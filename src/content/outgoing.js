@@ -43,12 +43,14 @@ export function mountOutgoing(cur) {
   };
 
   // Composer selector check (design: selector miss = inactive + badge).
-  setTimeout(() => {
-    if (getCurrent() === cur && !composer()) {
-      ask({ type: 'badge', text: '!' }).catch(() => {});
-      console.warn('[protly] composer not found; outgoing translation inactive');
-    }
-  }, 3000);
+  // Instagram can drop the composer for a moment (slow load, thread switch), so retry before warning.
+  const checkComposer = (tries = 0) => {
+    if (!live() || composer()) return;
+    if (tries < 9) return void setTimeout(() => checkComposer(tries + 1), 1000);
+    ask({ type: 'badge', text: '!' }).catch(() => {});
+    console.warn('[protly] composer not found after 10 s; outgoing translation inactive');
+  };
+  setTimeout(checkComposer, 1000);
 
   // One card above the composer's row, so Instagram's own layout stays intact. Rebuilt if the row is replaced.
   let card = null;
