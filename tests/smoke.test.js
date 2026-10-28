@@ -83,3 +83,16 @@ test('content modules import cleanly', async () => {
     await import(new URL(p, import.meta.url));
   }
 });
+
+test('options page saves on change and has diagnostics', () => {
+  const html = readFileSync(new URL('../options/options.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(html, /id="save"/);
+  for (const id of ['incoming', 'outgoing', 'hard', 'otherTarget', 'pastMode', 'newMode', 'saved', 'check', 'host-result', 'test', 'test-result', 'ext-id']) {
+    assert.match(html, new RegExp(`id="${id}"`), id);
+  }
+});
+
+test('the host error points to the diagnostics', async () => {
+  const { ERRORS } = await import('../src/ui/errors.js');
+  assert.equal(ERRORS.host, 'Native host not reachable. Open protly options and run Diagnostics.');
+});

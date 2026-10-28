@@ -1,7 +1,7 @@
 // User-facing text per ApiError kind (src/lib/api.js), shared by Instagram, Gmail and the generic path.
 export const ERRORS = {
   auth: 'API key missing or rejected. Check ~/.config/anthropic/api-key.',
-  host: 'Native host not reachable. Run host/install.sh <extension id>, then reload the extension.',
+  host: 'Native host not reachable. Open protly options and run Diagnostics.',
   host_bug: 'The native host hit an error',
   spend_limit: 'Monthly API spend limit reached. Paused until the limit resets.',
   bad_request: 'The API rejected the request (check the model ids in Options)',

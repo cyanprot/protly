@@ -1,26 +1,47 @@
 <!doctype html>
+<html class="pl-root">
 <meta charset="utf-8">
 <title>protly options</title>
 <style>
-  body { font: 14px system-ui, sans-serif; max-width: 520px; margin: 24px auto; padding: 0 16px; }
-  label { display: block; margin: 14px 0 4px; font-weight: 600; }
-  select { width: 100%; padding: 6px; box-sizing: border-box; }
-  #saved { color: green; margin-left: 8px; }
-  p.note { color: #666; }
+  body { margin: 0; background: var(--pl-bg); color: var(--pl-fg); font: 13px/1.5 var(--pl-font); }
+  main { max-width: 560px; margin: 0 auto; padding: 28px 16px 48px; }
+  .wordmark { width: 140px; height: 26px; background: var(--pl-fg); margin-bottom: 20px;
+    -webkit-mask: url(../icons/wordmark.svg) left center / contain no-repeat;
+    mask: url(../icons/wordmark.svg) left center / contain no-repeat; }
+  h2 { font-size: 13px; font-weight: 500; margin: 28px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--pl-rule); }
+  label { display: block; margin: 12px 0 4px; }
+  select { width: 100%; }
+  .note { color: var(--pl-muted); }
+  #saved { color: var(--pl-muted); margin-left: 8px; }
+  .diag { display: flex; gap: 8px; align-items: baseline; margin: 10px 0; flex-wrap: wrap; }
+  .result { color: var(--pl-muted); }
+  .result.err { color: var(--pl-err); }
+  code { font: inherit; }
 </style>
-<h1>protly</h1>
-<p class="note">API key: read by the native host from <code>~/.config/anthropic/api-key</code>. Install the host with <code>host/install.sh &lt;extension id&gt;</code>.</p>
-<label for="incoming">Incoming model</label>
-<select id="incoming"></select>
-<label for="outgoing">Draft model (Enter, Gmail, polish, memo)</label>
-<select id="outgoing"></select>
-<label for="hard">Hard model (Alt+Enter)</label>
-<select id="hard"></select>
-<label for="otherTarget">Default: non-English incoming to</label>
-<select id="otherTarget"><option value="ko">Korean</option><option value="en">English</option></select>
-<label for="pastMode">Default: past messages</label>
-<select id="pastMode"><option value="replace">Replace text</option><option value="below">Below bubble</option></select>
-<label for="newMode">Default: new messages</label>
-<select id="newMode"><option value="below">Below bubble</option><option value="replace">Replace text</option></select>
-<p><button id="save" type="button">Save</button><span id="saved"></span></p>
+<main>
+  <div class="wordmark" role="img" aria-label="protly"></div>
+  <p class="note">The native host reads the API key from <code>~/.config/anthropic/api-key</code>. Changes save as you make them.<span id="saved"></span></p>
+
+  <h2>Models</h2>
+  <label for="incoming">Incoming</label>
+  <select id="incoming"></select>
+  <label for="outgoing">Draft model (Enter, Gmail, polish, memo)</label>
+  <select id="outgoing"></select>
+  <label for="hard">Hard (Alt+Enter, Opus button)</label>
+  <select id="hard"></select>
+
+  <h2>Defaults for new Instagram threads</h2>
+  <label for="otherTarget">Non-English incoming to</label>
+  <select id="otherTarget"><option value="ko">Korean</option><option value="en">English</option></select>
+  <label for="pastMode">Past messages</label>
+  <select id="pastMode"><option value="replace">Replace text</option><option value="below">Below bubble</option></select>
+  <label for="newMode">New messages</label>
+  <select id="newMode"><option value="below">Below bubble</option><option value="replace">Replace text</option></select>
+
+  <h2>Diagnostics</h2>
+  <p class="note">Extension ID <code id="ext-id"></code>. Install or repair the host with <code>host/install.sh &lt;extension id&gt;</code>.</p>
+  <div class="diag"><button type="button" id="check" class="pl-btn">Check host</button><span id="host-result" class="result"></span></div>
+  <div class="diag"><button type="button" id="test" class="pl-btn">Test call</button><span id="test-result" class="result"></span></div>
+</main>
 <script type="module" src="options.js"></script>
+</html>
