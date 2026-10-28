@@ -20,11 +20,12 @@ confirmation, any server component.
 | Topic | Decision |
 |---|---|
 | Platform | Chrome desktop, Manifest V3, plain JS, no build step, loaded unpacked |
-| API path | Extension calls Anthropic API directly from the background service worker |
+| API path | Extension calls Anthropic API directly from the background service worker, with header `anthropic-dangerous-direct-browser-access: true` (required for browser-origin requests) |
 | API key | `chrome.storage.local`, entered on the options page. Console spend limit set to the $100/month credit |
 | Incoming model | Sonnet 5.5, extended thinking off (latency first) |
 | Outgoing model | Sonnet 5.5, effort `medium` (adaptive thinking) |
 | Outgoing "hard" mode | Opus 5.5, effort `high`, triggered per message by `Alt+Enter` |
+| Memo suggestion model | Same as outgoing (Sonnet 5.5, effort `medium`) |
 | Context | Last ~30 visible messages of the thread plus a per-thread memo |
 | Send flow | Preview, then a second Enter sends |
 
@@ -40,8 +41,10 @@ current API docs during planning, not assumed here.
   - Output language per thread: `auto` (default) or a fixed language code.
   - `auto` resolves to `partner_lang`, the language of the partner's most recent messages.
   - `partner_lang` is updated from the `src_lang` field Claude returns for incoming messages.
-  - If `partner_lang` is unknown (new thread, no partner messages yet), fall back to English and
-    show the chosen language in the preview so the user can change it.
+  - If `partner_lang` is unknown (new thread, no partner messages yet), fall back to English.
+  - The preview always shows the target language as a clickable chip. Clicking it opens a small
+    language picker; picking a language sets the thread's output language and re-translates from
+    the stored Korean original.
 - Composer text with no Hangul is sent as-is, no translation.
 
 ## Components
@@ -51,7 +54,7 @@ current API docs during planning, not assumed here.
 | `manifest.json` | MV3. `host_permissions`: `https://www.instagram.com/*`, `https://api.anthropic.com/*`. Content script matches `https://www.instagram.com/direct/*` |
 | `selectors.js` | Every Instagram DOM selector in one place. Prefer `role`, `aria-label`, `contenteditable`, structural anchors over obfuscated class names |
 | `content.js` | Injected into DM pages. Detects messages with `MutationObserver`, renders translations, intercepts composer Enter, hosts the thread panel |
-| `background.js` | Service worker. Owns every API call; the key never reaches the content script |
+| `background.js` | Service worker. Owns every API call; `content.js` never reads or handles the key (it could technically read `chrome.storage.local`, but the page itself cannot) |
 | `prompts.js` | System prompts for incoming batch translation, outgoing translation plus back-translation, memo suggestion |
 | `options.html` / `options.js` | API key, model choice per direction, global defaults |
 
@@ -70,17 +73,26 @@ Per-thread controls:
 
 Defaults: new messages below the bubble, past messages replaced.
 
+**Past vs new:** a message is *past* if it was in the DOM when the thread was initialised, or is
+inserted above an already known message (Instagram back-fills history when scrolling up). It is
+*new* only if it is appended below the last known message after initialisation.
+
 ## Storage (`chrome.storage.local`)
 
+One storage key per entry, so a write never rewrites a whole map:
+
 - `settings`: API key, model per direction, global defaults for every panel toggle
-- `threads[threadId]`: memo, `partner_lang`, output language, toggles
-- `cache[hash]`: translation results keyed by hash of (threadId, message text, target language)
-- `sent[hash]`: Korean original of each message sent through the extension, keyed by hash of
-  (threadId, sent translated text)
+- `t:<threadId>`: memo, `partner_lang`, output language, toggles
+- `c:<hash>`: incoming translation. Key = hash of (threadId, message text, non-English target
+  toggle value). Value = `{src_lang, translation, ts}`. The toggle value is known before the call,
+  so lookup works without knowing `src_lang` first
+- `s:<hash>`: Korean original of a message sent through the extension. Key = hash of
+  (threadId, composer text at the moment of the second Enter, after any user edits). Value =
+  `{korean, ts}`
 
 `threadId` comes from the URL path `/direct/t/<id>`.
 
-Cache growth: entries carry a timestamp; entries older than 90 days are pruned on startup.
+Growth: `c:` and `s:` entries older than 90 days are pruned on startup.
 
 ## Data flow
 
@@ -90,11 +102,13 @@ Cache growth: entries carry a timestamp; entries older than 90 days are pruned o
    no text (images, reels, stickers, voice).
 2. Skip Hangul-only text. Everything else goes to Claude, which returns `src_lang` per message.
 3. Cache hit: render immediately. Misses are sent as **one batch call** containing the last ~30
-   messages as context, the memo, and the list of messages to translate. Response is a JSON array
-   of `{id, src_lang, translation}`. Messages Claude reports as Korean or English-to-English
-   no-ops are left untouched.
-4. New messages arriving later (`MutationObserver`) go through the same path as a batch of one,
-   debounced so a burst of messages becomes one call.
+   messages as context, the memo, and the list of messages to translate. The caller cannot assign
+   a target per message, so the prompt states the rule: "English to Korean; any other non-Korean
+   language to <toggle value>; Korean unchanged". Response is a JSON array of
+   `{id, src_lang, translation}`. Messages Claude reports as Korean are left untouched.
+4. Messages added later (`MutationObserver`) go through the same path, debounced so a burst
+   becomes one call. Back-filled history and new arrivals share this path; they differ only in
+   display mode (see "Past vs new").
 5. Render according to the thread's display mode. In replace mode the original is available on
    hover.
 6. My own past bubbles: if `sent[hash]` has the Korean original, show it on hover. They are not
@@ -107,12 +121,17 @@ Cache growth: entries carry a timestamp; entries older than 90 days are pruned o
 2. No Hangul in the text: let the event through untouched.
 3. Hangul present: call Claude with recent context, memo, and target language. Response is
    `{translation, back_translation}`.
-4. Composer text is replaced with the translation; the back-translation (Korean) and the model
-   used are shown under the composer.
+4. The Korean original is kept in preview state. Composer text is replaced with the translation;
+   the back-translation (Korean), the model used, and the target-language chip are shown under
+   the composer.
 5. Second Enter sends whatever is in the composer, including user edits. `Esc` restores the
    original Korean and leaves preview state.
-6. On send, store the Korean original in `sent`.
-7. `Alt+Enter` does the same as step 3 onward with the Opus model.
+6. On send, store the Korean original under `s:<hash>` (hash of the composer text as sent).
+7. `Alt+Enter` outside preview: same as step 3 onward with the Opus model.
+   `Alt+Enter` inside preview: re-translate the stored Korean original with Opus, replacing the
+   current preview (user edits to the translation are discarded).
+8. Changing the target language via the chip re-translates the stored Korean original with the
+   model of the current preview.
 
 The method for replacing composer text must make Instagram's own state see the new value
 (Instagram's composer is a React-controlled contenteditable). Verifying that technique against
@@ -144,8 +163,9 @@ telemetry.
 ## Testing
 
 - **Prompts and parsing:** fixed fixture set of conversations (en, ru, es, ja mixed; casual
-  register, slang, Korean subject drop). A script runs them through the API and checks JSON shape
-  and `src_lang`. Translation quality is reviewed by eye.
+  register, slang, Korean subject drop). A Node script (key from `ANTHROPIC_API_KEY` env var)
+  runs them through the API and checks JSON shape and `src_lang`. The script imports the same
+  `prompts.js` as the extension. Translation quality is reviewed by eye.
 - **DOM:** saved HTML snapshots of real Instagram DM pages, selector unit tests against them.
   When Instagram changes, take a new snapshot and diff.
 - **Live check:** Claude in Chrome drives the real `instagram.com/direct` page to check incoming
