@@ -3,13 +3,8 @@ import { userNodes, nodesToText, textToNodes, replaceUserNodes, hasMedia } from 
 import { readThread } from './thread.js';
 import { hasHangul, LANG_NAMES, parseLangPrefix } from '../../lib/lang.js';
 import { flags } from '../../lib/flags.js';
+import { errorText } from '../../ui/errors.js';
 
-const ERRORS = {
-  auth: 'API key missing or rejected. Check ~/.config/anthropic/api-key.',
-  host: 'Native host not reachable. Run host/install.sh <extension id>, then reload the extension.',
-  spend_limit: 'Monthly API spend limit reached.',
-  timeout: 'The model took too long. Try again.',
-};
 const MOUNT_GRACE_MS = 3000; // Gmail can render a body before its toolbar
 const norm = (s) => (s ?? '').replace(/\s+/g, ' ').trim();
 const modelLabel = (m) => (m && m.includes('opus') ? 'Opus' : 'Sonnet');
@@ -247,6 +242,6 @@ async function request(body, { kind = 'translate', korean, profile, lang }) {
   } catch (e) {
     if (reqId !== s.reqId) return;
     s.mode = prevMode;
-    showError(body, s, `${polish ? 'Polish' : 'Translation'} failed: ${ERRORS[e.kind] || e.message}`);
+    showError(body, s, `${polish ? 'Polish' : 'Translation'} failed: ${errorText(e)}`);
   }
 }

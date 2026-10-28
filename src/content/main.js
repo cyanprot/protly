@@ -3,6 +3,7 @@ import { watchFlags } from '../lib/flags.js';
 import { isKoreanOnly, hasHangul as isHangulText } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
 import { findViewerName } from './selectors.js';
+import { ERRORS, GLOBAL_KINDS, errorText } from '../ui/errors.js';
 import {
   findThreadRoot, readMessages, renderTranslation, renderRetry, setHoverOriginal, clearTranslation,
   clearAllTranslations, stillShows,
@@ -13,20 +14,9 @@ const DEBOUNCE_MS = 400;
 const WAIT_MS = 300;
 const WAIT_TRIES = 33; // about 10 s
 
-const ERROR_BANNERS = {
-  auth: 'protly: API key missing or rejected. Check ~/.config/anthropic/api-key.',
-  host: 'protly: native host not reachable. Run host/install.sh <extension id>, then reload the extension.',
-  spend_limit: 'protly: monthly API spend limit reached. Translation paused until the limit resets.',
-  host_bug: 'protly: the native host hit an error',
-  bad_request: 'protly: the API rejected the request (check the model ids in Options)',
-  stale: 'protly was reloaded or updated. Reload this tab.',
-};
-
-// Banner text for an error from ask(), or null when a per-message marker is enough.
+// Toast text for an error from ask(), or null when a per-message marker is enough.
 export function bannerFor(e) {
-  const base = ERROR_BANNERS[e?.kind];
-  if (!base) return null;
-  return ['host_bug', 'bad_request'].includes(e.kind) ? `${base}: ${e.message}` : base;
+  return GLOBAL_KINDS.has(e?.kind) ? errorText(e) : null;
 }
 
 export const ask = async (msg) => {
@@ -37,7 +27,7 @@ export const ask = async (msg) => {
   } catch (err) {
     const e = new Error(err?.message || String(err));
     e.kind = /context invalidated|Receiving end does not exist/i.test(e.message) ? 'stale' : 'internal';
-    if (e.kind === 'stale') showBanner(ERROR_BANNERS.stale);
+    if (e.kind === 'stale') showBanner(ERRORS.stale);
     throw e;
   }
   if (!r?.ok) { const e = new Error(r?.error?.message || 'no response'); e.kind = r?.error?.kind; throw e; }
