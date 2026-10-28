@@ -47,3 +47,17 @@ test('protly-mono woff2 subsets exist and are small', () => {
     assert.ok(buf.length > 4000 && buf.length < 60000, `size ${buf.length}`);
   }
 });
+
+test('manifest icons point at the built p icon PNGs', () => {
+  const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
+  const sizes = ['16', '32', '48', '128'];
+  assert.deepEqual(Object.keys(m.icons), sizes);
+  assert.deepEqual(m.action.default_icon, { 16: 'icons/icon-16.png', 32: 'icons/icon-32.png' });
+  for (const s of sizes) {
+    assert.equal(m.icons[s], `icons/icon-${s}.png`);
+    const png = readFileSync(new URL(`../${m.icons[s]}`, import.meta.url));
+    assert.equal(png.subarray(1, 4).toString('latin1'), 'PNG');
+    assert.equal(png.readUInt32BE(16), Number(s)); // IHDR width
+  }
+  assert.match(readFileSync(new URL('../icons/wordmark.svg', import.meta.url), 'utf8'), /fill="currentColor"/);
+});
