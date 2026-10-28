@@ -61,5 +61,5 @@ test('connect throwing rejects with host kind', async () => {
 
 test('no reply rejects after the timeout', async () => {
   const { t } = setup(undefined, 20);
-  await assert.rejects(t({}), (e) => e.kind === 'host' && /timed out/.test(e.message));
+  await assert.rejects(t({}), (e) => e.kind === 'timeout' && /timed out/.test(e.message));
 });

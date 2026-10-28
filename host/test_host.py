@@ -46,7 +46,15 @@ class Framing(unittest.TestCase):
         msg = {'id': 7, 'body': {'text': '안녕 привет'}}
         buf = io.BytesIO(h.encode_message(msg))
         self.assertEqual(h.read_message(buf), msg)
+        self.assertIs(h.read_message(buf), h.EOF)
+
+    def test_null_frame_is_not_eof(self):
+        buf = io.BytesIO(h.encode_message(None))
         self.assertIsNone(h.read_message(buf))
+
+    def test_lone_surrogate_encodes(self):
+        data = h.encode_message({'t': '\ud83d'})
+        self.assertEqual(h.read_message(io.BytesIO(data)), {'t': '\ud83d'})
 
     def test_length_is_utf8_byte_count(self):
         data = h.encode_message({'t': '안'})
@@ -118,6 +126,12 @@ class Handle(unittest.TestCase):
         r = h.handle({'id': 4, 'body': {}}, make_home(), urlopen=op)
         self.assertEqual(r['status'], 0)
         self.assertEqual(r['body']['error']['type'], 'host_network')
+
+    def test_socket_timeout_is_host_timeout(self):
+        for exc in (TimeoutError('timed out'), urllib.error.URLError(TimeoutError('timed out'))):
+            op = mock.Mock(side_effect=exc)
+            r = h.handle({'id': 4, 'body': {}}, make_home(), urlopen=op)
+            self.assertEqual(r['body']['error']['type'], 'host_timeout')
 
     def test_errors_never_contain_the_key(self):
         op = mock.Mock(side_effect=urllib.error.URLError('down'))

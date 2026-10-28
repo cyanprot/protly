@@ -81,3 +81,26 @@ test('callJson gives up after second parse error', async () => {
   await assert.rejects(callJson({}, parse, { transport: t, sleep: noSleep }), (e) => e.kind === 'parse');
   assert.equal(t.calls.length, 2);
 });
+
+test('timeouts are not retried (the first attempt may still be billing)', async () => {
+  const t1 = fakeTransport([new ApiError('timeout', 'native host timed out')]);
+  await assert.rejects(callClaude({}, { transport: t1, sleep: noSleep }), (e) => e.kind === 'timeout');
+  assert.equal(t1.calls.length, 1);
+  const t2 = fakeTransport([{ status: 0, body: { error: { type: 'host_timeout', message: 'network: timed out' } } }]);
+  await assert.rejects(callClaude({}, { transport: t2, sleep: noSleep }), (e) => e.kind === 'timeout');
+  assert.equal(t2.calls.length, 1);
+});
+
+test('retry_after is capped at 30 s', async () => {
+  const waits = [];
+  const t = fakeTransport([{ status: 429, retry_after: '600' }, { status: 200, body: {} }]);
+  await callClaude({}, { transport: t, sleep: async (ms) => waits.push(ms) });
+  assert.deepEqual(waits, [30000]);
+});
+
+test('callJson does not re-request a truncated reply', async () => {
+  const t = fakeTransport([{ status: 200, body: {} }, { status: 200, body: {} }]);
+  const parse = () => { throw new ApiError('truncated', 'Output truncated'); };
+  await assert.rejects(callJson({}, parse, { transport: t, sleep: noSleep }), (e) => e.kind === 'truncated');
+  assert.equal(t.calls.length, 1);
+});

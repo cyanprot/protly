@@ -38,7 +38,7 @@ export function createNativeTransport(connect, lastError = () => undefined, time
       }
       const id = nextId++;
       const timer = setTimeout(() => {
-        if (c.pending.delete(id)) reject(new ApiError('host', 'native host timed out'));
+        if (c.pending.delete(id)) reject(new ApiError('timeout', 'native host timed out'));
       }, timeoutMs);
       c.pending.set(id, { resolve, reject, timer });
       try {

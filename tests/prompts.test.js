@@ -56,6 +56,12 @@ test('parseIncoming maps ids and skips thinking blocks', () => {
   assert.deepEqual(r, { '0': { src_lang: 'ru', translation: 'hi' } });
 });
 
+test('parseIncoming normalizes src_lang to a bare lowercase code', () => {
+  const r = parseIncoming(resp('{"items":[{"id":"0","src_lang":"ko-KR","translation":"x"},{"id":"1","src_lang":"EN","translation":"y"}]}'));
+  assert.equal(r['0'].src_lang, 'ko');
+  assert.equal(r['1'].src_lang, 'en');
+});
+
 test('parseOutgoing accepts JSON embedded in prose (no-format fallback)', () => {
   const r = parseOutgoing(resp('Here:\n{"translation":"see you","back_translation":"또 봐"}'));
   assert.deepEqual(r, { translation: 'see you', back_translation: '또 봐' });
@@ -64,7 +70,7 @@ test('parseOutgoing accepts JSON embedded in prose (no-format fallback)', () => 
 test('parse errors', () => {
   assert.throws(() => parseOutgoing(resp('nope')), (e) => e.kind === 'parse');
   assert.throws(() => parseOutgoing(resp('{"translation":"x"}')), (e) => e.kind === 'parse');
-  assert.throws(() => parseOutgoing(resp('{}', 'max_tokens')), (e) => e.kind === 'parse');
+  assert.throws(() => parseOutgoing(resp('{}', 'max_tokens')), (e) => e.kind === 'truncated');
   assert.throws(() => parseOutgoing(resp('{}', 'refusal')), (e) => e.kind === 'refused');
 });
 

@@ -114,7 +114,7 @@ export function buildMemoRequest({ model, context }) {
 
 function extractJson(resp) {
   if (resp.stop_reason === 'refusal') throw new ApiError('refused', 'Model refused');
-  if (resp.stop_reason === 'max_tokens') throw new ApiError('parse', 'Output truncated');
+  if (resp.stop_reason === 'max_tokens') throw new ApiError('truncated', 'Output truncated');
   const text = (resp.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
   try {
     return JSON.parse(text);
@@ -131,7 +131,8 @@ export function parseIncoming(resp) {
   const out = {};
   for (const it of j.items) {
     if (typeof it.id !== 'string' || typeof it.translation !== 'string') throw new ApiError('parse', 'bad item');
-    out[it.id] = { src_lang: it.src_lang, translation: it.translation };
+    const src = typeof it.src_lang === 'string' ? it.src_lang.toLowerCase().split(/[-_]/)[0] : 'und';
+    out[it.id] = { src_lang: src, translation: it.translation };
   }
   return out;
 }

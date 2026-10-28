@@ -19,21 +19,22 @@ TIMEOUT_S = 120
 MAX_REPLY = 1024 * 1024  # Chrome rejects host messages larger than 1 MB
 
 _out_lock = threading.Lock()
+EOF = object()  # distinct from a JSON null frame
 
 
 def read_message(stream):
     raw = stream.read(4)
     if len(raw) < 4:
-        return None
+        return EOF
     (n,) = struct.unpack('=I', raw)
     data = stream.read(n)
     if len(data) < n:
-        return None
+        return EOF
     return json.loads(data.decode('utf-8'))
 
 
 def encode_message(obj):
-    data = json.dumps(obj, ensure_ascii=False).encode('utf-8')
+    data = json.dumps(obj).encode('utf-8')  # ASCII escapes: a lone surrogate cannot break encoding
     return struct.pack('=I', len(data)) + data
 
 
@@ -87,8 +88,9 @@ def handle(req, home, urlopen=urllib.request.urlopen):
             body = {}
         return {'id': req_id, 'status': e.code, 'retry_after': e.headers.get('retry-after'), 'body': body}
     except (urllib.error.URLError, TimeoutError, OSError) as e:
-        reason = getattr(e, 'reason', None) or type(e).__name__
-        return local_error(req_id, 'host_network', f'network: {reason}')
+        reason = getattr(e, 'reason', None) or e
+        kind = 'host_timeout' if isinstance(reason, TimeoutError) else 'host_network'
+        return local_error(req_id, kind, f'network: {reason or type(e).__name__}')
 
 
 def safe_handle(req, home):
@@ -106,8 +108,10 @@ def main():
             req = read_message(stdin)
         except ValueError:
             continue  # unparseable JSON has no id to reply to; the frame was consumed, keep reading
-        if req is None:
+        if req is EOF:
             break  # Chrome closed the port
+        if not isinstance(req, dict):
+            continue  # no id to reply to
         threading.Thread(target=lambda r=req: write_message(stdout, safe_handle(r, home)), daemon=True).start()
 
 

@@ -127,3 +127,18 @@ test('Esc in idle passes; reset always returns idle', () => {
   const a = reduce(initial(), { type: 'enter', text: '가자', hard: false });
   assert.equal(reduce(a.state, { type: 'reset' }).state.mode, 'idle');
 });
+
+test('preview Enter sends a translation that keeps Hangul (ㅋㅋ, names)', () => {
+  const a = reduce(initial(), { type: 'enter', text: 'ㅋㅋㅋ 내일 보자', hard: false });
+  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId, translation: 'ㅋㅋ see u tmrw', back_translation: 'ㅋㅋ 내일 봐', lang: 'en', model: 'm' });
+  const c = reduce(b.state, { type: 'enter', text: ' ㅋㅋ  see u tmrw ', hard: false });
+  assert.deepEqual(c.effect, { type: 'sent', korean: 'ㅋㅋㅋ 내일 보자' });
+  assert.equal(c.state.mode, 'idle');
+});
+
+test('preview Enter with different Hangul text is a new draft', () => {
+  const s = toPreview('내일 봐');
+  const r = reduce(s, { type: 'enter', text: '아니 모레 봐', hard: false });
+  assert.equal(r.effect.type, 'translate');
+  assert.equal(r.effect.korean, '아니 모레 봐');
+});
