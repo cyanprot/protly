@@ -53,9 +53,14 @@ export function getComposerText(el) {
   return (el.innerText || '').replace(/\n$/, '');
 }
 
-export function setComposerText(el, text) {
+// Lexical syncs its selection on `selectionchange`, so it needs a moment between selecting and inserting,
+// otherwise insertText is dropped (spike-notes, Composer write). Clearing to empty is not supported by Lexical
+// via execCommand; callers only write non-empty text.
+export const SELECT_SETTLE_MS = 60;
+export async function setComposerText(el, text) {
   el.focus();
-  el.ownerDocument.execCommand('selectAll', false);
-  if (text) el.ownerDocument.execCommand('insertText', false, text);
-  else el.ownerDocument.execCommand('delete', false);
+  el.ownerDocument.getSelection().selectAllChildren(el);
+  await new Promise((r) => setTimeout(r, SELECT_SETTLE_MS));
+  el.focus();
+  el.ownerDocument.execCommand('insertText', false, text);
 }

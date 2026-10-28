@@ -19,7 +19,7 @@ export function mountOutgoing(cur) {
 
   const composer = () => findComposer(document);
   const text = (s) => document.createTextNode(s);
-  const write = (c, s) => { writing = true; try { setComposerText(c, s); } finally { writing = false; } };
+  const write = async (c, s) => { writing = true; try { await setComposerText(c, s); } finally { writing = false; } };
 
   // Composer selector check (design: selector miss = inactive + badge).
   setTimeout(() => {
@@ -92,7 +92,7 @@ export function mountOutgoing(cur) {
       }
       case 'show': {
         if (!c) { resetPreview(); break; }
-        write(c, effect.translation);
+        await write(c, effect.translation);
         await new Promise((r) => setTimeout(r, WRITE_SETTLE_MS));
         if (state.mode !== 'preview') break; // Esc or reset meanwhile
         if (norm(getComposerText(c)) !== norm(effect.translation)) {
@@ -105,7 +105,7 @@ export function mountOutgoing(cur) {
         break;
       }
       case 'restore':
-        if (c) write(c, effect.korean);
+        if (c) await write(c, effect.korean);
         hideNote();
         lastText = '';
         break;
@@ -119,7 +119,7 @@ export function mountOutgoing(cur) {
         break;
       }
       case 'fail':
-        if (c && effect.korean != null && norm(getComposerText(c)) !== norm(effect.korean)) write(c, effect.korean);
+        if (c && effect.korean != null && norm(getComposerText(c)) !== norm(effect.korean)) await write(c, effect.korean);
         lastText = '';
         showNote([text(`Translation failed: ${effect.message}`)], true);
         break;
