@@ -4,6 +4,7 @@ import { isKoreanOnly, hasHangul as isHangulText } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
 import { findViewerName } from './selectors.js';
 import { ERRORS, GLOBAL_KINDS, errorText } from '../ui/errors.js';
+import { showToast } from '../ui/toast.js';
 import {
   findThreadRoot, readMessages, renderTranslation, renderRetry, setHoverOriginal, clearTranslation,
   clearAllTranslations, stillShows,
@@ -27,7 +28,7 @@ export const ask = async (msg) => {
   } catch (err) {
     const e = new Error(err?.message || String(err));
     e.kind = /context invalidated|Receiving end does not exist/i.test(e.message) ? 'stale' : 'internal';
-    if (e.kind === 'stale') showBanner(ERRORS.stale);
+    if (e.kind === 'stale') showToast(ERRORS.stale, { error: true });
     throw e;
   }
   if (!r?.ok) { const e = new Error(r?.error?.message || 'no response'); e.kind = r?.error?.kind; throw e; }
@@ -40,7 +41,6 @@ let current = null; // { threadId, thread, root, observer, known, timer, onTeard
 // cannot tell old rows from new ones; the visible texts can.
 let staleSig = null;
 const sigOf = (msgs) => msgs.map((m) => m.text).join('\u0001');
-const bannersShown = new Set();
 
 export async function start() {
   watchFlags();
@@ -74,7 +74,7 @@ function guardUnownedEnter(e) {
   if (!t?.isContentEditable || !isHangulText(t.innerText || t.textContent || '')) return;
   e.preventDefault();
   e.stopImmediatePropagation();
-  showBanner('protly is still loading this thread. Nothing was sent; press Enter again in a moment.', { transient: true });
+  showToast('Still loading this thread. Nothing was sent; press Enter again in a moment.', { transient: true });
 }
 
 function teardown() {
@@ -114,7 +114,7 @@ async function initThread(threadId, root) {
     thread = await ask({ type: 'getThread', threadId });
   } catch (e) {
     ask({ type: 'badge', text: '!' }).catch(() => {});
-    showBanner(bannerFor(e) || `protly: could not load thread settings: ${e.message}`);
+    showToast(bannerFor(e) || `Could not load thread settings: ${e.message}`, { error: true });
     return;
   }
   if (threadIdFromPath(location.pathname) !== threadId) return;
@@ -184,7 +184,7 @@ async function translate(msgs, mode, updateLang) {
     }
   } catch (e) {
     if (current?.threadId !== threadId) return;
-    if (bannerFor(e)) showBanner(bannerFor(e));
+    if (bannerFor(e)) showToast(bannerFor(e), { error: true });
     todo.forEach((m) => { if (stillShows(m)) renderRetry(m, () => translate([m], mode, false)); });
   }
 }
@@ -210,19 +210,6 @@ export function rerender() {
   translate(msgs.filter((m) => !isFresh(m)), current.thread.pastMode, false); // cache makes this cheap
   translate(msgs.filter(isFresh), current.thread.newMode, false);
   hoverSent(msgs);
-}
-
-// transient: auto-dismiss after a few seconds and allow repeats (for per-keypress feedback).
-export function showBanner(text, { transient = false } = {}) {
-  if (bannersShown.has(text)) return;
-  if (!transient) bannersShown.add(text);
-  const b = document.createElement('div');
-  b.style.cssText = 'position:fixed;top:12px;right:12px;z-index:99999;max-width:360px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;font:13px system-ui;cursor:pointer';
-  b.textContent = text;
-  b.title = 'Click to dismiss';
-  b.onclick = () => b.remove();
-  document.body.appendChild(b);
-  if (transient) setTimeout(() => b.remove(), 4000);
 }
 
 export const getCurrent = () => current;

@@ -1,7 +1,8 @@
 import { initial, reduce } from '../lib/preview.js';
 import { hasHangul, langName, LANG_NAMES } from '../lib/lang.js';
 import { findComposer, getComposerText, setComposerText } from './dom.js';
-import { ask, getCurrent, contextFor, showBanner, bannerFor } from './main.js';
+import { ask, getCurrent, contextFor, bannerFor } from './main.js';
+import { showToast } from '../ui/toast.js';
 import { threadIdFromPath } from '../lib/keys.js';
 import { flags } from '../lib/flags.js';
 
@@ -80,7 +81,7 @@ export function mountOutgoing(cur) {
         try {
           if (c) c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch: { outputLang: sel.value } });
         } catch (err) {
-          showBanner(`protly: could not save the reply language: ${err.message}`);
+          showToast(`Could not save the reply language: ${err.message}`, { error: true });
         }
         dispatch({ type: 'lang', lang: sel.value });
       };
@@ -115,7 +116,7 @@ export function mountOutgoing(cur) {
             });
           dispatch({ type: 'result', reqId: effect.reqId, ...r });
         } catch (e) {
-          if (bannerFor(e)) showBanner(bannerFor(e));
+          if (bannerFor(e)) showToast(bannerFor(e), { error: true });
           dispatch({ type: 'fail', reqId: effect.reqId, message: e.message });
         }
         break;
@@ -202,7 +203,7 @@ export function mountOutgoing(cur) {
       if (!c && isEnter(e) && !e.shiftKey && e.target?.isContentEditable
           && hasHangul(e.target.innerText || e.target.textContent || '')) {
         block(e);
-        showBanner('protly: message box not recognised, so nothing was sent. The selectors need updating.');
+        showToast('Message box not recognised, so nothing was sent. The selectors need updating.', { error: true });
       }
       return;
     }

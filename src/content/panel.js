@@ -1,4 +1,5 @@
-import { ask, rerender, getCurrent, contextFor, showBanner } from './main.js';
+import { ask, rerender, getCurrent, contextFor } from './main.js';
+import { showToast } from '../ui/toast.js';
 import { LANG_NAMES } from '../lib/lang.js';
 
 export function mountPanel(cur) {
@@ -52,7 +53,7 @@ export function mountPanel(cur) {
     try {
       c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch });
     } catch (e) {
-      showBanner(`protly: could not save: ${e.message}`);
+      showToast(`Could not save: ${e.message}`, { error: true });
       fill(c.thread); // show what is actually stored
       return;
     }
@@ -70,7 +71,7 @@ export function mountPanel(cur) {
     try {
       $('memo').value = await ask({ type: 'suggestMemo', threadId: c.threadId, context: contextFor(c.root) });
     } catch (e) {
-      showBanner(`protly: memo suggestion failed: ${e.message}`);
+      showToast(`Memo suggestion failed: ${e.message}`, { error: true });
     } finally {
       $('suggest').disabled = false;
     }
