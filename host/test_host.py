@@ -146,5 +146,29 @@ class Handle(unittest.TestCase):
         self.assertEqual(r['body']['error']['type'], 'host_error')
 
 
+class Ping(unittest.TestCase):
+    def test_reports_key_and_workspace_without_calling_the_api(self):
+        op = mock.Mock()
+        r = h.handle({'id': 11, 'ping': True}, make_home(), urlopen=op)
+        self.assertEqual(r, {'id': 11, 'ping': {'ok': True, 'key_present': True, 'workspace_header': True}})
+        op.assert_not_called()
+
+    def test_missing_key(self):
+        r = h.handle({'id': 12, 'ping': True}, make_home(key=None), urlopen=mock.Mock())
+        self.assertEqual(r['ping'], {'ok': True, 'key_present': False, 'workspace_header': True})
+
+    def test_empty_key_counts_as_missing(self):
+        r = h.handle({'id': 13, 'ping': True}, make_home(key='  '), urlopen=mock.Mock())
+        self.assertFalse(r['ping']['key_present'])
+
+    def test_missing_workspace(self):
+        r = h.handle({'id': 14, 'ping': True}, make_home(ws=None), urlopen=mock.Mock())
+        self.assertEqual(r['ping'], {'ok': True, 'key_present': True, 'workspace_header': False})
+
+    def test_reply_never_contains_the_key(self):
+        r = h.safe_handle({'id': 15, 'ping': True}, make_home())
+        self.assertNotIn('sk-ant-test-123', json.dumps(r))
+
+
 if __name__ == '__main__':
     unittest.main()

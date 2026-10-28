@@ -4,6 +4,7 @@
 Chrome sends {id, body} messages on stdin. Each body is sent to the Anthropic Messages API
 and the reply {id, status, retry_after, body} is written to stdout. Messages in both
 directions are UTF-8 JSON preceded by a 32-bit length in native byte order.
+A {id, ping: true} message is answered locally with {id, ping: {ok, key_present, workspace_header}}.
 The API key never leaves this process; nothing here logs it.
 """
 import json
@@ -68,8 +69,28 @@ def build_headers(home):
     return headers
 
 
+def ping(home):
+    """Local health check for the options page. Reports whether the key and workspace exist, never their values."""
+    base = os.path.join(home, '.config', 'anthropic')
+    key_present = False
+    try:
+        with open(os.path.join(base, 'api-key')) as f:
+            key_present = bool(f.read().strip())
+    except OSError:
+        pass
+    workspace = False
+    try:
+        with open(os.path.join(base, 'configs', 'default.json')) as f:
+            workspace = bool(json.load(f).get('workspace_id'))
+    except (OSError, ValueError, AttributeError):
+        pass
+    return {'ok': True, 'key_present': key_present, 'workspace_header': workspace}
+
+
 def handle(req, home, urlopen=urllib.request.urlopen):
     req_id = req.get('id')
+    if req.get('ping'):
+        return {'id': req_id, 'ping': ping(home)}
     try:
         headers = build_headers(home)
     except (OSError, ValueError) as e:

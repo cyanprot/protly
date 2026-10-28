@@ -4,7 +4,9 @@ export const HOST_NAME = 'com.northprot.protly';
 
 // connect() returns a Port-like object: { postMessage, onMessage.addListener, onDisconnect.addListener }.
 // lastError() returns why a port closed (chrome.runtime.lastError?.message), read inside onDisconnect.
-export function createNativeTransport(connect, lastError = () => undefined, timeoutMs = 270000) {
+// The returned transport(body) resolves { status, retry_after, body }; transport.ping() resolves
+// { ok, key_present, workspace_header } from the host without calling the API.
+export function createNativeTransport(connect, lastError = () => undefined, timeoutMs = 270000, pingTimeoutMs = 5000) {
   let conn = null; // { port, pending: Map<id, {resolve, reject, timer}> }
   let nextId = 1;
 
@@ -16,7 +18,7 @@ export function createNativeTransport(connect, lastError = () => undefined, time
       if (!p) return;
       c.pending.delete(msg.id);
       clearTimeout(p.timer);
-      p.resolve({ status: msg.status, retry_after: msg.retry_after ?? null, body: msg.body });
+      p.resolve(msg.ping ? { ping: msg.ping } : { status: msg.status, retry_after: msg.retry_after ?? null, body: msg.body });
     });
     port.onDisconnect.addListener(() => {
       const reason = lastError() || 'native host disconnected';
@@ -27,7 +29,7 @@ export function createNativeTransport(connect, lastError = () => undefined, time
     return c;
   }
 
-  return function transport(body) {
+  function send(payload, ms) {
     return new Promise((resolve, reject) => {
       let c;
       try {
@@ -39,10 +41,10 @@ export function createNativeTransport(connect, lastError = () => undefined, time
       const id = nextId++;
       const timer = setTimeout(() => {
         if (c.pending.delete(id)) reject(new ApiError('timeout', 'native host timed out'));
-      }, timeoutMs);
+      }, ms);
       c.pending.set(id, { resolve, reject, timer });
       try {
-        c.port.postMessage({ id, body });
+        c.port.postMessage({ id, ...payload });
       } catch (e) {
         c.pending.delete(id);
         clearTimeout(timer);
@@ -50,5 +52,13 @@ export function createNativeTransport(connect, lastError = () => undefined, time
         reject(new ApiError('host', String(e?.message || e)));
       }
     });
+  }
+
+  const transport = (body) => send({ body }, timeoutMs);
+  transport.ping = async () => {
+    const r = await send({ ping: true }, pingTimeoutMs);
+    if (!r.ping) throw new ApiError('host_bug', 'the native host does not answer ping; re-run host/install.sh <extension id>');
+    return r.ping;
   };
+  return transport;
 }

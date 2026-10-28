@@ -156,6 +156,18 @@ const handlers = {
     const { sites } = await store.get('sites');
     return statusFor({ url, sites: { ...DEFAULT_SITES, ...sites }, badge: tabId == null ? null : await badges.get(tabId) });
   },
+  diag: () => transport.ping(),
+  // One tiny real request through the normal path (metered like any other call).
+  testCall: async () => {
+    const settings = await getSettings();
+    const model = settings.models.outgoing;
+    const t0 = Date.now();
+    const body = await callClaude(
+      { model, max_tokens: 16, messages: [{ role: 'user', content: 'Reply with OK.' }] },
+      apiOpts,
+    );
+    return { model: body?.model || model, ms: Date.now() - t0 };
+  },
   usageSummary: async () => summarize((await store.get('usage')).usage || {}, Date.now()),
   badge: async ({ text, reason }, sender) => { await setTabBadge(sender.tab?.id, text, reason); return true; },
 };
