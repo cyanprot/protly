@@ -1,7 +1,7 @@
 # protly campaign handoff
 
-- Phase: execute. Sprint 2 (design system) DONE 2026-10-28: commits 2d78875..33522c4, npm test 175 pass / 0 fail, Python OK. Spec review SPEC_COMPLIANT, quality fixes landed, live check passed (Claude: panel, fonts, Gmail cards, Gmail Esc; user: Instagram Enter flow works as before).
-- Next: Sprint 3 (popup, usage, options), Task 3.1 of docs/plans/2026-10-28-protly.md.
+- Phase: execute. Sprint 3 (popup, usage, options) DONE 2026-10-28: commits 90f12d0..16dc23c, npm test 212 pass / 0 fail, Python 21 OK. Spec SPEC_COMPLIANT, quality fixes in 16dc23c, user live check passed (options auto-save, Check host, Test call, popup status/cost, Gmail switch off/on, generic page).
+- Next: Sprint 4 (any-site Alt+T), Task 4.1 of docs/plans/2026-10-28-protly.md.
 - Sprint 2 live fixes: card theme follows its surroundings (ea352d4, Gmail compose is white on a dark page); composer check retries 10 s before warning (33522c4, user saw a false 'composer not found' at outgoing.js:47).
 - Plan: docs/plans/2026-10-28-protly.md (theme.js contract updated in ea352d4). Design: docs/plans/2026-10-28-protly-design.md.
 - Repo /home/cyan/projects/protly. Extension ID X = idkdlhcfhfdbbpakkaifjlmjhhfepidg (manifest key; private key ~/.config/protly/extension-key.pem, never committed).

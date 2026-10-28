@@ -4,13 +4,14 @@
   "project": "protly",
   "campaign_id": "2026-10-28-protly",
   "started": "2026-10-28T14:08:19-07:00",
-  "updated": "2026-10-28T16:08:03-07:00",
+  "updated": "2026-10-28T16:31:27-07:00",
   "current_phase": "execute",
-  "current_sprint": 3,
+  "current_sprint": 4,
   "total_sprints": 4,
   "completed_sprints": [
     1,
-    2
+    2,
+    3
   ],
   "blocked_reason": null,
   "resume_instruction": null,
@@ -23,9 +24,14 @@
     "2026-10-28 Claude in Chrome cannot open chrome-extension:// pages (confirmed); storage checks use the Instagram page fallback",
     "2026-10-28 Sprint 2: pickTheme takes an optional from element; bindTheme judges each element by its surroundings (Gmail compose is white on a dark page) (ea352d4)",
     "2026-10-28 Sprint 2: Gmail Esc on an edited translation shows the edited-translation prompt instead of undoing (c80c92a)",
-    "2026-10-28 Sprint 2 closed: user tested Instagram live (works as before); composer-check false warning fixed with a 10 s retry (33522c4)"
+    "2026-10-28 Sprint 2 closed: user tested Instagram live (works as before); composer-check false warning fixed with a 10 s retry (33522c4)",
+    {
+      "timestamp": "2026-10-28T16:31:27-07:00",
+      "decision": "Sprint 3 review fixes 16dc23c: popup/options load protly-mono by URL; missing workspace config = no header; ping timeout blames host; options save failure shown; popup status refreshes on switch; setTabBadge ignores null tabId. activeTab test lives in tests/status.test.js.",
+      "rationale": "Quality review findings 1,2,3,4,6; spec review noted the font gap. 5 and 7 judged negligible."
+    }
   ],
-  "continuation_prompt": "Sprint 2 (design system) DONE and user-tested live 2026-10-28 (2d78875..33522c4). Start Sprint 3 (popup, usage, options), Task 3.1 of docs/plans/2026-10-28-protly.md.",
+  "continuation_prompt": "Sprint 3 (popup, usage, options) DONE and user-tested live 2026-10-28 (90f12d0..16dc23c). Start Sprint 4 (any-site Alt+T), Task 4.1 of docs/plans/2026-10-28-protly.md.",
   "artifacts": {
     "plan": "docs/plans/2026-10-28-protly.md",
     "design": "docs/plans/2026-10-28-protly-design.md"
