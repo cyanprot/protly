@@ -1,4 +1,5 @@
 import { watchFlags } from '../../lib/flags.js';
+import { addFonts, fetchFonts } from '../../ui/fonts.js';
 import { GSEL } from './selectors.js';
 import { mountCompose, translate, escape } from './compose.js';
 
@@ -6,6 +7,8 @@ const SCAN_MS = 300;
 const COMPOSE_WAIT_MS = 500;
 
 export async function start() {
+  fetchFonts((p) => chrome.runtime.getURL(p)).then((f) => addFonts(document, f))
+    .catch((e) => console.warn('[protly] fonts not loaded; using the monospace fallback', e));
   watchFlags();
   let timer = null;
   const scan = () => { timer = null; document.querySelectorAll(GSEL.body).forEach(mountCompose); };

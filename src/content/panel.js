@@ -1,34 +1,31 @@
 import { ask, rerender, getCurrent, contextFor } from './main.js';
-import { showToast } from '../ui/toast.js';
 import { LANG_NAMES } from '../lib/lang.js';
+import { TOKENS, BASE } from '../ui/tokens.css.js';
+import { PANEL_CSS } from '../ui/panel.css.js';
+import { bindTheme } from '../ui/theme.js';
+import { showToast } from '../ui/toast.js';
 
 export function mountPanel(cur) {
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;right:16px;bottom:96px;z-index:99998';
   const shadow = host.attachShadow({ mode: 'open' });
   shadow.innerHTML = `
-    <style>
-      :host { all: initial; }
-      button.fab { width: 36px; height: 36px; border-radius: 18px; border: 0; background: #3a3a3c; color: #fff; cursor: pointer; font: 600 13px system-ui; }
-      .p { display: none; position: absolute; right: 0; bottom: 44px; width: 280px; background: #1c1c1e; color: #f2f2f7; border-radius: 10px; padding: 12px; font: 13px system-ui; box-shadow: 0 4px 16px #0006; }
-      .p.open { display: block; }
-      label { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; gap: 8px; }
-      select, textarea { background: #2c2c2e; color: inherit; border: 1px solid #48484a; border-radius: 6px; font: inherit; }
-      textarea { width: 100%; box-sizing: border-box; height: 90px; margin-top: 4px; }
-      .row { display: flex; gap: 6px; margin-top: 6px; }
-      .row button { flex: 1; background: #2c2c2e; color: inherit; border: 1px solid #48484a; border-radius: 6px; padding: 4px; cursor: pointer; }
-    </style>
-    <button type="button" class="fab" title="protly">T</button>
-    <div class="p">
-      <label>Translate <input type="checkbox" id="enabled"></label>
-      <label>Reply in <select id="outputLang"></select></label>
-      <label>Other languages to <select id="otherTarget"><option value="ko">Korean</option><option value="en">English</option></select></label>
-      <label>Past messages <select id="pastMode"><option value="replace">Replace</option><option value="below">Below</option></select></label>
-      <label>New messages <select id="newMode"><option value="below">Below</option><option value="replace">Replace</option></select></label>
-      <div>Memo</div>
-      <textarea id="memo" placeholder="Who they are, tone, nicknames, running jokes"></textarea>
-      <div class="row"><button type="button" id="suggest">Suggest memo</button><button type="button" id="saveMemo">Save memo</button></div>
+    <style>${TOKENS}${BASE}${PANEL_CSS}</style>
+    <div class="pl-root">
+      <button type="button" class="fab" title="protly: this thread" aria-expanded="false">p</button>
+      <div class="p" role="dialog" aria-label="protly thread settings">
+        <div class="head">protly</div>
+        <label>Translate <input type="checkbox" id="enabled"></label>
+        <label>Reply in <select id="outputLang"></select></label>
+        <label>Other languages to <select id="otherTarget"><option value="ko">Korean</option><option value="en">English</option></select></label>
+        <label>Past messages <select id="pastMode"><option value="replace">Replace</option><option value="below">Below</option></select></label>
+        <label>New messages <select id="newMode"><option value="below">Below</option><option value="replace">Replace</option></select></label>
+        <div class="memo-label">Memo</div>
+        <textarea id="memo" placeholder="Who they are, tone, nicknames, running jokes"></textarea>
+        <div class="row"><button type="button" id="suggest">Suggest memo</button><button type="button" id="saveMemo">Save memo</button></div>
+      </div>
     </div>`;
+  const unbindTheme = bindTheme(shadow.querySelector('.pl-root'), document);
   const $ = (id) => shadow.getElementById(id);
   const out = $('outputLang');
   out.add(new Option('Auto', 'auto'));
@@ -42,8 +39,10 @@ export function mountPanel(cur) {
   };
   fill(cur.thread);
 
-  shadow.querySelector('.fab').onclick = () => {
-    shadow.querySelector('.p').classList.toggle('open');
+  const fab = shadow.querySelector('.fab');
+  fab.onclick = () => {
+    const open = shadow.querySelector('.p').classList.toggle('open');
+    fab.setAttribute('aria-expanded', String(open));
     fill(getCurrent()?.thread || cur.thread); // pick up partnerLang/outputLang changes
   };
 
@@ -78,5 +77,5 @@ export function mountPanel(cur) {
   };
 
   document.body.appendChild(host);
-  cur.onTeardown.push(() => host.remove());
+  cur.onTeardown.push(() => { unbindTheme(); host.remove(); });
 }

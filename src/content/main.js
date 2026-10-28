@@ -5,6 +5,7 @@ import { classifyAdded } from '../lib/classify.js';
 import { findViewerName } from './selectors.js';
 import { ERRORS, GLOBAL_KINDS, errorText } from '../ui/errors.js';
 import { showToast } from '../ui/toast.js';
+import { addFonts, fetchFonts } from '../ui/fonts.js';
 import {
   findThreadRoot, readMessages, renderTranslation, renderRetry, setHoverOriginal, clearTranslation,
   clearAllTranslations, stillShows,
@@ -43,6 +44,8 @@ let staleSig = null;
 const sigOf = (msgs) => msgs.map((m) => m.text).join('\u0001');
 
 export async function start() {
+  fetchFonts((p) => chrome.runtime.getURL(p)).then((f) => addFonts(document, f))
+    .catch((e) => console.warn('[protly] fonts not loaded; using the monospace fallback', e));
   watchFlags();
   const [{ mountPanel }, { mountOutgoing }] = await Promise.all([import('./panel.js'), import('./outgoing.js')]);
   initHooks.push(mountPanel, mountOutgoing);
