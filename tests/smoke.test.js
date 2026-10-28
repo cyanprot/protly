@@ -24,10 +24,15 @@ test('manifest injects the Gmail loader on mail.google.com', () => {
   assert.ok(war.resources.includes('src/lib/*.js'));
 });
 
-test('the toolbar popup is wired and present', () => {
+test('the toolbar popup is wired and has the control-center fields', () => {
   const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
   assert.equal(m.action.default_popup, 'popup/popup.html');
-  assert.match(readFileSync(new URL('../popup/popup.html', import.meta.url), 'utf8'), /id="polish"/);
+  const html = readFileSync(new URL('../popup/popup.html', import.meta.url), 'utf8');
+  for (const id of ['polish', 'site-instagram', 'site-gmail', 'status', 'today', 'month', 'options']) {
+    assert.match(html, new RegExp(`id="${id}"`), id);
+  }
+  assert.match(html, /Polish English on Enter \(Instagram\)/);
+  assert.match(html, /wordmark\.svg/);
 });
 
 test('the product is named protly everywhere a user or Chrome sees a name', async () => {

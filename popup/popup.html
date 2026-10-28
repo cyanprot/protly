@@ -1,11 +1,40 @@
 <!doctype html>
+<html class="pl-root">
 <meta charset="utf-8">
 <title>protly</title>
 <style>
-  body { font: 14px system-ui, sans-serif; width: 240px; margin: 12px; }
-  label { display: flex; gap: 8px; align-items: center; font-weight: 600; }
-  p.note { color: #666; margin: 6px 0 0; }
+  body { margin: 0; width: 300px; background: var(--pl-bg); color: var(--pl-fg); font: 13px/1.45 var(--pl-font); }
+  header { padding: 14px 16px 12px; border-bottom: 1px solid var(--pl-rule); }
+  .wordmark { width: 96px; height: 18px; background: var(--pl-fg);
+    -webkit-mask: url(../icons/wordmark.svg) left center / contain no-repeat;
+    mask: url(../icons/wordmark.svg) left center / contain no-repeat; }
+  section { padding: 10px 16px; border-bottom: 1px solid var(--pl-rule); }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 0; }
+  label.row { cursor: pointer; }
+  #status { font-weight: 500; }
+  #status[data-state="problem"], #status[data-state="unavailable"] { color: var(--pl-err); }
+  #status[data-state="unavailable"] { color: var(--pl-muted); }
+  .note { color: var(--pl-muted); font-size: 11px; margin: 4px 0 0; }
+  .num { font-variant-numeric: tabular-nums; }
+  input[type="checkbox"] { appearance: none; margin: 0; width: 14px; height: 14px; flex: none;
+    border: 1px solid var(--pl-fg); border-radius: 2px; background: var(--pl-bg); cursor: pointer; }
+  input[type="checkbox"]:checked { background: var(--pl-fg); outline: 2px solid var(--pl-bg); outline-offset: -3px; }
+  input[type="checkbox"]:focus-visible { outline: 1px solid var(--pl-fg); outline-offset: 2px; }
+  footer { padding: 10px 16px 14px; }
+  footer button { width: 100%; }
 </style>
-<label><input type="checkbox" id="polish"> Polish English drafts</label>
-<p class="note">English drafts get a preview before sending, on Instagram and in Gmail.</p>
+<header><div class="wordmark" role="img" aria-label="protly"></div></header>
+<section><span id="status" class="muted">...</span></section>
+<section>
+  <label class="row"><span>Polish English on Enter (Instagram)</span><input type="checkbox" id="polish"></label>
+  <label class="row"><span>Instagram</span><input type="checkbox" id="site-instagram"></label>
+  <label class="row"><span>Gmail</span><input type="checkbox" id="site-gmail"></label>
+  <p class="note">Site switches apply on reload.</p>
+</section>
+<section>
+  <div class="row"><span>Today</span><span id="today" class="num">...</span></div>
+  <div class="row"><span>This month</span><span id="month" class="num">...</span></div>
+</section>
+<footer><button type="button" id="options" class="pl-btn">Settings</button></footer>
 <script type="module" src="popup.js"></script>
+</html>
