@@ -1,6 +1,6 @@
 # iOS Shortcut: IG Translate
 
-Translates Instagram DMs in the native iPhone app. Double-tap the back of the phone:
+Translates chats in any iPhone app (built for Instagram DMs; KakaoTalk, iMessage, WhatsApp, Discord and the rest work the same way), plus any other screen with text: a post, a web page, an email. It only sends a screenshot, so it does not care which app is open. Double-tap the back of the phone:
 
 - Clipboard holds Korean: it is your draft. The translation goes to the clipboard, the Korean back translation shows as a notification.
 - Clipboard holds English prose: it is polished (spelling, grammar, structure, stronger words) and copied back.
@@ -90,6 +90,8 @@ Run it once from the Shortcuts app and pick Always Allow for `api.anthropic.com`
 ## Daily use
 
 - Read: open the chat, double-tap the back.
+- Group chats and apps that left-align everyone (Discord, Slack): add a memo line `Me: your name (handle)` so the shortcut knows which messages are yours. Without it, only two-sided chats (mine on the right) are reliable.
+- Not a chat (a post, article, email): the main text on screen is translated, menus and ads are skipped.
 - Write: type Korean, Select All, Copy, double-tap, Select All, Paste, send.
 - Target language: start the draft with a language code and a colon (`en:`, `ru:`, `ja:`) to pick it for that message. Without a prefix: the memo reply language, else the friend's language on screen, else English.
 - The `[out]` notification shows the translation first, then `KO:` with the back translation.
