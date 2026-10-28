@@ -51,3 +51,12 @@ test('the Cherri source has the fix mode and expiring clipboard results', () => 
   assert.match(src, /adjustDate\("\{now\}", "Add", qty\(3, "min"\)\)/);
   assert.match(src, /setClipboard\(translation, false, "\{expiry\}"\)/);
 });
+
+test('mode comes from the launch input, and the write shortcut passes it', () => {
+  const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
+  const write = readFileSync(new URL('../ios/ig-translate-write.cherri', import.meta.url), 'utf8');
+  assert.match(src, /const writeFlag = matchText\('\^write\$', "\{ShortcutInput\}"\)/);
+  // The clipboard is read only inside the write branch.
+  assert.ok(src.indexOf('getClipboard()') > src.indexOf('if writeFlag {'));
+  assert.match(write, /@flag = "write"\nrun\("IG Translate", @flag\)/);
+});

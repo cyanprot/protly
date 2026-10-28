@@ -84,18 +84,19 @@ Settings > Accessibility > Touch > Back Tap > Double Tap > IG Translate.
 Run it once from the Shortcuts app and pick Always Allow for `api.anthropic.com`.
 
 1. Incoming: open a DM where the friend wrote in English or Russian. Double-tap. Expect an `[in]` alert in Korean.
-2. Outgoing: type a Korean draft with a `"` and a line break in the composer, Select All, Copy, double-tap. Expect `[out] copied`. Select All, Paste, and check before sending.
+2. Outgoing: type a Korean draft with a `"` and a line break in the composer, Select All, Copy, triple-tap. Expect `[out] copied`. Select All, Paste, and check before sending.
 3. Error path: change one character of the key, run. Expect an alert naming the invalid key. Put the key back.
 
 ## Daily use
 
+- Mode comes from the tap, never from the clipboard (a leftover copy used to send every run to write mode): double tap = read the screen, triple tap = write (`IG Translate Write` runs `IG Translate` with the input `write`). Install both files; Back Tap > Double Tap = IG Translate, Triple Tap = IG Translate Write. Keep the main shortcut named exactly `IG Translate`.
 - Read: open the chat, double-tap the back.
 - Group chats and apps that left-align everyone (Discord, Slack): add a memo line `Me: your name (handle)` so the shortcut knows which messages are yours. Without it, only two-sided chats (mine on the right) are reliable.
 - Not a chat (a post, article, email): the main text on screen is translated, menus and ads are skipped.
-- Write: type Korean, Select All, Copy, double-tap, Select All, Paste, send.
+- Write: type Korean, Select All, Copy, triple-tap, Select All, Paste, send.
 - Target language: start the draft with a language code and a colon (`en:`, `ru:`, `ja:`) to pick it for that message. Without a prefix: the memo reply language, else the friend's language on screen, else English.
 - The `[out]` notification shows the translation first, then `KO:` with the back translation.
-- Polish English: copy English text (more than one word), double-tap. The improved text is copied, the notification `[fix] copied, paste it` shows it with a short Korean list of the main changes. The rules are the CyanStyle voice from the user's own `cyanprot/humanizer` repo (style guide plus Vale lists), cut to a few lines: Canadian spelling, no em or en dash, semicolon or slash, the banned phrase lists. The full humanizer pipeline (linter, reference passages, claim check) does not run on the phone.
+- Polish English: copy English text (more than one word), triple-tap. The improved text is copied, the notification `[fix] copied, paste it` shows it with a short Korean list of the main changes. The rules are the CyanStyle voice from the user's own `cyanprot/humanizer` repo (style guide plus Vale lists), cut to a few lines: Canadian spelling, no em or en dash, semicolon or slash, the banned phrase lists. The full humanizer pipeline (linter, reference passages, claim check) does not run on the phone.
 - Results the shortcut copies expire from the clipboard after 3 minutes, so a leftover English result does not turn the next run into a polish run. Within those 3 minutes a run on new incoming messages would polish the old result instead; wait, or copy something else first.
 
 ## Troubleshooting

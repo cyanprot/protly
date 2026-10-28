@@ -1,8 +1,8 @@
 // IG Translate: iOS Shortcut source. Compile: cherri ios/ig-translate.cherri (see docs/ios-shortcut.md).
 // Double-tap the back of the phone in any chat app (Instagram first), or on any screen with text to translate.
-// Clipboard holds Korean: translate it as my draft, copy the result. Clipboard holds English prose: polish it, copy the result.
-// Otherwise: translate the friend's latest messages on screen to Korean. Results expire from the clipboard after 3 minutes,
-// so a stale result does not turn the next run into a polish run.
+// Double tap: translate the friend's latest messages (or the main text) on screen to Korean.
+// Triple tap (via IG Translate Write): clipboard Korean is my draft, translate it; clipboard English is polished. Results are copied
+// and expire from the clipboard after 3 minutes.
 // The API key and the memos are pasted into Text actions on the phone, so neither is in the compiled file.
 
 #include 'actions/sharing'
@@ -31,22 +31,32 @@ if !keyCheck {
 // A line "Me: name (handle)" tells group chats and Discord-style apps which messages are mine.
 @memoText = "(none) Replace this line with one line per friend: Name (handle): who they are, gender, reply language, tone. Add Me: your name (handle) for group chats."
 
-const clip = getClipboard()
-const hangul = matchText('[\uAC00-\uD7A3\u3131-\u318E]', "{clip}")
+// Mode comes from how the shortcut was started, never from what happens to sit on the clipboard.
+// Back Tap double tap runs this shortcut with no input: always "in" (translate the screen).
+// Back Tap triple tap runs "IG Translate Write", which runs this one with the input "write": translate or polish the clipboard.
 @tail = "MODE: in"
 @mode = "in"
-// English prose = two or more Latin letters in a row and more than one word (a lone URL or handle stays "in").
-const latin = matchText('[A-Za-z]{2,}', "{clip}")
-const oneToken = matchText('^\s*\S+\s*$', "{clip}")
-if hangul {
-    @tail = "MODE: out\n\nDRAFT:\n{clip}"
-    @mode = "out"
-} else {
-    if latin {
-        if !oneToken {
-            @tail = "MODE: fix\n\nDRAFT:\n{clip}"
-            @mode = "fix"
+const writeFlag = matchText('^write$', "{ShortcutInput}")
+if writeFlag {
+    const clip = getClipboard()
+    const hangul = matchText('[\uAC00-\uD7A3\u3131-\u318E]', "{clip}")
+    // English prose = two or more Latin letters in a row and more than one word (a lone URL or handle is refused).
+    const latin = matchText('[A-Za-z]{2,}', "{clip}")
+    const oneToken = matchText('^\s*\S+\s*$', "{clip}")
+    if hangul {
+        @tail = "MODE: out\n\nDRAFT:\n{clip}"
+        @mode = "out"
+    } else {
+        if latin {
+            if !oneToken {
+                @tail = "MODE: fix\n\nDRAFT:\n{clip}"
+                @mode = "fix"
+            }
         }
+    }
+    if @mode == "in" {
+        alert("Copy a Korean draft or an English sentence first, then triple-tap.", "IG Translate")
+        stop()
     }
 }
 

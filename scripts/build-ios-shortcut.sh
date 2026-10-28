@@ -6,8 +6,12 @@ cd "$(dirname "$0")/.."
 CHERRI="${CHERRI:-$HOME/.local/opt/cherri-2.3.0/cherri}"
 node scripts/build-ios-template.mjs
 out="$(mktemp -d)"
-cp ios/ig-translate.cherri "$out/"
-(cd "$out" && "$CHERRI" ig-translate.cherri --hubsign --share=anyone --no-ansi)
-[ "$(head -c 4 "$out/ig-translate.shortcut")" = "AEA1" ] || { echo "not signed" >&2; exit 1; }
-cp "$out/ig-translate.shortcut" "$HOME/GoogleDrive/IG Translate.shortcut"
-echo "Copied to ~/GoogleDrive/IG Translate.shortcut"
+build() { # $1 source basename, $2 name in Google Drive
+  cp "ios/$1.cherri" "$out/"
+  (cd "$out" && "$CHERRI" "$1.cherri" --hubsign --share=anyone --no-ansi)
+  [ "$(head -c 4 "$out/$1.shortcut")" = "AEA1" ] || { echo "$1 not signed" >&2; exit 1; }
+  cp "$out/$1.shortcut" "$HOME/GoogleDrive/$2.shortcut"
+  echo "Copied to ~/GoogleDrive/$2.shortcut"
+}
+build ig-translate "IG Translate"
+build ig-translate-write "IG Translate Write"
