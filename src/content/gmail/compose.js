@@ -1,7 +1,8 @@
 import { GSEL, composeOf, findViewerEmail } from './selectors.js';
 import { userNodes, nodesToText, textToNodes, replaceUserNodes, hasMedia } from './body.js';
 import { readThread } from './thread.js';
-import { hasHangul, LANG_NAMES } from '../../lib/lang.js';
+import { hasHangul, LANG_NAMES, parseLangPrefix } from '../../lib/lang.js';
+import { flags } from '../../lib/flags.js';
 
 const ERRORS = {
   auth: 'API key missing or rejected. Check ~/.config/anthropic/api-key.',
@@ -32,8 +33,9 @@ async function ask(msg) {
 function stateOf(body) {
   let s = states.get(body);
   if (!s) {
+    // korean is the source text: the Korean draft, or the English draft being polished (kind 'polish').
     s = {
-      mode: 'idle', reqId: 0, saved: null, korean: null, shown: null, lang: 'auto', profile: 'email',
+      mode: 'idle', reqId: 0, saved: null, kind: 'translate', korean: null, shown: null, lang: 'auto', profile: 'email',
       last: null, note: null, anchor: null, btn: null, firstMiss: 0, warned: false,
     };
     states.set(body, s);
@@ -67,7 +69,7 @@ export function mountCompose(body) {
   btn.type = 'button';
   btn.className = 'igt-g-btn';
   btn.textContent = 'Translate';
-  btn.title = 'Translate the Korean draft (Alt+T)';
+  btn.title = 'Translate the Korean draft, or polish an English one (Alt+T)';
   btn.addEventListener('click', () => translate(body));
   td.appendChild(btn);
   sendCell.after(td);
@@ -114,8 +116,9 @@ function langPicker(body, current) {
   return sel;
 }
 
+// A polish preview has no target language, so no picker.
 const previewControls = (body, s) => [
-  langPicker(body, s.lang),
+  ...(s.kind === 'polish' ? [] : [langPicker(body, s.lang)]),
   button('Opus', () => retranslate(body, { profile: 'hard' })),
   button('Undo', () => undo(body)),
 ];
@@ -137,20 +140,39 @@ export function translate(body) {
   const text = nodesToText(nodes).trim();
   if (s.mode === 'preview') {
     if (norm(text) === norm(s.shown)) return; // nothing new to translate
-    if (!hasHangul(text)) return showError(body, s, 'No Korean text to translate. Use the picker or Opus to translate the original again.');
+    // Polish only starts from idle, so Undo always goes back to the original draft.
+    if (!hasHangul(text)) {
+      return showError(body, s, flags.polish
+        ? 'No Korean text to translate. To polish this English, press Undo first.'
+        : 'No Korean text to translate. Use the picker or Opus to translate the original again.');
+    }
     // A new Korean draft replaced the preview. The body holds it, so the older Korean is not needed for Undo.
     Object.assign(s, { mode: 'idle', saved: null });
   }
-  if (!hasHangul(text)) return showNote(body, s, [span('No Korean text to translate.')], true);
-  if (hasMedia(nodes)) return showNote(body, s, [span('The draft contains images. Translate the text before adding images.')], true);
-  return request(body, { korean: text, profile: 'email', lang: 'auto' });
+  let opts;
+  if (hasHangul(text)) {
+    // The prefix ("ru: ...") is a one-off override; the saved nodes keep it, so Undo brings it back.
+    const p = parseLangPrefix(text);
+    opts = { kind: 'translate', korean: p.text, profile: 'email', lang: p.lang ?? 'auto' };
+  } else if (flags.polish && /\p{L}/u.test(text)) {
+    opts = { kind: 'polish', korean: text, profile: 'email' };
+  } else {
+    return showNote(body, s, [span(flags.polish
+      ? 'Nothing to polish.'
+      : 'No Korean text to translate. Turn on Polish English in the toolbar popup to polish English drafts.')], true);
+  }
+  if (hasMedia(nodes)) {
+    const verb = opts.kind === 'polish' ? 'Polish' : 'Translate';
+    return showNote(body, s, [span(`The draft contains images. ${verb} the text before adding images.`)], true);
+  }
+  return request(body, opts);
 }
 
-// Picker and Opus in preview: same Korean, other language or model.
+// Picker and Opus in preview: same source and kind, other language or model.
 function retranslate(body, { lang, profile, force = false }) {
   const s = stateOf(body);
   if (s.mode !== 'preview') return;
-  const opts = { korean: s.korean, profile: profile ?? s.profile, lang: lang ?? s.lang };
+  const opts = { kind: s.kind, korean: s.korean, profile: profile ?? s.profile, lang: lang ?? s.lang };
   if (!force && norm(nodesToText(userNodes(body))) !== norm(s.shown)) {
     return showNote(body, s, [
       span('You edited the translation. Translating again replaces your edit.'),
@@ -165,7 +187,7 @@ function retranslate(body, { lang, profile, force = false }) {
 export function undo(body) {
   const s = stateOf(body);
   if (s.saved) replaceUserNodes(body, s.saved);
-  Object.assign(s, { mode: 'idle', saved: null, korean: null, shown: null, lang: 'auto', profile: 'email', last: null });
+  Object.assign(s, { mode: 'idle', saved: null, kind: 'translate', korean: null, shown: null, lang: 'auto', profile: 'email', last: null });
   s.reqId++; // drop any result still in flight
   hideNote(s);
 }
@@ -178,28 +200,35 @@ function cancel(body, reqId, prevMode) {
   if (prevMode === 'preview') showPreview(body, s); else hideNote(s);
 }
 
-async function request(body, { korean, profile, lang }) {
+// The thread for an inline reply; a new compose window has none.
+function threadContext(body) {
+  const root = document.querySelector('[role="main"]');
+  if (body.closest('[role="dialog"]') || !root) return [];
+  const viewer = findViewerEmail(document);
+  if (!viewer && !viewerWarned) {
+    viewerWarned = true;
+    console.warn('[igt] Gmail account email not found; every thread message counts as from the other side');
+  }
+  return readThread(root, viewer);
+}
+
+async function request(body, { kind = 'translate', korean, profile, lang }) {
   const s = stateOf(body);
   const prevMode = s.mode;
   const expected = nodesToText(userNodes(body)); // what the body must still hold when the result lands
   const reqId = ++s.reqId;
   s.mode = 'translating';
+  const polish = kind === 'polish';
+  const verb = polish ? 'Polishing' : 'Translating';
   showNote(body, s, [
-    span(profile === 'hard' ? 'Translating with Opus...' : 'Translating...'),
+    span(profile === 'hard' ? `${verb} with Opus...` : `${verb}...`),
     button('Cancel', () => cancel(body, reqId, prevMode)),
   ]);
   try {
-    const root = document.querySelector('[role="main"]');
-    let context = [];
-    if (!body.closest('[role="dialog"]') && root) {
-      const viewer = findViewerEmail(document);
-      if (!viewer && !viewerWarned) {
-        viewerWarned = true;
-        console.warn('[igt] Gmail account email not found; every thread message counts as from the other side');
-      }
-      context = readThread(root, viewer);
-    }
-    const r = await ask({ type: 'email', context, korean, profile, lang });
+    // Polish takes no thread context: one draft does not need it.
+    const r = polish
+      ? await ask({ type: 'polish', text: korean, profile })
+      : await ask({ type: 'email', context: threadContext(body), korean, profile, lang });
     if (reqId !== s.reqId || !body.isConnected) return;
     s.mode = prevMode;
     // The draft changed while translating (the user kept typing): never overwrite it.
@@ -211,12 +240,13 @@ async function request(body, { korean, profile, lang }) {
       replaceUserNodes(body, removed);
       return showError(body, s, 'Could not write the translation into the email. Your draft is back as it was.');
     }
-    if (prevMode !== 'preview') s.saved = removed; // first translation: keep the Korean nodes for Undo
-    Object.assign(s, { mode: 'preview', korean, shown: r.translation, lang: r.lang, profile, last: r });
+    if (prevMode !== 'preview') s.saved = removed; // first result: keep the original draft nodes for Undo
+    // The polish result carries no lang, so keep the current one.
+    Object.assign(s, { mode: 'preview', kind, korean, shown: r.translation, lang: r.lang ?? s.lang, profile, last: r });
     showPreview(body, s);
   } catch (e) {
     if (reqId !== s.reqId) return;
     s.mode = prevMode;
-    showError(body, s, `Translation failed: ${ERRORS[e.kind] || e.message}`);
+    showError(body, s, `${polish ? 'Polish' : 'Translation'} failed: ${ERRORS[e.kind] || e.message}`);
   }
 }

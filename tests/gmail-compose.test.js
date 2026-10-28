@@ -5,6 +5,7 @@ import { JSDOM } from 'jsdom';
 import { GSEL } from '../src/content/gmail/selectors.js';
 import { userNodes, nodesToText } from '../src/content/gmail/body.js';
 import { mountCompose, translate, undo } from '../src/content/gmail/compose.js';
+import { flags } from '../src/lib/flags.js';
 
 const html = readFileSync(new URL('./fixtures/gmail.html', import.meta.url), 'utf8');
 const KOREAN = '한글 첫줄\n둘째 줄\n\n셋째 문단';
@@ -33,6 +34,12 @@ function setup() {
   return { inline, dialog, calls, reply, note, buttonIn };
 }
 const userText = (body) => nodesToText(userNodes(body));
+const ENGLISH = 'Hi Prof. Allen,\nI has a question.\n\nThanks,\nCyan';
+const polished = (translation, model = 'claude-sonnet-5-5') =>
+  ({ ok: true, data: { translation, back_translation: '바뀐 점', model } }); // polish returns no lang
+const draft = (body, text) => body.replaceChildren(document.createTextNode(text));
+// Runs a test with Polish English on and always turns it off again.
+const withPolish = (fn) => async () => { flags.polish = true; try { await fn(); } finally { flags.polish = false; } };
 
 test('the button mounts next to each compose\'s own Send, once', () => {
   const { inline, dialog } = setup();
@@ -147,3 +154,129 @@ test('Opus after editing the translation asks before replacing the edit', async 
   undo(inline);
   assert.equal(userText(inline), KOREAN); // Undo still goes back to the original Korean
 });
+
+test('the button title mentions polish, the label stays Translate', () => {
+  const { inline } = setup();
+  mountCompose(inline);
+  const btn = inline.closest('.reply').querySelector('.igt-g-btn');
+  assert.equal(btn.textContent, 'Translate');
+  assert.match(btn.title, /polish an English one/);
+});
+
+test('polish on: an English draft gets one polish call, Undo restores the English', withPolish(async () => {
+  const { dialog, calls, reply, note, buttonIn } = setup();
+  draft(dialog, ENGLISH);
+  translate(dialog);
+  assert.match(note().textContent, /Polishing\.\.\./);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], { type: 'polish', text: ENGLISH, profile: 'email' });
+  await reply(polished('Hi Prof. Allen,\nI have a question.\n\nThanks,\nCyan'));
+  assert.equal(userText(dialog), 'Hi Prof. Allen,\nI have a question.\n\nThanks,\nCyan');
+  assert.match(note().textContent, /바뀐 점/);
+  buttonIn('Undo').click();
+  assert.equal(userText(dialog), ENGLISH);
+  assert.equal(note(), null);
+}));
+
+test('polish off: an English draft shows an error naming the popup, no call', () => {
+  const { dialog, calls, note } = setup();
+  draft(dialog, ENGLISH);
+  translate(dialog);
+  assert.equal(calls.length, 0);
+  assert.match(note().textContent, /Turn on Polish English in the toolbar popup/);
+});
+
+test('polish on: digits or emoji only is nothing to polish, no call', withPolish(() => {
+  const { dialog, calls, note } = setup();
+  draft(dialog, '123 🙂');
+  translate(dialog);
+  assert.equal(calls.length, 0);
+  assert.match(note().textContent, /Nothing to polish/);
+}));
+
+test('an English edit in a polish preview is an error, no call, Undo keeps the original', withPolish(async () => {
+  const { dialog, calls, reply, note, buttonIn } = setup();
+  draft(dialog, ENGLISH);
+  translate(dialog);
+  await reply(polished('Polished'));
+  draft(dialog, 'Polished, edited');
+  translate(dialog);
+  assert.equal(calls.length, 1);
+  assert.match(note().textContent, /To polish this English, press Undo first/);
+  assert.ok(buttonIn('Opus') && buttonIn('Undo'));
+  buttonIn('Undo').click();
+  assert.equal(userText(dialog), ENGLISH);
+}));
+
+test('an English edit in a translate preview is an error with polish on, Undo keeps the Korean', withPolish(async () => {
+  const { inline, calls, reply, note, buttonIn } = setup();
+  translate(inline);
+  await reply(ok('First'));
+  inline.firstChild.textContent = 'First, edited';
+  translate(inline);
+  assert.equal(calls.length, 1);
+  assert.match(note().textContent, /press Undo first/);
+  buttonIn('Undo').click();
+  assert.equal(userText(inline), KOREAN);
+}));
+
+test('an English edit in a translate preview with polish off keeps the old error', async () => {
+  const { inline, calls, reply, note } = setup();
+  translate(inline);
+  await reply(ok('First'));
+  inline.firstChild.textContent = 'First, edited';
+  translate(inline);
+  assert.equal(calls.length, 1);
+  assert.match(note().textContent, /Use the picker or Opus/);
+});
+
+test('a ru: prefix sends lang ru without the prefix, Undo brings back the prefixed draft', async () => {
+  const { dialog, calls, reply, buttonIn } = setup();
+  draft(dialog, 'ru: 안녕하세요');
+  translate(dialog);
+  assert.equal(calls[0].type, 'email');
+  assert.equal(calls[0].lang, 'ru');
+  assert.equal(calls[0].korean, '안녕하세요');
+  await reply({ ok: true, data: { lang: 'ru', translation: 'Здравствуйте', back_translation: '안녕하세요', model: 'claude-sonnet-5-5' } });
+  assert.equal(userText(dialog), 'Здравствуйте');
+  buttonIn('Undo').click();
+  assert.equal(userText(dialog), 'ru: 안녕하세요');
+});
+
+test('a polish preview has Opus and Undo but no language picker', withPolish(async () => {
+  const { dialog, reply, note, buttonIn } = setup();
+  draft(dialog, ENGLISH);
+  translate(dialog);
+  await reply(polished('Polished'));
+  assert.equal(note().querySelector('select'), null);
+  assert.ok(buttonIn('Opus') && buttonIn('Undo'));
+}));
+
+test('Opus in a polish preview re-polishes with the hard profile', withPolish(async () => {
+  const { dialog, calls, reply, note, buttonIn } = setup();
+  draft(dialog, ENGLISH);
+  translate(dialog);
+  await reply(polished('Polished'));
+  buttonIn('Opus').click();
+  assert.match(note().textContent, /Polishing with Opus/);
+  assert.deepEqual(calls[1], { type: 'polish', text: ENGLISH, profile: 'hard' });
+  await reply(polished('Polished harder', 'claude-opus-5-5'));
+  assert.equal(userText(dialog), 'Polished harder');
+  assert.match(note().textContent, /Opus/);
+  assert.equal(note().querySelector('select'), null);
+  undo(dialog);
+  assert.equal(userText(dialog), ENGLISH);
+}));
+
+test('Korean typed over a polish preview starts a translation', withPolish(async () => {
+  const { dialog, calls, reply, note } = setup();
+  draft(dialog, ENGLISH);
+  translate(dialog);
+  await reply(polished('Polished'));
+  draft(dialog, '새 초안');
+  translate(dialog);
+  assert.equal(calls[1].type, 'email');
+  assert.equal(calls[1].korean, '새 초안');
+  await reply(ok('New draft'));
+  assert.ok(note().querySelector('select')); // back to a translate preview
+}));
