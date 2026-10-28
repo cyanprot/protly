@@ -1,6 +1,6 @@
 import { ApiError } from './api.js';
 
-export const HOST_NAME = 'com.northprot.ig_translate';
+export const HOST_NAME = 'com.northprot.protly';
 
 // connect() returns a Port-like object: { postMessage, onMessage.addListener, onDisconnect.addListener }.
 // lastError() returns why a port closed (chrome.runtime.lastError?.message), read inside onDisconnect.

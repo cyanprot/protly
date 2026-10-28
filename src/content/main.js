@@ -14,12 +14,12 @@ const WAIT_MS = 300;
 const WAIT_TRIES = 33; // about 10 s
 
 const ERROR_BANNERS = {
-  auth: 'ig-translate: API key missing or rejected. Check ~/.config/anthropic/api-key.',
-  host: 'ig-translate: native host not reachable. Run host/install.sh <extension id>, then reload the extension.',
-  spend_limit: 'ig-translate: monthly API spend limit reached. Translation paused until the limit resets.',
-  host_bug: 'ig-translate: the native host hit an error',
-  bad_request: 'ig-translate: the API rejected the request (check the model ids in Options)',
-  stale: 'ig-translate was reloaded or updated. Reload this tab.',
+  auth: 'protly: API key missing or rejected. Check ~/.config/anthropic/api-key.',
+  host: 'protly: native host not reachable. Run host/install.sh <extension id>, then reload the extension.',
+  spend_limit: 'protly: monthly API spend limit reached. Translation paused until the limit resets.',
+  host_bug: 'protly: the native host hit an error',
+  bad_request: 'protly: the API rejected the request (check the model ids in Options)',
+  stale: 'protly was reloaded or updated. Reload this tab.',
 };
 
 // Banner text for an error from ask(), or null when a per-message marker is enough.
@@ -84,7 +84,7 @@ function guardUnownedEnter(e) {
   if (!t?.isContentEditable || !isHangulText(t.innerText || t.textContent || '')) return;
   e.preventDefault();
   e.stopImmediatePropagation();
-  showBanner('ig-translate is still loading this thread. Nothing was sent; press Enter again in a moment.', { transient: true });
+  showBanner('protly is still loading this thread. Nothing was sent; press Enter again in a moment.', { transient: true });
 }
 
 function teardown() {
@@ -108,11 +108,11 @@ function waitForThread(threadId, tries = 0, lastSig = null) {
   if (root && clean && sig === lastSig && (msgs.length > 0 || tries >= 3)) return initThread(threadId, root);
   if (tries >= WAIT_TRIES) {
     if (root) {
-      if (!clean) console.warn('[igt] old thread rows still present after 10 s; initialising anyway');
+      if (!clean) console.warn('[protly] old thread rows still present after 10 s; initialising anyway');
       return initThread(threadId, root);
     }
     ask({ type: 'badge', text: '!' }).catch(() => {});
-    console.warn('[igt] thread root not found; extension inactive on this page');
+    console.warn('[protly] thread root not found; extension inactive on this page');
     return;
   }
   setTimeout(() => waitForThread(threadId, tries + 1, clean ? sig : null), WAIT_MS);
@@ -124,7 +124,7 @@ async function initThread(threadId, root) {
     thread = await ask({ type: 'getThread', threadId });
   } catch (e) {
     ask({ type: 'badge', text: '!' }).catch(() => {});
-    showBanner(bannerFor(e) || `ig-translate: could not load thread settings: ${e.message}`);
+    showBanner(bannerFor(e) || `protly: could not load thread settings: ${e.message}`);
     return;
   }
   if (threadIdFromPath(location.pathname) !== threadId) return;

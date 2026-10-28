@@ -21,29 +21,29 @@ export function readMessages(root, viewer = findViewerName(root.ownerDocument)) 
 export function renderTranslation(m, translation, mode) {
   clearTranslation(m);
   const tr = m.textEl.ownerDocument.createElement('div');
-  tr.className = `igt-tr igt-${mode}`;
+  tr.className = `pl-tr pl-${mode}`;
   tr.textContent = translation;
   if (mode === 'replace') {
     tr.title = m.text ?? m.textEl.textContent;
-    m.textEl.setAttribute('data-igt-hide', '');
+    m.textEl.setAttribute('data-pl-hide', '');
   }
   m.textEl.after(tr);
 }
 
 export function clearTranslation(m) {
-  m.textEl.removeAttribute('data-igt-hide');
-  if (m.textEl.hasAttribute('data-igt-title')) {
+  m.textEl.removeAttribute('data-pl-hide');
+  if (m.textEl.hasAttribute('data-pl-title')) {
     m.textEl.removeAttribute('title');
-    m.textEl.removeAttribute('data-igt-title');
+    m.textEl.removeAttribute('data-pl-title');
   }
-  m.textEl.parentElement?.querySelectorAll(':scope > .igt-tr').forEach((n) => n.remove());
+  m.textEl.parentElement?.querySelectorAll(':scope > .pl-tr').forEach((n) => n.remove());
 }
 
 // Instagram reuses message nodes across threads, so everything we added must go on teardown.
 export function clearAllTranslations(root) {
-  root.querySelectorAll('.igt-tr').forEach((n) => n.remove());
-  root.querySelectorAll('[data-igt-hide]').forEach((n) => n.removeAttribute('data-igt-hide'));
-  root.querySelectorAll('[data-igt-title]').forEach((n) => { n.removeAttribute('title'); n.removeAttribute('data-igt-title'); });
+  root.querySelectorAll('.pl-tr').forEach((n) => n.remove());
+  root.querySelectorAll('[data-pl-hide]').forEach((n) => n.removeAttribute('data-pl-hide'));
+  root.querySelectorAll('[data-pl-title]').forEach((n) => { n.removeAttribute('title'); n.removeAttribute('data-pl-title'); });
 }
 
 // True while the row still shows the text it was read with (nodes get reused for other messages).
@@ -55,7 +55,7 @@ export function stillShows(m) {
 export function renderRetry(m, onClick) {
   clearTranslation(m);
   const b = m.textEl.ownerDocument.createElement('button');
-  b.className = 'igt-tr igt-retry';
+  b.className = 'pl-tr pl-retry';
   b.textContent = '⟳';
   b.title = 'Translation failed, click to retry';
   b.onclick = (e) => { e.stopPropagation(); onClick(); };
@@ -64,7 +64,7 @@ export function renderRetry(m, onClick) {
 
 export function setHoverOriginal(m, korean) {
   m.textEl.title = korean;
-  m.textEl.setAttribute('data-igt-title', '');
+  m.textEl.setAttribute('data-pl-title', '');
 }
 
 export function getComposerText(el) {

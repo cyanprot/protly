@@ -66,7 +66,7 @@ async function incoming({ threadId, context, items, updateLang }) {
     try {
       await store.set(writes);
     } catch (e) {
-      console.warn('[igt] cache write failed; translations still returned', e); // the call is already billed
+      console.warn('[protly] cache write failed; translations still returned', e); // the call is already billed
     }
   }
 

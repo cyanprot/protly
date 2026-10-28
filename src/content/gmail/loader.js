@@ -4,6 +4,6 @@
     const { start } = await import(chrome.runtime.getURL('src/content/gmail/main.js'));
     await start();
   } catch (e) {
-    console.error('[igt] Gmail part failed to load', e);
+    console.error('[protly] Gmail part failed to load', e);
   }
 })();

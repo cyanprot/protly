@@ -10,7 +10,7 @@ from unittest import mock
 
 # Run as `python3 -I host/test_host.py`. Isolated mode does not add the script dir to sys.path.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import ig_translate_host as h  # noqa: E402
+import protly_host as h  # noqa: E402
 
 
 def make_home(key='sk-ant-test-123', ws='wrkspc_test'):

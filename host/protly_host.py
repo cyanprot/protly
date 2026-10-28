@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""ig-translate native messaging host.
+"""protly native messaging host.
 
 Chrome sends {id, body} messages on stdin. Each body is sent to the Anthropic Messages API
 and the reply {id, status, retry_after, body} is written to stdout. Messages in both

@@ -29,3 +29,13 @@ test('the toolbar popup is wired and present', () => {
   assert.equal(m.action.default_popup, 'popup/popup.html');
   assert.match(readFileSync(new URL('../popup/popup.html', import.meta.url), 'utf8'), /id="polish"/);
 });
+
+test('the product is named protly everywhere a user or Chrome sees a name', async () => {
+  const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
+  assert.equal(m.name, 'protly');
+  assert.equal(m.action.default_title, 'protly');
+  const { HOST_NAME } = await import('../src/lib/native.js');
+  assert.equal(HOST_NAME, 'com.northprot.protly');
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(pkg.name, 'protly');
+});

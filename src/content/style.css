@@ -1,7 +1,7 @@
-[data-igt-hide] { display: none !important; }
-.igt-tr { font-size: 0.85em; opacity: 0.85; margin-top: 2px; white-space: pre-wrap; }
-.igt-tr.igt-replace { font-size: inherit; opacity: 1; margin-top: 0; }
-.igt-retry { background: none; border: 0; cursor: pointer; color: inherit; padding: 0 4px; }
-.igt-composer-note { font-size: 12px; padding: 4px 12px; opacity: 0.8; }
-.igt-composer-note.igt-error { color: #e5484d; opacity: 1; }
-.igt-chip { border: 1px solid currentColor; border-radius: 10px; padding: 0 6px; margin-left: 6px; cursor: pointer; background: none; color: inherit; font-size: 11px; }
+[data-pl-hide] { display: none !important; }
+.pl-tr { font-size: 0.85em; opacity: 0.85; margin-top: 2px; white-space: pre-wrap; }
+.pl-tr.pl-replace { font-size: inherit; opacity: 1; margin-top: 0; }
+.pl-retry { background: none; border: 0; cursor: pointer; color: inherit; padding: 0 4px; }
+.pl-composer-note { font-size: 12px; padding: 4px 12px; opacity: 0.8; }
+.pl-composer-note.pl-error { color: #e5484d; opacity: 1; }
+.pl-chip { border: 1px solid currentColor; border-radius: 10px; padding: 0 6px; margin-left: 6px; cursor: pointer; background: none; color: inherit; font-size: 11px; }

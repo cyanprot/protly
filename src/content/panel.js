@@ -17,7 +17,7 @@ export function mountPanel(cur) {
       .row { display: flex; gap: 6px; margin-top: 6px; }
       .row button { flex: 1; background: #2c2c2e; color: inherit; border: 1px solid #48484a; border-radius: 6px; padding: 4px; cursor: pointer; }
     </style>
-    <button type="button" class="fab" title="ig-translate">T</button>
+    <button type="button" class="fab" title="protly">T</button>
     <div class="p">
       <label>Translate <input type="checkbox" id="enabled"></label>
       <label>Reply in <select id="outputLang"></select></label>
@@ -52,7 +52,7 @@ export function mountPanel(cur) {
     try {
       c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch });
     } catch (e) {
-      showBanner(`ig-translate: could not save: ${e.message}`);
+      showBanner(`protly: could not save: ${e.message}`);
       fill(c.thread); // show what is actually stored
       return;
     }
@@ -70,7 +70,7 @@ export function mountPanel(cur) {
     try {
       $('memo').value = await ask({ type: 'suggestMemo', threadId: c.threadId, context: contextFor(c.root) });
     } catch (e) {
-      showBanner(`ig-translate: memo suggestion failed: ${e.message}`);
+      showBanner(`protly: memo suggestion failed: ${e.message}`);
     } finally {
       $('suggest').disabled = false;
     }

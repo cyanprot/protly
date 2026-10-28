@@ -44,7 +44,7 @@ export function mountOutgoing(cur) {
   setTimeout(() => {
     if (getCurrent() === cur && !composer()) {
       ask({ type: 'badge', text: '!' }).catch(() => {});
-      console.warn('[igt] composer not found; outgoing translation inactive');
+      console.warn('[protly] composer not found; outgoing translation inactive');
     }
   }, 3000);
 
@@ -53,11 +53,11 @@ export function mountOutgoing(cur) {
     if (!c) return;
     if (!note) {
       note = document.createElement('div');
-      note.className = 'igt-composer-note';
+      note.className = 'pl-composer-note';
       // Above the composer's row so Instagram's own layout stays intact.
       (c.closest('form, [role="group"]') || c.parentElement).before(note);
     }
-    note.classList.toggle('igt-error', !!isError);
+    note.classList.toggle('pl-error', !!isError);
     note.replaceChildren(...nodes);
   };
   const hideNote = () => { note?.remove(); note = null; };
@@ -65,13 +65,13 @@ export function mountOutgoing(cur) {
   const chip = (lang) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'igt-chip';
+    b.className = 'pl-chip';
     b.textContent = langName(lang);
     b.title = 'Change target language';
     b.onclick = (e) => {
       e.preventDefault();
       const sel = document.createElement('select');
-      sel.className = 'igt-chip';
+      sel.className = 'pl-chip';
       for (const [code, name] of Object.entries(LANG_NAMES)) if (code !== 'ko') sel.add(new Option(name, code));
       if (!(lang in LANG_NAMES)) sel.add(new Option(langName(lang), lang), 0); // partner language outside the list
       sel.value = lang;
@@ -80,7 +80,7 @@ export function mountOutgoing(cur) {
         try {
           if (c) c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch: { outputLang: sel.value } });
         } catch (err) {
-          showBanner(`ig-translate: could not save the reply language: ${err.message}`);
+          showBanner(`protly: could not save the reply language: ${err.message}`);
         }
         dispatch({ type: 'lang', lang: sel.value });
       };
@@ -202,7 +202,7 @@ export function mountOutgoing(cur) {
       if (!c && isEnter(e) && !e.shiftKey && e.target?.isContentEditable
           && hasHangul(e.target.innerText || e.target.textContent || '')) {
         block(e);
-        showBanner('ig-translate: message box not recognised, so nothing was sent. The selectors need updating.');
+        showBanner('protly: message box not recognised, so nothing was sent. The selectors need updating.');
       }
       return;
     }

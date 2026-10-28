@@ -42,15 +42,15 @@ function bubble() {
 test('below mode adds a sibling, keeps original visible', () => {
   const m = bubble();
   renderTranslation(m, 'hi', 'below');
-  assert.equal(m.row.querySelector('.igt-tr').textContent, 'hi');
-  assert.equal(m.textEl.hasAttribute('data-igt-hide'), false);
+  assert.equal(m.row.querySelector('.pl-tr').textContent, 'hi');
+  assert.equal(m.textEl.hasAttribute('data-pl-hide'), false);
 });
 
 test('replace mode hides original, shows translation with original on hover', () => {
   const m = bubble();
   renderTranslation(m, 'hi', 'replace');
-  assert.equal(m.textEl.getAttribute('data-igt-hide'), '');
-  const tr = m.row.querySelector('.igt-tr');
+  assert.equal(m.textEl.getAttribute('data-pl-hide'), '');
+  const tr = m.row.querySelector('.pl-tr');
   assert.equal(tr.textContent, 'hi');
   assert.equal(tr.title, 'привет');
 });
@@ -59,10 +59,10 @@ test('render is idempotent and clear restores', () => {
   const m = bubble();
   renderTranslation(m, 'hi', 'replace');
   renderTranslation(m, 'hello', 'below');
-  assert.equal(m.row.querySelectorAll('.igt-tr').length, 1);
-  assert.equal(m.textEl.hasAttribute('data-igt-hide'), false);
+  assert.equal(m.row.querySelectorAll('.pl-tr').length, 1);
+  assert.equal(m.textEl.hasAttribute('data-pl-hide'), false);
   clearTranslation(m);
-  assert.equal(m.row.querySelectorAll('.igt-tr').length, 0);
+  assert.equal(m.row.querySelectorAll('.pl-tr').length, 0);
 });
 
 test('setHoverOriginal sets title on own bubble', () => {
@@ -79,8 +79,8 @@ test('clearAllTranslations removes everything we added, including hover titles',
   setHoverOriginal({ textEl: b, text: 'mine' }, '내 원문');
   assert.ok(stillShows({ textEl: a, text: 'hello' }));
   clearAllTranslations(d.querySelector('[role="main"]'));
-  assert.equal(d.querySelectorAll('.igt-tr').length, 0);
-  assert.equal(a.hasAttribute('data-igt-hide'), false);
+  assert.equal(d.querySelectorAll('.pl-tr').length, 0);
+  assert.equal(a.hasAttribute('data-pl-hide'), false);
   assert.equal(b.hasAttribute('title'), false);
   a.textContent = 'other message';
   assert.equal(stillShows({ textEl: a, text: 'hello' }), false);

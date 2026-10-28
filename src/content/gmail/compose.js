@@ -22,7 +22,7 @@ async function ask(msg) {
   try {
     r = await chrome.runtime.sendMessage(msg);
   } catch (err) {
-    const e = new Error(/context invalidated/i.test(err?.message) ? 'ig-translate was reloaded. Reload this tab.' : err?.message || String(err));
+    const e = new Error(/context invalidated/i.test(err?.message) ? 'protly was reloaded. Reload this tab.' : err?.message || String(err));
     e.kind = 'internal';
     throw e;
   }
@@ -58,7 +58,7 @@ export function mountCompose(body) {
     s.firstMiss ||= Date.now();
     if (!s.warned && Date.now() - s.firstMiss > MOUNT_GRACE_MS) {
       s.warned = true;
-      console.warn('[igt] Gmail Send button not found; Translate button not mounted (Alt+T still works)');
+      console.warn('[protly] Gmail Send button not found; Translate button not mounted (Alt+T still works)');
       setBadge(true);
     }
     return;
@@ -67,7 +67,7 @@ export function mountCompose(body) {
   const td = document.createElement('td');
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'igt-g-btn';
+  btn.className = 'pl-g-btn';
   btn.textContent = 'Translate';
   btn.title = 'Translate the Korean draft, or polish an English one (Alt+T)';
   btn.addEventListener('click', () => translate(body));
@@ -89,10 +89,10 @@ function button(label, onClick) {
 function showNote(body, s, children, isError = false) {
   if (!s.note?.isConnected) {
     s.note = document.createElement('div');
-    s.note.className = 'igt-g-note';
+    s.note.className = 'pl-g-note';
     if (s.anchor?.isConnected) s.anchor.before(s.note); else body.after(s.note);
   }
-  s.note.classList.toggle('igt-g-err', isError);
+  s.note.classList.toggle('pl-g-err', isError);
   s.note.replaceChildren(...children);
 }
 
@@ -207,7 +207,7 @@ function threadContext(body) {
   const viewer = findViewerEmail(document);
   if (!viewer && !viewerWarned) {
     viewerWarned = true;
-    console.warn('[igt] Gmail account email not found; every thread message counts as from the other side');
+    console.warn('[protly] Gmail account email not found; every thread message counts as from the other side');
   }
   return readThread(root, viewer);
 }

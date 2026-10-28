@@ -1,4 +1,4 @@
-.igt-g-btn { margin-left: 8px; padding: 6px 12px; border-radius: 16px; border: 1px solid #888; background: transparent; color: inherit; cursor: pointer; font: 500 13px system-ui, sans-serif; }
-.igt-g-note { margin: 6px 16px; padding: 6px 10px; border-radius: 6px; background: rgba(127, 127, 127, .12); font: 13px system-ui, sans-serif; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; white-space: pre-wrap; }
-.igt-g-note.igt-g-err { color: #d93025; }
-.igt-g-note button, .igt-g-note select { font: inherit; padding: 2px 8px; cursor: pointer; }
+.pl-g-btn { margin-left: 8px; padding: 6px 12px; border-radius: 16px; border: 1px solid #888; background: transparent; color: inherit; cursor: pointer; font: 500 13px system-ui, sans-serif; }
+.pl-g-note { margin: 6px 16px; padding: 6px 10px; border-radius: 6px; background: rgba(127, 127, 127, .12); font: 13px system-ui, sans-serif; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; white-space: pre-wrap; }
+.pl-g-note.pl-g-err { color: #d93025; }
+.pl-g-note button, .pl-g-note select { font: inherit; padding: 2px 8px; cursor: pointer; }

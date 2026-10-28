@@ -29,7 +29,7 @@ function setup() {
   };
   const [inline, dialog] = document.querySelectorAll(GSEL.body);
   const reply = async (r) => { pending.shift()(r); await flush(); };
-  const note = () => document.querySelector('.igt-g-note');
+  const note = () => document.querySelector('.pl-g-note');
   const buttonIn = (label) => [...(note()?.querySelectorAll('button') || [])].find((b) => b.textContent === label);
   return { inline, dialog, calls, reply, note, buttonIn };
 }
@@ -46,8 +46,8 @@ test('the button mounts next to each compose\'s own Send, once', () => {
   mountCompose(inline);
   mountCompose(inline);
   mountCompose(dialog);
-  assert.equal(inline.closest('.reply').querySelectorAll('.igt-g-btn').length, 1);
-  assert.equal(dialog.closest('[role="dialog"]').querySelectorAll('.igt-g-btn').length, 1);
+  assert.equal(inline.closest('.reply').querySelectorAll('.pl-g-btn').length, 1);
+  assert.equal(dialog.closest('[role="dialog"]').querySelectorAll('.pl-g-btn').length, 1);
 });
 
 test('a body whose toolbar renders later gets its button on a later scan', () => {
@@ -60,7 +60,7 @@ test('a body whose toolbar renders later gets its button on a later scan', () =>
   box.appendChild(body);
   document.body.appendChild(box);
   mountCompose(body);
-  assert.equal(box.querySelector('.igt-g-btn'), null);
+  assert.equal(box.querySelector('.pl-g-btn'), null);
   const table = document.createElement('table');
   table.setAttribute('role', 'group');
   const td = table.insertRow().insertCell();
@@ -70,7 +70,7 @@ test('a body whose toolbar renders later gets its button on a later scan', () =>
   td.appendChild(send);
   box.appendChild(table);
   mountCompose(body);
-  assert.ok(box.querySelector('.igt-g-btn'));
+  assert.ok(box.querySelector('.pl-g-btn'));
 });
 
 test('translate replaces the user part, Undo brings the Korean back, signature untouched', async () => {
@@ -158,7 +158,7 @@ test('Opus after editing the translation asks before replacing the edit', async 
 test('the button title mentions polish, the label stays Translate', () => {
   const { inline } = setup();
   mountCompose(inline);
-  const btn = inline.closest('.reply').querySelector('.igt-g-btn');
+  const btn = inline.closest('.reply').querySelector('.pl-g-btn');
   assert.equal(btn.textContent, 'Translate');
   assert.match(btn.title, /polish an English one/);
 });
