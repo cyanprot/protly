@@ -29,3 +29,12 @@ const body = {
   }],
 };
 writeFileSync(new URL('../ios/body-template.json', import.meta.url), JSON.stringify(body) + '\n');
+
+// Keep the copy inside the Cherri source in step. Cherri single-quoted strings are raw but cannot hold an apostrophe.
+const json = JSON.stringify(body);
+if (json.includes("'")) throw new Error('template must not contain an apostrophe (Cherri raw string)');
+const cherriUrl = new URL('../ios/ig-translate.cherri', import.meta.url);
+const src = readFileSync(cherriUrl, 'utf8');
+const next = src.replace(/^@template = '.*'$/m, () => `@template = '${json}'`);
+if (!/^@template = '/m.test(src)) throw new Error('ios/ig-translate.cherri has no @template line');
+writeFileSync(cherriUrl, next);

@@ -10,6 +10,16 @@ Request body: `ios/body-template.json`, generated from `ios/system-prompt.txt` b
 Checked against the live API with `node scripts/eval-ios.mjs <screenshot.jpg>` (synthetic screen `scripts/fixtures/ios-dm.html`).
 A phone-friendly copy of this guide with copy buttons is published as a private claude.ai Artifact.
 
+## Quick install (signed file)
+
+`ios/ig-translate.cherri` is the same shortcut as code. `scripts/build-ios-shortcut.sh` compiles it with Cherri v2.3.0 (`~/.local/opt/cherri-2.3.0/cherri`), signs it through HubSign (no Mac here; the file holds no key and no memos) and copies `IG Translate.shortcut` to `~/GoogleDrive/`.
+
+On the iPhone: Google Drive app > `IG Translate.shortcut` > Share > Shortcuts > Add Shortcut. Paste the API key when asked. Then edit the long Text action that starts with `(none) Replace this line` to hold your memos, and set up Back Tap (section 2). Section 0 still applies for the key.
+
+Cherri v2.3.0 quirks found while writing it: a `rawAction` whose result is assigned loses its identifier (custom `action` definitions are used instead); an import question is bound only to action 0, so the key question must feed the first action; multi-line default blocks in user `action` definitions fail to parse; a string cannot end in a backslash; conditions need a text constant on the left.
+
+The manual build below is the fallback.
+
 ## 0. Before you start
 
 1. On the phone, open console.anthropic.com. Create a workspace `iphone` with a monthly spend limit (for example $5). Create an API key inside it named `iphone-shortcut` and copy it. A key made inside a workspace needs no workspace header.

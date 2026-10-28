@@ -28,3 +28,17 @@ test('iOS template asks for the translation schema', () => {
   assert.equal(f.type, 'json_schema');
   assert.deepEqual(f.schema.required, ['translation', 'back_translation']);
 });
+
+test('the Cherri source carries the same template, with no apostrophe', () => {
+  const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
+  const m = src.match(/^@template = '(.*)'$/m);
+  assert.ok(m);
+  assert.equal(m[1], raw.trim());
+  assert.equal(raw.includes("'"), false);
+});
+
+test('the Cherri source keeps the key question bound to the first action', () => {
+  const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
+  const code = src.split('\n').filter((l) => l.trim() && !/^\s*(\/\/|#include|#question|action )/.test(l));
+  assert.equal(code[0], 'const key = trimWhitespace(apiKey)');
+});

@@ -79,3 +79,5 @@ Eval 2026-10-28 (`scripts/eval-ios.mjs`, synthetic 720x1561 JPEG, 46 KB): 3/3 PA
 - Workspace: the laptop key is org-level and needs `anthropic-workspace-id`; the eval adds it from `~/.config/anthropic/configs/default.json`. The phone key is made inside a workspace and needs no header.
 
 Delivered: `docs/ios-shortcut.md` and a private Artifact copy with copy buttons (claude.ai/artifact/YAQtPrEhmbaUFbreaX6RrC). Open: the user's phone test (iPhone 13 Pro, 1170x2532 screenshot -> 720x1558).
+
+Cherri build 2026-10-28 (user asked for less manual work): `ios/ig-translate.cherri` compiles to 66 actions; plist checked (identifiers, template identical, headers, File body, key question on action 0). Signed via HubSign at the user's go-ahead, file starts with `AEA1`, copied to Google Drive. System prompt reworded without apostrophes (Cherri raw strings); eval re-run 3/3 PASS. Seen once at effort low: "спас меня" for a female friend where the first run gave the feminine form; watch on the phone, raise effort if it repeats.
