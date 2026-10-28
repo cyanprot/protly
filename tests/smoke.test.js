@@ -61,3 +61,20 @@ test('manifest icons point at the built p icon PNGs', () => {
   }
   assert.match(readFileSync(new URL('../icons/wordmark.svg', import.meta.url), 'utf8'), /fill="currentColor"/);
 });
+
+test('both content-script origins can load the shared UI modules and fonts', () => {
+  const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
+  for (const origin of ['https://www.instagram.com/*', 'https://mail.google.com/*']) {
+    const war = m.web_accessible_resources.find((w) => w.matches.includes(origin));
+    assert.ok(war.resources.includes('src/ui/*.js'), origin);
+    assert.ok(war.resources.includes('src/ui/fonts/*.woff2'), origin);
+  }
+});
+
+// No test drives these modules end to end; importing them catches broken imports and duplicate declarations.
+test('content modules import cleanly', async () => {
+  for (const p of ['../src/content/main.js', '../src/content/outgoing.js', '../src/content/panel.js',
+    '../src/content/gmail/main.js', '../src/content/gmail/compose.js']) {
+    await import(new URL(p, import.meta.url));
+  }
+});

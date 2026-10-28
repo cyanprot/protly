@@ -58,7 +58,9 @@
     {
       "resources": [
         "src/content/*.js",
-        "src/lib/*.js"
+        "src/lib/*.js",
+        "src/ui/*.js",
+        "src/ui/fonts/*.woff2"
       ],
       "matches": [
         "https://www.instagram.com/*"
@@ -67,7 +69,9 @@
     {
       "resources": [
         "src/content/gmail/*.js",
-        "src/lib/*.js"
+        "src/lib/*.js",
+        "src/ui/*.js",
+        "src/ui/fonts/*.woff2"
       ],
       "matches": [
         "https://mail.google.com/*"
