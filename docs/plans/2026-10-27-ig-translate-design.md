@@ -1,7 +1,7 @@
 # ig-translate: Instagram DM translation extension (design)
 
 Date: 2026-10-27
-Status: approved in brainstorm, pending spec review
+Status: approved; API path revised 2026-10-27 after the API spike (native messaging host)
 
 ## Goal
 
@@ -13,15 +13,16 @@ a per-thread memo) and runs on the Claude API.
 Use case: casual chats with friends. Slang, emoji, casual register and tone must survive.
 
 Non-goals: mobile Instagram app, group-chat specific features, automatic sending without user
-confirmation, any server component.
+confirmation, any always-on server component. (The native messaging host is started by Chrome on demand and
+exits with the browser; it is not a server.)
 
 ## Decisions
 
 | Topic | Decision |
 |---|---|
 | Platform | Chrome desktop, Manifest V3, plain JS, no build step, loaded unpacked |
-| API path | Extension calls Anthropic API directly from the background service worker, with header `anthropic-dangerous-direct-browser-access: true` (required for browser-origin requests) |
-| API key | `chrome.storage.local`, entered on the options page. Console spend limit set to the $100/month credit |
+| API path | Background service worker -> Chrome native messaging (`chrome.runtime.connectNative('com.northprot.ig_translate')`) -> stdlib Python host `host/ig_translate_host.py` -> Anthropic API. Direct browser calls are impossible: the organization rejects CORS requests (`401 "CORS requests are not allowed for this Organization because of its settings."`, Task 2 spike) |
+| API key | Stays on disk in `~/.config/anthropic/api-key`. The host reads it, plus `workspace_id` from `~/.config/anthropic/configs/default.json` (sent as `anthropic-workspace-id`, required for this user-scoped key), on every request. The key never enters the browser. Console spend limit set to the $100/month credit |
 | Incoming model | Sonnet 5.5, extended thinking off (latency first) |
 | Outgoing model | Sonnet 5.5, effort `medium` (adaptive thinking) |
 | Outgoing "hard" mode | Opus 5.5, effort `high`, triggered per message by `Alt+Enter` |
@@ -29,8 +30,8 @@ confirmation, any server component.
 | Context | Last ~30 visible messages of the thread plus a per-thread memo |
 | Send flow | Preview, then a second Enter sends |
 
-The exact request parameters for effort / thinking on the 5.5 models are verified against the
-current API docs during planning, not assumed here.
+Request parameters for effort / thinking on the 5.5 models were verified against the API docs
+and the Task 2 spike; the plan's "Verified API facts" section is the reference.
 
 ## Language rules
 
@@ -51,12 +52,14 @@ current API docs during planning, not assumed here.
 
 | File | Role |
 |---|---|
-| `manifest.json` | MV3. `host_permissions`: `https://www.instagram.com/*`, `https://api.anthropic.com/*`. Content script matches `https://www.instagram.com/direct/*` |
+| `manifest.json` | MV3. Permissions `storage`, `nativeMessaging`. `host_permissions`: `https://www.instagram.com/*` only (the browser never talks to the API). Content script matches all of `instagram.com` and activates on `/direct/t/<id>` (SPA navigation) |
 | `selectors.js` | Every Instagram DOM selector in one place. Prefer `role`, `aria-label`, `contenteditable`, structural anchors over obfuscated class names |
 | `content.js` | Injected into DM pages. Detects messages with `MutationObserver`, renders translations, intercepts composer Enter, hosts the thread panel |
-| `background.js` | Service worker. Owns every API call; `content.js` never reads or handles the key (it could technically read `chrome.storage.local`, but the page itself cannot) |
+| `background.js` | Service worker. Owns all storage and every API call, sent over one long-lived native messaging port (an open port also keeps the service worker alive during long calls) |
+| `host/ig_translate_host.py` | Native messaging host, Python 3 stdlib only. Length-prefixed JSON on stdin/stdout, one thread per request, 120 s timeout. Reads the key and workspace ID from disk per request; never logs the key |
+| `host/install.sh` | Writes `~/.config/google-chrome/NativeMessagingHosts/com.northprot.ig_translate.json` with `allowed_origins` set to this extension's ID |
 | `prompts.js` | System prompts for incoming batch translation, outgoing translation plus back-translation, memo suggestion. ES module, shared with the Node fixture script; the service worker is declared `"type": "module"` and the repo `package.json` sets `"type": "module"` |
-| `options.html` / `options.js` | API key, model choice per direction, global defaults |
+| `options.html` / `options.js` | Model choice per direction, global defaults. No API key field |
 
 Instagram is an SPA: thread changes happen without page loads, so `content.js` watches URL
 changes and re-initialises per thread.
@@ -81,14 +84,14 @@ inserted above an already known message (Instagram back-fills history when scrol
 
 One storage key per entry, so a write never rewrites a whole map:
 
-- `settings`: API key, model per direction, global defaults for every panel toggle
+- `settings`: model per direction, global defaults for every panel toggle
 - `t:<threadId>`: memo, `partner_lang`, output language, toggles
 - `c:<hash>`: incoming translation. Key = hash of (threadId, message text, non-English target
   toggle value). Value = `{src_lang, translation, ts}`. The toggle value is known before the call,
   so lookup works without knowing `src_lang` first
 - `s:<hash>`: Korean original of a message sent through the extension. Key = hash of
-  (threadId, composer text at the moment of the second Enter, after any user edits). Value =
-  `{korean, ts}`
+  (threadId, whitespace-normalized composer text at the moment of sending, after any user
+  edits). Value = `{korean, ts}`
 
 `threadId` comes from the URL path `/direct/t/<id>`.
 
@@ -109,9 +112,11 @@ Growth: `c:` and `s:` entries older than 90 days are pruned on startup.
 4. Messages added later (`MutationObserver`) go through the same path, debounced so a burst
    becomes one call. Back-filled history and new arrivals share this path; they differ only in
    display mode (see "Past vs new").
-5. Render according to the thread's display mode. In replace mode the original is available on
+5. `partner_lang` is updated only from the initial scan and from new arrivals, never from
+   back-filled history or retries, so `auto` keeps following the partner's most recent language.
+6. Render according to the thread's display mode. In replace mode the original is available on
    hover.
-6. My own past bubbles: if `s:<hash>` has the Korean original, show it on hover. They are not
+7. My own past bubbles: if `s:<hash>` has the Korean original, show it on hover. They are not
    translated.
 
 ### Outgoing (preview)
@@ -132,6 +137,13 @@ Growth: `c:` and `s:` entries older than 90 days are pruned on startup.
    current preview (user edits to the translation are discarded).
 8. Changing the target language via the chip re-translates the stored Korean original with the
    model of the current preview.
+9. Enter in preview while the composer holds Hangul (the user wrote a new Korean draft) starts a
+   new translation of that text. It never sends raw Korean.
+10. The composer emptying while in preview (Instagram's Send button, or the user deleted the text)
+   ends the preview. A send through the button is recorded under `s:<hash>` like an Enter send.
+11. Korean IME: Enter pressed mid-composition is blocked whenever the box holds Hangul or a
+   translation is pending, and is handled once the composition commits.
+12. A failed or cancelled re-translate puts the Korean original back in the composer.
 
 The method for replacing composer text must make Instagram's own state see the new value
 (Instagram's composer is a React-controlled contenteditable). Verifying that technique against
@@ -149,8 +161,10 @@ nicknames, running jokes). The draft fills the memo editor; it is saved only whe
 | Incoming API failure / timeout | Small retry marker next to the bubble; original text untouched |
 | Outgoing API failure | Korean stays in the composer, red "translation failed" line. Never auto-send the original |
 | 429 / overloaded | Exponential backoff, 2 retries, then show failure |
-| Missing / invalid key | One banner linking to the options page |
-| Selector miss (Instagram changed) | Disable the extension on that page, set toolbar badge `!`. Never act on a guessed element |
+| Key file missing / key rejected | One banner naming `~/.config/anthropic/api-key` |
+| Native host missing / not installed / crashed | Retried like a network error, then one banner pointing at `host/install.sh <extension id>`. Outgoing keeps the Korean, sends nothing. The next request reconnects |
+| Selector miss (Instagram changed) | Disable the extension on that page, set toolbar badge `!`. Never act on a guessed element. If the composer is not recognised, a Hangul Enter in any editable box is blocked with a banner rather than sent raw |
+| Translation could not be written into the composer | Preview cancelled, error note, nothing sent |
 | Enter pressed while a translation is pending | Ignored, prevents double send |
 | Thread change during preview | Preview state discarded |
 | Malformed JSON response | One re-request, then show failure |
@@ -158,13 +172,18 @@ nicknames, running jokes). The draft fills the memo editor; it is saved only whe
 ## Privacy
 
 Friends' DM text is sent to the Anthropic API. Accepted by the user. No other destination, no
-telemetry.
+telemetry. The API key never enters the browser: it stays in `~/.config/anthropic/api-key` and
+is read only by the native host process, which never logs it or returns it.
 
 ## Testing
 
+- **Native host:** Python `unittest` (framing round trip, header building from a temp HOME,
+  missing key file, HTTP and network errors, key never in output), run with
+  `python3 -I host/test_host.py`.
 - **Prompts and parsing:** fixed fixture set of conversations (en, ru, es, ja mixed; casual
-  register, slang, Korean subject drop). A Node script (key from `ANTHROPIC_API_KEY` env var)
-  runs them through the API and checks JSON shape and `src_lang`. The script imports the same
+  register, slang, Korean subject drop). A Node script (key and workspace from env vars, read
+  from the config files inside the command) runs them through the API and checks JSON shape and
+  `src_lang`. The script imports the same
   `prompts.js` as the extension. Translation quality is reviewed by eye.
 - **DOM:** saved HTML snapshots of real Instagram DM pages, selector unit tests against them.
   When Instagram changes, take a new snapshot and diff.

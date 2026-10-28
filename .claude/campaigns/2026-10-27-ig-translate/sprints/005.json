@@ -2,7 +2,7 @@
   "schema_version": 1,
   "sprint_id": "005",
   "campaign_id": "2026-10-27-ig-translate",
-  "feature": "Outgoing preview flow (Tasks 18-19)",
+  "feature": "Outgoing preview flow (Tasks 20-21)",
   "deliverables": [
     "composer helpers in dom.js",
     "src/content/outgoing.js",
@@ -10,15 +10,17 @@
   ],
   "success_criteria": [
     "npm test passes",
-    "every Task 19 step recorded as pass in spike-notes",
-    "exactly one message sent during the live check, by the user"
+    "every Task 21 step recorded as pass in spike-notes",
+    "every message sent during the live check was sent by the user on purpose"
   ],
   "testable_behaviors": [
     "Korean + Enter shows translation, back-translation, model and language chip without sending",
     "Esc restores Korean",
-    "Alt+Enter uses Opus",
+    "Alt+Enter uses the hard model",
     "Enter mid-IME-composition produces a preview, not a raw send",
-    "API failure keeps the Korean and sends nothing"
+    "Send-button send ends the preview and records the Korean original",
+    "New Korean typed in preview is translated, not sent raw",
+    "Host failure keeps the Korean and sends nothing"
   ],
   "scope_boundaries": [
     "Claude presses no keys in the Instagram composer",

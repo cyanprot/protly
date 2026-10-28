@@ -4,7 +4,7 @@
   "project": "ig-translate",
   "campaign_id": "2026-10-27-ig-translate",
   "started": "2026-10-27T00:00:00-07:00",
-  "updated": "2026-10-27T00:00:00-07:00",
+  "updated": "2026-10-27T12:00:00-07:00",
   "current_phase": "plan",
   "current_sprint": 1,
   "total_sprints": 6,
@@ -14,7 +14,7 @@
   "decisions_log": [
     {
       "timestamp": "2026-10-27T00:00:00-07:00",
-      "decision": "Direct Anthropic API calls from the background service worker; no proxy (prot goes offline for the move)"
+      "decision": "SUPERSEDED: direct Anthropic API calls from the background service worker (org rejects CORS requests, Task 2 spike)"
     },
     {
       "timestamp": "2026-10-27T00:00:00-07:00",
@@ -31,11 +31,21 @@
     {
       "timestamp": "2026-10-27T00:00:00-07:00",
       "decision": "use_dynamic_url not set on web_accessible_resources; content dynamic import verified in Task 12"
+    },
+    {
+      "timestamp": "2026-10-27T12:00:00-07:00",
+      "decision": "API path is Chrome native messaging to a stdlib Python host (host/ig_translate_host.py); key and workspace_id read from ~/.config/anthropic per request; key never in the browser",
+      "rationale": "Org rejects browser-origin requests (401 CORS not allowed for this Organization). User chose native messaging over Console setting or prot proxy (prot offline during the move)."
+    },
+    {
+      "timestamp": "2026-10-27T12:00:00-07:00",
+      "decision": "Applied independent plan review: preview stuck-state fixes, IME Enter blocking while translating, thread-switch race guard, partnerLang only from initial scan and fresh, composer-miss guard, BATCH 20 / incoming max_tokens 8192, normalized sent hashing"
     }
   ],
-  "continuation_prompt": "Plan created for ig-translate. 6 sprints. Ready for plancheck-flow, then execute-flow.",
+  "continuation_prompt": "Plan revised for native messaging host + plan review fixes (22 tasks, 6 sprints). Sprint 1: Tasks 1-2 done, Task 3 (DOM/IME spike) in progress; its findings fill the Task 15 __FILL__ markers. Then sprint 2.",
   "artifacts": {
     "plan": "docs/plans/2026-10-27-ig-translate.md",
-    "design": "docs/plans/2026-10-27-ig-translate-design.md"
+    "design": "docs/plans/2026-10-27-ig-translate-design.md",
+    "spike_notes": "docs/spike-notes.md"
   }
 }

@@ -2,24 +2,32 @@
   "schema_version": 1,
   "sprint_id": "003",
   "campaign_id": "2026-10-27-ig-translate",
-  "feature": "Background router and options (Tasks 10-12)",
+  "feature": "Native host, background router and options (Tasks 10-14)",
   "deliverables": [
+    "host/ig_translate_host.py, host/test_host.py, host/install.sh",
+    "src/lib/native.js with tests",
+    "manifest with nativeMessaging and no API host permission",
     "src/background.js",
-    "options/options.html and options.js",
-    "loadable unpacked extension"
+    "options/options.html and options.js (no API key field)",
+    "loadable unpacked extension with the host installed"
   ],
   "success_criteria": [
-    "node --check src/background.js passes and npm test passes",
-    "options-page console smoke call returns ok:true with a translation",
+    "python3 -I host/test_host.py runs 12 tests OK",
+    "npm test passes including native 5 tests and the manifest smoke test",
+    "options-page console outgoing call returns ok:true with a translation",
+    "a hard-profile call with a long draft returns ok:true end to end; duration recorded in spike-notes",
+    "with the host manifest moved away the call fails with kind host, and succeeds again after restoring it",
     "content-script dynamic import confirmed in spike-notes"
   ],
   "testable_behaviors": [
-    "Saving options persists the key and models across reloads",
+    "The API key is read only by the host from ~/.config/anthropic/api-key and never appears in the browser or any output",
+    "Saving options persists models and defaults across reloads",
     "Background answers outgoing messages with translation, back_translation, lang, model"
   ],
   "scope_boundaries": [
     "No content-script features",
-    "Claude never types the API key"
+    "Never print the API key",
+    "No always-on service or open port"
   ],
   "evaluation_method": "manual"
 }

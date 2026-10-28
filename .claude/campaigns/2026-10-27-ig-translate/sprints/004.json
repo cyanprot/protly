@@ -2,20 +2,22 @@
   "schema_version": 1,
   "sprint_id": "004",
   "campaign_id": "2026-10-27-ig-translate",
-  "feature": "Incoming translation in the page (Tasks 13-17)",
+  "feature": "Incoming translation in the page (Tasks 15-19)",
   "deliverables": [
     "src/content/selectors.js, dom.js, main.js, panel.js, style.css, loader.js",
     "tests/dom.test.js snapshot tests"
   ],
   "success_criteria": [
     "npm test passes including snapshot tests",
-    "every Task 17 checklist item recorded as pass in spike-notes"
+    "every Task 19 checklist item recorded as pass in spike-notes"
   ],
   "testable_behaviors": [
     "Past partner messages show Korean in replace mode with original on hover",
     "A newly arrived message is translated below the bubble",
     "Panel toggles re-render the thread",
-    "Thread switch tears down and re-initialises"
+    "Thread switch tears down and re-initialises with exactly one panel",
+    "Back-filled history does not change partnerLang",
+    "Missing key or host shows one banner"
   ],
   "scope_boundaries": [
     "No outgoing/composer interception",

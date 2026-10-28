@@ -11,7 +11,7 @@
   ],
   "success_criteria": [
     "npm test passes",
-    "spike-notes records status/latency for all 7 API variants and the format+thinking and browser-origin answers",
+    "spike-notes records status/latency for all 7 API variants and the format+thinking and browser-origin answers (done: browser origin BLOCKED, resolved by the native host in sprint 003)",
     "spike-notes names one working composer write method (insertText or paste)",
     "thread.html contains no real names or message text (grep check)",
     "no message was sent from Instagram during the spike"

@@ -4,31 +4,32 @@
 
 **Goal:** A personal Chrome MV3 extension that translates Instagram web DMs into Korean (or English) and turns Korean drafts into the partner's language through a preview-then-send flow, using the Claude API with conversation context and a per-thread memo.
 
-**Architecture:** Plain ES modules, no build step, loaded unpacked. Pure logic lives in `src/lib/` and is unit-tested with `node --test`. The background service worker owns the API key, every API call and all storage. The content script is a thin DOM layer: it reads bubbles, renders translations, intercepts composer keys and hosts the thread panel, and asks the background for everything else via `chrome.runtime.sendMessage`.
+**Architecture:** Plain ES modules, no build step, loaded unpacked. Pure logic lives in `src/lib/` and is unit-tested with `node --test`. The background service worker owns all storage and every API call. It sends API calls through a Chrome native messaging host: a small stdlib-only Python script that Chrome starts on demand, which reads the API key from disk and calls the Anthropic API. The key never enters the browser. The content script is a thin DOM layer: it reads bubbles, renders translations, intercepts composer keys and hosts the thread panel, and asks the background for everything else via `chrome.runtime.sendMessage`.
 
-**Tech Stack:** Chrome Manifest V3, vanilla JS (ESM), Anthropic Messages API over `fetch`, Node 22 `node:test`, `jsdom` (dev only, DOM snapshot tests).
+**Tech Stack:** Chrome Manifest V3, vanilla JS (ESM), Chrome native messaging, Python 3 stdlib (`urllib`, `unittest`), Anthropic Messages API, Node 22 `node:test`, `jsdom` (dev only, DOM snapshot tests).
 
 **Design doc:** `docs/plans/2026-10-27-ig-translate-design.md` (read it first).
 
+**Why native messaging:** the Task 2 spike showed this organization rejects browser-origin (CORS) API requests: `401 "CORS requests are not allowed for this Organization because of its settings."`. Requests without an `Origin` header succeed. See `docs/spike-notes.md`.
+
 ---
 
-## Verified API facts (platform.claude.com, fetched 2026-10-27)
-
-Use these exactly. Items marked `[UNVERIFIED]` are settled by the Task 2 spike before any code depends on them.
+## Verified API facts (platform.claude.com docs + Task 2 spike, 2026-10-27)
 
 - Model IDs: `claude-sonnet-5-5`, `claude-opus-5-5`.
 - Effort: top-level `output_config: { effort: "low" | "medium" | "high" | "xhigh" | "max" }`. GA, no beta header.
 - Thinking on these models:
   - Omitting `thinking` means **adaptive thinking ON**, not off.
   - `{type: "disabled"}` returns 400 on both models.
-  - Sonnet 5.5 "off": `thinking: { type: "between_tools" }`, only with effort `high` or lower, no other fields.
-  - Opus 5.5 cannot turn thinking off. Use `thinking: { type: "adaptive" }`.
+  - Sonnet 5.5 "off": `thinking: { type: "between_tools" }`, only with effort `high` or lower, no other fields. Spike: 200.
+  - Opus 5.5 cannot turn thinking off. Use `thinking: { type: "adaptive" }`. Spike: Opus rejects `between_tools` with 400 `"thinking.type.between_tools" is not supported for this model.`
   - Thinking tokens count toward `max_tokens`. Response `content` has `thinking` blocks before `text` blocks; read only `type === "text"`.
 - **Never send `temperature`, `top_p` or `top_k`.** They return 400 under the current API version.
 - Structured output: `output_config: { format: { type: "json_schema", schema } }`. No beta header. The JSON is a string inside a `text` block. `stop_reason` `"refusal"` or `"max_tokens"` means the output may not match.
-  - `[UNVERIFIED]` whether `format` works together with adaptive thinking.
-- Headers: `x-api-key`, `anthropic-version: 2023-06-01`, `content-type: application/json`.
-  - `[UNVERIFIED]` whether `anthropic-dangerous-direct-browser-access: true` is required or accepted for extension-origin requests. Send it unless the spike shows a rejection.
+  - Spike: `format` works together with adaptive thinking (Sonnet and Opus). Without `format`, Sonnet wraps the JSON in a ```` ```json ```` fence.
+- Headers (sent by the native host, never by the browser): `x-api-key`, `anthropic-version: 2023-06-01`, `content-type: application/json`, and `anthropic-workspace-id`.
+  - The user's key (`~/.config/anthropic/api-key`, `sk-ant-usr-...`) is not workspace-scoped. Without `anthropic-workspace-id` the API returns 400 `"This API key is not scoped to a workspace..."`. The ID is `workspace_id` in `~/.config/anthropic/configs/default.json`.
+  - The host sends no `Origin` and no `anthropic-dangerous-direct-browser-access` header.
 - Errors:
   - 429 `rate_limit_error` carries a `retry-after` header in seconds. The exception is a 429 with `error.details.error_code === "enforced_spend_limit_reached"`: no `retry-after`, do not retry.
   - 529 `overloaded_error`: retry with backoff.
@@ -40,14 +41,20 @@ Use these exactly. Items marked `[UNVERIFIED]` are settled by the Task 2 spike b
 - Extension service workers support static `import` and `importScripts()`, but **not** dynamic `import()` (developer.chrome.com, service worker basics). `background.js` uses static imports only.
 - `runtime.onMessage` listener may `return true` and call `sendResponse` later (runtime API reference).
 - `web_accessible_resources` entries take `resources`, `matches` and optional `use_dynamic_url` (manifest reference).
-- `[UNVERIFIED]` dynamic `import(chrome.runtime.getURL(...))` from a content script. Widely used, but not in the fetched docs. Task 12 Step 4 confirms it before Sprint 4.
+- Native messaging (developer.chrome.com, native messaging):
+  - User-level host manifest on Linux for Google Chrome: `~/.config/google-chrome/NativeMessagingHosts/<name>.json`. `path` must be absolute. `allowed_origins` lists `chrome-extension://<id>/`.
+  - Host names may contain only lowercase alphanumerics, `_` and `.`.
+  - Each message is UTF-8 JSON preceded by a 32-bit length in native byte order, on stdin/stdout. Host to Chrome: max 1 MB per message. Chrome to host: max 64 MiB. Debug output goes to stderr, never stdout.
+  - `runtime.connectNative()` starts the host and keeps it running until the port closes. An open native port keeps the service worker alive (Chrome 105+), so long API calls are not cut off by the 30 s fetch rule.
+  - Common errors: "Specified native messaging host not found", "Access to the specified native messaging host is forbidden" (origin not in `allowed_origins`), "Native host has exited".
+- `[UNVERIFIED]` dynamic `import(chrome.runtime.getURL(...))` from a content script. Widely used, but not in the fetched docs. Task 14 Step 6 confirms it before Sprint 4.
 - jsdom: `new JSDOM(html).window.document`. jsdom does **not** implement `innerText` (its WebIDL comments it out), so readers fall back to `textContent`.
 
 ## Request profiles
 
 | Profile | Model (default) | thinking | effort | max_tokens |
 |---|---|---|---|---|
-| `incoming` | `claude-sonnet-5-5` | `between_tools` (Sonnet) / `adaptive` (Opus) | `low` | 4096 |
+| `incoming` | `claude-sonnet-5-5` | `between_tools` (Sonnet) / `adaptive` (Opus) | `low` | 8192 |
 | `outgoing` | `claude-sonnet-5-5` | `adaptive` | `medium` | 16000 |
 | `hard` (`Alt+Enter`) | `claude-opus-5-5` | `adaptive` | `high` | 32000 |
 | `memo` | same as `outgoing` | `adaptive` | `medium` | 16000 |
@@ -58,22 +65,29 @@ Use these exactly. Items marked `[UNVERIFIED]` are settled by the Task 2 spike b
 ig-translate/
   manifest.json
   package.json
+  host/
+    ig_translate_host.py     native messaging host: framing, key/workspace from disk, urllib call
+    test_host.py             Python unit tests for the host
+    install.sh               writes the Chrome host manifest for a given extension ID
   src/
-    background.js            service worker: message router, storage, API calls, badge
+    background.js            service worker: message router, storage, API calls via native host, badge
     lib/lang.js              Hangul checks, language routing
     lib/keys.js              storage keys, hashing, defaults, pruning
     lib/prompts.js           system prompts, schemas, request builders, response parsers
-    lib/api.js               fetch wrapper: headers, retry/backoff, error kinds, parse-retry
+    lib/api.js               transport-agnostic API client: retry/backoff, error kinds, parse-retry
+    lib/native.js            native messaging transport: one long-lived port, id-matched replies
     lib/preview.js           outgoing preview state machine (pure reducer)
     lib/classify.js          past vs new classification of bubbles
     content/loader.js        classic content script; dynamic-imports main.js
-    content/main.js          per-thread wiring: observer, incoming, outgoing, panel
+    content/main.js          per-thread wiring: observer, incoming, hooks, banners
     content/selectors.js     every Instagram selector (filled from the Task 3 spike)
     content/dom.js           read bubbles, render translations, composer get/set
     content/panel.js         thread panel (shadow DOM)
+    content/outgoing.js      composer key interception and preview UI
     content/style.css        injected styles
-    options/options.html
-    options/options.js
+  options/
+    options.html             models and per-thread defaults (no API key)
+    options.js
   scripts/
     spike-api.mjs            Task 2
     spike-ime.html           Task 3
@@ -84,18 +98,22 @@ ig-translate/
     *.test.js
     fixtures/thread.html     sanitized Instagram snapshot (Task 3)
   docs/
-    spike-notes.md           Task 2 and Task 3 findings
+    spike-notes.md           spike and live-check findings
 ```
 
-Commit messages follow `type: summary` and end with the `Co-Authored-By` line from the session's attribution reminder. Run `npm test` before every commit after Task 1.
+Commit messages follow `type: summary` and end with the `Co-Authored-By` line from the session's attribution reminder. Run `npm test` before every commit after Task 1. After Task 10, also run `python3 -I host/test_host.py`.
 
 **Do not push this repo anywhere.** It holds a (sanitized) Instagram DOM snapshot and is personal.
+
+**Never print the API key** in any command output. Read it only inside commands, for example `ANTHROPIC_API_KEY="$(cat ~/.config/anthropic/api-key)"`.
 
 ---
 
 # Sprint 1: Scaffold and spikes
 
 ### Task 1: Scaffold
+
+Done (commit `3306410`). Task 11 later adds the `nativeMessaging` permission and drops the API host permission.
 
 **Files:**
 - Create: `package.json`, `manifest.json`, `.gitignore`, `tests/smoke.test.js`
@@ -188,6 +206,8 @@ git commit -m "chore: scaffold MV3 extension and test runner"
 ---
 
 ### Task 2: API spike
+
+**Result (done, commit `9696525`):** see `docs/spike-notes.md`. `format` + adaptive thinking works, Opus rejects `between_tools`, this key needs `anthropic-workspace-id`, and the organization rejects browser-origin requests even with the browser-access header. That last finding is why the API path is the native host (Tasks 10 and 11). The committed script also sends `anthropic-workspace-id` from `ANTHROPIC_WORKSPACE_ID`.
 
 Settles the `[UNVERIFIED]` items. Needs a real key in `ANTHROPIC_API_KEY`. Ask the user to export it in their shell. Never write the key to a file.
 
@@ -318,7 +338,7 @@ This is a local page, so a test keypress cannot send anything.
 
 Ask the user to open `file:///home/cyan/projects/ig-translate/scripts/spike-ime.html` and type `안녕` with the system Korean IME. They press Enter while `녕` is still composing, then type `하이` and press Enter after the composition is committed (for example after a space). Copy the log into `docs/spike-notes.md` under `## IME Enter`.
 
-The question to answer: when Enter is pressed mid-composition, does Chrome fire one keydown (`isComposing=true`), or that plus a second keydown with `isComposing=false`? Task 18's handler covers both cases. Record which one happens.
+The question to answer: when Enter is pressed mid-composition, does Chrome fire one keydown (`isComposing=true`), or that plus a second keydown with `isComposing=false`? Task 20's handler covers both cases. Record which one happens.
 
 **Step 3: Find the selectors on the live page**
 
@@ -359,7 +379,7 @@ el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true,
 
 Record which method works. If neither works, stop and report BLOCKED.
 
-The `javascript_tool` runs in the page's main world; the extension's content script runs in an isolated world. Both share the DOM, and `execCommand` produces real input events, so a pass here carries over. Task 17's live check confirms it from the isolated world.
+The `javascript_tool` runs in the page's main world; the extension's content script runs in an isolated world. Both share the DOM, and `execCommand` produces real input events, so a pass here carries over. Task 19's live check confirms it from the isolated world.
 
 **Step 5: Sanitized snapshot**
 
@@ -393,11 +413,11 @@ In `docs/spike-notes.md`, record the expected values for the snapshot:
 - number of message rows
 - for each row: me/partner, and whether it has a text element
 
-Task 13 asserts these values.
+Task 15 asserts these values.
 
 **Step 6: Fill in `selectors.js` placeholders in this plan**
 
-Edit Task 13 in this plan file, replacing the `__FILL__` markers with the strings found here.
+Edit Task 15 in this plan file, replacing the `__FILL__` markers with the strings found here.
 
 **Step 7: Commit**
 
@@ -566,6 +586,10 @@ test('sentKey', async () => {
   assert.notEqual(a, await sentKey('t1', 'see you!'));
 });
 
+test('sentKey ignores whitespace differences', async () => {
+  assert.equal(await sentKey('t1', ' see  you\n'), await sentKey('t1', 'see you'));
+});
+
 test('expiredKeys only prunes old c: and s: entries', () => {
   const now = 1_000_000_000_000;
   const all = {
@@ -600,7 +624,6 @@ Expected: FAIL, module not found.
 export const PRUNE_MS = 90 * 24 * 60 * 60 * 1000;
 
 export const DEFAULT_SETTINGS = {
-  apiKey: '',
   models: {
     incoming: 'claude-sonnet-5-5',
     outgoing: 'claude-sonnet-5-5',
@@ -631,8 +654,9 @@ export async function cacheKey(threadId, text, otherTarget) {
   return 'c:' + (await sha256hex(JSON.stringify([threadId, text, otherTarget])));
 }
 
+// Whitespace-normalized: composer text at send time and bubble text read later must hash the same.
 export async function sentKey(threadId, text) {
-  return 's:' + (await sha256hex(JSON.stringify([threadId, text])));
+  return 's:' + (await sha256hex(JSON.stringify([threadId, text.replace(/\s+/g, ' ').trim()])));
 }
 
 export function expiredKeys(all, now) {
@@ -645,7 +669,7 @@ export function expiredKeys(all, now) {
 **Step 4: Run, expect PASS**
 
 Run: `node --test tests/keys.test.js`
-Expected: 6 tests PASS.
+Expected: 7 tests PASS.
 
 **Step 5: Commit**
 
@@ -657,6 +681,13 @@ git commit -m "feat: storage keys, hashing, defaults, pruning"
 ---
 
 ### Task 6: `api.js`
+
+The client does not know how a request travels. It takes a `transport(body)` that resolves to `{status, retry_after, body}`. In the extension, the transport is the native host (Task 11). In Node scripts, it is a small `fetch` wrapper (Task 22).
+
+`status: 0` is the host's code for a local failure. `body.error.type` says which:
+- `host_config` (key or workspace file unreadable): kind `auth`
+- `host_network` (DNS, connection, timeout): kind `network`
+- anything else: kind `host`
 
 **Files:**
 - Create: `src/lib/api.js`
@@ -670,85 +701,83 @@ import assert from 'node:assert/strict';
 import { callClaude, callJson, ApiError } from '../src/lib/api.js';
 
 const noSleep = async () => {};
-function fakeFetch(responses) {
+function fakeTransport(responses) {
   const calls = [];
-  const fn = async (url, init) => {
-    calls.push({ url, init });
+  const fn = async (body) => {
+    calls.push(body);
     const r = responses.shift();
     if (r instanceof Error) throw r;
-    return {
-      ok: r.status >= 200 && r.status < 300,
-      status: r.status,
-      headers: new Map(Object.entries(r.headers || {})),
-      json: async () => r.body,
-    };
+    return { status: r.status, retry_after: r.retry_after ?? null, body: r.body ?? {} };
   };
   fn.calls = calls;
   return fn;
 }
 
-test('sends required headers and no sampling params', async () => {
-  const f = fakeFetch([{ status: 200, body: { content: [] } }]);
-  await callClaude({ model: 'm' }, 'KEY', { fetchImpl: f, sleep: noSleep });
-  const h = f.calls[0].init.headers;
-  assert.equal(h['x-api-key'], 'KEY');
-  assert.equal(h['anthropic-version'], '2023-06-01');
-  assert.equal(h['anthropic-dangerous-direct-browser-access'], 'true');
-  const body = JSON.parse(f.calls[0].init.body);
-  assert.equal('temperature' in body, false);
-});
-
-test('missing key throws nokey without calling fetch', async () => {
-  const f = fakeFetch([]);
-  await assert.rejects(callClaude({}, '', { fetchImpl: f, sleep: noSleep }), (e) => e.kind === 'nokey');
-  assert.equal(f.calls.length, 0);
+test('passes the body through unchanged and returns the response body', async () => {
+  const t = fakeTransport([{ status: 200, body: { content: [] } }]);
+  const r = await callClaude({ model: 'm' }, { transport: t, sleep: noSleep });
+  assert.deepEqual(t.calls[0], { model: 'm' });
+  assert.deepEqual(r, { content: [] });
 });
 
 test('retries 529 twice then fails as overloaded', async () => {
-  const f = fakeFetch([{ status: 529, body: {} }, { status: 529, body: {} }, { status: 529, body: {} }]);
-  await assert.rejects(callClaude({}, 'K', { fetchImpl: f, sleep: noSleep }), (e) => e.kind === 'overloaded');
-  assert.equal(f.calls.length, 3);
+  const t = fakeTransport([{ status: 529 }, { status: 529 }, { status: 529 }]);
+  await assert.rejects(callClaude({}, { transport: t, sleep: noSleep }), (e) => e.kind === 'overloaded');
+  assert.equal(t.calls.length, 3);
 });
 
-test('429 honours retry-after then succeeds', async () => {
+test('429 honours retry_after then succeeds', async () => {
   const waits = [];
-  const f = fakeFetch([{ status: 429, headers: { 'retry-after': '3' }, body: {} }, { status: 200, body: { ok: 1 } }]);
-  const r = await callClaude({}, 'K', { fetchImpl: f, sleep: async (ms) => waits.push(ms) });
+  const t = fakeTransport([{ status: 429, retry_after: '3' }, { status: 200, body: { ok: 1 } }]);
+  const r = await callClaude({}, { transport: t, sleep: async (ms) => waits.push(ms) });
   assert.deepEqual(r, { ok: 1 });
   assert.deepEqual(waits, [3000]);
 });
 
 test('spend-limit 429 does not retry', async () => {
-  const f = fakeFetch([{ status: 429, body: { error: { message: 'cap', details: { error_code: 'enforced_spend_limit_reached' } } } }]);
-  await assert.rejects(callClaude({}, 'K', { fetchImpl: f, sleep: noSleep }), (e) => e.kind === 'spend_limit');
-  assert.equal(f.calls.length, 1);
+  const t = fakeTransport([{ status: 429, body: { error: { message: 'cap', details: { error_code: 'enforced_spend_limit_reached' } } } }]);
+  await assert.rejects(callClaude({}, { transport: t, sleep: noSleep }), (e) => e.kind === 'spend_limit');
+  assert.equal(t.calls.length, 1);
 });
 
 test('401 is auth, no retry', async () => {
-  const f = fakeFetch([{ status: 401, body: { error: { message: 'bad key' } } }]);
-  await assert.rejects(callClaude({}, 'K', { fetchImpl: f, sleep: noSleep }), (e) => e.kind === 'auth' && e.message === 'bad key');
-  assert.equal(f.calls.length, 1);
+  const t = fakeTransport([{ status: 401, body: { error: { message: 'bad key' } } }]);
+  await assert.rejects(callClaude({}, { transport: t, sleep: noSleep }), (e) => e.kind === 'auth' && e.message === 'bad key');
+  assert.equal(t.calls.length, 1);
 });
 
-test('network error retries then fails as network', async () => {
-  const f = fakeFetch([new TypeError('x'), new TypeError('x'), new TypeError('x')]);
-  await assert.rejects(callClaude({}, 'K', { fetchImpl: f, sleep: noSleep }), (e) => e.kind === 'network');
-  assert.equal(f.calls.length, 3);
+test('status 0 host_config is auth, no retry', async () => {
+  const t = fakeTransport([{ status: 0, body: { error: { type: 'host_config', message: 'cannot read API key config' } } }]);
+  await assert.rejects(callClaude({}, { transport: t, sleep: noSleep }), (e) => e.kind === 'auth' && /API key/.test(e.message));
+  assert.equal(t.calls.length, 1);
+});
+
+test('status 0 host_network retries then fails as network', async () => {
+  const net = { status: 0, body: { error: { type: 'host_network', message: 'down' } } };
+  const t = fakeTransport([net, { ...net }, { ...net }]);
+  await assert.rejects(callClaude({}, { transport: t, sleep: noSleep }), (e) => e.kind === 'network');
+  assert.equal(t.calls.length, 3);
+});
+
+test('transport rejection retries then fails as host', async () => {
+  const t = fakeTransport([new ApiError('host', 'gone'), new ApiError('host', 'gone'), new ApiError('host', 'gone')]);
+  await assert.rejects(callClaude({}, { transport: t, sleep: noSleep }), (e) => e.kind === 'host' && e.message === 'gone');
+  assert.equal(t.calls.length, 3);
 });
 
 test('callJson re-requests once on parse error', async () => {
-  const f = fakeFetch([{ status: 200, body: { n: 1 } }, { status: 200, body: { n: 2 } }]);
+  const t = fakeTransport([{ status: 200, body: { n: 1 } }, { status: 200, body: { n: 2 } }]);
   let seen = 0;
   const parse = (resp) => { seen++; if (resp.n === 1) throw new ApiError('parse', 'bad'); return resp.n; };
-  assert.equal(await callJson({}, 'K', parse, { fetchImpl: f, sleep: noSleep }), 2);
+  assert.equal(await callJson({}, parse, { transport: t, sleep: noSleep }), 2);
   assert.equal(seen, 2);
 });
 
 test('callJson gives up after second parse error', async () => {
-  const f = fakeFetch([{ status: 200, body: {} }, { status: 200, body: {} }]);
+  const t = fakeTransport([{ status: 200 }, { status: 200 }]);
   const parse = () => { throw new ApiError('parse', 'bad'); };
-  await assert.rejects(callJson({}, 'K', parse, { fetchImpl: f, sleep: noSleep }), (e) => e.kind === 'parse');
-  assert.equal(f.calls.length, 2);
+  await assert.rejects(callJson({}, parse, { transport: t, sleep: noSleep }), (e) => e.kind === 'parse');
+  assert.equal(t.calls.length, 2);
 });
 ```
 
@@ -760,9 +789,7 @@ Expected: FAIL, module not found.
 **Step 3: Implement `src/lib/api.js`**
 
 ```js
-export const API_URL = 'https://api.anthropic.com/v1/messages';
-
-// kind: nokey | auth | spend_limit | rate | overloaded | server | bad_request | network | refused | parse
+// kind: auth | host | spend_limit | rate | overloaded | server | bad_request | network | refused | parse
 export class ApiError extends Error {
   constructor(kind, message, status) {
     super(message);
@@ -771,11 +798,17 @@ export class ApiError extends Error {
   }
 }
 
-const RETRYABLE = new Set(['rate', 'overloaded', 'server', 'network']);
+const RETRYABLE = new Set(['rate', 'overloaded', 'server', 'network', 'host']);
 const backoff = (attempt) => 1000 * 2 ** attempt;
 const realSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function classify(status, body) {
+  if (status === 0) {
+    const t = body?.error?.type;
+    if (t === 'host_config') return 'auth';
+    if (t === 'host_network') return 'network';
+    return 'host';
+  }
   if (status === 401 || status === 403) return 'auth';
   if (status === 429) {
     return body?.error?.details?.error_code === 'enforced_spend_limit_reached' ? 'spend_limit' : 'rate';
@@ -785,59 +818,51 @@ function classify(status, body) {
   return 'bad_request';
 }
 
-export async function callClaude(body, apiKey, { fetchImpl = fetch, sleep = realSleep, retries = 2, timeoutMs = 90000 } = {}) {
-  if (!apiKey) throw new ApiError('nokey', 'No API key set');
+// transport(body) resolves to { status, retry_after, body } or rejects (ApiError 'host' on port failure).
+export async function callClaude(body, { transport, sleep = realSleep, retries = 2 } = {}) {
   for (let attempt = 0; ; attempt++) {
     let res;
     try {
-      res = await fetchImpl(API_URL, {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(timeoutMs),
-      });
+      res = await transport(body);
     } catch (e) {
-      if (attempt < retries) { await sleep(backoff(attempt)); continue; }
-      throw new ApiError('network', String(e?.message || e));
+      const err = e instanceof ApiError ? e : new ApiError('host', String(e?.message || e));
+      if (RETRYABLE.has(err.kind) && attempt < retries) { await sleep(backoff(attempt)); continue; }
+      throw err;
     }
-    if (res.ok) return res.json();
-    const errBody = await res.json().catch(() => ({}));
-    const kind = classify(res.status, errBody);
+    if (res.status >= 200 && res.status < 300) return res.body;
+    const kind = classify(res.status, res.body);
     if (RETRYABLE.has(kind) && attempt < retries) {
-      const ra = Number(res.headers.get('retry-after'));
+      const ra = Number(res.retry_after);
       await sleep(ra > 0 ? ra * 1000 : backoff(attempt));
       continue;
     }
-    throw new ApiError(kind, errBody?.error?.message || `HTTP ${res.status}`, res.status);
+    throw new ApiError(kind, res.body?.error?.message || `HTTP ${res.status}`, res.status);
   }
 }
 
 // parse(resp) returns the value or throws ApiError('parse'). One re-request on parse failure.
-export async function callJson(body, apiKey, parse, opts) {
+export async function callJson(body, parse, opts) {
   try {
-    return parse(await callClaude(body, apiKey, opts));
+    return parse(await callClaude(body, opts));
   } catch (e) {
     if (e.kind !== 'parse') throw e;
-    return parse(await callClaude(body, apiKey, opts));
+    return parse(await callClaude(body, opts));
   }
 }
 ```
 
+`Number(null)` is `0` and `Number(undefined)` is `NaN`, so a missing `retry_after` falls back to exponential backoff.
+
 **Step 4: Run, expect PASS**
 
 Run: `node --test tests/api.test.js`
-Expected: 9 tests PASS.
+Expected: 10 tests PASS.
 
 **Step 5: Commit**
 
 ```bash
 git add src/lib/api.js tests/api.test.js
-git commit -m "feat: API client with retry, backoff, error kinds"
+git commit -m "feat: transport-agnostic API client with retry, backoff, error kinds"
 ```
 
 ---
@@ -937,9 +962,9 @@ Expected: FAIL, module not found.
 import { ApiError } from './api.js';
 import { langName } from './lang.js';
 
-// useFormat: set false for a profile if the Task 2 spike showed format + adaptive thinking fails.
+// useFormat: the Task 2 spike confirmed format works with adaptive thinking; false is only a fallback switch.
 export const PROFILES = {
-  incoming: { thinkingOff: true, effort: 'low', max_tokens: 4096, useFormat: true },
+  incoming: { thinkingOff: true, effort: 'low', max_tokens: 8192, useFormat: true },
   outgoing: { thinkingOff: false, effort: 'medium', max_tokens: 16000, useFormat: true },
   hard: { thinkingOff: false, effort: 'high', max_tokens: 32000, useFormat: true },
   memo: { thinkingOff: false, effort: 'medium', max_tokens: 16000, useFormat: true },
@@ -1092,9 +1117,9 @@ export function parseMemo(resp) {
 Run: `node --test tests/prompts.test.js`
 Expected: 8 tests PASS.
 
-**Step 5: Apply the Task 2 decision gate**
+**Step 5: Task 2 decision gate**
 
-If the spike recorded that format + adaptive fails, set `useFormat: false` on `outgoing`, `hard` and `memo` now, then re-run the tests. Add one test asserting `output_config.format` is absent for `outgoing` in that case.
+The spike showed `format` works with adaptive thinking, so `useFormat` stays `true` on every profile. Nothing to change.
 
 **Step 6: Commit**
 
@@ -1116,13 +1141,17 @@ State: `{ mode: 'idle' | 'translating' | 'preview', korean, profile, lang, reqId
 - `{ type: 'pass' }`: let the key event through
 - `{ type: 'block' }`: preventDefault and do nothing
 - `{ type: 'translate', reqId, korean, profile, lang }`: call the background
-- `{ type: 'show', translation, back_translation, profile, lang }`: write the translation into the composer
-- `{ type: 'restore', korean }`: write the Korean back into the composer
+- `{ type: 'show', translation, back_translation, profile, lang, model }`: write the translation into the composer
+- `{ type: 'restore', korean }`: write the Korean back into the composer and hide the note
 - `{ type: 'sent', korean }`: let Enter through and record the sent message
-- `{ type: 'fail', message }`: show the error, composer untouched
+- `{ type: 'fail', message, korean }`: put the Korean back if the composer holds something else, then show the error
 - `{ type: 'none' }`
 
 `lang: null` in a translate effect means "resolve from the thread".
+
+Rules beyond the obvious:
+- Enter in `preview` with Hangul in the composer means the user wrote a new Korean draft (cleared the box, or Instagram's Send button already sent the old preview). It starts a **new** translation of that text, never a send. The one exception is a Korean target (`lang === 'ko'`), where Hangul is the expected output.
+- `fail` and Esc while `translating` both carry the Korean original back, so a failed or cancelled re-translate from preview never leaves a stale translation in the composer.
 
 **Step 1: Write the failing test**
 
@@ -1136,6 +1165,13 @@ const run = (events, s = initial()) => {
   for (const e of events) { const r = reduce(s, e); s = r.state; effects.push(r.effect); }
   return { s, effects };
 };
+
+// idle -> translating -> preview for `korean`, returns the preview state
+function toPreview(korean, { hard = false, lang = 'en' } = {}) {
+  const a = reduce(initial(), { type: 'enter', text: korean, hard });
+  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId, translation: 'T', back_translation: korean, lang, model: 'claude-sonnet-5-5' });
+  return b.state;
+}
 
 test('non-Hangul Enter passes through', () => {
   const { s, effects } = run([{ type: 'enter', text: 'hello', hard: false }]);
@@ -1156,11 +1192,11 @@ test('Hangul Enter starts translation; second Enter while pending is blocked', (
   assert.deepEqual(effects[1], { type: 'block' });
 });
 
-test('result shows preview, Enter sends with Korean original', () => {
+test('result shows preview with model; Enter sends with Korean original', () => {
   const a = reduce(initial(), { type: 'enter', text: '내일 봐', hard: false });
-  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId, translation: 'see u tmrw', back_translation: '내일 봐', lang: 'en' });
+  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId, translation: 'see u tmrw', back_translation: '내일 봐', lang: 'en', model: 'claude-sonnet-5-5' });
   assert.equal(b.state.mode, 'preview');
-  assert.equal(b.effect.type, 'show');
+  assert.deepEqual(b.effect, { type: 'show', translation: 'see u tmrw', back_translation: '내일 봐', profile: 'outgoing', lang: 'en', model: 'claude-sonnet-5-5' });
   const c = reduce(b.state, { type: 'enter', text: 'see u tmrw!', hard: false });
   assert.equal(c.state.mode, 'idle');
   assert.deepEqual(c.effect, { type: 'sent', korean: '내일 봐' });
@@ -1168,7 +1204,7 @@ test('result shows preview, Enter sends with Korean original', () => {
 
 test('stale result is ignored', () => {
   const a = reduce(initial(), { type: 'enter', text: '가자', hard: false });
-  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId + 99, translation: 'x', back_translation: 'y', lang: 'en' });
+  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId + 99, translation: 'x', back_translation: 'y', lang: 'en', model: 'm' });
   assert.equal(b.state.mode, 'translating');
   assert.deepEqual(b.effect, { type: 'none' });
 });
@@ -1179,9 +1215,8 @@ test('Alt+Enter outside preview uses hard profile', () => {
 });
 
 test('Alt+Enter inside preview re-translates stored Korean with hard', () => {
-  const a = reduce(initial(), { type: 'enter', text: '가자', hard: false });
-  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId, translation: "let's go", back_translation: '가자', lang: 'en' });
-  const c = reduce(b.state, { type: 'enter', text: "let's go (edited)", hard: true });
+  const p = toPreview('가자');
+  const c = reduce(p, { type: 'enter', text: "let's go (edited)", hard: true });
   assert.equal(c.state.mode, 'translating');
   assert.equal(c.effect.type, 'translate');
   assert.equal(c.effect.korean, '가자');
@@ -1189,10 +1224,26 @@ test('Alt+Enter inside preview re-translates stored Korean with hard', () => {
   assert.equal(c.effect.lang, 'en');
 });
 
+test('Hangul Enter in preview starts a new translation of the new text', () => {
+  const p = toPreview('가자');
+  const c = reduce(p, { type: 'enter', text: '밥 먹자', hard: false });
+  assert.equal(c.state.mode, 'translating');
+  assert.equal(c.state.korean, '밥 먹자');
+  assert.equal(c.effect.type, 'translate');
+  assert.equal(c.effect.korean, '밥 먹자');
+  assert.equal(c.effect.profile, 'outgoing');
+  assert.equal(c.effect.lang, null);
+});
+
+test('Hangul Enter in preview with a Korean target sends', () => {
+  const p = toPreview('가자', { lang: 'ko' });
+  const c = reduce(p, { type: 'enter', text: '가자고', hard: false });
+  assert.deepEqual(c.effect, { type: 'sent', korean: '가자' });
+});
+
 test('language change in preview re-translates with same profile', () => {
-  const a = reduce(initial(), { type: 'enter', text: '가자', hard: true });
-  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId, translation: "let's go", back_translation: '가자', lang: 'en' });
-  const c = reduce(b.state, { type: 'lang', lang: 'ru' });
+  const p = toPreview('가자', { hard: true });
+  const c = reduce(p, { type: 'lang', lang: 'ru' });
   assert.equal(c.effect.type, 'translate');
   assert.equal(c.effect.profile, 'hard');
   assert.equal(c.effect.lang, 'ru');
@@ -1200,28 +1251,33 @@ test('language change in preview re-translates with same profile', () => {
 });
 
 test('Esc in preview restores Korean', () => {
-  const a = reduce(initial(), { type: 'enter', text: '가자', hard: false });
-  const b = reduce(a.state, { type: 'result', reqId: a.effect.reqId, translation: 'go', back_translation: '가자', lang: 'en' });
-  const c = reduce(b.state, { type: 'esc' });
+  const c = reduce(toPreview('가자'), { type: 'esc' });
   assert.equal(c.state.mode, 'idle');
   assert.deepEqual(c.effect, { type: 'restore', korean: '가자' });
 });
 
-test('Esc while translating cancels; late result ignored', () => {
+test('Esc while translating restores Korean; late result ignored', () => {
   const a = reduce(initial(), { type: 'enter', text: '가자', hard: false });
   const b = reduce(a.state, { type: 'esc' });
   assert.equal(b.state.mode, 'idle');
-  assert.deepEqual(b.effect, { type: 'none' });
-  const c = reduce(b.state, { type: 'result', reqId: a.effect.reqId, translation: 'go', back_translation: '가자', lang: 'en' });
+  assert.deepEqual(b.effect, { type: 'restore', korean: '가자' });
+  const c = reduce(b.state, { type: 'result', reqId: a.effect.reqId, translation: 'go', back_translation: '가자', lang: 'en', model: 'm' });
   assert.equal(c.state.mode, 'idle');
   assert.deepEqual(c.effect, { type: 'none' });
 });
 
-test('failure returns to idle with Korean intact', () => {
+test('failure returns to idle and carries the Korean', () => {
   const a = reduce(initial(), { type: 'enter', text: '가자', hard: false });
   const b = reduce(a.state, { type: 'fail', reqId: a.effect.reqId, message: 'overloaded' });
   assert.equal(b.state.mode, 'idle');
-  assert.deepEqual(b.effect, { type: 'fail', message: 'overloaded' });
+  assert.deepEqual(b.effect, { type: 'fail', message: 'overloaded', korean: '가자' });
+});
+
+test('failed re-translate from preview still carries the Korean', () => {
+  const p = toPreview('가자');
+  const c = reduce(p, { type: 'enter', text: 'T', hard: true });
+  const d = reduce(c.state, { type: 'fail', reqId: c.effect.reqId, message: 'host' });
+  assert.deepEqual(d.effect, { type: 'fail', message: 'host', korean: '가자' });
 });
 
 test('Esc in idle passes; reset always returns idle', () => {
@@ -1259,6 +1315,7 @@ export function reduce(s, e) {
       const profile = e.hard ? 'hard' : 'outgoing';
       if (s.mode === 'translating') return { state: s, effect: { type: 'block' } };
       if (s.mode === 'preview') {
+        if (hasHangul(e.text) && s.lang !== 'ko') return translate(s, e.text, profile, null); // new draft
         if (e.hard) return translate(s, s.korean, 'hard', s.lang);
         return { state: idle(s), effect: { type: 'sent', korean: s.korean } };
       }
@@ -1269,17 +1326,21 @@ export function reduce(s, e) {
       if (s.mode !== 'translating' || e.reqId !== s.reqId) return { state: s, effect: { type: 'none' } };
       return {
         state: { ...s, mode: 'preview', lang: e.lang },
-        effect: { type: 'show', translation: e.translation, back_translation: e.back_translation, profile: s.profile, lang: e.lang },
+        effect: {
+          type: 'show', translation: e.translation, back_translation: e.back_translation,
+          profile: s.profile, lang: e.lang, model: e.model,
+        },
       };
     case 'fail':
       if (s.mode !== 'translating' || e.reqId !== s.reqId) return { state: s, effect: { type: 'none' } };
-      return { state: idle(s), effect: { type: 'fail', message: e.message } };
+      return { state: idle(s), effect: { type: 'fail', message: e.message, korean: s.korean } };
     case 'lang':
       if (s.mode !== 'preview') return { state: s, effect: { type: 'none' } };
       return translate(s, s.korean, s.profile, e.lang);
     case 'esc':
-      if (s.mode === 'preview') return { state: idle(s), effect: { type: 'restore', korean: s.korean } };
-      if (s.mode === 'translating') return { state: idle(s), effect: { type: 'none' } };
+      if (s.mode === 'preview' || s.mode === 'translating') {
+        return { state: idle(s), effect: { type: 'restore', korean: s.korean } };
+      }
       return { state: s, effect: { type: 'pass' } };
     case 'reset':
       return { state: idle(s), effect: { type: 'none' } };
@@ -1294,7 +1355,7 @@ export function reduce(s, e) {
 **Step 4: Run, expect PASS**
 
 Run: `node --test tests/preview.test.js`
-Expected: 11 tests PASS.
+Expected: 14 tests PASS.
 
 **Step 5: Commit**
 
@@ -1369,9 +1430,526 @@ git commit -m "feat: classify added bubbles as past or fresh"
 
 ---
 
-# Sprint 3: Background and options
+# Sprint 3: Native host, background and options
 
-### Task 10: `background.js`
+### Task 10: Native messaging host (Python, TDD)
+
+The host is a stdlib-only Python 3 script. Chrome starts it when the background calls `connectNative`, and stops it when the port closes. There is no daemon, no port and no systemd unit.
+
+Protocol on stdin/stdout (UTF-8 JSON, each message preceded by a 4-byte length in native byte order):
+- request: `{id, body}`, where `body` is the Messages API request body
+- reply: `{id, status, retry_after, body}`
+  - `status` is the HTTP status
+  - `status: 0` means a local failure, with `body.error.type` set to `host_config` (key/workspace file unreadable), `host_network` (DNS, connection, timeout) or `host_error` (anything else)
+
+Rules:
+- The key and the workspace ID are read from disk on every request, so a rotated key is picked up without restarting anything.
+- The key is never logged or written to stdout or stderr. Error messages name the file and the exception type only.
+- Each request runs in its own thread. Writes to stdout are serialized with a lock, so replies never interleave.
+- A reply larger than 1 MB (Chrome's limit) becomes a `host_error` reply.
+
+**Files:**
+- Create: `host/ig_translate_host.py`, `host/test_host.py`
+
+**Step 1: Write the failing test `host/test_host.py`**
+
+```python
+import io
+import json
+import os
+import struct
+import sys
+import tempfile
+import unittest
+import urllib.error
+from unittest import mock
+
+# Run as `python3 -I host/test_host.py`. Isolated mode does not add the script dir to sys.path.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ig_translate_host as h  # noqa: E402
+
+
+def make_home(key='sk-ant-test-123', ws='wrkspc_test'):
+    d = tempfile.mkdtemp()
+    base = os.path.join(d, '.config', 'anthropic')
+    os.makedirs(os.path.join(base, 'configs'))
+    if key is not None:
+        with open(os.path.join(base, 'api-key'), 'w') as f:
+            f.write(key + '\n')
+    with open(os.path.join(base, 'configs', 'default.json'), 'w') as f:
+        json.dump({'workspace_id': ws}, f)
+    return d
+
+
+class FakeResp:
+    def __init__(self, status, body, headers=None):
+        self.status = status
+        self._b = json.dumps(body).encode()
+        self.headers = headers or {}
+
+    def read(self):
+        return self._b
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+class Framing(unittest.TestCase):
+    def test_round_trip(self):
+        msg = {'id': 7, 'body': {'text': '안녕 привет'}}
+        buf = io.BytesIO(h.encode_message(msg))
+        self.assertEqual(h.read_message(buf), msg)
+        self.assertIsNone(h.read_message(buf))
+
+    def test_length_is_utf8_byte_count(self):
+        data = h.encode_message({'t': '안'})
+        (n,) = struct.unpack('=I', data[:4])
+        self.assertEqual(n, len(data) - 4)
+
+    def test_write_message(self):
+        out = io.BytesIO()
+        h.write_message(out, {'id': 1})
+        out.seek(0)
+        self.assertEqual(h.read_message(out), {'id': 1})
+
+    def test_oversized_reply_becomes_host_error(self):
+        out = io.BytesIO()
+        h.write_message(out, {'id': 9, 'status': 200, 'body': {'x': 'a' * (h.MAX_REPLY + 1)}})
+        out.seek(0)
+        r = h.read_message(out)
+        self.assertEqual(r['id'], 9)
+        self.assertEqual(r['status'], 0)
+        self.assertEqual(r['body']['error']['type'], 'host_error')
+
+
+class Headers(unittest.TestCase):
+    def test_reads_key_and_workspace(self):
+        hd = h.build_headers(make_home())
+        self.assertEqual(hd['x-api-key'], 'sk-ant-test-123')
+        self.assertEqual(hd['anthropic-workspace-id'], 'wrkspc_test')
+        self.assertEqual(hd['anthropic-version'], '2023-06-01')
+        self.assertEqual(hd['content-type'], 'application/json')
+        names = {k.lower() for k in hd}
+        self.assertNotIn('origin', names)
+        self.assertNotIn('anthropic-dangerous-direct-browser-access', names)
+
+    def test_workspace_optional(self):
+        hd = h.build_headers(make_home(ws=None))
+        self.assertNotIn('anthropic-workspace-id', hd)
+
+
+class Handle(unittest.TestCase):
+    def test_missing_key_file(self):
+        op = mock.Mock()
+        r = h.handle({'id': 3, 'body': {}}, make_home(key=None), urlopen=op)
+        self.assertEqual(r['id'], 3)
+        self.assertEqual(r['status'], 0)
+        self.assertEqual(r['body']['error']['type'], 'host_config')
+        op.assert_not_called()
+
+    def test_success(self):
+        op = mock.Mock(return_value=FakeResp(200, {'content': []}))
+        r = h.handle({'id': 1, 'body': {'model': 'm'}}, make_home(), urlopen=op)
+        self.assertEqual(r, {'id': 1, 'status': 200, 'retry_after': None, 'body': {'content': []}})
+        req = op.call_args[0][0]
+        self.assertEqual(req.full_url, h.API_URL)
+        self.assertEqual(req.get_method(), 'POST')
+        self.assertEqual(json.loads(req.data), {'model': 'm'})
+        self.assertEqual(req.get_header('X-api-key'), 'sk-ant-test-123')
+        self.assertEqual(op.call_args[1]['timeout'], 120)
+
+    def test_http_error_keeps_status_retry_after_and_body(self):
+        err = urllib.error.HTTPError(h.API_URL, 429, 'rate', {'retry-after': '3'},
+                                     io.BytesIO(b'{"error":{"message":"slow"}}'))
+        r = h.handle({'id': 2, 'body': {}}, make_home(), urlopen=mock.Mock(side_effect=err))
+        self.assertEqual(r['status'], 429)
+        self.assertEqual(r['retry_after'], '3')
+        self.assertEqual(r['body']['error']['message'], 'slow')
+
+    def test_network_error(self):
+        op = mock.Mock(side_effect=urllib.error.URLError('down'))
+        r = h.handle({'id': 4, 'body': {}}, make_home(), urlopen=op)
+        self.assertEqual(r['status'], 0)
+        self.assertEqual(r['body']['error']['type'], 'host_network')
+
+    def test_errors_never_contain_the_key(self):
+        op = mock.Mock(side_effect=urllib.error.URLError('down'))
+        for home in (make_home(key=None), make_home()):
+            r = h.handle({'id': 5, 'body': {}}, home, urlopen=op)
+            self.assertNotIn('sk-ant-test-123', json.dumps(r))
+
+    def test_safe_handle_catches_bad_request(self):
+        r = h.safe_handle({'id': 6}, make_home())
+        self.assertEqual(r['id'], 6)
+        self.assertEqual(r['status'], 0)
+        self.assertEqual(r['body']['error']['type'], 'host_error')
+
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+**Step 2: Run, expect FAIL**
+
+Run: `python3 -I host/test_host.py`
+Expected: `ModuleNotFoundError: No module named 'ig_translate_host'`.
+
+**Step 3: Implement `host/ig_translate_host.py`**
+
+```python
+#!/usr/bin/python3
+"""ig-translate native messaging host.
+
+Chrome sends {id, body} messages on stdin. Each body is sent to the Anthropic Messages API
+and the reply {id, status, retry_after, body} is written to stdout. Messages in both
+directions are UTF-8 JSON preceded by a 32-bit length in native byte order.
+The API key never leaves this process; nothing here logs it.
+"""
+import json
+import os
+import struct
+import sys
+import threading
+import urllib.error
+import urllib.request
+
+API_URL = 'https://api.anthropic.com/v1/messages'
+TIMEOUT_S = 120
+MAX_REPLY = 1024 * 1024  # Chrome rejects host messages larger than 1 MB
+
+_out_lock = threading.Lock()
+
+
+def read_message(stream):
+    raw = stream.read(4)
+    if len(raw) < 4:
+        return None
+    (n,) = struct.unpack('=I', raw)
+    data = stream.read(n)
+    if len(data) < n:
+        return None
+    return json.loads(data.decode('utf-8'))
+
+
+def encode_message(obj):
+    data = json.dumps(obj, ensure_ascii=False).encode('utf-8')
+    return struct.pack('=I', len(data)) + data
+
+
+def local_error(req_id, kind, message):
+    return {'id': req_id, 'status': 0, 'retry_after': None,
+            'body': {'error': {'type': kind, 'message': message}}}
+
+
+def write_message(stream, obj):
+    data = encode_message(obj)
+    if len(data) - 4 > MAX_REPLY:
+        data = encode_message(local_error(obj.get('id'), 'host_error', 'reply larger than 1 MB'))
+    with _out_lock:
+        stream.write(data)
+        stream.flush()
+
+
+def build_headers(home):
+    base = os.path.join(home, '.config', 'anthropic')
+    with open(os.path.join(base, 'api-key')) as f:
+        key = f.read().strip()
+    with open(os.path.join(base, 'configs', 'default.json')) as f:
+        workspace = json.load(f).get('workspace_id')
+    headers = {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+    }
+    if workspace:
+        headers['anthropic-workspace-id'] = workspace
+    return headers
+
+
+def handle(req, home, urlopen=urllib.request.urlopen):
+    req_id = req.get('id')
+    try:
+        headers = build_headers(home)
+    except (OSError, ValueError) as e:
+        where = getattr(e, 'filename', None) or '~/.config/anthropic'
+        return local_error(req_id, 'host_config', f'cannot read API key config ({type(e).__name__}: {where})')
+    request = urllib.request.Request(API_URL, data=json.dumps(req['body']).encode('utf-8'),
+                                     headers=headers, method='POST')
+    try:
+        with urlopen(request, timeout=TIMEOUT_S) as resp:
+            return {'id': req_id, 'status': resp.status,
+                    'retry_after': resp.headers.get('retry-after'), 'body': json.loads(resp.read())}
+    except urllib.error.HTTPError as e:
+        try:
+            body = json.loads(e.read())
+        except ValueError:
+            body = {}
+        return {'id': req_id, 'status': e.code, 'retry_after': e.headers.get('retry-after'), 'body': body}
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        reason = getattr(e, 'reason', None) or type(e).__name__
+        return local_error(req_id, 'host_network', f'network: {reason}')
+
+
+def safe_handle(req, home):
+    try:
+        return handle(req, home)
+    except Exception as e:  # never let one bad request kill the host
+        return local_error(req.get('id') if isinstance(req, dict) else None, 'host_error', type(e).__name__)
+
+
+def main():
+    home = os.path.expanduser('~')
+    stdin, stdout = sys.stdin.buffer, sys.stdout.buffer
+    while True:
+        try:
+            req = read_message(stdin)
+        except ValueError:
+            continue  # unparseable JSON has no id to reply to; the frame was consumed, keep reading
+        if req is None:
+            break  # Chrome closed the port
+        threading.Thread(target=lambda r=req: write_message(stdout, safe_handle(r, home)), daemon=True).start()
+
+
+if __name__ == '__main__':
+    main()
+```
+
+Hand-checked against the tests:
+- `HTTPError(url, code, msg, hdrs, fp)` with a dict `hdrs`: `e.headers` is that dict, so `.get('retry-after')` works.
+- `urllib.request.Request.get_header` looks names up as `str.capitalize()`, so `x-api-key` is stored as `X-api-key`.
+- `safe_handle({'id': 6})` raises `KeyError('body')` inside `handle`, which becomes a `host_error`.
+- `URLError('down').reason` is `'down'`.
+
+**Step 4: Run, expect PASS**
+
+Run: `python3 -I host/test_host.py`
+Expected: `Ran 12 tests`, `OK`.
+
+**Step 5: Write `host/install.sh`**
+
+```bash
+#!/usr/bin/env bash
+# Usage: host/install.sh <extension-id>
+# Registers the ig-translate native messaging host for the current user's Google Chrome.
+set -euo pipefail
+id="${1:?usage: host/install.sh <extension-id>}"
+[[ "$id" =~ ^[a-p]{32}$ ]] || { echo "not a Chrome extension id: $id" >&2; exit 1; }
+here="$(cd "$(dirname "$0")" && pwd)"
+host="$here/ig_translate_host.py"
+dir="$HOME/.config/google-chrome/NativeMessagingHosts"
+mkdir -p "$dir"
+chmod +x "$host"
+cat > "$dir/com.northprot.ig_translate.json" <<EOF
+{
+  "name": "com.northprot.ig_translate",
+  "description": "ig-translate Claude API bridge",
+  "path": "$host",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://$id/"]
+}
+EOF
+echo "installed $dir/com.northprot.ig_translate.json"
+```
+
+Run: `chmod +x host/install.sh && bash -n host/install.sh`
+Expected: no output (syntax OK). The real install happens in Task 14, once the extension ID is known.
+
+**Step 6: Commit**
+
+```bash
+git add host/
+git commit -m "feat: native messaging host for Claude API calls"
+```
+
+---
+
+### Task 11: Native transport in the extension
+
+**Files:**
+- Create: `src/lib/native.js`
+- Test: `tests/native.test.js`
+- Modify: `manifest.json`
+
+There is one long-lived port. Requests carry an increasing `id`, and replies resolve the matching pending promise. When the port disconnects, every pending request on that port is rejected with `ApiError('host', <chrome.runtime.lastError message>)`, and the next request opens a new port. A reply that never comes is rejected after 150 s, above the host's 120 s urllib timeout.
+
+**Step 1: Write the failing test**
+
+```js
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createNativeTransport } from '../src/lib/native.js';
+
+function fakePort() {
+  const msgL = [];
+  const discL = [];
+  return {
+    sent: [],
+    postMessage(m) { this.sent.push(m); },
+    onMessage: { addListener: (f) => msgL.push(f) },
+    onDisconnect: { addListener: (f) => discL.push(f) },
+    reply(m) { msgL.forEach((f) => f(m)); },
+    disconnect() { discL.forEach((f) => f()); },
+  };
+}
+
+function setup(lastError, timeoutMs) {
+  const ports = [];
+  const t = createNativeTransport(() => { const p = fakePort(); ports.push(p); return p; }, lastError, timeoutMs);
+  return { t, ports };
+}
+
+test('one port, replies matched by id', async () => {
+  const { t, ports } = setup();
+  const a = t({ n: 1 });
+  const b = t({ n: 2 });
+  assert.equal(ports.length, 1);
+  const [ma, mb] = ports[0].sent;
+  assert.deepEqual(ma.body, { n: 1 });
+  assert.notEqual(ma.id, mb.id);
+  ports[0].reply({ id: mb.id, status: 200, retry_after: null, body: { n: 2 } });
+  ports[0].reply({ id: ma.id, status: 429, retry_after: '3', body: {} });
+  assert.deepEqual(await b, { status: 200, retry_after: null, body: { n: 2 } });
+  assert.deepEqual(await a, { status: 429, retry_after: '3', body: {} });
+});
+
+test('unknown reply ids are ignored', async () => {
+  const { t, ports } = setup();
+  const a = t({});
+  ports[0].reply({ id: 999, status: 200, body: {} });
+  ports[0].reply({ id: ports[0].sent[0].id, status: 200, retry_after: null, body: { ok: 1 } });
+  assert.deepEqual((await a).body, { ok: 1 });
+});
+
+test('disconnect rejects pending with host kind; next call reconnects', async () => {
+  const { t, ports } = setup(() => 'Specified native messaging host not found.');
+  const a = t({});
+  ports[0].disconnect();
+  await assert.rejects(a, (e) => e.kind === 'host' && /not found/.test(e.message));
+  const b = t({});
+  assert.equal(ports.length, 2);
+  ports[1].reply({ id: ports[1].sent[0].id, status: 200, retry_after: null, body: {} });
+  assert.equal((await b).status, 200);
+});
+
+test('connect throwing rejects with host kind', async () => {
+  const t = createNativeTransport(() => { throw new Error('nativeMessaging permission missing'); });
+  await assert.rejects(t({}), (e) => e.kind === 'host' && /permission/.test(e.message));
+});
+
+test('no reply rejects after the timeout', async () => {
+  const { t } = setup(undefined, 20);
+  await assert.rejects(t({}), (e) => e.kind === 'host' && /timed out/.test(e.message));
+});
+```
+
+**Step 2: Run, expect FAIL**
+
+Run: `node --test tests/native.test.js`
+Expected: FAIL, module not found.
+
+**Step 3: Implement `src/lib/native.js`**
+
+```js
+import { ApiError } from './api.js';
+
+export const HOST_NAME = 'com.northprot.ig_translate';
+
+// connect() returns a Port-like object: { postMessage, onMessage.addListener, onDisconnect.addListener }.
+// lastError() returns why a port closed (chrome.runtime.lastError?.message), read inside onDisconnect.
+export function createNativeTransport(connect, lastError = () => undefined, timeoutMs = 150000) {
+  let conn = null; // { port, pending: Map<id, {resolve, reject, timer}> }
+  let nextId = 1;
+
+  function open() {
+    const port = connect();
+    const c = { port, pending: new Map() };
+    port.onMessage.addListener((msg) => {
+      const p = c.pending.get(msg?.id);
+      if (!p) return;
+      c.pending.delete(msg.id);
+      clearTimeout(p.timer);
+      p.resolve({ status: msg.status, retry_after: msg.retry_after ?? null, body: msg.body });
+    });
+    port.onDisconnect.addListener(() => {
+      const reason = lastError() || 'native host disconnected';
+      if (conn === c) conn = null;
+      for (const p of c.pending.values()) { clearTimeout(p.timer); p.reject(new ApiError('host', reason)); }
+      c.pending.clear();
+    });
+    return c;
+  }
+
+  return function transport(body) {
+    return new Promise((resolve, reject) => {
+      let c;
+      try {
+        c = conn || (conn = open());
+      } catch (e) {
+        reject(new ApiError('host', String(e?.message || e)));
+        return;
+      }
+      const id = nextId++;
+      const timer = setTimeout(() => {
+        if (c.pending.delete(id)) reject(new ApiError('host', 'native host timed out'));
+      }, timeoutMs);
+      c.pending.set(id, { resolve, reject, timer });
+      try {
+        c.port.postMessage({ id, body });
+      } catch (e) {
+        c.pending.delete(id);
+        clearTimeout(timer);
+        if (conn === c) conn = null;
+        reject(new ApiError('host', String(e?.message || e)));
+      }
+    });
+  };
+}
+```
+
+Hand-checked: in "connect throwing", `open()` throws before `conn` is assigned, so the next call tries again. In the timeout test, `setup(undefined, 20)` passes `lastError` as `undefined`, so the default parameter applies.
+
+**Step 4: Run, expect PASS**
+
+Run: `node --test tests/native.test.js`
+Expected: 5 tests PASS.
+
+**Step 5: Update `manifest.json`**
+
+Add the `nativeMessaging` permission and drop the API host permission, since the browser no longer talks to the API:
+
+```json
+  "permissions": ["storage", "nativeMessaging"],
+  "host_permissions": [
+    "https://www.instagram.com/*"
+  ],
+```
+
+Append to `tests/smoke.test.js`:
+
+```js
+test('manifest uses native messaging, not direct API access', () => {
+  const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
+  assert.ok(m.permissions.includes('nativeMessaging'));
+  assert.equal(m.host_permissions.some((h) => h.includes('anthropic')), false);
+});
+```
+
+Run: `npm test`
+Expected: all PASS.
+
+**Step 6: Commit**
+
+```bash
+git add src/lib/native.js tests/native.test.js manifest.json tests/smoke.test.js
+git commit -m "feat: native messaging transport, manifest permission"
+```
+
+---
+
+### Task 12: `background.js`
 
 The background service worker is not unit-tested directly; it is glue over the tested libraries. Keep logic out of it. Message types and replies:
 
@@ -1379,15 +1957,16 @@ The background service worker is not unit-tested directly; it is glue over the t
 |---|---|---|
 | `getThread` | `{threadId}` | thread object with defaults |
 | `setThread` | `{threadId, patch}` | updated thread |
-| `incoming` | `{threadId, context, items:[{id, text, from}]}` | `{ [id]: {src_lang, translation} \| null }` (null = leave as is) |
+| `incoming` | `{threadId, context, items:[{id, text, from}], updateLang}` | `{ [id]: {src_lang, translation} \| null }` (null = leave as is) |
 | `outgoing` | `{threadId, context, korean, profile, lang}` | `{translation, back_translation, lang, model}` |
 | `sent` | `{threadId, text, korean}` | `true` |
 | `lookupSent` | `{threadId, texts}` | `{ [text]: korean }` |
 | `suggestMemo` | `{threadId, context}` | `memo` string |
 | `badge` | `{text}` | `true` |
-| `openOptions` | `{}` | `true` |
 
 Every reply is `{ok: true, data}` or `{ok: false, error: {kind, message}}`.
+
+`updateLang` is `true` only for the initial scan of a thread and for freshly arrived messages. Back-filled history and retries never move `partnerLang`, because "auto" means the language of the partner's **most recent** messages.
 
 **Files:**
 - Create: `src/background.js`
@@ -1396,6 +1975,7 @@ Every reply is `{ok: true, data}` or `{ok: false, error: {kind, message}}`.
 
 ```js
 import { callJson, ApiError } from './lib/api.js';
+import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest,
   parseIncoming, parseOutgoing, parseMemo,
@@ -1404,12 +1984,16 @@ import { incomingTarget, resolveOutputLang, latestPartnerLang } from './lib/lang
 import { DEFAULT_SETTINGS, withThreadDefaults, threadKey, cacheKey, sentKey, expiredKeys } from './lib/keys.js';
 
 const store = chrome.storage.local;
-const BATCH = 40;
+const BATCH = 20;
+const transport = createNativeTransport(
+  () => chrome.runtime.connectNative(HOST_NAME),
+  () => chrome.runtime.lastError?.message,
+);
+const api = (body, parse) => callJson(body, parse, { transport });
 
 async function getSettings() {
   const { settings } = await store.get('settings');
   return {
-    ...DEFAULT_SETTINGS, ...settings,
     models: { ...DEFAULT_SETTINGS.models, ...settings?.models },
     threadDefaults: { ...DEFAULT_SETTINGS.threadDefaults, ...settings?.threadDefaults },
   };
@@ -1424,12 +2008,11 @@ async function getThread(threadId, settings) {
 async function setThread(threadId, patch) {
   const k = threadKey(threadId);
   const got = await store.get(k);
-  const next = { ...(got[k] || {}), ...patch };
-  await store.set({ [k]: next });
+  await store.set({ [k]: { ...(got[k] || {}), ...patch } });
   return getThread(threadId);
 }
 
-async function incoming({ threadId, context, items }) {
+async function incoming({ threadId, context, items, updateLang }) {
   const settings = await getSettings();
   const thread = await getThread(threadId, settings);
   const keys = await Promise.all(items.map((it) => cacheKey(threadId, it.text, thread.otherTarget)));
@@ -1447,7 +2030,7 @@ async function incoming({ threadId, context, items }) {
       model: settings.models.incoming, memo: thread.memo, context,
       otherTarget: thread.otherTarget, items: chunk.map((m) => m.it),
     });
-    const res = await callJson(body, settings.apiKey, parseIncoming);
+    const res = await api(body, parseIncoming);
     const writes = {};
     for (const { it, key } of chunk) {
       const r = res[it.id];
@@ -1459,9 +2042,11 @@ async function incoming({ threadId, context, items }) {
     await store.set(writes);
   }
 
-  const ordered = items.filter((it) => out[it.id]).map((it) => ({ from: it.from, src_lang: out[it.id].src_lang }));
-  const lang = latestPartnerLang(ordered);
-  if (lang && lang !== thread.partnerLang) await setThread(threadId, { partnerLang: lang });
+  if (updateLang) {
+    const ordered = items.filter((it) => out[it.id]).map((it) => ({ from: it.from, src_lang: out[it.id].src_lang }));
+    const lang = latestPartnerLang(ordered);
+    if (lang && lang !== thread.partnerLang) await setThread(threadId, { partnerLang: lang });
+  }
 
   const data = {};
   for (const it of items) {
@@ -1477,13 +2062,13 @@ async function outgoing({ threadId, context, korean, profile, lang }) {
   const target = lang || resolveOutputLang(thread);
   const model = profile === 'hard' ? settings.models.hard : settings.models.outgoing;
   const body = buildOutgoingRequest({ model, profile, memo: thread.memo, context, korean, lang: target });
-  const r = await callJson(body, settings.apiKey, parseOutgoing);
+  const r = await api(body, parseOutgoing);
   return { ...r, lang: target, model };
 }
 
 async function suggestMemo({ context }) {
   const settings = await getSettings();
-  return callJson(buildMemoRequest({ model: settings.models.outgoing, context }), settings.apiKey, parseMemo);
+  return api(buildMemoRequest({ model: settings.models.outgoing, context }), parseMemo);
 }
 
 async function sent({ threadId, text, korean }) {
@@ -1504,7 +2089,6 @@ const handlers = {
   setThread: ({ threadId, patch }) => setThread(threadId, patch),
   incoming, outgoing, suggestMemo, sent, lookupSent,
   badge: async ({ text }, sender) => { await chrome.action.setBadgeText({ text, tabId: sender.tab?.id }); return true; },
-  openOptions: async () => { await chrome.runtime.openOptionsPage(); return true; },
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -1528,6 +2112,9 @@ chrome.runtime.onInstalled.addListener(prune);
 Notes:
 - The cache stores every result, including Korean no-ops (`src_lang: 'ko'`). A Korean message then costs one call ever, and `incomingTarget` turns it into `null` on the way out.
 - English results are the same whatever the toggle says, but their cache key includes the toggle. Flipping the toggle re-requests them once. Accepted (spec review note).
+- `BATCH = 20` with incoming `max_tokens: 8192` leaves room for long messages. A `max_tokens` stop is a parse error, and an identical re-request would only truncate again.
+- `sentKey` normalizes whitespace (Task 5), so the composer text at send time and the bubble text read later hash the same.
+- The port opens on the first API call and stays open, which also keeps the service worker alive during long calls. If Chrome stops the idle service worker, the port closes with it, and the next call reconnects.
 
 **Step 2: Syntax check**
 
@@ -1538,12 +2125,14 @@ Expected: no syntax error; all tests PASS.
 
 ```bash
 git add src/background.js
-git commit -m "feat: background router, cache, thread state, API calls"
+git commit -m "feat: background router, cache, thread state, API calls via native host"
 ```
 
 ---
 
-### Task 11: Options page
+### Task 13: Options page
+
+There is no API key field. The key lives only in `~/.config/anthropic/api-key`, which the native host reads.
 
 **Files:**
 - Create: `options/options.html`, `options/options.js`
@@ -1557,12 +2146,12 @@ git commit -m "feat: background router, cache, thread state, API calls"
 <style>
   body { font: 14px system-ui, sans-serif; max-width: 520px; margin: 24px auto; padding: 0 16px; }
   label { display: block; margin: 14px 0 4px; font-weight: 600; }
-  input, select { width: 100%; padding: 6px; box-sizing: border-box; }
+  select { width: 100%; padding: 6px; box-sizing: border-box; }
   #saved { color: green; margin-left: 8px; }
+  p.note { color: #666; }
 </style>
 <h1>ig-translate</h1>
-<label for="apiKey">Anthropic API key</label>
-<input id="apiKey" type="password" autocomplete="off">
+<p class="note">API key: read by the native host from <code>~/.config/anthropic/api-key</code>. Install the host with <code>host/install.sh &lt;extension id&gt;</code>.</p>
 <label for="incoming">Incoming model</label>
 <select id="incoming"></select>
 <label for="outgoing">Outgoing model (Enter)</label>
@@ -1575,7 +2164,7 @@ git commit -m "feat: background router, cache, thread state, API calls"
 <select id="pastMode"><option value="replace">Replace text</option><option value="below">Below bubble</option></select>
 <label for="newMode">Default: new messages</label>
 <select id="newMode"><option value="below">Below bubble</option><option value="replace">Replace text</option></select>
-<p><button id="save">Save</button><span id="saved"></span></p>
+<p><button id="save" type="button">Save</button><span id="saved"></span></p>
 <script type="module" src="options.js"></script>
 ```
 
@@ -1592,19 +2181,14 @@ for (const id of ['incoming', 'outgoing', 'hard']) {
 }
 
 const { settings = {} } = await chrome.storage.local.get('settings');
-const s = {
-  ...DEFAULT_SETTINGS, ...settings,
-  models: { ...DEFAULT_SETTINGS.models, ...settings.models },
-  threadDefaults: { ...DEFAULT_SETTINGS.threadDefaults, ...settings.threadDefaults },
-};
-$('apiKey').value = s.apiKey;
-for (const id of ['incoming', 'outgoing', 'hard']) $(id).value = s.models[id];
-for (const id of ['otherTarget', 'pastMode', 'newMode']) $(id).value = s.threadDefaults[id];
+const models = { ...DEFAULT_SETTINGS.models, ...settings.models };
+const threadDefaults = { ...DEFAULT_SETTINGS.threadDefaults, ...settings.threadDefaults };
+for (const id of ['incoming', 'outgoing', 'hard']) $(id).value = models[id];
+for (const id of ['otherTarget', 'pastMode', 'newMode']) $(id).value = threadDefaults[id];
 
 $('save').onclick = async () => {
   await chrome.storage.local.set({
     settings: {
-      apiKey: $('apiKey').value.trim(),
       models: { incoming: $('incoming').value, outgoing: $('outgoing').value, hard: $('hard').value },
       threadDefaults: { otherTarget: $('otherTarget').value, pastMode: $('pastMode').value, newMode: $('newMode').value },
     },
@@ -1623,22 +2207,59 @@ git commit -m "feat: options page"
 
 ---
 
-### Task 12: Load unpacked and smoke-test the background (manual)
+### Task 14: Load unpacked, install the host, smoke-test end to end (manual)
 
-**Step 1:** Create a stub `src/content/loader.js` containing only `// filled in Task 14`, and an empty `src/content/style.css`, so the manifest loads.
+**Step 1:** Create a stub `src/content/loader.js` containing only `// filled in Task 16`, and an empty `src/content/style.css`, so the manifest loads.
 
-**Step 2:** Ask the user to open `chrome://extensions`, enable Developer mode, click "Load unpacked", and pick `/home/cyan/projects/ig-translate`. Then open the extension's options page, paste the API key, and save. The key is typed by the user, never by Claude.
+**Step 2:** Ask the user to open `chrome://extensions`, enable Developer mode, click "Load unpacked", pick `/home/cyan/projects/ig-translate`, and paste the extension ID shown on the card. An unpacked extension's ID is derived from its path, so it stays the same as long as the folder does not move.
 
-**Step 3:** Ask the user to right-click the options page, choose Inspect, and run this in its console. Service workers forbid `import()`, so use the options page. It has the same `chrome-extension://` origin as the service worker, and it sends the request through the background exactly as the content script will.
+**Step 3: Install the host**
+
+Run: `host/install.sh <extension-id>`
+Expected: `installed /home/cyan/.config/google-chrome/NativeMessagingHosts/com.northprot.ig_translate.json`.
+
+Then `python3 -I host/test_host.py` once more (Expected: OK). Chrome reads the host manifest on each `connectNative`, so no browser restart is needed.
+
+**Step 4: End-to-end call**
+
+Ask the user to right-click the options page, choose Inspect, and run this in its console. Service workers forbid `import()`, so the options page is the console to use. Messages from it go through the background exactly as the content script's will.
 
 ```js
-const r = await chrome.runtime.sendMessage({ type: 'outgoing', threadId: 'smoke', context: [], korean: '내일 보자', profile: 'outgoing', lang: 'en' });
-console.log(r);
+console.time('outgoing');
+console.log(await chrome.runtime.sendMessage({ type: 'outgoing', threadId: 'smoke', context: [], korean: '내일 보자', profile: 'outgoing', lang: 'en' }));
+console.timeEnd('outgoing');
 ```
 
-Expected: `{ok: true, data: {translation, back_translation, lang: 'en', model: 'claude-sonnet-5-5'}}`. This confirms a real extension-origin request works end to end through the background router. If CORS or 4xx fails here, check the `anthropic-dangerous-direct-browser-access` header first. Record the result in `docs/spike-notes.md`.
+Expected: `{ok: true, data: {translation, back_translation, lang: 'en', model: 'claude-sonnet-5-5'}}`.
 
-**Step 4: Confirm content-script dynamic import**
+If `ok: false` with kind `host`, the message names the cause:
+- "Specified native messaging host not found": re-run Step 3
+- "Access to the specified native messaging host is forbidden": the extension ID is wrong
+- "Native host has exited": run `python3 -I host/test_host.py`, and check the host's shebang and executable bit
+
+**Step 5: Long `hard` call (the 30 s question)**
+
+In the same console:
+
+```js
+const long = '어제 진짜 웃긴 일 있었어. 지하철에서 졸다가 내릴 역 지나쳐서 종점까지 갔는데, 거기서 고등학교 동창을 만났어. 걔도 똑같이 졸다가 지나친 거래. 그래서 둘이 그냥 근처 국밥집 가서 밥 먹고 옛날 얘기 엄청 했어. 담임 선생님 얘기, 수학여행 때 길 잃어버린 얘기, 축제 때 망한 공연 얘기까지. 다음 주에 다른 애들도 불러서 다시 모이기로 했는데, 너도 시간 되면 같이 가자. 장소는 아직 안 정했는데 아마 강남 쪽일 거야. 금요일 저녁 어때?';
+console.time('hard');
+console.log(await chrome.runtime.sendMessage({ type: 'outgoing', threadId: 'smoke', context: [], korean: long, profile: 'hard', lang: 'ru' }));
+console.timeEnd('hard');
+```
+
+Expected: `ok: true`, even if it takes longer than 30 s. Record the time in `docs/spike-notes.md`. If it fails after about 30 s with a disconnect, the open-port keepalive is not holding, so stop and report BLOCKED.
+
+**Step 6: Host-missing failure path**
+
+Run: `mv ~/.config/google-chrome/NativeMessagingHosts/com.northprot.ig_translate.json{,.off} && pkill -f '[i]g_translate_host.py' || true`
+
+The bracket pattern keeps `pkill` from matching its own shell. Rerun the Step 4 snippet.
+Expected: after about 3 s of retries, `{ok: false, error: {kind: 'host', message: 'Specified native messaging host not found.'}}`.
+
+Restore the manifest: `mv ~/.config/google-chrome/NativeMessagingHosts/com.northprot.ig_translate.json{.off,}`. Rerun Step 4 and expect `ok: true`, which shows the transport reconnects.
+
+**Step 7: Confirm content-script dynamic import**
 
 Temporarily replace the stub `src/content/loader.js` with:
 
@@ -1649,20 +2270,20 @@ Temporarily replace the stub `src/content/loader.js` with:
 })();
 ```
 
-Reload the extension, then open any `instagram.com` page. The page console should show `[igt] dynamic import ok true`. If it throws, stop and report BLOCKED. The fallback is listing every content file as classic scripts in `content_scripts.js`, which changes Tasks 13 to 18. Record the result in `docs/spike-notes.md`, then put the stub back.
+Reload the extension, then open any `instagram.com` page. The page console should show `[igt] dynamic import ok true`. If it throws, stop and report BLOCKED. The fallback is listing every content file as classic scripts in `content_scripts.js`, which changes Tasks 15 to 20. Record the result in `docs/spike-notes.md`, then put the stub back.
 
-**Step 5: Commit**
+**Step 8: Commit**
 
 ```bash
 git add src/content/loader.js src/content/style.css docs/spike-notes.md
-git commit -m "chore: loadable extension, background smoke test recorded"
+git commit -m "chore: loadable extension, native host smoke test recorded"
 ```
 
 ---
 
 # Sprint 4: Incoming translation in the page
 
-### Task 13: `selectors.js` and `dom.js` readers (snapshot tests)
+### Task 15: `selectors.js` and `dom.js` readers (snapshot tests)
 
 **Files:**
 - Create: `src/content/selectors.js`, `src/content/dom.js`
@@ -1740,9 +2361,9 @@ export function readMessages(root) {
 
 jsdom has no layout, so `innerText` is undefined there and `textContent` is used. In Chrome `innerText` keeps line breaks.
 
-Check that `SEL.messageText` cannot match the `.igt-tr` elements this extension inserts (Task 14), or translations would be read back as messages.
+Check that `SEL.messageText` cannot match the `.igt-tr` elements this extension inserts (Task 16), or translations would be read back as messages.
 
-If `senderOf` depends on layout (`getBoundingClientRect`), it cannot run in jsdom. In that case, find a structural signal instead. If none exists, test `senderOf` live in Task 17 only and drop `EXPECTED_SENDERS` from this test, noting why in spike-notes.
+If `senderOf` depends on layout (`getBoundingClientRect`), it cannot run in jsdom. In that case, find a structural signal instead. If none exists, test `senderOf` live in Task 19 only and drop `EXPECTED_SENDERS` from this test, noting why in spike-notes.
 
 **Step 5: Run, expect PASS**
 
@@ -1758,7 +2379,7 @@ git commit -m "feat: Instagram selectors and message reader with snapshot test"
 
 ---
 
-### Task 14: Rendering helpers and loader
+### Task 16: Rendering helpers and loader
 
 **Files:**
 - Modify: `src/content/dom.js` (append)
@@ -1871,7 +2492,7 @@ The test helper bubbles have no `m.text`, so `renderTranslation` falls back to `
 (async () => {
   try {
     const { start } = await import(chrome.runtime.getURL('src/content/main.js'));
-    start();
+    await start();
   } catch (e) {
     console.error('[igt] failed to load', e);
   }
@@ -1892,12 +2513,22 @@ git commit -m "feat: translation rendering helpers, loader, styles"
 
 ---
 
-### Task 15: `main.js`, thread lifecycle and incoming
+### Task 17: `main.js`, thread lifecycle and incoming
 
 **Files:**
 - Create: `src/content/main.js`
 
-**Step 1: Write `src/content/main.js` (incoming part; Task 18 adds outgoing)**
+The thread object `current` carries three hook lists so later modules stay decoupled:
+- `onTeardown`: cleanup when leaving the thread
+- `onThreadUpdate(thread)`: the panel changed the thread settings
+- `onMutate()`: the message list changed (debounced)
+
+Thread switch safety:
+- After an SPA switch from thread A to B, A's rows can still be in the DOM for a moment. `teardown` remembers A's rows. `waitForThread` waits until none of them remain **and** the row count is the same on two checks 300 ms apart.
+- `initThread` re-checks the URL after its `await` and tears down anything set up meanwhile, so a fast A to B to C switch never leaves two sets of listeners.
+- If Instagram reuses row nodes across threads, the stale-row wait never ends. After about 10 s it initialises anyway; Task 19 measures the switch time to catch this.
+
+**Step 1: Write `src/content/main.js` (Task 18 adds the panel, Task 20 adds outgoing)**
 
 ```js
 import { threadIdFromPath } from '../lib/keys.js';
@@ -1907,6 +2538,13 @@ import { findThreadRoot, readMessages, renderTranslation, renderRetry, setHoverO
 
 const CONTEXT_N = 30;
 const DEBOUNCE_MS = 400;
+const WAIT_MS = 300;
+const WAIT_TRIES = 33; // about 10 s
+
+export const ERROR_BANNERS = {
+  auth: 'ig-translate: API key missing or rejected. Check ~/.config/anthropic/api-key.',
+  host: 'ig-translate: native host not reachable. Run host/install.sh <extension id>, then reload the extension.',
+};
 
 export const ask = async (msg) => {
   const r = await chrome.runtime.sendMessage(msg);
@@ -1914,10 +2552,12 @@ export const ask = async (msg) => {
   return r.data;
 };
 
-let current = null; // { threadId, thread, root, observer, known: WeakSet, timer, pending: [], ...outgoing state }
-let keyBannerShown = false;
+export const initHooks = [];
+let current = null; // { threadId, thread, root, observer, known, timer, onTeardown, onThreadUpdate, onMutate }
+let staleRows = new WeakSet();
+const bannersShown = new Set();
 
-export function start() {
+export async function start() {
   let lastPath = null;
   const tick = () => {
     if (location.pathname === lastPath) return;
@@ -1932,59 +2572,67 @@ export function start() {
 
 function teardown() {
   if (!current) return;
+  for (const m of readMessages(current.root)) staleRows.add(m.row);
   current.observer?.disconnect();
   clearTimeout(current.timer);
-  current.onTeardown?.forEach((f) => f());
+  current.onTeardown.forEach((f) => f());
   current = null;
 }
 
-// The message list renders after navigation; wait up to 10 s, then mark the selectors broken.
-function waitForThread(threadId, tries = 0) {
+function waitForThread(threadId, tries = 0, lastCount = -1) {
+  if (threadIdFromPath(location.pathname) !== threadId) return; // navigated away meanwhile
   const root = findThreadRoot(document);
-  if (root && readMessages(root).length) return initThread(threadId, root);
-  if (tries >= 20) {
-    if (root) return initThread(threadId, root); // empty thread is fine
+  const msgs = root ? readMessages(root) : [];
+  const clean = !msgs.some((m) => staleRows.has(m.row));
+  // Stable over two checks; an empty thread (new chat) must stay empty for about 1 s.
+  if (root && clean && msgs.length === lastCount && (msgs.length > 0 || tries >= 3)) return initThread(threadId, root);
+  if (tries >= WAIT_TRIES) {
+    if (root) {
+      if (!clean) console.warn('[igt] old thread rows still present after 10 s; initialising anyway');
+      return initThread(threadId, root);
+    }
     ask({ type: 'badge', text: '!' }).catch(() => {});
     console.warn('[igt] thread root not found; extension inactive on this page');
     return;
   }
-  setTimeout(() => {
-    if (threadIdFromPath(location.pathname) === threadId) waitForThread(threadId, tries + 1);
-  }, 500);
+  setTimeout(() => waitForThread(threadId, tries + 1, clean ? msgs.length : -1), WAIT_MS);
 }
 
 async function initThread(threadId, root) {
   const thread = await ask({ type: 'getThread', threadId });
+  if (threadIdFromPath(location.pathname) !== threadId) return;
+  teardown(); // anything a racing init set up meanwhile
   ask({ type: 'badge', text: '' }).catch(() => {});
-  current = { threadId, thread, root, known: new WeakSet(), pending: [], timer: null, onTeardown: [] };
+  current = {
+    threadId, thread, root, known: new WeakSet(), timer: null,
+    onTeardown: [], onThreadUpdate: [], onMutate: [],
+  };
 
   const msgs = readMessages(root);
   msgs.forEach((m) => current.known.add(m.row));
   if (thread.enabled) {
-    translate(msgs, thread.pastMode);
+    translate(msgs, thread.pastMode, true);
     hoverSent(msgs);
   }
 
   current.observer = new MutationObserver(() => onMutate(threadId));
   current.observer.observe(root, { childList: true, subtree: true });
 
-  // Hook for Task 18/19 (outgoing, panel).
   for (const f of initHooks) f(current);
 }
-
-export const initHooks = [];
 
 function onMutate(threadId) {
   if (!current || current.threadId !== threadId) return;
   clearTimeout(current.timer);
   current.timer = setTimeout(() => {
     if (!current || current.threadId !== threadId) return;
+    current.onMutate.forEach((f) => f());
     const msgs = readMessages(current.root);
     const { past, fresh } = classifyAdded(msgs, (m) => current.known.has(m.row));
     for (const m of [...past, ...fresh]) current.known.add(m.row);
     if (!current.thread.enabled) return;
-    translate(past, current.thread.pastMode);
-    translate(fresh, current.thread.newMode);
+    translate(past, current.thread.pastMode, false);
+    translate(fresh, current.thread.newMode, true);
     hoverSent([...past, ...fresh]);
   }, DEBOUNCE_MS);
 }
@@ -1993,27 +2641,31 @@ export function contextFor(root) {
   return readMessages(root).slice(-CONTEXT_N).map(({ from, text }) => ({ from, text }));
 }
 
-async function translate(msgs, mode) {
+// updateLang: true only for the initial scan and fresh arrivals (see Task 12).
+async function translate(msgs, mode, updateLang) {
+  if (!current) return;
   const todo = msgs.filter((m) => m.from === 'partner' && !isKoreanOnly(m.text));
   if (!todo.length) return;
   const threadId = current.threadId;
   const items = todo.map((m, i) => ({ id: String(i), text: m.text, from: m.from }));
   try {
-    const data = await ask({ type: 'incoming', threadId, context: contextFor(current.root), items });
+    const data = await ask({ type: 'incoming', threadId, context: contextFor(current.root), items, updateLang });
     if (current?.threadId !== threadId) return;
     todo.forEach((m, i) => { const r = data[String(i)]; if (r) renderTranslation(m, r.translation, mode); });
-    // partnerLang may have changed; refresh the cached thread state
-    current.thread = await ask({ type: 'getThread', threadId });
+    if (updateLang) {
+      const t = await ask({ type: 'getThread', threadId }); // partnerLang may have changed
+      if (current?.threadId === threadId) current.thread = t;
+    }
   } catch (e) {
     if (current?.threadId !== threadId) return;
-    if (e.kind === 'nokey' || e.kind === 'auth') return showKeyBanner(e.kind);
-    todo.forEach((m) => renderRetry(m, () => translate([m], mode)));
+    if (ERROR_BANNERS[e.kind]) showBanner(ERROR_BANNERS[e.kind]);
+    todo.forEach((m) => renderRetry(m, () => translate([m], mode, false)));
   }
 }
 
 async function hoverSent(msgs) {
   const mine = msgs.filter((m) => m.from === 'me');
-  if (!mine.length) return;
+  if (!mine.length || !current) return;
   const threadId = current.threadId;
   try {
     const map = await ask({ type: 'lookupSent', threadId, texts: mine.map((m) => m.text) });
@@ -2027,16 +2679,17 @@ export function rerender() {
   if (!current) return;
   const msgs = readMessages(current.root);
   msgs.forEach(clearTranslation);
-  if (current.thread.enabled) translate(msgs, current.thread.pastMode); // cache makes this cheap
+  if (current.thread.enabled) translate(msgs, current.thread.pastMode, false); // cache makes this cheap
 }
 
-function showKeyBanner(kind) {
-  if (keyBannerShown) return;
-  keyBannerShown = true;
+export function showBanner(text) {
+  if (bannersShown.has(text)) return;
+  bannersShown.add(text);
   const b = document.createElement('div');
-  b.style.cssText = 'position:fixed;top:12px;right:12px;z-index:99999;background:#222;color:#fff;padding:10px 14px;border-radius:8px;font:13px system-ui;cursor:pointer';
-  b.textContent = kind === 'nokey' ? 'ig-translate: set your API key (click)' : 'ig-translate: API key rejected (click)';
-  b.onclick = () => { ask({ type: 'openOptions' }).catch(() => {}); b.remove(); };
+  b.style.cssText = 'position:fixed;top:12px;right:12px;z-index:99999;max-width:360px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;font:13px system-ui;cursor:pointer';
+  b.textContent = text;
+  b.title = 'Click to dismiss';
+  b.onclick = () => b.remove();
   document.body.appendChild(b);
 }
 
@@ -2047,6 +2700,7 @@ Notes:
 - `rerender` applies `pastMode` to every visible message, so after a toggle change, new ones that arrived earlier switch to past mode. Accepted: a toggle change is a deliberate re-layout.
 - Our own `.igt-tr` insertions trigger the observer. `readMessages` returns the same rows, they are all `known`, so nothing re-translates.
 - If Instagram recreates a row node, it is unknown again and gets translated again. The cache makes that free; display mode may follow the classification of its position.
+- `staleRows` is a `WeakSet`, so removed rows are garbage-collected normally.
 
 **Step 2: Syntax check and tests**
 
@@ -2062,7 +2716,7 @@ git commit -m "feat: thread lifecycle and incoming translation"
 
 ---
 
-### Task 16: Thread panel
+### Task 18: Thread panel
 
 **Files:**
 - Create: `src/content/panel.js`
@@ -2090,7 +2744,7 @@ export function mountPanel(cur) {
       .row { display: flex; gap: 6px; margin-top: 6px; }
       .row button { flex: 1; background: #2c2c2e; color: inherit; border: 1px solid #48484a; border-radius: 6px; padding: 4px; cursor: pointer; }
     </style>
-    <button class="fab" title="ig-translate">T</button>
+    <button type="button" class="fab" title="ig-translate">T</button>
     <div class="p">
       <label>Translate <input type="checkbox" id="enabled"></label>
       <label>Reply in <select id="outputLang"></select></label>
@@ -2099,7 +2753,7 @@ export function mountPanel(cur) {
       <label>New messages <select id="newMode"><option value="below">Below</option><option value="replace">Replace</option></select></label>
       <div>Memo</div>
       <textarea id="memo" placeholder="Who they are, tone, nicknames, running jokes"></textarea>
-      <div class="row"><button id="suggest">Suggest memo</button><button id="saveMemo">Save memo</button></div>
+      <div class="row"><button type="button" id="suggest">Suggest memo</button><button type="button" id="saveMemo">Save memo</button></div>
     </div>`;
   const $ = (id) => shadow.getElementById(id);
   const out = $('outputLang');
@@ -2123,6 +2777,7 @@ export function mountPanel(cur) {
     const c = getCurrent();
     if (!c) return;
     c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch });
+    c.onThreadUpdate.forEach((f) => f(c.thread)); // e.g. outgoing resets its preview when disabled
     if (rerenderAfter) rerender();
   };
   $('enabled').onchange = () => save({ enabled: $('enabled').checked }, true);
@@ -2151,7 +2806,7 @@ Memo suggestion only fills the textarea; nothing is stored until "Save memo".
 
 **Step 2: Register the hook in `start()` in `src/content/main.js`**
 
-Make `start` async and load the panel before the first `tick()`, so the hook exists before any `initThread` runs:
+Load the panel before the first `tick()`, so the hook exists before any `initThread` runs:
 
 ```js
 export async function start() {
@@ -2162,7 +2817,7 @@ export async function start() {
 }
 ```
 
-The import is dynamic because `panel.js` imports from `main.js`. By the time `start()` runs, `main.js` has finished evaluating, so the cycle is safe.
+The import is dynamic because `panel.js` imports from `main.js`. By the time `start()` runs, `main.js` has finished evaluating, so the cycle is safe. Task 20 replaces this with one combined import of `panel.js` and `outgoing.js`.
 
 **Step 3: Syntax check and tests**
 
@@ -2178,23 +2833,25 @@ git commit -m "feat: per-thread panel with toggles and memo"
 
 ---
 
-### Task 17: Live check, incoming (manual)
+### Task 19: Live check, incoming (manual)
 
 **Safety:** no sending, no typing in the Instagram composer.
 
 **Step 1:** Ask the user to reload the extension at `chrome://extensions` and reload the Instagram tab.
 
-**Step 2:** Using Claude in Chrome, open a thread the user picks that has non-Korean messages. Check:
+**Step 2:** Using Claude in Chrome, open the test thread `https://www.instagram.com/direct/t/17843292048580540/`. Its partner is the user's own second account. If the thread has no non-Korean messages yet, ask the user to send a few from that account first. Check:
 - [ ] past partner messages are replaced by Korean, with the original on hover
 - [ ] own messages are untouched
 - [ ] the panel button appears; toggling "Past messages" to Below re-renders
 - [ ] toggling "Other languages to" English re-renders non-English messages (for example Russian) in English, while English messages stay Korean
 - [ ] scrolling up loads history, and that history is translated in past mode
 - [ ] switching to another thread tears down the panel and translations, then sets up the new thread
+- [ ] switching A to B to A quickly leaves exactly one panel button, and translations appear within about 2 s of each switch (about 10 s means Instagram reuses row nodes; see the Task 17 notes)
+- [ ] scrolling up to load history does not change `partnerLang` (compare `t:<id>` before and after)
 - [ ] the service worker console has no errors
 - [ ] in the panel, `Reply in` is still Auto, and `chrome.storage.local` `t:<id>` shows `partnerLang` set
 
-**Step 3:** Ask the user to have a friend (or a second account) send a message while the thread is open. Check that it is translated **below** the bubble.
+**Step 3:** Ask the user to send a message from the second account while the thread is open. Check that it is translated **below** the bubble.
 
 **Step 4:** Record pass/fail per item in `docs/spike-notes.md` under `## Live check: incoming`. Fix any selector issue in `selectors.js`, plus the snapshot test if needed. Commit.
 
@@ -2207,16 +2864,16 @@ git commit -m "test: live incoming check recorded"
 
 # Sprint 5: Outgoing preview
 
-### Task 18: Composer write helpers and key interception
+### Task 20: Composer write helpers and key interception
 
 **Files:**
 - Modify: `src/content/dom.js` (append composer helpers)
 - Create: `src/content/outgoing.js`
-- Modify: `src/content/main.js` (`start()` loads `outgoing.js`, as shown in Task 16)
+- Modify: `src/content/main.js` (`start()` loads `outgoing.js`)
 
 **Step 1: Append composer helpers to `src/content/dom.js`**
 
-Use the method that worked in Task 3 Step 4. If it was `insertText`:
+Use exactly the sequence that worked in Task 3 Step 4. The default, `execCommand` `selectAll` then `insertText`:
 
 ```js
 export function getComposerText(el) {
@@ -2225,14 +2882,13 @@ export function getComposerText(el) {
 
 export function setComposerText(el, text) {
   el.focus();
-  const sel = el.ownerDocument.getSelection();
-  sel.selectAllChildren(el);
+  el.ownerDocument.execCommand('selectAll', false);
   if (text) el.ownerDocument.execCommand('insertText', false, text);
   else el.ownerDocument.execCommand('delete', false);
 }
 ```
 
-If the spike found that paste works and `insertText` does not, the body of `setComposerText` becomes: select all, `execCommand('delete')`, then dispatch the `ClipboardEvent('paste')` from Task 3.
+If the spike found that only the synthetic paste works, the body becomes: `focus`, `execCommand('selectAll')`, `execCommand('delete')`, then dispatch the `ClipboardEvent('paste')` from Task 3 with `text`.
 
 **Step 2: Write `src/content/outgoing.js`**
 
@@ -2240,31 +2896,51 @@ If the spike found that paste works and `insertText` does not, the body of `setC
 import { initial, reduce } from '../lib/preview.js';
 import { hasHangul, langName, LANG_NAMES } from '../lib/lang.js';
 import { findComposer, getComposerText, setComposerText } from './dom.js';
-import { ask, getCurrent, contextFor } from './main.js';
+import { ask, getCurrent, contextFor, showBanner } from './main.js';
+
+const COMPOSE_ENTER_MS = 300; // a deferred IME Enter must be followed by compositionend within this window
+const WRITE_SETTLE_MS = 50;   // editors such as Lexical commit DOM updates asynchronously
+const norm = (s) => s.replace(/\s+/g, ' ').trim();
+const isEnter = (e) => e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter';
+const modelLabel = (m) => (m && m.includes('opus') ? 'Opus' : 'Sonnet');
+const block = (e) => { e.preventDefault(); e.stopImmediatePropagation(); };
 
 export function mountOutgoing(cur) {
   let state = initial();
   let note = null;
-  let enterAfterComposition = false;
+  let enterAfterComposition = null; // { hard, at }
+  let lastText = ''; // composer text while previewing; recorded if Instagram's Send button sends it
+  let writing = false; // our own composer writes fire input events; ignore them
 
   const composer = () => findComposer(document);
+  const text = (s) => document.createTextNode(s);
+  const write = (c, s) => { writing = true; try { setComposerText(c, s); } finally { writing = false; } };
 
-  const showNote = (html, isError) => {
+  // Composer selector check (design: selector miss = inactive + badge).
+  setTimeout(() => {
+    if (getCurrent() === cur && !composer()) {
+      ask({ type: 'badge', text: '!' }).catch(() => {});
+      console.warn('[igt] composer not found; outgoing translation inactive');
+    }
+  }, 3000);
+
+  const showNote = (nodes, isError) => {
     const c = composer();
     if (!c) return;
     if (!note) {
       note = document.createElement('div');
       note.className = 'igt-composer-note';
-      // Insert above the composer's form row so Instagram's own layout stays intact.
-      c.closest('form, [role="group"]')?.before(note) ?? c.parentElement.before(note);
+      // Above the composer's row so Instagram's own layout stays intact.
+      (c.closest('form, [role="group"]') || c.parentElement).before(note);
     }
     note.classList.toggle('igt-error', !!isError);
-    note.replaceChildren(...html);
+    note.replaceChildren(...nodes);
   };
   const hideNote = () => { note?.remove(); note = null; };
 
   const chip = (lang) => {
     const b = document.createElement('button');
+    b.type = 'button';
     b.className = 'igt-chip';
     b.textContent = langName(lang);
     b.title = 'Change target language';
@@ -2285,13 +2961,20 @@ export function mountOutgoing(cur) {
     return b;
   };
 
+  function resetPreview() {
+    dispatch({ type: 'reset' });
+    hideNote();
+    lastText = '';
+  }
+
   async function apply(effect) {
     const c = composer();
     switch (effect.type) {
       case 'translate': {
-        showNote([document.createTextNode(effect.profile === 'hard' ? 'Translating (Opus)...' : 'Translating...')]);
+        showNote([text(effect.profile === 'hard' ? 'Translating (hard)...' : 'Translating...')]);
         try {
           const cur2 = getCurrent();
+          if (!cur2) throw new Error('thread closed');
           const r = await ask({
             type: 'outgoing', threadId: cur2.threadId, context: contextFor(cur2.root),
             korean: effect.korean, profile: effect.profile, lang: effect.lang,
@@ -2303,24 +2986,37 @@ export function mountOutgoing(cur) {
         break;
       }
       case 'show': {
-        if (c) setComposerText(c, effect.translation);
-        const model = effect.profile === 'hard' ? 'Opus' : 'Sonnet';
-        showNote([document.createTextNode(`${effect.back_translation}  · ${model}`), chip(effect.lang)]);
+        if (!c) { resetPreview(); break; }
+        write(c, effect.translation);
+        await new Promise((r) => setTimeout(r, WRITE_SETTLE_MS));
+        if (state.mode !== 'preview') break; // Esc or reset meanwhile
+        if (norm(getComposerText(c)) !== norm(effect.translation)) {
+          dispatch({ type: 'reset' });
+          showNote([text('Could not write the translation into the message box. Nothing was sent.')], true);
+          break;
+        }
+        lastText = effect.translation;
+        showNote([text(`${effect.back_translation}  · ${modelLabel(effect.model)}`), chip(effect.lang)]);
         break;
       }
       case 'restore':
-        if (c) setComposerText(c, effect.korean);
+        if (c) write(c, effect.korean);
         hideNote();
+        lastText = '';
         break;
       case 'sent': {
+        // Runs synchronously inside the Enter keydown, before Instagram reads and clears the composer.
         const cur2 = getCurrent();
-        const text = c ? getComposerText(c) : '';
+        const sentText = c ? getComposerText(c).trim() : '';
         hideNote();
-        if (cur2 && text) ask({ type: 'sent', threadId: cur2.threadId, text, korean: effect.korean }).catch(() => {});
+        lastText = '';
+        if (cur2 && sentText) ask({ type: 'sent', threadId: cur2.threadId, text: sentText, korean: effect.korean }).catch(() => {});
         break;
       }
       case 'fail':
-        showNote([document.createTextNode(`Translation failed: ${effect.message}`)], true);
+        if (c && effect.korean != null && norm(getComposerText(c)) !== norm(effect.korean)) write(c, effect.korean);
+        lastText = '';
+        showNote([text(`Translation failed: ${effect.message}`)], true);
         break;
     }
   }
@@ -2332,59 +3028,98 @@ export function mountOutgoing(cur) {
     return r.effect;
   }
 
-  function onKeyDown(e) {
+  // Composer emptied while previewing: Instagram's Send button sent it, or the user deleted it.
+  function checkEmpty() {
+    if (state.mode !== 'preview') return;
     const c = composer();
-    if (!c || !c.contains(e.target)) return;
-    if (!getCurrent()?.thread.enabled) return;
+    if (!c || getComposerText(c).trim() !== '') return;
+    const cur2 = getCurrent();
+    if (cur2 && lastText.trim()) {
+      ask({ type: 'sent', threadId: cur2.threadId, text: lastText.trim(), korean: state.korean }).catch(() => {});
+    }
+    resetPreview();
+  }
+
+  function onInput(e) {
+    const c = composer();
+    if (writing || state.mode !== 'preview' || !c || !c.contains(e.target)) return;
+    const t = getComposerText(c);
+    if (t.trim()) lastText = t; else checkEmpty();
+  }
+
+  function onKeyDown(e) {
+    const cur2 = getCurrent();
+    if (!cur2?.thread.enabled) return;
+    const c = composer();
+
+    if (!c || !c.contains(e.target)) {
+      // Composer selector broken: never let Hangul go out untranslated by accident.
+      if (!c && isEnter(e) && !e.shiftKey && e.target?.isContentEditable
+          && hasHangul(e.target.innerText || e.target.textContent || '')) {
+        block(e);
+        showBanner('ig-translate: message box not recognised, so nothing was sent. The selectors need updating.');
+      }
+      return;
+    }
 
     if (e.key === 'Escape') {
       const eff = dispatch({ type: 'esc' });
-      if (eff.type !== 'pass') { e.preventDefault(); e.stopImmediatePropagation(); }
+      if (eff.type !== 'pass') block(e);
       return;
     }
-    if (e.key !== 'Enter' || e.shiftKey) return;
+    if (!isEnter(e) || e.shiftKey) return;
 
-    // Korean IME: Enter mid-composition. Block it so Instagram cannot send raw Korean,
-    // then handle Enter once the composition is committed.
+    // Korean IME: Enter mid-composition. Never let it reach Instagram while a translation is pending
+    // or while the box holds Hangul; handle the Enter once the composition is committed.
     if (e.isComposing || e.keyCode === 229) {
-      if (state.mode === 'idle' && hasHangul(getComposerText(c))) {
-        e.preventDefault(); e.stopImmediatePropagation();
-        enterAfterComposition = { hard: e.altKey };
+      if (state.mode === 'translating') { block(e); return; }
+      if (hasHangul(getComposerText(c)) && !(state.mode === 'preview' && state.lang === 'ko')) {
+        block(e);
+        enterAfterComposition = { hard: e.altKey, at: Date.now() };
       }
       return;
     }
 
     const eff = dispatch({ type: 'enter', text: getComposerText(c), hard: e.altKey });
     // 'sent' lets the real Enter through so Instagram sends the composer text itself.
-    if (eff.type !== 'pass' && eff.type !== 'sent') { e.preventDefault(); e.stopImmediatePropagation(); }
+    if (eff.type !== 'pass' && eff.type !== 'sent') block(e);
   }
 
   function onCompositionEnd() {
-    if (!enterAfterComposition) return;
-    const { hard } = enterAfterComposition;
-    enterAfterComposition = false;
+    const pending = enterAfterComposition;
+    enterAfterComposition = null;
+    if (!pending || Date.now() - pending.at > COMPOSE_ENTER_MS) return;
     // Let the committed text land in the composer first.
     setTimeout(() => {
       const c = composer();
-      if (c) dispatch({ type: 'enter', text: getComposerText(c), hard });
+      if (c) dispatch({ type: 'enter', text: getComposerText(c), hard: pending.hard });
     }, 0);
   }
 
   window.addEventListener('keydown', onKeyDown, true);
   window.addEventListener('compositionend', onCompositionEnd, true);
+  window.addEventListener('input', onInput, true);
+  cur.onMutate.push(checkEmpty);
+  cur.onThreadUpdate.push((t) => { if (!t.enabled && state.mode !== 'idle') resetPreview(); });
   cur.onTeardown.push(() => {
     window.removeEventListener('keydown', onKeyDown, true);
     window.removeEventListener('compositionend', onCompositionEnd, true);
-    dispatch({ type: 'reset' });
-    hideNote();
+    window.removeEventListener('input', onInput, true);
+    resetPreview();
   });
 }
 ```
 
-How this fits the design:
+How this fits the design and the plan review:
 - Listeners sit on `window` in the capture phase, so they run before Instagram's handlers on the composer.
-- If the IME spike showed Chrome fires a second, non-composing Enter after the composing one, that second Enter reaches `reduce` while in `translating`, gets `block`, and nothing double-fires.
-- With `Alt+Enter`, check in Task 19 that Instagram does not treat `Alt+Enter` as send by itself. Our capture listener blocks it either way, except for `pass`. A non-Hangul `Alt+Enter` passes through untouched, which is fine.
+- If Chrome fires a second, non-composing Enter after the composing one (see the Task 3 IME log), that Enter reaches `reduce` while in `translating`, gets `block`, and nothing double-fires.
+- A deferred IME Enter runs outside any key event, so a `pass` or `sent` effect from it does nothing. That cannot happen: it is only set up when the box holds Hangul, which always yields `translate`.
+- **Stuck preview:** a Send-button send or a cleared box is caught by `checkEmpty` through two paths, the composer `input` event and the thread observer (`onMutate`). The observer covers Instagram clearing the editor without an input event. New Korean typed while in preview is a new draft (reducer rule), never a raw send.
+- `write()` sets `writing` so the input events our own writes cause (an intermediate empty box with the paste variant) never look like a user clearing the box.
+- A failed write into the composer is detected after the editor settles, and nothing is left in `preview`.
+- Turning "Translate" off in the panel resets any preview (`onThreadUpdate`).
+- `NumpadEnter` and `key === 'Process'` with `code === 'Enter'` (some IMEs) both count as Enter.
+- With `Alt+Enter`, check in Task 21 that Instagram does not treat `Alt+Enter` as send by itself. Our capture listener blocks it either way, except for `pass`. A non-Hangul `Alt+Enter` passes through untouched, which is fine.
 
 **Step 3: Wire it into `start()` in `src/content/main.js`**
 
@@ -2411,11 +3146,11 @@ git commit -m "feat: outgoing preview flow with IME-safe Enter handling"
 
 ---
 
-### Task 19: Live check, outgoing (manual, user presses send)
+### Task 21: Live check, outgoing (manual, user presses send)
 
 **Safety: the user does every keypress in this task.** Claude only observes with `read_page` and screenshots, and never types into or submits the Instagram composer.
 
-**Step 1:** Reload the extension and the tab. The user opens a thread with a friend who knows about the test, or a second account.
+**Step 1:** Reload the extension and the tab. The user opens the test thread `https://www.instagram.com/direct/t/17843292048580540/` (partner = the user's own second account).
 
 **Step 2:** The user types `내일 몇 시에 볼까?` and presses Enter. Check:
 - [ ] composer text becomes the translation in the partner's language
@@ -2434,9 +3169,21 @@ git commit -m "feat: outgoing preview flow with IME-safe Enter handling"
 
 **Step 7:** IME case: the user types a Korean word and presses Enter while the last syllable is still composing. Check: a preview appears, not a send of the raw Korean.
 
-**Step 8:** Failure case: in options, the user replaces the key with `sk-bad` and presses Enter on Korean text. Check: the Korean stays in the composer, an error note appears, and nothing is sent. They then restore the real key.
+**Step 8:** Send-button case: the user previews a Korean draft, then clicks Instagram's Send button instead of pressing Enter. Check:
+- [ ] exactly one message is sent (the translation)
+- [ ] the note disappears
+- [ ] hovering the new bubble shows the Korean
 
-**Step 9:** Record results in `docs/spike-notes.md` under `## Live check: outgoing`. Fix any failures, then commit.
+**Step 9:** New-draft case: the user previews a draft, clears the box, types a different Korean sentence and presses Enter. Check: a new preview appears for the new sentence, and nothing was sent.
+
+**Step 10:** Host failure case: Claude runs `mv ~/.config/google-chrome/NativeMessagingHosts/com.northprot.ig_translate.json{,.off} && pkill -f '[i]g_translate_host.py'`. The user presses Enter on Korean text. Check:
+- [ ] after about 3 s the Korean is still in the composer
+- [ ] the error note names the host
+- [ ] nothing is sent
+
+Then Claude restores the manifest with `mv ~/.config/google-chrome/NativeMessagingHosts/com.northprot.ig_translate.json{.off,}`.
+
+**Step 11:** Record results in `docs/spike-notes.md` under `## Live check: outgoing`. Fix any failures, then commit.
 
 ```bash
 git add -A
@@ -2447,7 +3194,7 @@ git commit -m "test: live outgoing check recorded"
 
 # Sprint 6: Fixture eval
 
-### Task 20: Fixture set and eval script
+### Task 22: Fixture set and eval script
 
 **Files:**
 - Create: `scripts/fixtures/conversations.json`, `scripts/eval-fixtures.mjs`
@@ -2501,14 +3248,35 @@ These are invented conversations, not real DMs.
 
 **Step 2: Write `scripts/eval-fixtures.mjs`**
 
+Node calls the API directly (Node sends no `Origin`, so CORS rules do not apply). It reuses `api.js` and `prompts.js` through a small `fetch` transport.
+
 ```js
-// Usage: ANTHROPIC_API_KEY=... node scripts/eval-fixtures.mjs [--hard]
+// Usage:
+//   ANTHROPIC_API_KEY="$(cat ~/.config/anthropic/api-key)" \
+//   ANTHROPIC_WORKSPACE_ID="$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/anthropic/configs/default.json")))["workspace_id"])')" \
+//   node scripts/eval-fixtures.mjs [--hard]
 import { readFileSync } from 'node:fs';
 import { callJson } from '../src/lib/api.js';
 import { buildIncomingRequest, buildOutgoingRequest, parseIncoming, parseOutgoing } from '../src/lib/prompts.js';
 
 const key = process.env.ANTHROPIC_API_KEY;
+const workspace = process.env.ANTHROPIC_WORKSPACE_ID;
 if (!key) { console.error('ANTHROPIC_API_KEY not set'); process.exit(1); }
+
+const transport = async (body) => {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      ...(workspace ? { 'anthropic-workspace-id': workspace } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  return { status: res.status, retry_after: res.headers.get('retry-after'), body: await res.json().catch(() => ({})) };
+};
+
 const hard = process.argv.includes('--hard');
 const cases = JSON.parse(readFileSync(new URL('./fixtures/conversations.json', import.meta.url)));
 let failures = 0;
@@ -2519,7 +3287,7 @@ for (const c of cases) {
   const inc = await callJson(buildIncomingRequest({
     model: 'claude-sonnet-5-5', memo: c.memo, context: c.context, otherTarget: c.otherTarget,
     items: c.items.map(({ id, text }) => ({ id, text })),
-  }), key, parseIncoming);
+  }), parseIncoming, { transport });
   console.log(`incoming ${Date.now() - t0}ms`);
   for (const it of c.items) {
     const r = inc[it.id];
@@ -2531,7 +3299,7 @@ for (const c of cases) {
   const out = await callJson(buildOutgoingRequest({
     model: hard ? 'claude-opus-5-5' : 'claude-sonnet-5-5', profile: hard ? 'hard' : 'outgoing',
     memo: c.memo, context: c.context, korean: c.outgoing.korean, lang: c.outgoing.lang,
-  }), key, parseOutgoing);
+  }), parseOutgoing, { transport });
   console.log(`outgoing ${Date.now() - t1}ms\n  ${c.outgoing.korean}\n  -> ${out.translation}\n  <- ${out.back_translation}`);
 }
 console.log(`\n${failures} src_lang failure(s)`);
@@ -2540,10 +3308,10 @@ process.exit(failures ? 1 : 0);
 
 **Step 3: Run it**
 
-Run: `node scripts/eval-fixtures.mjs`
+Run the usage command from the script header (it reads the key and workspace inside the command and never prints them).
 Expected: `0 src_lang failure(s)`, plus a latency per call. Show the translations to the user for an eye check.
 
-Run: `node scripts/eval-fixtures.mjs --hard`
+Run it again with `--hard`.
 Expected: same, with Opus for outgoing.
 
 **Step 4:** If the user flags tone problems, adjust the system prompts in `src/lib/prompts.js`, then re-run Task 7's tests and this script.

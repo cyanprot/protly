@@ -2,7 +2,7 @@
   "schema_version": 1,
   "sprint_id": "006",
   "campaign_id": "2026-10-27-ig-translate",
-  "feature": "Fixture eval (Task 20)",
+  "feature": "Fixture eval (Task 22)",
   "deliverables": [
     "scripts/fixtures/conversations.json",
     "scripts/eval-fixtures.mjs"
@@ -15,7 +15,8 @@
     "Prompts handle en, ru, es, ja and Korean no-op correctly"
   ],
   "scope_boundaries": [
-    "No real DM text in fixtures"
+    "No real DM text in fixtures",
+    "Never print the API key"
   ],
   "evaluation_method": "manual"
 }
