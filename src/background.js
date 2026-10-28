@@ -18,7 +18,7 @@ const api = (body, parse) => callJson(body, parse, { transport });
 async function getSettings() {
   const { settings } = await store.get('settings');
   return {
-    models: { ...DEFAULT_SETTINGS.models, ...settings?.models },
+    models: { ...DEFAULT_SETTINGS.models, ...Object.fromEntries(Object.entries(settings?.models || {}).filter(([, v]) => v)) },
     threadDefaults: { ...DEFAULT_SETTINGS.threadDefaults, ...settings?.threadDefaults },
   };
 }
@@ -63,7 +63,11 @@ async function incoming({ threadId, context, items, updateLang }) {
       writes[key] = entry;
       out[it.id] = entry;
     }
-    await store.set(writes);
+    try {
+      await store.set(writes);
+    } catch (e) {
+      console.warn('[igt] cache write failed; translations still returned', e); // the call is already billed
+    }
   }
 
   if (updateLang) {
@@ -75,7 +79,8 @@ async function incoming({ threadId, context, items, updateLang }) {
   const data = {};
   for (const it of items) {
     const r = out[it.id];
-    data[it.id] = r && incomingTarget(r.src_lang, thread.otherTarget) ? { src_lang: r.src_lang, translation: r.translation } : null;
+    if (!r) { data[it.id] = { missing: true }; continue; } // model skipped it or returned nothing
+    data[it.id] = incomingTarget(r.src_lang, thread.otherTarget) ? { src_lang: r.src_lang, translation: r.translation } : null;
   }
   return data;
 }

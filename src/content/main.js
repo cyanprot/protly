@@ -12,14 +12,33 @@ const DEBOUNCE_MS = 400;
 const WAIT_MS = 300;
 const WAIT_TRIES = 33; // about 10 s
 
-export const ERROR_BANNERS = {
+const ERROR_BANNERS = {
   auth: 'ig-translate: API key missing or rejected. Check ~/.config/anthropic/api-key.',
   host: 'ig-translate: native host not reachable. Run host/install.sh <extension id>, then reload the extension.',
   spend_limit: 'ig-translate: monthly API spend limit reached. Translation paused until the limit resets.',
+  host_bug: 'ig-translate: the native host hit an error',
+  bad_request: 'ig-translate: the API rejected the request (check the model ids in Options)',
+  stale: 'ig-translate was reloaded or updated. Reload this tab.',
 };
 
+// Banner text for an error from ask(), or null when a per-message marker is enough.
+export function bannerFor(e) {
+  const base = ERROR_BANNERS[e?.kind];
+  if (!base) return null;
+  return ['host_bug', 'bad_request'].includes(e.kind) ? `${base}: ${e.message}` : base;
+}
+
 export const ask = async (msg) => {
-  const r = await chrome.runtime.sendMessage(msg);
+  let r;
+  try {
+    if (!chrome.runtime?.id) throw new Error('Extension context invalidated.');
+    r = await chrome.runtime.sendMessage(msg);
+  } catch (err) {
+    const e = new Error(err?.message || String(err));
+    e.kind = /context invalidated|Receiving end does not exist/i.test(e.message) ? 'stale' : 'internal';
+    if (e.kind === 'stale') showBanner(ERROR_BANNERS.stale);
+    throw e;
+  }
   if (!r?.ok) { const e = new Error(r?.error?.message || 'no response'); e.kind = r?.error?.kind; throw e; }
   return r.data;
 };
@@ -79,12 +98,20 @@ function waitForThread(threadId, tries = 0, lastSig = null) {
 }
 
 async function initThread(threadId, root) {
-  const thread = await ask({ type: 'getThread', threadId });
+  let thread;
+  try {
+    thread = await ask({ type: 'getThread', threadId });
+  } catch (e) {
+    ask({ type: 'badge', text: '!' }).catch(() => {});
+    showBanner(bannerFor(e) || `ig-translate: could not load thread settings: ${e.message}`);
+    return;
+  }
   if (threadIdFromPath(location.pathname) !== threadId) return;
   teardown(); // anything a racing init set up meanwhile
   ask({ type: 'badge', text: '' }).catch(() => {});
   current = {
     threadId, thread, root, known: new WeakMap(), timer: null, // row -> text it was seen with
+    freshRows: new WeakSet(), // rows that arrived as new messages: rendered with newMode
     onTeardown: [], onThreadUpdate: [], onMutate: [],
   };
 
@@ -111,6 +138,8 @@ function onMutate(threadId) {
     // A row counts as known only with the same text: a reused node showing another message is new.
     const { past, fresh } = classifyAdded(msgs, (m) => current.known.get(m.row) === m.text);
     for (const m of [...past, ...fresh]) { current.known.set(m.row, m.text); clearTranslation(m); }
+    past.forEach((m) => current.freshRows.delete(m.row));
+    fresh.forEach((m) => current.freshRows.add(m.row));
     if (!current.thread.enabled) return;
     translate(past, current.thread.pastMode, false);
     translate(fresh, current.thread.newMode, true);
@@ -132,14 +161,19 @@ async function translate(msgs, mode, updateLang) {
   try {
     const data = await ask({ type: 'incoming', threadId, context: contextFor(current.root), items, updateLang });
     if (current?.threadId !== threadId) return;
-    todo.forEach((m, i) => { const r = data[String(i)]; if (r && stillShows(m)) renderTranslation(m, r.translation, mode); });
+    todo.forEach((m, i) => {
+      const r = data[String(i)];
+      if (!r || !stillShows(m)) return;
+      if (r.missing) renderRetry(m, () => translate([m], mode, false));
+      else renderTranslation(m, r.translation, mode);
+    });
     if (updateLang) {
       const t = await ask({ type: 'getThread', threadId }); // partnerLang may have changed
       if (current?.threadId === threadId) current.thread = t;
     }
   } catch (e) {
     if (current?.threadId !== threadId) return;
-    if (ERROR_BANNERS[e.kind]) showBanner(ERROR_BANNERS[e.kind]);
+    if (bannerFor(e)) showBanner(bannerFor(e));
     todo.forEach((m) => { if (stillShows(m)) renderRetry(m, () => translate([m], mode, false)); });
   }
 }
@@ -160,7 +194,11 @@ export function rerender() {
   if (!current) return;
   const msgs = readMessages(current.root);
   msgs.forEach(clearTranslation);
-  if (current.thread.enabled) translate(msgs, current.thread.pastMode, false); // cache makes this cheap
+  if (!current.thread.enabled) return;
+  const isFresh = (m) => current.freshRows.has(m.row);
+  translate(msgs.filter((m) => !isFresh(m)), current.thread.pastMode, false); // cache makes this cheap
+  translate(msgs.filter(isFresh), current.thread.newMode, false);
+  hoverSent(msgs);
 }
 
 export function showBanner(text) {

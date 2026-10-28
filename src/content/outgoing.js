@@ -1,7 +1,7 @@
 import { initial, reduce } from '../lib/preview.js';
 import { hasHangul, langName, LANG_NAMES } from '../lib/lang.js';
 import { findComposer, getComposerText, setComposerText } from './dom.js';
-import { ask, getCurrent, contextFor, showBanner } from './main.js';
+import { ask, getCurrent, contextFor, showBanner, bannerFor } from './main.js';
 
 const COMPOSE_ENTER_MS = 300; // a deferred IME Enter must be followed by compositionend within this window
 const WRITE_SETTLE_MS = 50;   // editors such as Lexical commit DOM updates asynchronously
@@ -54,10 +54,15 @@ export function mountOutgoing(cur) {
       const sel = document.createElement('select');
       sel.className = 'igt-chip';
       for (const [code, name] of Object.entries(LANG_NAMES)) if (code !== 'ko') sel.add(new Option(name, code));
+      if (!(lang in LANG_NAMES)) sel.add(new Option(langName(lang), lang), 0); // partner language outside the list
       sel.value = lang;
       sel.onchange = async () => {
         const c = getCurrent();
-        if (c) c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch: { outputLang: sel.value } });
+        try {
+          if (c) c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch: { outputLang: sel.value } });
+        } catch (err) {
+          showBanner(`ig-translate: could not save the reply language: ${err.message}`);
+        }
         dispatch({ type: 'lang', lang: sel.value });
       };
       b.replaceWith(sel);
@@ -86,6 +91,7 @@ export function mountOutgoing(cur) {
           });
           dispatch({ type: 'result', reqId: effect.reqId, ...r });
         } catch (e) {
+          if (bannerFor(e)) showBanner(bannerFor(e));
           dispatch({ type: 'fail', reqId: effect.reqId, message: e.message });
         }
         break;

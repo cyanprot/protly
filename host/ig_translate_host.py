@@ -15,7 +15,7 @@ import urllib.error
 import urllib.request
 
 API_URL = 'https://api.anthropic.com/v1/messages'
-TIMEOUT_S = 120
+TIMEOUT_S = 240  # Opus hard (effort high, 32k tokens, non-streaming) can take minutes
 MAX_REPLY = 1024 * 1024  # Chrome rejects host messages larger than 1 MB
 
 _out_lock = threading.Lock()

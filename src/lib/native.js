@@ -4,7 +4,7 @@ export const HOST_NAME = 'com.northprot.ig_translate';
 
 // connect() returns a Port-like object: { postMessage, onMessage.addListener, onDisconnect.addListener }.
 // lastError() returns why a port closed (chrome.runtime.lastError?.message), read inside onDisconnect.
-export function createNativeTransport(connect, lastError = () => undefined, timeoutMs = 150000) {
+export function createNativeTransport(connect, lastError = () => undefined, timeoutMs = 270000) {
   let conn = null; // { port, pending: Map<id, {resolve, reject, timer}> }
   let nextId = 1;
 

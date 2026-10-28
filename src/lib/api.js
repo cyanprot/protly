@@ -1,4 +1,4 @@
-// kind: auth | host | timeout | spend_limit | rate | overloaded | server | bad_request | network | refused | parse | truncated
+// kind: auth | host | host_bug | timeout | spend_limit | rate | overloaded | server | bad_request | network | refused | parse | truncated
 // timeout and truncated are not retried: the API may still be generating (and billing) the first attempt.
 export class ApiError extends Error {
   constructor(kind, message, status) {
@@ -17,6 +17,7 @@ function classify(status, body) {
     const t = body?.error?.type;
     if (t === 'host_config') return 'auth';
     if (t === 'host_timeout') return 'timeout';
+    if (t === 'host_error') return 'host_bug'; // a bug in the host, not a transient failure: never retried
     if (t === 'host_network') return 'network';
     return 'host';
   }

@@ -104,3 +104,9 @@ test('callJson does not re-request a truncated reply', async () => {
   await assert.rejects(callJson({}, parse, { transport: t, sleep: noSleep }), (e) => e.kind === 'truncated');
   assert.equal(t.calls.length, 1);
 });
+
+test('host_error is host_bug and is not retried', async () => {
+  const t = fakeTransport([{ status: 0, body: { error: { type: 'host_error', message: 'KeyError' } } }]);
+  await assert.rejects(callClaude({}, { transport: t, sleep: noSleep }), (e) => e.kind === 'host_bug' && e.message === 'KeyError');
+  assert.equal(t.calls.length, 1);
+});

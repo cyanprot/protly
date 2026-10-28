@@ -133,6 +133,7 @@ export function parseIncoming(resp) {
   const out = {};
   for (const it of j.items) {
     if (typeof it.id !== 'string' || typeof it.translation !== 'string') throw new ApiError('parse', 'bad item');
+    if (!it.translation.trim()) continue; // treated as missing: retry marker, never cached
     const src = typeof it.src_lang === 'string' ? it.src_lang.toLowerCase().split(/[-_]/)[0] : 'und';
     out[it.id] = { src_lang: src, translation: it.translation };
   }

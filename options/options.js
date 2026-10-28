@@ -10,7 +10,7 @@ for (const id of ['incoming', 'outgoing', 'hard']) {
 const { settings = {} } = await chrome.storage.local.get('settings');
 const models = { ...DEFAULT_SETTINGS.models, ...settings.models };
 const threadDefaults = { ...DEFAULT_SETTINGS.threadDefaults, ...settings.threadDefaults };
-for (const id of ['incoming', 'outgoing', 'hard']) $(id).value = models[id];
+for (const id of ['incoming', 'outgoing', 'hard']) $(id).value = MODELS.includes(models[id]) ? models[id] : DEFAULT_SETTINGS.models[id];
 for (const id of ['otherTarget', 'pastMode', 'newMode']) $(id).value = threadDefaults[id];
 
 $('save').onclick = async () => {

@@ -3,7 +3,7 @@
   "name": "ig-translate",
   "version": "0.1.0",
   "description": "Translate Instagram DMs with Claude.",
-  "permissions": ["storage", "nativeMessaging"],
+  "permissions": ["storage", "unlimitedStorage", "nativeMessaging"],
   "host_permissions": [
     "https://www.instagram.com/*"
   ],

@@ -1,4 +1,4 @@
-import { ask, rerender, getCurrent, contextFor } from './main.js';
+import { ask, rerender, getCurrent, contextFor, showBanner } from './main.js';
 import { LANG_NAMES } from '../lib/lang.js';
 
 export function mountPanel(cur) {
@@ -49,7 +49,13 @@ export function mountPanel(cur) {
   const save = async (patch, rerenderAfter) => {
     const c = getCurrent();
     if (!c) return;
-    c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch });
+    try {
+      c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch });
+    } catch (e) {
+      showBanner(`ig-translate: could not save: ${e.message}`);
+      fill(c.thread); // show what is actually stored
+      return;
+    }
     c.onThreadUpdate.forEach((f) => f(c.thread)); // e.g. outgoing resets its preview when disabled
     if (rerenderAfter) rerender();
   };
@@ -64,7 +70,7 @@ export function mountPanel(cur) {
     try {
       $('memo').value = await ask({ type: 'suggestMemo', threadId: c.threadId, context: contextFor(c.root) });
     } catch (e) {
-      $('memo').placeholder = `Suggestion failed: ${e.message}`;
+      showBanner(`ig-translate: memo suggestion failed: ${e.message}`);
     } finally {
       $('suggest').disabled = false;
     }

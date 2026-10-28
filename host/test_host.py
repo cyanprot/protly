@@ -111,7 +111,7 @@ class Handle(unittest.TestCase):
         self.assertEqual(req.get_method(), 'POST')
         self.assertEqual(json.loads(req.data), {'model': 'm'})
         self.assertEqual(req.get_header('X-api-key'), 'sk-ant-test-123')
-        self.assertEqual(op.call_args[1]['timeout'], 120)
+        self.assertEqual(op.call_args[1]['timeout'], h.TIMEOUT_S)
 
     def test_http_error_keeps_status_retry_after_and_body(self):
         err = urllib.error.HTTPError(h.API_URL, 429, 'rate', {'retry-after': '3'},

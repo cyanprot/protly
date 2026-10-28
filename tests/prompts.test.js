@@ -82,3 +82,8 @@ test('outgoing prompt fixes the writer as male', () => {
   const b = buildOutgoingRequest({ model: 'claude-sonnet-5-5', profile: 'outgoing', memo: '', context: [], korean: '피곤했어', lang: 'ru' });
   assert.match(b.system, /writer is male/);
 });
+
+test('parseIncoming drops empty translations so they are never cached', () => {
+  const r = parseIncoming(resp('{"items":[{"id":"0","src_lang":"en","translation":"  "},{"id":"1","src_lang":"en","translation":"안녕"}]}'));
+  assert.deepEqual(Object.keys(r), ['1']);
+});
