@@ -1,5 +1,5 @@
 import { threadIdFromPath } from '../lib/keys.js';
-import { watchFlags } from '../lib/flags.js';
+import { watchFlags, siteEnabled } from '../lib/flags.js';
 import { isKoreanOnly, hasHangul as isHangulText } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
 import { findViewerName } from './selectors.js';
@@ -44,6 +44,7 @@ let staleSig = null;
 const sigOf = (msgs) => msgs.map((m) => m.text).join('\u0001');
 
 export async function start() {
+  if (!(await siteEnabled('instagram'))) return; // switched off in the popup: mount nothing
   fetchFonts((p) => chrome.runtime.getURL(p)).then((f) => addFonts(document, f))
     .catch((e) => console.warn('[protly] fonts not loaded; using the monospace fallback', e));
   watchFlags();

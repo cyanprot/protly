@@ -1,4 +1,4 @@
-import { watchFlags } from '../../lib/flags.js';
+import { watchFlags, siteEnabled } from '../../lib/flags.js';
 import { addFonts, fetchFonts } from '../../ui/fonts.js';
 import { GSEL } from './selectors.js';
 import { mountCompose, translate, escape } from './compose.js';
@@ -7,6 +7,7 @@ const SCAN_MS = 300;
 const COMPOSE_WAIT_MS = 500;
 
 export async function start() {
+  if (!(await siteEnabled('gmail'))) return; // switched off in the popup: mount nothing
   fetchFonts((p) => chrome.runtime.getURL(p)).then((f) => addFonts(document, f))
     .catch((e) => console.warn('[protly] fonts not loaded; using the monospace fallback', e));
   watchFlags();
