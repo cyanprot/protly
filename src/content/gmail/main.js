@@ -2,9 +2,9 @@ import { watchFlags, siteEnabled } from '../../lib/flags.js';
 import { addFonts, fetchFonts } from '../../ui/fonts.js';
 import { GSEL } from './selectors.js';
 import { mountCompose, translate, escape } from './compose.js';
+import { commandListener } from '../../lib/command.js';
 
 const SCAN_MS = 300;
-const COMPOSE_WAIT_MS = 500;
 
 export async function start() {
   if (!(await siteEnabled('gmail'))) return; // switched off in the popup: mount nothing
@@ -18,20 +18,6 @@ export async function start() {
     .observe(document.body, { childList: true, subtree: true });
   scan();
 
-  // Alt+T inside a compose body. e.code, because the Korean layout reports e.key as 'ㅅ'.
-  document.addEventListener('keydown', (e) => {
-    if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.code !== 'KeyT') return;
-    const body = e.target?.closest?.(GSEL.body);
-    if (!body) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    if (!e.isComposing && e.keyCode !== 229) { translate(body); return; }
-    // IME mid-syllable: wait for the last syllable to commit.
-    const go = () => { clearTimeout(t); translate(body); };
-    const t = setTimeout(() => { body.removeEventListener('compositionend', go); translate(body); }, COMPOSE_WAIT_MS);
-    body.addEventListener('compositionend', go, { once: true });
-  }, true);
-
   // Esc in a compose body undoes protly's preview. Only swallowed when there was something to undo.
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || e.isComposing) return;
@@ -40,4 +26,14 @@ export async function start() {
     e.preventDefault();
     e.stopImmediatePropagation();
   }, true);
+
+  // Alt+T arrives as a background command. The compose body owns it when focus is inside one.
+  let composing = false;
+  document.addEventListener('compositionstart', () => { composing = true; }, true);
+  document.addEventListener('compositionend', () => { composing = false; }, true);
+  chrome.runtime.onMessage.addListener(commandListener({
+    owner: () => document.activeElement?.closest?.(GSEL.body) ?? null,
+    composing: () => composing,
+    run: (body) => { if (body.isConnected) translate(body); },
+  }));
 }

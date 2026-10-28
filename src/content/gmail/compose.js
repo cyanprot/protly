@@ -2,7 +2,6 @@ import { GSEL, composeOf, findViewerEmail } from './selectors.js';
 import { userNodes, nodesToText, textToNodes, replaceUserNodes, hasMedia } from './body.js';
 import { readThread } from './thread.js';
 import { hasHangul, parseLangPrefix } from '../../lib/lang.js';
-import { flags } from '../../lib/flags.js';
 import { createCard } from '../../ui/card.js';
 import { ERRORS, errorText } from '../../ui/errors.js';
 
@@ -116,7 +115,7 @@ function showError(body, s, message) {
   say(body, s, message, { error: true, actions: inPreview ? previewActions(body) : [], picker: inPreview });
 }
 
-// Translate button and Alt+T.
+// Translate button and Alt+T (through the background command).
 export function translate(body) {
   const s = stateOf(body);
   if (s.mode === 'translating') return;
@@ -125,11 +124,7 @@ export function translate(body) {
   if (s.mode === 'preview') {
     if (norm(text) === norm(s.shown)) return; // nothing new to translate
     // Polish only starts from idle, so Undo always goes back to the original draft.
-    if (!hasHangul(text)) {
-      return showError(body, s, flags.polish
-        ? 'No Korean text to translate. To polish this English, press Undo first.'
-        : 'No Korean text to translate. Use the picker or Opus to translate the original again.');
-    }
+    if (!hasHangul(text)) return showError(body, s, 'No Korean text to translate. To polish this English, press Undo first.');
     // A new Korean draft replaced the preview. The body holds it, so the older Korean is not needed for Undo.
     Object.assign(s, { mode: 'idle', saved: null });
   }
@@ -138,12 +133,11 @@ export function translate(body) {
     // The prefix ("ru: ...") is a one-off override; the saved nodes keep it, so Undo brings it back.
     const p = parseLangPrefix(text);
     opts = { kind: 'translate', korean: p.text, profile: 'email', lang: p.lang ?? 'auto' };
-  } else if (flags.polish && /\p{L}/u.test(text)) {
+  } else if (/\p{L}/u.test(text)) {
+    // Explicit action (button or Alt+T): polish always. The popup toggle only governs Enter on Instagram.
     opts = { kind: 'polish', korean: text, profile: 'email' };
   } else {
-    return say(body, s, flags.polish
-      ? 'Nothing to polish.'
-      : 'No Korean text to translate. Turn on Polish English in the toolbar popup to polish English drafts.', { error: true });
+    return say(body, s, 'Nothing to translate or polish.', { error: true });
   }
   if (hasMedia(nodes)) {
     const verb = opts.kind === 'polish' ? 'Polish' : 'Translate';
