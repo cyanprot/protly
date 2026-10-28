@@ -41,3 +41,15 @@ test('latestPartnerLang picks last non-Korean partner message', () => {
   assert.equal(latestPartnerLang(r), 'ru');
   assert.equal(latestPartnerLang([]), null);
 });
+
+test('LANG_NAMES: lowercase codes, unique names, rest sorted by name', async () => {
+  const { LANG_NAMES, langName } = await import('../src/lib/lang.js');
+  const codes = Object.keys(LANG_NAMES);
+  const names = Object.values(LANG_NAMES);
+  assert.ok(codes.every((c) => /^[a-z]{2,3}$/.test(c)));
+  assert.equal(new Set(names).size, names.length);
+  const rest = names.slice(10);
+  assert.deepEqual(rest, [...rest].sort());
+  assert.equal(langName('vi'), 'Vietnamese');
+  assert.equal(langName('xx'), 'xx');
+});

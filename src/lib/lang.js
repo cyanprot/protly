@@ -33,9 +33,19 @@ export function latestPartnerLang(results) {
   return null;
 }
 
+// Picker order: the common ones first, then the rest by name. Codes are ISO 639-1
+// (yue has none, so it uses 639-3); the model can still write any language not listed.
 export const LANG_NAMES = {
   ko: 'Korean', en: 'English', ru: 'Russian', es: 'Spanish', ja: 'Japanese',
   zh: 'Chinese', fr: 'French', de: 'German', uk: 'Ukrainian', pt: 'Portuguese',
+  ar: 'Arabic', be: 'Belarusian', bn: 'Bengali', bg: 'Bulgarian', yue: 'Cantonese',
+  hr: 'Croatian', cs: 'Czech', da: 'Danish', nl: 'Dutch', et: 'Estonian',
+  fi: 'Finnish', ka: 'Georgian', el: 'Greek', he: 'Hebrew', hi: 'Hindi',
+  hu: 'Hungarian', id: 'Indonesian', it: 'Italian', kk: 'Kazakh', lv: 'Latvian',
+  lt: 'Lithuanian', ms: 'Malay', mn: 'Mongolian', no: 'Norwegian', fa: 'Persian',
+  pl: 'Polish', pa: 'Punjabi', ro: 'Romanian', sr: 'Serbian', sk: 'Slovak',
+  sv: 'Swedish', tl: 'Tagalog', th: 'Thai', tr: 'Turkish', ur: 'Urdu',
+  uz: 'Uzbek', vi: 'Vietnamese',
 };
 
 export const langName = (code) => LANG_NAMES[code] || code;
