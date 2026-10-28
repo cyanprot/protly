@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { hasHangul, isKoreanOnly, incomingTarget, resolveOutputLang, latestPartnerLang } from '../src/lib/lang.js';
+import { hasHangul, isKoreanOnly, incomingTarget, resolveOutputLang, latestPartnerLang, parseLangPrefix } from '../src/lib/lang.js';
 
 test('hasHangul', () => {
   assert.equal(hasHangul('hello'), false);
@@ -52,4 +52,15 @@ test('LANG_NAMES: lowercase codes, unique names, rest sorted by name', async () 
   assert.deepEqual(rest, [...rest].sort());
   assert.equal(langName('vi'), 'Vietnamese');
   assert.equal(langName('xx'), 'xx');
+});
+
+test('parseLangPrefix: a known code picks the language and is dropped', () => {
+  assert.deepEqual(parseLangPrefix('ru: 안녕'), { lang: 'ru', text: '안녕' });
+  assert.deepEqual(parseLangPrefix('ja: 첫줄\n둘째 줄'), { lang: 'ja', text: '첫줄\n둘째 줄' });
+});
+
+test('parseLangPrefix: ko, unknown codes, a late prefix and URLs stay text', () => {
+  for (const s of ['ko: 안녕', 'ok: 안녕', '안녕 ru:', 'https://x.com 안녕']) {
+    assert.deepEqual(parseLangPrefix(s), { lang: null, text: s });
+  }
 });

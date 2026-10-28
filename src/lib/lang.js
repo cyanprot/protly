@@ -49,3 +49,12 @@ export const LANG_NAMES = {
 };
 
 export const langName = (code) => LANG_NAMES[code] || code;
+
+// "ru: 안녕" -> { lang: 'ru', text: '안녕' }. Only known non-Korean codes count, so "ok:" stays text.
+// Callers apply it to Korean drafts only, which keeps English such as "no: ..." (Norwegian) out of it.
+export function parseLangPrefix(s) {
+  const m = s.match(/^\s*([a-z]{2,3}):\s*/i);
+  const code = m?.[1].toLowerCase();
+  if (!code || code === 'ko' || !(code in LANG_NAMES)) return { lang: null, text: s };
+  return { lang: code, text: s.slice(m[0].length) };
+}
