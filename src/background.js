@@ -3,6 +3,7 @@ import { createUsageRecorder, summarize } from './lib/usage.js';
 import { createBadgeStore } from './lib/badge.js';
 import { statusFor } from './lib/status.js';
 import { DEFAULT_SITES } from './lib/flags.js';
+import { routeCommand } from './lib/route.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
@@ -200,6 +201,43 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     .then((data) => sendResponse({ ok: true, data }))
     .catch((e) => sendResponse({ ok: false, error: { kind: e instanceof ApiError ? e.kind : 'internal', message: String(e?.message || e) } }));
   return true;
+});
+
+const GENERIC = 'dist/generic.js';
+const inFrame = (tabId, frameId) => ({ tabId, frameIds: [frameId] });
+
+// Ask the Instagram/Gmail adapter in that frame first; inject the generic bundle only when none owns the box.
+function route(tab, frameId, args) {
+  return routeCommand({
+    tabId: tab.id, frameId, args,
+    sendToTab: (tabId, msg, f) => chrome.tabs.sendMessage(tabId, msg, { frameId: f }),
+    injectFile: (tabId, f) => chrome.scripting.executeScript({ target: inFrame(tabId, f), files: [GENERIC] }),
+    runGeneric: (tabId, f, a) => chrome.scripting.executeScript({
+      target: inFrame(tabId, f), func: (x) => globalThis.__protly.run(x), args: [a],
+    }),
+    setBadge: (tabId, text, reason) => setTabBadge(tabId, text, reason),
+    toastInMain: (tabId, text) => chrome.scripting.executeScript({
+      target: inFrame(tabId, 0), func: (t) => globalThis.__protly.toast(t), args: [text],
+    }),
+  }).catch((e) => console.warn('[protly] routing failed', e));
+}
+
+chrome.commands.onCommand.addListener((command, tab) => {
+  if (command === 'run' && tab?.id != null) route(tab, 0, { source: 'command' });
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  // removeAll first: a reload re-runs onInstalled and duplicate ids would throw.
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({ id: 'protly-selection', title: 'protly: translate selection', contexts: ['selection'] });
+    chrome.contextMenus.create({ id: 'protly-box', title: 'protly: translate or polish this box', contexts: ['editable'] });
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (tab?.id == null) return;
+  const source = info.menuItemId === 'protly-selection' ? 'menu-selection' : 'menu-editable';
+  route(tab, info.frameId ?? 0, { source, selectionText: info.selectionText });
 });
 
 async function prune() {
