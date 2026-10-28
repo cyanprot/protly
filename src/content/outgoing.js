@@ -7,6 +7,7 @@ import { flags } from '../lib/flags.js';
 import { createCard } from '../ui/card.js';
 import { showToast } from '../ui/toast.js';
 import { errorText } from '../ui/errors.js';
+import { commandListener } from '../lib/command.js';
 
 const HINTS = 'Enter send · Esc undo · Alt+Enter Opus';
 
@@ -246,6 +247,21 @@ export function mountOutgoing(cur) {
     }, 0);
   }
 
+  // Alt+T: owned only while this thread is live, translation is on and focus is in the composer. A disabled thread
+  // falls through to the generic path. The real Enter is never involved: `run` never sends.
+  // Known gap, accepted: between a thread switch and this mount (up to ~10 s) no adapter owns the composer, so
+  // Alt+T falls through to the generic path, which writes outside the sent tracking (no hover original).
+  const onCommand = commandListener({
+    owner: () => {
+      if (!live() || !getCurrent()?.thread.enabled) return null;
+      const c = composer();
+      return c && c.contains(document.activeElement) ? c : null;
+    },
+    composing: () => composing,
+    run: (c) => { if (live() && composer() === c) dispatch({ type: 'run', text: getComposerText(c) }); },
+  });
+  chrome.runtime.onMessage.addListener(onCommand);
+
   window.addEventListener('keydown', onKeyDown, true);
   window.addEventListener('compositionstart', onCompositionStart, true);
   window.addEventListener('compositionend', onCompositionEnd, true);
@@ -257,6 +273,7 @@ export function mountOutgoing(cur) {
     window.removeEventListener('compositionstart', onCompositionStart, true);
     window.removeEventListener('compositionend', onCompositionEnd, true);
     window.removeEventListener('input', onInput, true);
+    chrome.runtime.onMessage.removeListener(onCommand);
     resetPreview();
     dead = true;
   });
