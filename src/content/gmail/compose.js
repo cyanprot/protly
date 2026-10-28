@@ -9,6 +9,8 @@ import { ERRORS, errorText } from '../../ui/errors.js';
 const MOUNT_GRACE_MS = 3000; // Gmail can render a body before its toolbar
 const HINTS = 'Esc undo';
 const norm = (s) => (s ?? '').replace(/\s+/g, ' ').trim();
+// The user changed the translation in the body since the preview appeared.
+const edited = (body, s) => norm(nodesToText(userNodes(body))) !== norm(s.shown);
 const states = new WeakMap(); // compose body -> state; dropped with the compose
 let badgeSet = false;
 let viewerWarned = false;
@@ -18,7 +20,8 @@ async function ask(msg) {
   try {
     r = await chrome.runtime.sendMessage(msg);
   } catch (err) {
-    const stale = /context invalidated/i.test(err?.message);
+    // Same detection as the Instagram ask(): a reloaded or updated extension.
+    const stale = /context invalidated|Receiving end does not exist/i.test(err?.message);
     const e = new Error(stale ? ERRORS.stale : err?.message || String(err));
     e.kind = stale ? 'stale' : 'internal';
     throw e;
@@ -87,7 +90,10 @@ function cardOf(body, s) {
 
 const act = (label, onClick) => ({ label, onClick });
 // A polish preview has no target language, so no picker.
-const pickerOf = (body, s) => (s.kind === 'polish' ? {} : { lang: s.lang, onLang: (lang) => retranslate(body, { lang }) });
+// The chip takes focus and the working card removes it, so give focus back to the body for the next Esc.
+const pickerOf = (body, s) => (s.kind === 'polish' ? {} : {
+  lang: s.lang, onLang: (lang) => { body.focus(); retranslate(body, { lang }); },
+});
 const previewActions = (body) => [act('Opus', () => retranslate(body, { profile: 'hard' })), act('Undo', () => undo(body))];
 
 function say(body, s, text, { error = false, actions = [], picker = false } = {}) {
@@ -151,7 +157,7 @@ function retranslate(body, { lang, profile, force = false }) {
   const s = stateOf(body);
   if (s.mode !== 'preview') return;
   const opts = { kind: s.kind, korean: s.korean, profile: profile ?? s.profile, lang: lang ?? s.lang };
-  if (!force && norm(nodesToText(userNodes(body))) !== norm(s.shown)) {
+  if (!force && edited(body, s)) {
     return say(body, s, 'You edited the translation. Translating again replaces your edit.', {
       actions: [
         act('Replace anyway', () => retranslate(body, { ...opts, force: true })),
@@ -172,9 +178,15 @@ export function undo(body) {
 }
 
 // Esc in a compose body: undo a preview or a translation in flight. False when there is nothing to undo.
+// An edited translation is never undone by Esc (the DOM swap is outside Ctrl+Z): retranslate's
+// edited-translation prompt asks instead, with Undo as one of its choices.
 export function escape(body) {
   const s = states.get(body);
   if (!s || s.mode === 'idle') return false;
+  if (s.mode === 'preview' && edited(body, s)) {
+    retranslate(body, {});
+    return true;
+  }
   undo(body);
   return true;
 }

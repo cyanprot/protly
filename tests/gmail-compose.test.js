@@ -304,3 +304,44 @@ test('the preview card shows the model and the Esc hint', async () => {
   assert.equal(note().querySelector('.model').textContent, 'Opus');
   assert.equal(note().querySelector('.hints').textContent, 'Esc undo');
 });
+
+test('Esc after editing the translation keeps the edit and asks instead', async () => {
+  const { inline, calls, reply, note, buttonIn } = setup();
+  translate(inline);
+  await reply(ok('First'));
+  inline.firstChild.textContent = 'First, edited';
+  assert.equal(escape(inline), true); // swallowed: the prompt answers it
+  assert.equal(userText(inline), 'First, edited');
+  assert.equal(calls.length, 1);
+  assert.match(note().textContent, /You edited the translation/);
+  buttonIn('Keep my edit').click();
+  assert.equal(userText(inline), 'First, edited');
+  assert.match(note().textContent, /역번역/);
+  buttonIn('Undo').click();
+  assert.equal(userText(inline), KOREAN); // an explicit Undo still goes back
+});
+
+test('changing the language puts focus back in the compose body', async () => {
+  const { inline, calls, reply, note } = setup();
+  translate(inline);
+  await reply(ok('First'));
+  const sel = note().querySelector('select');
+  sel.focus();
+  sel.value = 'ja';
+  sel.dispatchEvent(new document.defaultView.Event('change'));
+  assert.equal(calls[1].lang, 'ja');
+  assert.equal(document.activeElement, inline);
+});
+
+test('a reloaded extension shows the stale error, not Chrome\'s message', async () => {
+  for (const message of ['Could not establish connection. Receiving end does not exist.', 'Extension context invalidated.']) {
+    const { inline, note } = setup();
+    chrome.runtime.sendMessage = (msg) => (msg.type === 'badge'
+      ? Promise.resolve({ ok: true, data: true })
+      : Promise.reject(new Error(message)));
+    translate(inline);
+    await flush();
+    assert.match(note().textContent, /protly was reloaded or updated/);
+    assert.doesNotMatch(note().textContent, /Receiving end|context invalidated/);
+  }
+});
