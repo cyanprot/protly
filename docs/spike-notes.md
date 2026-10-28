@@ -31,3 +31,17 @@ The organization disallows browser-origin (CORS) requests. An extension service 
 `Origin: chrome-extension://<id>` header on POST, so the design's direct-call path cannot work with this
 organization. Requests with no `Origin` (Node) succeed. Plan Task 2 decision gate: BLOCKED, design
 revisit needed for the API path only.
+
+## Composer write (2026-10-27, live, no send)
+
+Composer: `div[role="textbox"][contenteditable="true"][data-lexical-editor="true"]` (Lexical editor, 1 match).
+
+- `el.focus(); document.execCommand('selectAll'); document.execCommand('insertText', false, text)` on an
+  empty composer: text appears and Instagram shows its Send button. State follows.
+- Replacing existing text: `getSelection().selectAllChildren(el)`, wait ~60 ms (Lexical syncs selection on
+  `selectionchange`), then `execCommand('insertText', false, text)`. Works.
+- Clearing to empty with `execCommand('delete')` does NOT work: returns true, Lexical keeps the text. Not needed,
+  since the extension only ever replaces text with non-empty text. Real Ctrl+A, Backspace clears it.
+- Empty composer `innerText` is `"\n"`; `getComposerText` strips the trailing newline.
+
+`setComposerText` must therefore be: focus, `selectAllChildren`, wait 60 ms, `insertText`. It becomes async.

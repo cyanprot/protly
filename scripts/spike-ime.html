@@ -1,0 +1,12 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>IME Enter spike</title>
+<div id="ed" contenteditable="true" style="border:1px solid #888;min-height:3em;padding:8px"></div>
+<pre id="log"></pre>
+<script>
+  const ed = document.getElementById('ed');
+  const log = (s) => { document.getElementById('log').textContent += s + '\n'; };
+  for (const t of ['keydown', 'keyup', 'compositionstart', 'compositionend', 'beforeinput']) {
+    ed.addEventListener(t, (e) => log(`${t} key=${e.key ?? ''} code=${e.keyCode ?? ''} isComposing=${e.isComposing ?? ''} data=${e.data ?? ''} text="${ed.innerText}"`), true);
+  }
+</script>
