@@ -121,3 +121,31 @@ test('parseEmail normalizes lang and rejects an empty translation', () => {
   assert.throws(() => parseEmail(resp('{"lang":"en","translation":"  ","back_translation":"x"}')), (e) => e.kind === 'parse');
   assert.throws(() => parseEmail(resp('{}', 'max_tokens')), (e) => e.kind === 'truncated');
 });
+
+import { buildPolishRequest } from '../src/lib/prompts.js';
+
+test('polish request: CyanStyle rules, draft last, effort low; hard is Opus high', () => {
+  const b = buildPolishRequest({ model: 'claude-sonnet-5-5', draft: 'i think its good' });
+  assert.match(b.system, /Canadian spelling/);
+  assert.match(b.system, /never an em dash/);
+  assert.match(b.system, /An email keeps its greeting/);
+  assert.equal(b.messages[0].content, 'DRAFT:\ni think its good');
+  assert.equal(b.output_config.effort, 'low');
+  assert.deepEqual(b.output_config.format.schema.required, ['translation', 'back_translation']);
+  const h = buildPolishRequest({ model: 'claude-opus-5-5', profile: 'hard', draft: 'x' });
+  assert.equal(h.output_config.effort, 'high');
+});
+
+test('parseOutgoing rejects an empty translation', () => {
+  assert.throws(() => parseOutgoing(resp('{"translation":"  ","back_translation":"x"}')), (e) => e.kind === 'parse');
+});
+
+test('outgoing prompt checks gendered words and never answers in Korean; email skips Korean for auto', () => {
+  const o = buildOutgoingRequest({ model: 'claude-sonnet-5-5', profile: 'outgoing', memo: '', context: [], korean: '고마워', lang: 'ru' });
+  assert.match(o.system, /ty spasla/);
+  assert.match(o.system, /never Korean/);
+  const e = buildEmailRequest({ model: 'claude-sonnet-5-5', context: [], korean: '네' });
+  assert.match(e.system, /never Korean/);
+  assert.match(e.system, /non-Korean message/);
+  assert.doesNotMatch(e.system, /ty spasla/);
+});
