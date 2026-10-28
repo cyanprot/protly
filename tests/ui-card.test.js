@@ -133,3 +133,26 @@ test('the theme follows the page', () => {
   card.message('x');
   assert.equal(rootOf(card).dataset.plTheme, 'dark');
 });
+
+test('the theme follows the card\'s surroundings: a white compose on a dark page stays light', () => {
+  doc.body.style.backgroundColor = 'rgb(17, 17, 17)';
+  const compose = doc.body.appendChild(doc.createElement('div'));
+  compose.style.backgroundColor = 'rgb(255, 255, 255)';
+  const anchor = compose.appendChild(doc.createElement('div'));
+  const card = createCard({ doc, place: { before: anchor } });
+  card.message('x');
+  assert.equal(rootOf(card).dataset.plTheme, 'light');
+  const clear = doc.body.appendChild(doc.createElement('div'));
+  const card2 = createCard({ doc, place: { after: clear.appendChild(doc.createElement('div')) } });
+  card2.message('y');
+  assert.equal(rootOf(card2).dataset.plTheme, 'dark');
+});
+
+test('a dark thread on a light page gives a dark card', () => {
+  doc.body.style.backgroundColor = 'rgb(250, 250, 250)';
+  const thread = doc.body.appendChild(doc.createElement('div'));
+  thread.style.backgroundColor = 'rgb(0, 0, 0)';
+  const card = createCard({ doc, place: { before: thread.appendChild(doc.createElement('div')) } });
+  card.message('x');
+  assert.equal(rootOf(card).dataset.plTheme, 'dark');
+});

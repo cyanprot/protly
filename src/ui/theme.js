@@ -13,31 +13,47 @@ export function luminance([r, g, b]) {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }
 
-export function pickTheme(doc) {
+const themeOf = (c) => (luminance(c) < 0.4 ? 'dark' : 'light');
+
+// from (optional Element): the first ancestor of from, itself included and crossing shadow roots, whose
+// background is at least half opaque decides (a white Gmail compose on a dark page). None, or no from: the
+// first non-transparent background of body, then html; none at all -> 'light'.
+export function pickTheme(doc, from) {
   const win = doc.defaultView;
-  for (const el of [doc.body, doc.documentElement]) {
-    if (!el || !win) continue;
+  if (!win) return 'light';
+  for (let el = from; el; el = el.parentElement || el.getRootNode().host) {
     const c = parseColor(win.getComputedStyle(el).backgroundColor);
-    if (c && c[3] > 0) return luminance(c) < 0.4 ? 'dark' : 'light';
+    if (c && c[3] >= 0.5) return themeOf(c);
+  }
+  for (const el of [doc.body, doc.documentElement]) {
+    if (!el) continue;
+    const c = parseColor(win.getComputedStyle(el).backgroundColor);
+    if (c && c[3] > 0) return themeOf(c);
   }
   return 'light';
 }
 
+// Where el sits: the parent of its shadow host, or its own parent. Null while not yet in the page.
+const surroundings = (el) => {
+  const root = el.getRootNode();
+  return (root.host ? root.host : el).parentElement;
+};
+
 const bound = new WeakMap(); // document -> Set of elements kept in sync
 
-// Sets el.dataset.plTheme now and whenever html or body change class or style. Returns an unbind function.
+// Sets el.dataset.plTheme from el's surroundings (see surroundings and pickTheme) now and whenever html or body
+// change class or style, each bound element judged against its own surroundings. Returns an unbind function.
 // An element the page detached without unbinding (Gmail closing a compose window) is dropped on the next
 // change, so it and its listeners are not kept alive; card.js and toast.js bind again when they re-insert.
 export function bindTheme(el, doc = el.ownerDocument) {
-  el.dataset.plTheme = pickTheme(doc);
+  el.dataset.plTheme = pickTheme(doc, surroundings(el));
   let set = bound.get(doc);
   if (!set) {
     set = new Set();
     bound.set(doc, set);
     const mo = new doc.defaultView.MutationObserver(() => {
-      const t = pickTheme(doc);
       for (const e of set) {
-        if (e.isConnected) e.dataset.plTheme = t;
+        if (e.isConnected) e.dataset.plTheme = pickTheme(doc, surroundings(e));
         else set.delete(e);
       }
     });
