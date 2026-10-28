@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "harness": "claude",
+  "project": "ig-translate",
+  "campaign_id": "2026-10-28-gmail-compose",
+  "started": "2026-10-28T12:00:00-07:00",
+  "updated": "2026-10-28T12:00:00-07:00",
+  "current_phase": "plan",
+  "current_sprint": 2,
+  "total_sprints": 3,
+  "completed_sprints": [
+    1
+  ],
+  "blocked_reason": null,
+  "resume_instruction": null,
+  "decisions_log": [
+    {
+      "timestamp": "2026-10-28T12:00:00-07:00",
+      "decision": "Scope (user): Gmail compose/reply translation only; no incoming email translation, no summaries"
+    },
+    {
+      "timestamp": "2026-10-28T12:00:00-07:00",
+      "decision": "Register (user): follow the thread's formality; new email with no thread is neutral-polite; writer is male"
+    },
+    {
+      "timestamp": "2026-10-28T12:00:00-07:00",
+      "decision": "Trigger is an explicit Translate button next to Send plus Alt+T; Enter is never intercepted; the extension never sends"
+    },
+    {
+      "timestamp": "2026-10-28T12:00:00-07:00",
+      "decision": "Target language auto: the model writes in the language of the latest thread message from them (else English) and reports lang; picker overrides"
+    },
+    {
+      "timestamp": "2026-10-28T12:00:00-07:00",
+      "decision": "Body write is a direct DOM replace of the user's part plus an input event; execCommand insertText cloned the quote block's class in the spike"
+    },
+    {
+      "timestamp": "2026-10-28T12:00:00-07:00",
+      "decision": "No storage for email: no cache, no per-thread state, no Korean-original record"
+    },
+    {
+      "timestamp": "2026-10-28T12:00:00-07:00",
+      "decision": "Unit tests use a synthetic Gmail fixture shaped by the spike instead of a sanitized live snapshot, so no mail content can leak into the repo"
+    }
+  ],
+  "continuation_prompt": "Gmail compose translation plan written and self-reviewed (8 tasks, 3 sprints; Sprint 1 spike done). Next: execute Sprint 2 (Tasks 2-3), then Sprint 3 (Tasks 4-8, Task 8 is the live check where the user sends).",
+  "artifacts": {
+    "plan": "docs/plans/2026-10-28-gmail-compose.md",
+    "design": "docs/plans/2026-10-28-gmail-compose-design.md",
+    "spike_notes": "docs/spike-notes-gmail.md"
+  }
+}

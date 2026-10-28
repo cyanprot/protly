@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "sprint_id": "001",
+  "campaign_id": "2026-10-28-gmail-compose",
+  "feature": "Gmail DOM spike (Task 1)",
+  "deliverables": [
+    "docs/spike-notes-gmail.md"
+  ],
+  "success_criteria": [
+    "Selectors recorded for compose body, Send, thread items, message body, sender, viewer email",
+    "A write method into the compose body verified on a throwaway draft that was discarded",
+    "No email content, names or addresses in the repo"
+  ],
+  "testable_behaviors": [
+    "Direct DOM replace of the user's part leaves a quote block intact"
+  ],
+  "scope_boundaries": [
+    "No code",
+    "No typing into a compose that has a recipient, no Send"
+  ],
+  "evaluation_method": "manual"
+}
