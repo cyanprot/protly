@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "campaign_id": "2026-10-28-protly",
+  "sprint_id": "002",
+  "feature": "Design system (src/ui) applied to the Instagram and Gmail UI",
+  "deliverables": [
+    "scripts/build-fonts.py + src/ui/fonts/protly-mono-{400,500}.woff2 + OFL.txt",
+    "scripts/build-icons.py + icons/p.svg, wordmark.svg, icon-{16,32,48,128}.png, manifest icons",
+    "src/ui/tokens.css.js, theme.js, fonts.js, errors.js, toast.js(+css), card.js(+css), panel.css.js",
+    "outgoing.js and gmail/compose.js render through the card; Gmail Esc undo",
+    "panel.js restyled p tile; style.css files restyled; web_accessible_resources include src/ui"
+  ],
+  "success_criteria": [
+    "npm test green incl. ui-theme, ui-fonts, ui-errors, ui-toast, ui-card and the updated gmail-compose tests",
+    "grep showBanner|ERROR_BANNERS|igt in src prints nothing",
+    "each woff2 is under 60 KB and starts with wOF2",
+    "manifest icons resolve to PNGs of the stated size"
+  ],
+  "testable_behaviors": [
+    "Instagram preview card above the composer with back-translation, model, chip and the Enter/Esc/Alt+Enter hints",
+    "Gmail preview card with picker (not for polish), Opus, Undo and the Esc undo hint; Esc undoes",
+    "errors are red text in the card, global errors as protly toasts",
+    "card and panel go dark on a dark page",
+    "p tile opens the thread panel; p icon in the toolbar"
+  ],
+  "scope_boundaries": [
+    "no popup/options/usage work (Sprint 3)",
+    "no Alt+T routing changes or removal of the polish gate (Sprint 4)",
+    "translated message text keeps the site font",
+    "no behaviour change to the preview reducer"
+  ],
+  "evaluation_method": "unit + live visual check in Chrome (user triggers Enter; Claude never presses Enter or Send)"
+}
