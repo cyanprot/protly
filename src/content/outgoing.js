@@ -1,21 +1,23 @@
 import { initial, reduce } from '../lib/preview.js';
-import { hasHangul, langName, LANG_NAMES } from '../lib/lang.js';
+import { hasHangul } from '../lib/lang.js';
 import { findComposer, getComposerText, setComposerText } from './dom.js';
 import { ask, getCurrent, contextFor, bannerFor } from './main.js';
-import { showToast } from '../ui/toast.js';
 import { threadIdFromPath } from '../lib/keys.js';
 import { flags } from '../lib/flags.js';
+import { createCard } from '../ui/card.js';
+import { showToast } from '../ui/toast.js';
+import { errorText } from '../ui/errors.js';
+
+const HINTS = 'Enter send · Esc undo · Alt+Enter Opus';
 
 const COMPOSE_ENTER_MS = 300; // a deferred IME Enter must be followed by compositionend within this window
 const WRITE_SETTLE_MS = 50;   // editors such as Lexical commit DOM updates asynchronously
 const norm = (s) => s.replace(/\s+/g, ' ').trim();
 const isEnter = (e) => e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter';
-const modelLabel = (m) => (m && m.includes('opus') ? 'Opus' : 'Sonnet');
 const block = (e) => { e.preventDefault(); e.stopImmediatePropagation(); };
 
 export function mountOutgoing(cur) {
   let state = initial();
-  let note = null;
   let enterAfterComposition = null; // { hard, at }
   let lastText = ''; // composer text while previewing; recorded if Instagram's Send button sends it
   let writing = false; // a composer write is queued or running: its input events are ours, and Enter/Esc wait
@@ -29,7 +31,6 @@ export function mountOutgoing(cur) {
   // switch and the next 500 ms tick, composer() already finds the NEW thread's box.
   const live = () => !dead && getCurrent() === cur && threadIdFromPath(location.pathname) === cur.threadId;
   const composer = () => findComposer(document);
-  const text = (s) => document.createTextNode(s);
   // Writes run one at a time; a newer write supersedes queued or settling older ones.
   const write = (c, s) => {
     const gen = ++writeGen;
@@ -49,47 +50,33 @@ export function mountOutgoing(cur) {
     }
   }, 3000);
 
-  const showNote = (nodes, isError) => {
+  // One card above the composer's row, so Instagram's own layout stays intact. Rebuilt if the row is replaced.
+  let card = null;
+  let cardRow = null;
+  const cardFor = () => {
     const c = composer();
-    if (!c) return;
-    if (!note) {
-      note = document.createElement('div');
-      note.className = 'pl-composer-note';
-      // Above the composer's row so Instagram's own layout stays intact.
-      (c.closest('form, [role="group"]') || c.parentElement).before(note);
+    if (!c) return null;
+    const row = c.closest('form, [role="group"]') || c.parentElement;
+    if (!card || cardRow !== row) {
+      card?.hide();
+      card = createCard({ place: { before: row } });
+      cardRow = row;
     }
-    note.classList.toggle('pl-error', !!isError);
-    note.replaceChildren(...nodes);
+    return card;
   };
-  const hideNote = () => { note?.remove(); note = null; };
+  const say = (msg, error = false) => cardFor()?.message(msg, { error });
+  const hideNote = () => card?.hide();
 
-  const chip = (lang) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'pl-chip';
-    b.textContent = langName(lang);
-    b.title = 'Change target language';
-    b.onclick = (e) => {
-      e.preventDefault();
-      const sel = document.createElement('select');
-      sel.className = 'pl-chip';
-      for (const [code, name] of Object.entries(LANG_NAMES)) if (code !== 'ko') sel.add(new Option(name, code));
-      if (!(lang in LANG_NAMES)) sel.add(new Option(langName(lang), lang), 0); // partner language outside the list
-      sel.value = lang;
-      sel.onchange = async () => {
-        const c = getCurrent();
-        try {
-          if (c) c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch: { outputLang: sel.value } });
-        } catch (err) {
-          showToast(`Could not save the reply language: ${err.message}`, { error: true });
-        }
-        dispatch({ type: 'lang', lang: sel.value });
-      };
-      b.replaceWith(sel);
-      sel.focus();
-    };
-    return b;
-  };
+  // Language chip: remember the choice for the thread, then translate again.
+  async function saveLang(lang) {
+    const c = getCurrent();
+    try {
+      if (c) c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch: { outputLang: lang } });
+    } catch (err) {
+      showToast(`Could not save the reply language: ${err.message}`, { error: true });
+    }
+    dispatch({ type: 'lang', lang });
+  }
 
   function resetPreview() {
     dispatch({ type: 'reset' });
@@ -104,7 +91,7 @@ export function mountOutgoing(cur) {
       case 'translate': {
         if (c) srcText = getComposerText(c);
         const verb = effect.kind === 'polish' ? 'Polishing' : 'Translating';
-        showNote([text(effect.profile === 'hard' ? `${verb} (Opus)...` : `${verb}...`)]);
+        cardFor()?.working(effect.profile === 'hard' ? `${verb} with Opus` : verb);
         try {
           const cur2 = getCurrent();
           if (!cur2) throw new Error('thread closed');
@@ -117,7 +104,7 @@ export function mountOutgoing(cur) {
           dispatch({ type: 'result', reqId: effect.reqId, ...r });
         } catch (e) {
           if (bannerFor(e)) showToast(bannerFor(e), { error: true });
-          dispatch({ type: 'fail', reqId: effect.reqId, message: e.message });
+          dispatch({ type: 'fail', reqId: effect.reqId, message: errorText(e) });
         }
         break;
       }
@@ -126,7 +113,7 @@ export function mountOutgoing(cur) {
         // The draft changed while translating (typing, or Instagram's Send button sent it): drop the result.
         if (norm(getComposerText(c)) !== norm(srcText)) {
           dispatch({ type: 'reset' });
-          showNote([text('The draft changed while translating, so the translation was dropped. Press Enter again.')], true);
+          say('The draft changed while translating, so the translation was dropped. Press Enter again.', true);
           break;
         }
         const korean = state.korean;
@@ -136,12 +123,16 @@ export function mountOutgoing(cur) {
         if (!ok || norm(getComposerText(c)) !== norm(effect.translation)) {
           dispatch({ type: 'reset' });
           if (korean) await write(c, korean); // never leave an unpreviewed translation behind
-          showNote([text('Could not write the translation into the message box. Nothing was sent.')], true);
+          say('Could not write the translation into the message box. Nothing was sent.', true);
           break;
         }
         lastText = effect.translation;
-        const label = text(`${effect.back_translation}  · ${modelLabel(effect.model)}`);
-        showNote(state.kind === 'polish' ? [label] : [label, chip(effect.lang)]); // no target language to pick
+        cardFor()?.preview({
+          text: effect.back_translation,
+          model: effect.model,
+          ...(state.kind === 'polish' ? {} : { lang: effect.lang, onLang: saveLang }), // polish has no target language
+          hints: HINTS,
+        });
         break;
       }
       case 'restore':
@@ -161,7 +152,7 @@ export function mountOutgoing(cur) {
       case 'fail':
         if (c && effect.korean != null && norm(getComposerText(c)) !== norm(effect.korean)) await write(c, effect.korean);
         lastText = '';
-        showNote([text(`Translation failed: ${effect.message}`)], true);
+        say(`Translation failed: ${effect.message}`, true);
         break;
     }
   }
@@ -248,7 +239,7 @@ export function mountOutgoing(cur) {
       const ev = { type: 'enter', text: getComposerText(c), hard: pending.hard, polish: flags.polish };
       // The real Enter was blocked, so a deferred 'sent' or 'pass' would send nothing: ask for another Enter.
       const kind = reduce(state, ev).effect.type;
-      if (kind === 'sent' || kind === 'pass') { showNote([text('Press Enter again to send.')]); return; }
+      if (kind === 'sent' || kind === 'pass') { say('Press Enter again to send.'); return; }
       dispatch(ev);
     }, 0);
   }
