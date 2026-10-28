@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "ig-translate",
   "version": "0.1.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp0mPMqnNtwS40XXVbf/cotvgHFMNLvw/tz9INiBXhPumXxyVCmU67cAUA6u8UZTDrkRIz28gKwO7EbYh7t1bV1Yvnko8OOc5WyTa+tBwYbM+PCBSlMxf32VquMlgzx00gK3P4eVVSEF5K8aM3LaFSdM2lXubbuRBFWc0bgULZQZg0wwp1YThTXI9bZG5xldzM0UPO2UKNzUyeeIX6tYESyMSKGRO4jmcED7+/auN0ysb5zRbd9198hyBdqVkAkKcTxn88yVm9aN4+zLTTXecP5D54dxhKKa0e6eq/dCJlUWhfbLAGapGQzoQAJIm+JmLBYcKWx4ARgx2KtPgczgAMwIDAQAB",
   "description": "Translate Instagram DMs and Gmail drafts with Claude.",
   "permissions": [
     "storage",
