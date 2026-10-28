@@ -1,5 +1,6 @@
 import { callClaude, callJson, ApiError } from './lib/api.js';
 import { createUsageRecorder, summarize } from './lib/usage.js';
+import { createBadgeStore } from './lib/badge.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
@@ -20,6 +21,7 @@ const usageLog = createUsageRecorder({
 });
 const apiOpts = { transport, onUsage: usageLog.record };
 const api = (body, parse) => callJson(body, parse, apiOpts);
+const badges = createBadgeStore(chrome.storage.session);
 
 async function getSettings() {
   const { settings } = await store.get('settings');
@@ -138,12 +140,18 @@ async function lookupSent({ threadId, texts }) {
   return out;
 }
 
+// text '' clears the reason too: SPA navigation may never fire a 'loading' update.
+async function setTabBadge(tabId, text, reason) {
+  await chrome.action.setBadgeText({ text, tabId });
+  await badges.set(tabId, { text, reason });
+}
+
 const handlers = {
   getThread: ({ threadId }) => getThread(threadId),
   setThread: ({ threadId, patch }) => setThread(threadId, patch),
   incoming, outgoing, email, polish, suggestMemo, sent, lookupSent,
   usageSummary: async () => summarize((await store.get('usage')).usage || {}, Date.now()),
-  badge: async ({ text }, sender) => { await chrome.action.setBadgeText({ text, tabId: sender.tab?.id }); return true; },
+  badge: async ({ text, reason }, sender) => { await setTabBadge(sender.tab?.id, text, reason); return true; },
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -162,3 +170,5 @@ async function prune() {
 }
 chrome.runtime.onStartup.addListener(prune);
 chrome.runtime.onInstalled.addListener(prune);
+chrome.tabs.onUpdated.addListener((tabId, info) => { if (info.status === 'loading') badges.clear(tabId); });
+chrome.tabs.onRemoved.addListener((tabId) => badges.clear(tabId));

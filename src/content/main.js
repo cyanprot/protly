@@ -105,7 +105,7 @@ function waitForThread(threadId, tries = 0, lastSig = null) {
       if (!clean) console.warn('[protly] old thread rows still present after 10 s; initialising anyway');
       return initThread(threadId, root);
     }
-    ask({ type: 'badge', text: '!' }).catch(() => {});
+    ask({ type: 'badge', text: '!', reason: 'Instagram thread not found' }).catch(() => {});
     console.warn('[protly] thread root not found; extension inactive on this page');
     return;
   }
@@ -117,7 +117,7 @@ async function initThread(threadId, root) {
   try {
     thread = await ask({ type: 'getThread', threadId });
   } catch (e) {
-    ask({ type: 'badge', text: '!' }).catch(() => {});
+    ask({ type: 'badge', text: '!', reason: 'Could not load the thread settings' }).catch(() => {});
     showToast(bannerFor(e) || `Could not load thread settings: ${e.message}`, { error: true });
     return;
   }

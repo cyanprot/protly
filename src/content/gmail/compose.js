@@ -46,7 +46,7 @@ function stateOf(body) {
 function setBadge(on) {
   if (badgeSet === on) return;
   badgeSet = on;
-  ask({ type: 'badge', text: on ? '!' : '' }).catch(() => {});
+  ask({ type: 'badge', text: on ? '!' : '', reason: on ? 'Gmail Send button not found' : '' }).catch(() => {});
 }
 
 // Called on every scan; (re)mounts the button until it is in place next to this compose's own Send.

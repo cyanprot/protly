@@ -47,7 +47,7 @@ export function mountOutgoing(cur) {
   const checkComposer = (tries = 0) => {
     if (!live() || composer()) return;
     if (tries < 9) return void setTimeout(() => checkComposer(tries + 1), 1000);
-    ask({ type: 'badge', text: '!' }).catch(() => {});
+    ask({ type: 'badge', text: '!', reason: 'Instagram message box not found' }).catch(() => {});
     console.warn('[protly] composer not found after 10 s; outgoing translation inactive');
   };
   setTimeout(checkComposer, 1000);
