@@ -37,10 +37,17 @@ test('a badge with a reason is a problem', () => {
 
 test('any other web page is generic; missing sites means defaults', () => {
   assert.deepEqual(statusFor({ url: 'https://example.com/form' }), { state: 'generic', text: GENERIC_TEXT });
-  assert.equal(GENERIC_TEXT, 'Not active on this site');
+  assert.equal(GENERIC_TEXT, 'Alt+T ready');
 });
 
 test('manifest grants activeTab so the popup can read the current tab', () => {
   const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
   assert.ok(m.permissions.includes('activeTab'));
+});
+
+test('a refused injection reads as unavailable, not as a problem', () => {
+  assert.deepEqual(
+    statusFor({ url: 'https://example.com/', sites: ON, badge: { text: '!', reason: 'unavailable here' } }),
+    { state: 'unavailable', text: 'Unavailable here' },
+  );
 });

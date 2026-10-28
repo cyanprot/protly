@@ -6,14 +6,14 @@ const RESTRICTED = [
   /^https:\/\/chrome\.google\.com\/webstore/, /^https:\/\/chromewebstore\.google\.com/,
 ];
 const UNAVAILABLE = { state: 'unavailable', text: 'Unavailable here' };
-// Sprint 4 changes this to 'Alt+T ready' when the any-site path lands.
-export const GENERIC_TEXT = 'Not active on this site';
+export const GENERIC_TEXT = 'Alt+T ready';
 
 const SITES = { 'www.instagram.com': ['instagram', 'Instagram'], 'mail.google.com': ['gmail', 'Gmail'] };
 
 // The popup's one-line status for the active tab. badge: { text, reason } from the badge store, or null.
 export function statusFor({ url, sites = DEFAULT_SITES, badge = null }) {
   if (!url || RESTRICTED.some((r) => r.test(url)) || !/^https?:/.test(url)) return UNAVAILABLE;
+  if (badge?.reason === 'unavailable here') return UNAVAILABLE; // routeCommand could not inject (Sprint 4)
   if (badge?.text) return { state: 'problem', text: badge.reason ? `Problem: ${badge.reason}` : 'Problem on this page' };
   let host;
   try { host = new URL(url).hostname; } catch { return UNAVAILABLE; }
