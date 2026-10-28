@@ -177,4 +177,16 @@ Review 2026-10-28 (code-reviewer, APPROVE WITH CHANGES; line refs and `npm test`
 - Not taken: dropping the email-polish eval case (reason in Task 6).
 - Documented, no fix: select-all-then-type over a polish preview, and the startup read of `flags.polish` (Decision 11).
 
-(eval results and live-check results go here)
+Implementation 2026-10-28: Tasks 1-6 done, `npm test` 129 pass. Task 5 (Gmail) by a subagent; its calls:
+- Media check runs after the kind is chosen, so a media-only or letterless draft keeps today's error wording.
+- Failure prefix follows the kind ("Polish failed:"). "You edited the translation" and "draft changed while translating" still say translation in a polish preview: cosmetic, left.
+- Polish turned off while a polish preview is open: an English edit then shows the old "Use the picker or Opus" error although there is no picker. Rare, left.
+
+Eval 2026-10-28 (`scripts/eval-polish.mjs`, Sonnet 5.5): 7/7 PASS on the second run. The first run failed the three Russian cases on a bad check (`спас(?!ла)` matched "Спасибо"); all three outputs were "ты меня спасла".
+- polish chat: 2.5-4.7 s; the CyanStyle case took about 9 s (adaptive thinking), as on iOS.
+- polish email: 2.9 s, greeting, sign-off and four paragraphs kept, semicolon and slash removed, "Additionally" -> "Also".
+- out, female friend, Russian: 3/3 feminine, about 1.4 s each.
+- out, never Korean: "lol really?" for "ㅋㅋ 진짜?".
+- Seen, not fixed: the outgoing translation added emoji and "!" the draft did not have ("Спасибо за конспекты! Ты меня спасла 🙏"). OUTGOING_SYSTEM has no add-no-emoji rule; the user decides.
+
+(live-check results go here)
