@@ -1,7 +1,8 @@
 # protly campaign handoff
 
-- Phase: execute. Sprint 3 (popup, usage, options) DONE 2026-10-28: commits 90f12d0..16dc23c, npm test 212 pass / 0 fail, Python 21 OK. Spec SPEC_COMPLIANT, quality fixes in 16dc23c, user live check passed (options auto-save, Check host, Test call, popup status/cost, Gmail switch off/on, generic page).
-- Next: Sprint 4 (any-site Alt+T), Task 4.1 of docs/plans/2026-10-28-protly.md.
+- Phase: COMPLETE 2026-10-28. Sprint 4 (any-site Alt+T) DONE: commits 60acfaf..7a51a88 (incl. review fixes d5e665e, 7a51a88), npm test 285 pass / 0 fail, Python 21 OK. Spec SPEC_COMPLIANT, quality findings 1-10 fixed. User live check on the local test page and real sites: works ("seems to work fine").
+- Sprint 3 (popup, usage, options) DONE 2026-10-28: commits 90f12d0..16dc23c, npm test 212 pass / 0 fail, Python 21 OK. Spec SPEC_COMPLIANT, quality fixes in 16dc23c, user live check passed (options auto-save, Check host, Test call, popup status/cost, Gmail switch off/on, generic page).
+- Next: nothing queued. Storage backup ~/.config/protly/storage-backup-dcfndjml/ may now be deleted at the user's call.
 - Sprint 2 live fixes: card theme follows its surroundings (ea352d4, Gmail compose is white on a dark page); composer check retries 10 s before warning (33522c4, user saw a false 'composer not found' at outgoing.js:47).
 - Plan: docs/plans/2026-10-28-protly.md (theme.js contract updated in ea352d4). Design: docs/plans/2026-10-28-protly-design.md.
 - Repo /home/cyan/projects/protly. Extension ID X = idkdlhcfhfdbbpakkaifjlmjhhfepidg (manifest key; private key ~/.config/protly/extension-key.pem, never committed).

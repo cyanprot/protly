@@ -4,14 +4,15 @@
   "project": "protly",
   "campaign_id": "2026-10-28-protly",
   "started": "2026-10-28T14:08:19-07:00",
-  "updated": "2026-10-28T16:31:27-07:00",
-  "current_phase": "execute",
+  "updated": "2026-10-28T16:55:10-07:00",
+  "current_phase": "complete",
   "current_sprint": 4,
   "total_sprints": 4,
   "completed_sprints": [
     1,
     2,
-    3
+    3,
+    4
   ],
   "blocked_reason": null,
   "resume_instruction": null,
@@ -29,9 +30,14 @@
       "timestamp": "2026-10-28T16:31:27-07:00",
       "decision": "Sprint 3 review fixes 16dc23c: popup/options load protly-mono by URL; missing workspace config = no header; ping timeout blames host; options save failure shown; popup status refreshes on switch; setTabBadge ignores null tabId. activeTab test lives in tests/status.test.js.",
       "rationale": "Quality review findings 1,2,3,4,6; spec review noted the font gap. 5 and 7 judged negligible."
+    },
+    {
+      "timestamp": "2026-10-28T16:55:10-07:00",
+      "decision": "Sprint 4 review fixes: translate selection skips the adapter (d5e665e); generic path 7a51a88: write verify polls 300 ms, stillOk/Esc cancel, block-aware contenteditable read, no focus steal, shadow DOM composedPath, preview closes on focusout, menu-editable reruns, card lifts into open dialog/fullscreen, double press guard, 8000-char cap, cross-origin frame toast. Sprint contract: selection popover has Close, not Copy (plan wins).",
+      "rationale": "Spec review SPEC_COMPLIANT with 1 contract mismatch + 2 plan-level notes; quality review findings 1-10 fixed, 11 informational (shortcut binding checked at chrome://extensions/shortcuts)."
     }
   ],
-  "continuation_prompt": "Sprint 3 (popup, usage, options) DONE and user-tested live 2026-10-28 (90f12d0..16dc23c). Start Sprint 4 (any-site Alt+T), Task 4.1 of docs/plans/2026-10-28-protly.md.",
+  "continuation_prompt": "Campaign complete 2026-10-28. All 4 sprints done and user-tested live. Sprint 4 (any-site Alt+T) 60acfaf..7a51a88, npm test 285 pass + Python 21 OK.",
   "artifacts": {
     "plan": "docs/plans/2026-10-28-protly.md",
     "design": "docs/plans/2026-10-28-protly-design.md"
