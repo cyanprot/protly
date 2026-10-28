@@ -1,5 +1,5 @@
 import { threadIdFromPath } from '../lib/keys.js';
-import { isKoreanOnly } from '../lib/lang.js';
+import { isKoreanOnly, hasHangul as isHangulText } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
 import { findViewerName } from './selectors.js';
 import {
@@ -63,7 +63,26 @@ export async function start() {
     if (id) waitForThread(id);
   };
   tick();
-  setInterval(tick, 500); // SPA navigation: poll the path; cheap and reliable
+  setInterval(() => {
+    // Instagram may swap [role=main] without a path change; the observer would watch a detached node.
+    // Same thread, so its texts are not stale: re-init without the stale-signature wait.
+    if (current && !current.root.isConnected) { teardown(); staleSig = null; lastPath = null; }
+    tick();
+  }, 500); // SPA navigation: poll the path; cheap and reliable
+  window.addEventListener('keydown', guardUnownedEnter, true);
+}
+
+// Between a thread switch and the new thread's outgoing handler (up to ~10 s), a Hangul Enter would go
+// out untranslated. Block it unless translation is known to be off for the thread on screen.
+function guardUnownedEnter(e) {
+  if (!(e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter') || e.shiftKey) return;
+  const id = threadIdFromPath(location.pathname);
+  if (!id || (current && current.threadId === id)) return; // the mounted handler decides
+  const t = e.target;
+  if (!t?.isContentEditable || !isHangulText(t.innerText || t.textContent || '')) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  showBanner('ig-translate is still loading this thread. Nothing was sent; press Enter again in a moment.', { transient: true });
 }
 
 function teardown() {
@@ -201,15 +220,17 @@ export function rerender() {
   hoverSent(msgs);
 }
 
-export function showBanner(text) {
+// transient: auto-dismiss after a few seconds and allow repeats (for per-keypress feedback).
+export function showBanner(text, { transient = false } = {}) {
   if (bannersShown.has(text)) return;
-  bannersShown.add(text);
+  if (!transient) bannersShown.add(text);
   const b = document.createElement('div');
   b.style.cssText = 'position:fixed;top:12px;right:12px;z-index:99999;max-width:360px;background:#222;color:#fff;padding:10px 14px;border-radius:8px;font:13px system-ui;cursor:pointer';
   b.textContent = text;
   b.title = 'Click to dismiss';
   b.onclick = () => b.remove();
   document.body.appendChild(b);
+  if (transient) setTimeout(() => b.remove(), 4000);
 }
 
 export const getCurrent = () => current;

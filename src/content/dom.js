@@ -75,10 +75,14 @@ export function getComposerText(el) {
 // otherwise insertText is dropped (spike-notes, Composer write). Clearing to empty is not supported by Lexical
 // via execCommand; callers only write non-empty text.
 export const SELECT_SETTLE_MS = 60;
-export async function setComposerText(el, text) {
+// stillOk() is re-checked after the settle; false aborts the insert (thread switched, write superseded).
+// Returns true when the text was inserted.
+export async function setComposerText(el, text, stillOk = () => true) {
   el.focus();
   el.ownerDocument.getSelection().selectAllChildren(el);
   await new Promise((r) => setTimeout(r, SELECT_SETTLE_MS));
+  if (!el.isConnected || !stillOk()) return false;
   el.focus();
   el.ownerDocument.execCommand('insertText', false, text);
+  return true;
 }

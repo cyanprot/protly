@@ -2,6 +2,7 @@ import { initial, reduce } from '../lib/preview.js';
 import { hasHangul, langName, LANG_NAMES } from '../lib/lang.js';
 import { findComposer, getComposerText, setComposerText } from './dom.js';
 import { ask, getCurrent, contextFor, showBanner, bannerFor } from './main.js';
+import { threadIdFromPath } from '../lib/keys.js';
 
 const COMPOSE_ENTER_MS = 300; // a deferred IME Enter must be followed by compositionend within this window
 const WRITE_SETTLE_MS = 50;   // editors such as Lexical commit DOM updates asynchronously
@@ -15,11 +16,28 @@ export function mountOutgoing(cur) {
   let note = null;
   let enterAfterComposition = null; // { hard, at }
   let lastText = ''; // composer text while previewing; recorded if Instagram's Send button sends it
-  let writing = false; // our own composer writes fire input events; ignore them
+  let writing = false; // a composer write is queued or running: its input events are ours, and Enter/Esc wait
+  let writeGen = 0;
+  let writeChain = Promise.resolve();
+  let srcText = ''; // composer text when the current translation was requested
+  let composing = false;
+  let dead = false;
 
+  // This mount still owns the page: not torn down and the URL still shows its thread. Between a thread
+  // switch and the next 500 ms tick, composer() already finds the NEW thread's box.
+  const live = () => !dead && getCurrent() === cur && threadIdFromPath(location.pathname) === cur.threadId;
   const composer = () => findComposer(document);
   const text = (s) => document.createTextNode(s);
-  const write = async (c, s) => { writing = true; try { await setComposerText(c, s); } finally { writing = false; } };
+  // Writes run one at a time; a newer write supersedes queued or settling older ones.
+  const write = (c, s) => {
+    const gen = ++writeGen;
+    writing = true;
+    writeChain = writeChain.then(async () => {
+      if (gen !== writeGen || !live()) return false;
+      return setComposerText(c, s, () => gen === writeGen && live());
+    }).catch(() => false).finally(() => { if (gen === writeGen) writing = false; });
+    return writeChain;
+  };
 
   // Composer selector check (design: selector miss = inactive + badge).
   setTimeout(() => {
@@ -78,9 +96,11 @@ export function mountOutgoing(cur) {
   }
 
   async function apply(effect) {
+    if (!live()) return; // a late result must never touch another thread's composer
     const c = composer();
     switch (effect.type) {
       case 'translate': {
+        if (c) srcText = getComposerText(c);
         showNote([text(effect.profile === 'hard' ? 'Translating (hard)...' : 'Translating...')]);
         try {
           const cur2 = getCurrent();
@@ -98,11 +118,19 @@ export function mountOutgoing(cur) {
       }
       case 'show': {
         if (!c) { resetPreview(); break; }
-        await write(c, effect.translation);
-        await new Promise((r) => setTimeout(r, WRITE_SETTLE_MS));
-        if (state.mode !== 'preview') break; // Esc or reset meanwhile
-        if (norm(getComposerText(c)) !== norm(effect.translation)) {
+        // The draft changed while translating (typing, or Instagram's Send button sent it): drop the result.
+        if (norm(getComposerText(c)) !== norm(srcText)) {
           dispatch({ type: 'reset' });
+          showNote([text('The draft changed while translating, so the translation was dropped. Press Enter again.')], true);
+          break;
+        }
+        const korean = state.korean;
+        const ok = await write(c, effect.translation);
+        await new Promise((r) => setTimeout(r, WRITE_SETTLE_MS));
+        if (!live() || state.mode !== 'preview') break; // Esc, reset or thread switch meanwhile
+        if (!ok || norm(getComposerText(c)) !== norm(effect.translation)) {
+          dispatch({ type: 'reset' });
+          if (korean) await write(c, korean); // never leave an unpreviewed translation behind
           showNote([text('Could not write the translation into the message box. Nothing was sent.')], true);
           break;
         }
@@ -159,6 +187,7 @@ export function mountOutgoing(cur) {
   }
 
   function onKeyDown(e) {
+    if (!live()) return; // main.js guards Hangul Enter until the new thread's handler is mounted
     const cur2 = getCurrent();
     if (!cur2?.thread.enabled) return;
     const c = composer();
@@ -173,6 +202,10 @@ export function mountOutgoing(cur) {
       return;
     }
 
+    // A write is landing: the composer does not yet match the state, so Enter/Esc would act on stale text.
+    if (writing && (e.key === 'Escape' || isEnter(e))) { block(e); return; }
+    if (isEnter(e) && e.repeat) { block(e); return; } // a held Enter must not confirm a preview it never showed
+
     if (e.key === 'Escape') {
       const eff = dispatch({ type: 'esc' });
       if (eff.type !== 'pass') block(e);
@@ -182,7 +215,7 @@ export function mountOutgoing(cur) {
 
     // Korean IME: Enter mid-composition. Never let it reach Instagram while a translation is pending
     // or while the box holds Hangul; handle the Enter once the composition is committed.
-    if (e.isComposing || e.keyCode === 229) {
+    if (e.isComposing || composing) {
       if (state.mode === 'translating') { block(e); return; }
       if (hasHangul(getComposerText(c)) && !(state.mode === 'preview' && state.lang === 'ko')) {
         block(e);
@@ -196,26 +229,36 @@ export function mountOutgoing(cur) {
     if (eff.type !== 'pass' && eff.type !== 'sent') block(e);
   }
 
+  function onCompositionStart() { composing = true; }
   function onCompositionEnd() {
+    composing = false;
     const pending = enterAfterComposition;
     enterAfterComposition = null;
     if (!pending || Date.now() - pending.at > COMPOSE_ENTER_MS) return;
     // Let the committed text land in the composer first.
     setTimeout(() => {
       const c = composer();
-      if (c) dispatch({ type: 'enter', text: getComposerText(c), hard: pending.hard });
+      if (!c || !live()) return;
+      const ev = { type: 'enter', text: getComposerText(c), hard: pending.hard };
+      // The real Enter was blocked, so a deferred 'sent' or 'pass' would send nothing: ask for another Enter.
+      const kind = reduce(state, ev).effect.type;
+      if (kind === 'sent' || kind === 'pass') { showNote([text('Press Enter again to send.')]); return; }
+      dispatch(ev);
     }, 0);
   }
 
   window.addEventListener('keydown', onKeyDown, true);
+  window.addEventListener('compositionstart', onCompositionStart, true);
   window.addEventListener('compositionend', onCompositionEnd, true);
   window.addEventListener('input', onInput, true);
   cur.onMutate.push(checkEmpty);
   cur.onThreadUpdate.push((t) => { if (!t.enabled && state.mode !== 'idle') resetPreview(); });
   cur.onTeardown.push(() => {
     window.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('compositionstart', onCompositionStart, true);
     window.removeEventListener('compositionend', onCompositionEnd, true);
     window.removeEventListener('input', onInput, true);
     resetPreview();
+    dead = true;
   });
 }
