@@ -13,7 +13,8 @@
   "permissions": [
     "storage",
     "unlimitedStorage",
-    "nativeMessaging"
+    "nativeMessaging",
+    "activeTab"
   ],
   "host_permissions": [
     "https://www.instagram.com/*"

@@ -1,6 +1,8 @@
 import { callClaude, callJson, ApiError } from './lib/api.js';
 import { createUsageRecorder, summarize } from './lib/usage.js';
 import { createBadgeStore } from './lib/badge.js';
+import { statusFor } from './lib/status.js';
+import { DEFAULT_SITES } from './lib/flags.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
@@ -150,6 +152,10 @@ const handlers = {
   getThread: ({ threadId }) => getThread(threadId),
   setThread: ({ threadId, patch }) => setThread(threadId, patch),
   incoming, outgoing, email, polish, suggestMemo, sent, lookupSent,
+  tabStatus: async ({ tabId, url }) => {
+    const { sites } = await store.get('sites');
+    return statusFor({ url, sites: { ...DEFAULT_SITES, ...sites }, badge: tabId == null ? null : await badges.get(tabId) });
+  },
   usageSummary: async () => summarize((await store.get('usage')).usage || {}, Date.now()),
   badge: async ({ text, reason }, sender) => { await setTabBadge(sender.tab?.id, text, reason); return true; },
 };
