@@ -3,10 +3,9 @@
   "name": "ig-translate",
   "version": "0.1.0",
   "description": "Translate Instagram DMs with Claude.",
-  "permissions": ["storage"],
+  "permissions": ["storage", "nativeMessaging"],
   "host_permissions": [
-    "https://www.instagram.com/*",
-    "https://api.anthropic.com/*"
+    "https://www.instagram.com/*"
   ],
   "background": { "service_worker": "src/background.js", "type": "module" },
   "action": { "default_title": "ig-translate" },

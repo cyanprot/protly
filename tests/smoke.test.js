@@ -7,3 +7,9 @@ test('manifest is valid JSON with MV3', () => {
   assert.equal(m.manifest_version, 3);
   assert.equal(m.background.type, 'module');
 });
+
+test('manifest uses native messaging, not direct API access', () => {
+  const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
+  assert.ok(m.permissions.includes('nativeMessaging'));
+  assert.equal(m.host_permissions.some((h) => h.includes('anthropic')), false);
+});
