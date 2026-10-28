@@ -55,7 +55,7 @@ current API docs during planning, not assumed here.
 | `selectors.js` | Every Instagram DOM selector in one place. Prefer `role`, `aria-label`, `contenteditable`, structural anchors over obfuscated class names |
 | `content.js` | Injected into DM pages. Detects messages with `MutationObserver`, renders translations, intercepts composer Enter, hosts the thread panel |
 | `background.js` | Service worker. Owns every API call; `content.js` never reads or handles the key (it could technically read `chrome.storage.local`, but the page itself cannot) |
-| `prompts.js` | System prompts for incoming batch translation, outgoing translation plus back-translation, memo suggestion |
+| `prompts.js` | System prompts for incoming batch translation, outgoing translation plus back-translation, memo suggestion. ES module, shared with the Node fixture script; the service worker is declared `"type": "module"` and the repo `package.json` sets `"type": "module"` |
 | `options.html` / `options.js` | API key, model choice per direction, global defaults |
 
 Instagram is an SPA: thread changes happen without page loads, so `content.js` watches URL
@@ -111,7 +111,7 @@ Growth: `c:` and `s:` entries older than 90 days are pruned on startup.
    display mode (see "Past vs new").
 5. Render according to the thread's display mode. In replace mode the original is available on
    hover.
-6. My own past bubbles: if `sent[hash]` has the Korean original, show it on hover. They are not
+6. My own past bubbles: if `s:<hash>` has the Korean original, show it on hover. They are not
    translated.
 
 ### Outgoing (preview)
