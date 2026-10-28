@@ -37,8 +37,10 @@ test('the Cherri source carries the same template, with no apostrophe', () => {
   assert.equal(raw.includes("'"), false);
 });
 
-test('the Cherri source keeps the key question bound to the first action', () => {
+test('the Cherri source takes the key from a placeholder Text action and guards it', () => {
   const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
-  const code = src.split('\n').filter((l) => l.trim() && !/^\s*(\/\/|#include|#question|action )/.test(l));
-  assert.equal(code[0], 'const key = trimWhitespace(apiKey)');
+  const code = src.split('\n').filter((l) => l.trim() && !/^\s*(\/\/|#include|action )/.test(l));
+  assert.equal(code[0], '@keyText = "PASTE_API_KEY_HERE"');
+  assert.equal(src.includes('#question'), false);
+  assert.match(src, /matchText\('\^sk-ant-'/);
 });

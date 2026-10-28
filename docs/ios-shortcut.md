@@ -14,9 +14,9 @@ A phone-friendly copy of this guide with copy buttons is published as a private 
 
 `ios/ig-translate.cherri` is the same shortcut as code. `scripts/build-ios-shortcut.sh` compiles it with Cherri v2.3.0 (`~/.local/opt/cherri-2.3.0/cherri`), signs it through HubSign (no Mac here; the file holds no key and no memos) and copies `IG Translate.shortcut` to `~/GoogleDrive/`.
 
-On the iPhone: Google Drive app > `IG Translate.shortcut` > Share > Shortcuts > Add Shortcut. Paste the API key when asked. Then edit the long Text action that starts with `(none) Replace this line` to hold your memos, and set up Back Tap (section 2). Section 0 still applies for the key.
+On the iPhone: Google Drive app > `IG Translate.shortcut` > Share > Shortcuts > Add Shortcut. Edit the shortcut: paste the API key over `PASTE_API_KEY_HERE` in the first Text action (an alert says so if it is missing). Then edit the long Text action that starts with `(none) Replace this line` to hold your memos, and set up Back Tap (section 2). Section 0 still applies for the key.
 
-Cherri v2.3.0 quirks found while writing it: a `rawAction` whose result is assigned loses its identifier (custom `action` definitions are used instead); an import question is bound only to action 0, so the key question must feed the first action; multi-line default blocks in user `action` definitions fail to parse; a string cannot end in a backslash; conditions need a text constant on the left.
+Cherri v2.3.0 quirks found while writing it: a `rawAction` whose result is assigned loses its identifier (custom `action` definitions are used instead); an import question is bound only to action 0 (and on the phone the key from the import question never reached the request, so the key is now a placeholder Text action with a `sk-ant-` guard); multi-line default blocks in user `action` definitions fail to parse; a string cannot end in a backslash; conditions need a text constant on the left.
 
 The build sends `anthropic-workspace-id` (the laptop's workspace, from `~/.config/anthropic/configs/default.json`): the user's phone key turned out to be org-level, and the API rejected it without the header (2026-10-28).
 

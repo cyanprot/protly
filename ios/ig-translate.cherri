@@ -1,7 +1,7 @@
 // IG Translate: iOS Shortcut source. Compile: cherri ios/ig-translate.cherri (see docs/ios-shortcut.md).
 // Double-tap the back of the phone in an Instagram chat.
 // Clipboard holds Korean: translate it as my draft, copy the result. Otherwise: translate the friend's latest messages on screen to Korean.
-// The API key is asked at import and the memos are edited on the phone, so neither is in the compiled file.
+// The API key and the memos are pasted into Text actions on the phone, so neither is in the compiled file.
 
 #include 'actions/sharing'
 #include 'actions/text'
@@ -14,11 +14,15 @@
 action 'base64encode' base64OneLine(variable input: 'WFInput') {"WFEncodeMode": "Encode", "WFBase64LineBreakMode": "None"}
 action 'downloadurl' postFile(text url: 'WFURL', dictionary headers: 'WFHTTPHeaders', variable body: 'WFRequestVariable') {"WFHTTPMethod": "POST", "WFHTTPBodyType": "File"}
 
-// The key is an import question: typed on the phone at import, never compiled into the file.
-// It must stay the first action (v2.3.0 only binds a question to action 0 reliably).
-#question apiKey "Claude API key" ""
-
-const key = trimWhitespace(apiKey)
+// EDIT ON THE PHONE: paste the Claude API key into this first Text action. It is never compiled into the file.
+// (An import question was dropped: on the phone the key did not reach the request and nothing showed why.)
+@keyText = "PASTE_API_KEY_HERE"
+const key = trimWhitespace("{@keyText}")
+const keyCheck = matchText('^sk-ant-', "{key}")
+if !keyCheck {
+    alert("No API key. Edit the shortcut and paste the key (sk-ant-...) into the first Text action.", "IG Translate setup")
+    stop()
+}
 
 // EDIT ON THE PHONE: friend memos, one line each. Name (handle): who they are, gender, reply language, tone.
 @memoText = "(none) Replace this line with one line per friend: Name (handle): who they are, gender, reply language, tone."
