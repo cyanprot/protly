@@ -93,7 +93,7 @@ Run it once from the Shortcuts app and pick Always Allow for `api.anthropic.com`
 - Write: type Korean, Select All, Copy, double-tap, Select All, Paste, send.
 - Target language: start the draft with a language code and a colon (`en:`, `ru:`, `ja:`) to pick it for that message. Without a prefix: the memo reply language, else the friend's language on screen, else English.
 - The `[out]` notification shows the translation first, then `KO:` with the back translation.
-- Polish English: copy English text (more than one word), double-tap. The improved text is copied, the notification `[fix] copied, paste it` shows it with a short Korean list of the main changes. The rules borrow the AI-word and AI-habit list from blader/humanizer (MIT), cut to a few lines to keep the phone request small.
+- Polish English: copy English text (more than one word), double-tap. The improved text is copied, the notification `[fix] copied, paste it` shows it with a short Korean list of the main changes. The rules are the CyanStyle voice from the user's own `cyanprot/humanizer` repo (style guide plus Vale lists), cut to a few lines: Canadian spelling, no em or en dash, semicolon or slash, the banned phrase lists. The full humanizer pipeline (linter, reference passages, claim check) does not run on the phone.
 - Results the shortcut copies expire from the clipboard after 3 minutes, so a leftover English result does not turn the next run into a polish run. Within those 3 minutes a run on new incoming messages would polish the old result instead; wait, or copy something else first.
 
 ## Troubleshooting

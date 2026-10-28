@@ -24,6 +24,7 @@ const CASES = [
   { name: 'out, memo says Russian', text: textFor('out', MEMO, DRAFT), check: (r) => /[а-яё]/i.test(r.translation) && /[가-힣]/.test(r.back_translation) },
   { name: 'out, ja: prefix beats memo', text: textFor('out', MEMO, 'ja: ' + DRAFT), check: (r) => /[\u3040-\u30ff]/.test(r.translation) && !/^ja:/i.test(r.translation) && !/^ja:/i.test(r.back_translation) },
   { name: 'fix, English draft', text: textFor('fix', MEMO, 'i dont know what your saying but its very good idea, lets do it tommorow'), check: (r) => !/[가-힣]/.test(r.translation) && /tomorrow/i.test(r.translation) && /[가-힣]/.test(r.back_translation) },
+  { name: 'fix, CyanStyle rules', text: textFor('fix', MEMO, 'Additionally i think its a really nice color \u2014 lets meet at the center tomorrow; ok?'), check: (r) => !/[\u2014\u2013;\/]/.test(r.translation) && /colour/i.test(r.translation) && /centre/i.test(r.translation) && !/additionally/i.test(r.translation) },
   { name: 'out, no memo', text: textFor('out', '', DRAFT), check: (r) => r.translation.length > 0 && !/[가-힣]/.test(r.translation) },
 ];
 
