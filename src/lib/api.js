@@ -31,7 +31,8 @@ function classify(status, body) {
 }
 
 // transport(body) resolves to { status, retry_after, body } or rejects (ApiError 'host' on port failure).
-export async function callClaude(body, { transport, sleep = realSleep, retries = 2 } = {}) {
+// onUsage(body) runs once per 2xx body (it was billed), never throws into the call.
+export async function callClaude(body, { transport, sleep = realSleep, retries = 2, onUsage } = {}) {
   for (let attempt = 0; ; attempt++) {
     let res;
     try {
@@ -41,7 +42,10 @@ export async function callClaude(body, { transport, sleep = realSleep, retries =
       if (RETRYABLE.has(err.kind) && attempt < retries) { await sleep(backoff(attempt)); continue; }
       throw err;
     }
-    if (res.status >= 200 && res.status < 300) return res.body;
+    if (res.status >= 200 && res.status < 300) {
+      try { onUsage?.(res.body); } catch {} // metering must never break a translation
+      return res.body;
+    }
     const kind = classify(res.status, res.body);
     if (RETRYABLE.has(kind) && attempt < retries) {
       const ra = Number(res.retry_after);

@@ -1,4 +1,5 @@
-import { callJson, ApiError } from './lib/api.js';
+import { callClaude, callJson, ApiError } from './lib/api.js';
+import { createUsageRecorder, summarize } from './lib/usage.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
@@ -13,7 +14,12 @@ const transport = createNativeTransport(
   () => chrome.runtime.connectNative(HOST_NAME),
   () => chrome.runtime.lastError?.message,
 );
-const api = (body, parse) => callJson(body, parse, { transport });
+const usageLog = createUsageRecorder({
+  get: async () => (await store.get('usage')).usage,
+  set: (usage) => store.set({ usage }),
+});
+const apiOpts = { transport, onUsage: usageLog.record };
+const api = (body, parse) => callJson(body, parse, apiOpts);
 
 async function getSettings() {
   const { settings } = await store.get('settings');
@@ -136,6 +142,7 @@ const handlers = {
   getThread: ({ threadId }) => getThread(threadId),
   setThread: ({ threadId, patch }) => setThread(threadId, patch),
   incoming, outgoing, email, polish, suggestMemo, sent, lookupSent,
+  usageSummary: async () => summarize((await store.get('usage')).usage || {}, Date.now()),
   badge: async ({ text }, sender) => { await chrome.action.setBadgeText({ text, tabId: sender.tab?.id }); return true; },
 };
 

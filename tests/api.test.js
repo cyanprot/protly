@@ -110,3 +110,29 @@ test('host_error is host_bug and is not retried', async () => {
   await assert.rejects(callClaude({}, { transport: t, sleep: noSleep }), (e) => e.kind === 'host_bug' && e.message === 'KeyError');
   assert.equal(t.calls.length, 1);
 });
+
+test('onUsage sees every 2xx body, including the re-request after a parse failure', async () => {
+  const t = fakeTransport([{ status: 200, body: { n: 1 } }, { status: 200, body: { n: 2 } }]);
+  const seen = [];
+  let first = true;
+  const parse = (b) => {
+    if (first) { first = false; throw new ApiError('parse', 'not JSON'); }
+    return b.n;
+  };
+  const r = await callJson({}, parse, { transport: t, sleep: noSleep, onUsage: (b) => seen.push(b.n) });
+  assert.equal(r, 2);
+  assert.deepEqual(seen, [1, 2]);
+});
+
+test('onUsage is not called for failed attempts', async () => {
+  const t = fakeTransport([{ status: 529 }, { status: 200, body: { n: 1 } }]);
+  const seen = [];
+  await callClaude({}, { transport: t, sleep: noSleep, onUsage: (b) => seen.push(b.n) });
+  assert.deepEqual(seen, [1]);
+});
+
+test('a throwing onUsage never fails the call', async () => {
+  const t = fakeTransport([{ status: 200, body: { ok: 1 } }]);
+  const r = await callClaude({}, { transport: t, sleep: noSleep, onUsage: () => { throw new Error('boom'); } });
+  assert.deepEqual(r, { ok: 1 });
+});
