@@ -39,3 +39,11 @@ test('the product is named protly everywhere a user or Chrome sees a name', asyn
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.name, 'protly');
 });
+
+test('protly-mono woff2 subsets exist and are small', () => {
+  for (const w of ['400', '500']) {
+    const buf = readFileSync(new URL(`../src/ui/fonts/protly-mono-${w}.woff2`, import.meta.url));
+    assert.equal(buf.subarray(0, 4).toString('latin1'), 'wOF2');
+    assert.ok(buf.length > 4000 && buf.length < 60000, `size ${buf.length}`);
+  }
+});
