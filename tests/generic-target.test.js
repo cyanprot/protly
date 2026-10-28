@@ -39,8 +39,11 @@ test('deepActive follows same-origin iframes and stops at cross-origin ones', ()
   assert.equal(deepActive(sameOrigin).doc, inner);
   const crossNull = { activeElement: { tagName: 'IFRAME', contentDocument: null } };
   assert.equal(deepActive(crossNull).el, null);
+  assert.equal(deepActive(crossNull).blocked, true);
+  assert.equal(deepActive(sameOrigin).blocked, undefined);
   const crossThrows = { activeElement: { tagName: 'IFRAME', get contentDocument() { throw new Error('SecurityError'); } } };
   assert.equal(deepActive(crossThrows).el, null);
+  assert.equal(deepActive(crossThrows).blocked, true);
 });
 
 test('selectionInfo returns the selected text and its document', () => {
@@ -51,6 +54,7 @@ test('selectionInfo returns the selected text and its document', () => {
   const s = selectionInfo(d);
   assert.equal(s.text, 'hello world');
   assert.equal(s.doc, d);
+  assert.equal(s.node, d.getElementById('p'));
   assert.equal(typeof s.rect, 'function');
   assert.equal(selectionInfo(docOf('<p>x</p>')).text, '');
 });

@@ -145,3 +145,204 @@ test('toast() shows a message in the page', () => {
   inst.toast('protly cannot reach this frame.');
   assert.match(toasts(), /cannot reach this frame/);
 });
+
+// A contenteditable box whose execCommand stub writes after delayMs (0: at once).
+function editable(s, delayMs = 0) {
+  const calls = [];
+  s.doc.execCommand = (cmd, ui, text) => {
+    calls.push(text);
+    const set = () => { s.box.textContent = text; };
+    if (delayMs) setTimeout(set, delayMs); else set();
+    return true;
+  };
+  return calls;
+}
+const CE = '<div id="b" contenteditable="true" tabindex="0"></div><input id="o">';
+
+test('contenteditable that renders the insert late (Slate, Draft.js): preview, not an error', async () => {
+  const s = setup(CE);
+  editable(s, 80);
+  s.box.textContent = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  s.pending[0].res(reply('see you tomorrow'));
+  await until(() => s.btn('Undo'));
+  assert.equal(s.box.textContent, 'see you tomorrow');
+});
+
+test('Esc during the select settle cancels the write', async () => {
+  const s = setup(CE);
+  const writes = editable(s);
+  s.box.textContent = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  s.pending[0].res(reply('see you tomorrow'));
+  await sleep(10); // inside the 60 ms settle
+  s.box.dispatchEvent(new s.dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  await sleep(120);
+  assert.deepEqual(writes, []);
+  assert.equal(s.box.textContent, '내일 봐');
+  assert.equal(s.root(), undefined);
+});
+
+test('a composition that commits more text before the write: result dropped', async () => {
+  const s = setup();
+  s.box.value = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  s.box.dispatchEvent(new s.dom.window.Event('compositionstart', { bubbles: true }));
+  s.pending[0].res(reply('see you tomorrow'));
+  await sleep(10);
+  s.box.value = '내일 봐요';
+  s.box.dispatchEvent(new s.dom.window.Event('compositionend', { bubbles: true }));
+  await until(() => /draft changed/.test(s.msg() || ''));
+  assert.equal(s.box.value, '내일 봐요');
+});
+
+test('focus moved while working: a textarea is written without taking focus back', async () => {
+  const s = setup('<textarea id="b"></textarea><input id="o">');
+  s.box.value = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  const other = s.doc.getElementById('o');
+  other.focus();
+  s.pending[0].res(reply('see you tomorrow'));
+  await until(() => s.box.value === 'see you tomorrow');
+  await until(() => s.btn('Undo'));
+  assert.equal(s.doc.activeElement, other);
+});
+
+test('focus moved while working: a contenteditable is left alone, with a toast', async () => {
+  const s = setup(CE);
+  const writes = editable(s);
+  s.box.textContent = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  const other = s.doc.getElementById('o');
+  other.focus();
+  s.pending[0].res(reply('see you tomorrow'));
+  await until(() => /Focus moved, so the translation was not written\./.test(s.toasts()));
+  assert.deepEqual(writes, []);
+  assert.equal(s.box.textContent, '내일 봐');
+  assert.equal(s.doc.activeElement, other);
+  assert.equal(s.root(), undefined);
+});
+
+test('a box inside a shadow root: Esc in it undoes', async () => {
+  const s = setup('<div id="h"></div>');
+  const sr = s.doc.getElementById('h').attachShadow({ mode: 'open' });
+  const box = s.doc.createElement('textarea');
+  sr.appendChild(box);
+  box.value = '내일 봐';
+  box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  s.pending[0].res(reply('see you tomorrow'));
+  await until(() => s.btn('Undo'));
+  box.dispatchEvent(new s.dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true }));
+  await until(() => box.value === '내일 봐');
+});
+
+test('blur to nothing closes the preview; focus on the chip keeps it', async () => {
+  const s = setup();
+  s.box.value = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  s.pending[0].res(reply('see you tomorrow'));
+  await until(() => s.btn('Undo'));
+  s.root().querySelector('select.pl-chip').focus();
+  assert.equal(s.doc.activeElement, s.doc.querySelector('.pl-card'));
+  await sleep(20);
+  assert.ok(s.btn('Undo'));
+  s.box.focus();
+  s.box.blur(); // a click on plain text
+  await until(() => s.root() === undefined);
+  assert.equal(s.box.value, 'see you tomorrow');
+});
+
+test('preview open, focus on the chip, page text selected: Alt+T translates the selection', async () => {
+  const s = setup('<textarea id="b"></textarea><p id="p">see you</p>');
+  s.box.value = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  s.pending[0].res(reply('see you tomorrow'));
+  await until(() => s.btn('Undo'));
+  s.root().querySelector('select.pl-chip').focus();
+  assert.equal(s.doc.activeElement, s.doc.querySelector('.pl-card'));
+  const r = s.doc.createRange();
+  r.selectNodeContents(s.doc.getElementById('p'));
+  s.doc.getSelection().removeAllRanges();
+  s.doc.getSelection().addRange(r);
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 2);
+  assert.deepEqual(s.calls[1], { type: 'selection', text: 'see you' });
+});
+
+test('menu-editable on the same box during the preview re-runs on Opus', async () => {
+  const s = setup();
+  s.box.value = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  s.pending[0].res(reply('see you tomorrow'));
+  await until(() => s.btn('Undo'));
+  s.inst.run({ source: 'menu-editable' });
+  await until(() => s.calls.length === 2);
+  assert.equal(s.calls[1].type, 'box');
+  assert.equal(s.calls[1].profile, 'hard');
+  assert.equal(s.calls[1].text, '내일 봐');
+});
+
+test('a box in an open modal dialog gets its card inside the dialog', async () => {
+  const s = setup('<dialog open><textarea id="b"></textarea></dialog>');
+  s.box.value = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  assert.equal(s.doc.querySelector('.pl-card').parentNode, s.doc.querySelector('dialog'));
+});
+
+test('a second Alt+T while the box is being read sends no second request', async () => {
+  const s = setup();
+  s.box.value = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  await sleep(50);
+  assert.equal(s.calls.length, 1);
+});
+
+test('over 8000 characters: a toast, no call', async () => {
+  const s = setup();
+  s.box.value = '가'.repeat(8001);
+  s.box.focus();
+  await s.inst.run({ source: 'command' });
+  assert.match(s.toasts(), /Too long for protly \(over 8000 characters\)\./);
+  _resetToasts();
+  await s.inst.run({ source: 'menu-selection', selectionText: 'a'.repeat(8001) });
+  assert.match(s.toasts(), /Too long for protly/);
+  assert.equal(s.calls.length, 0);
+});
+
+test('focus in a cross-origin frame: a toast, no stale re-run', async () => {
+  const s = setup();
+  s.box.value = '내일 봐';
+  s.box.focus();
+  s.inst.run({ source: 'command' });
+  await until(() => s.calls.length === 1);
+  s.pending[0].res(reply('see you tomorrow'));
+  await until(() => s.btn('Undo'));
+  const frame = { tagName: 'IFRAME', contentDocument: null };
+  Object.defineProperty(s.doc, 'activeElement', { get: () => frame, configurable: true });
+  await s.inst.run({ source: 'command' });
+  assert.match(s.toasts(), /protly cannot reach this frame\. Right-click inside the box instead\./);
+  assert.equal(s.calls.length, 1);
+});

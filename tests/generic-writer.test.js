@@ -50,3 +50,40 @@ test('a detached box reports false', async () => {
   el.remove();
   assert.equal(await writeBox({ el, doc: d, kind: 'text' }, 'x'), false);
 });
+
+test('readBox: <p> blocks join with one newline, <br> is a newline, an empty <p> is a blank line', () => {
+  const d = docOf('<div contenteditable="true"><p>하나</p><p>둘<br>셋</p><p><br></p><p>넷</p></div><div contenteditable="true">안녕<br>둘째<br></div>');
+  const [p, br] = d.querySelectorAll('[contenteditable]');
+  assert.equal(readBox({ el: p, doc: d, kind: 'contenteditable' }), '하나\n둘\n셋\n\n넷');
+  assert.equal(readBox({ el: br, doc: d, kind: 'contenteditable' }), '안녕\n둘째');
+});
+
+test('contenteditable: an editor that renders the insert a tick later still verifies', async () => {
+  const d = docOf('<div contenteditable="true">안녕</div>');
+  const el = d.querySelector('div');
+  d.execCommand = (cmd, ui, text) => { setTimeout(() => { el.textContent = text; }, 50); return true; };
+  assert.equal(await writeBox({ el, doc: d, kind: 'contenteditable' }, 'hello', { settleMs: 0 }), true);
+});
+
+test('stillOk false right before the write: nothing is written, null', async () => {
+  const d = docOf('<div contenteditable="true">안녕</div><textarea>가</textarea>');
+  const el = d.querySelector('div');
+  let calls = 0;
+  d.execCommand = () => { calls++; return true; };
+  let ok = true;
+  const p = writeBox({ el, doc: d, kind: 'contenteditable' }, 'hello', { settleMs: 20, stillOk: () => ok });
+  ok = false; // e.g. Esc during the select settle
+  assert.equal(await p, null);
+  assert.equal(calls, 0);
+  const ta = d.querySelector('textarea');
+  assert.equal(await writeBox({ el: ta, doc: d, kind: 'text' }, 'x', { stillOk: () => false }), null);
+  assert.equal(ta.value, '가');
+});
+
+test('textarea: written without taking focus', async () => {
+  const d = docOf('<textarea>안녕</textarea><input id="o">');
+  const el = d.querySelector('textarea');
+  d.getElementById('o').focus();
+  assert.equal(await writeBox({ el, doc: d, kind: 'text' }, 'hi'), true);
+  assert.equal(d.activeElement, d.getElementById('o'));
+});

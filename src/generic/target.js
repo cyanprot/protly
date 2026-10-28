@@ -8,7 +8,8 @@ function isEditable(el) {
   return !!c && c.getAttribute('contenteditable').toLowerCase() !== 'false';
 }
 
-// The focused element, through open shadow roots and same-origin iframes. Cross-origin frames give { el: null }.
+// The focused element, through open shadow roots and same-origin iframes. A cross-origin frame gives
+// { el: null, blocked: true }: this frame cannot see inside it.
 export function deepActive(doc) {
   let d = doc;
   let el = d.activeElement;
@@ -17,7 +18,7 @@ export function deepActive(doc) {
     if (el.tagName !== 'IFRAME' && el.tagName !== 'FRAME') break;
     let inner = null;
     try { inner = el.contentDocument; } catch {}
-    if (!inner) return { el: null, doc: d };
+    if (!inner) return { el: null, doc: d, blocked: true };
     d = inner;
     el = d.activeElement;
   }
@@ -49,7 +50,8 @@ export function findTarget(doc) {
   return { el: kind === 'contenteditable' ? editableRoot(el) : el, doc: d, kind };
 }
 
-// The page selection, preferring the focused frame. rect() re-reads the range so a card follows scrolling.
+// The page selection, preferring the focused frame. rect() re-reads the range so a card follows scrolling;
+// node is the range's common ancestor.
 export function selectionInfo(doc) {
   const { doc: inner } = deepActive(doc);
   for (const d of inner === doc ? [doc] : [inner, doc]) {
@@ -57,7 +59,7 @@ export function selectionInfo(doc) {
     const text = sel ? sel.toString() : '';
     if (!text.trim()) continue;
     const range = sel.getRangeAt(0).cloneRange();
-    return { doc: d, text, rect: () => { try { return range.getBoundingClientRect(); } catch { return null; } } };
+    return { doc: d, text, node: range.commonAncestorContainer, rect: () => { try { return range.getBoundingClientRect(); } catch { return null; } } };
   }
-  return { doc, text: '', rect: () => null };
+  return { doc, text: '', node: null, rect: () => null };
 }
