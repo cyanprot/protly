@@ -881,6 +881,10 @@ git commit -m "feat: Gmail compose button, Alt+T, preview note with picker, Opus
 
 **Step 7:** Reply case: the user opens a thread whose last message is in English (or Russian), clicks Reply, types Korean, presses `Translate`. Check: the language follows that message and the register matches it. If the account has a signature, check it is unchanged below the translation. Then the user expands the trimmed content and translates again: the quote block stays unchanged. The user may send it to themselves or discard.
 
+**Step 7b:** Persistence: Translate, close the compose, reopen the draft from Drafts. Check: the translation is there (autosave picked up the DOM write). Then Ctrl+Z after a Translate, then `Undo`: the Korean comes back intact.
+
+**Step 7c:** Two composes open (an inline reply and a new compose window). Check: each `Translate` button sits next to its own Send and translates only its own draft. An indented ("Indent more") Korean paragraph is translated too.
+
 **Step 8:** Host failure: Claude runs `mv ~/.config/google-chrome/NativeMessagingHosts/com.northprot.ig_translate.json{,.off} && pkill -f '[i]g_translate_host.py'`. The user presses `Translate`. Check: the Korean stays, a red note names the host. Claude restores with `mv ~/.config/google-chrome/NativeMessagingHosts/com.northprot.ig_translate.json{.off,}`.
 
 **Step 9:** Record pass/fail per step in `docs/spike-notes-gmail.md` under `## Live check`, fix failures, commit.

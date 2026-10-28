@@ -88,3 +88,17 @@ test('readThread without a viewer email marks everything as them', () => {
   const t = readThread(load().querySelector('[role="main"]'), null);
   assert.deepEqual(t.map((m) => m.from), ['them', 'them']);
 });
+
+test('an indented paragraph (bare blockquote) is part of the user text', () => {
+  const doc = new JSDOM('<body><div id="b">위<blockquote style="margin:0 0 0 40px">들여쓴 문단</blockquote><div class="gmail_quote">old</div></div></body>').window.document;
+  assert.equal(nodesToText(userNodes(doc.getElementById('b'))), '위\n들여쓴 문단');
+});
+
+test('a wrapper div around text and signature is descended into', () => {
+  const doc = new JSDOM('<body><div id="b"><div dir="ltr">안녕<div>둘째</div><br><div class="gmail_signature">Sig</div></div></div></body>').window.document;
+  const body = doc.getElementById('b');
+  assert.equal(nodesToText(userNodes(body)), '안녕\n둘째');
+  replaceUserNodes(body, textToNodes(doc, 'Hi'));
+  assert.equal(nodesToText(userNodes(body)), 'Hi');
+  assert.ok(body.querySelector('[dir="ltr"] > .gmail_signature'));
+});

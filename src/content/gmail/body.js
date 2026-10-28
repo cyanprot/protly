@@ -9,10 +9,21 @@ const isBlank = (n) =>
   (n.nodeType === 3 && !n.textContent.trim()) ||
   (n.nodeType === 1 && !n.textContent.trim() && !n.querySelector(MEDIA));
 
-// The user's own part: body children before the first quote/signature block, minus trailing blank lines
+// Where the user's part lives: normally the body itself, but a reopened draft can wrap the text and the
+// signature in one <div>, so descend while the first child holds a boundary without being one.
+function userParent(body) {
+  let p = body;
+  for (;;) {
+    const first = [...p.childNodes].find((n) => !(n.nodeType === 3 && !n.textContent.trim()));
+    if (!first || first.nodeType !== 1 || first.matches(GSEL.boundary) || !first.querySelector(GSEL.boundary)) return p;
+    p = first;
+  }
+}
+
+// The user's own part: children before the first quote/signature block, minus trailing blank lines
 // (those separate the draft from the signature and stay untouched).
 export function userNodes(body) {
-  const kids = [...body.childNodes];
+  const kids = [...userParent(body).childNodes];
   let end = kids.findIndex(isBoundary);
   if (end === -1) end = kids.length;
   while (end > 0 && isBlank(kids[end - 1])) end--;
@@ -51,12 +62,13 @@ export function textToNodes(doc, text) {
 // Swap the user's part for newNodes; returns the removed nodes (for Undo). Quote and signature stay put.
 // execCommand is not used: next to a block it clones the block's class onto the new lines (spike).
 export function replaceUserNodes(body, newNodes) {
+  const parent = userParent(body);
   const old = userNodes(body);
-  const next = old.length ? old[old.length - 1].nextSibling : body.firstChild;
+  const next = old.length ? old[old.length - 1].nextSibling : parent.firstChild;
   old.forEach((n) => n.remove());
   const frag = body.ownerDocument.createDocumentFragment();
   newNodes.forEach((n) => frag.appendChild(n));
-  body.insertBefore(frag, next);
+  parent.insertBefore(frag, next);
   body.dispatchEvent(new body.ownerDocument.defaultView.Event('input', { bubbles: true }));
   return old;
 }

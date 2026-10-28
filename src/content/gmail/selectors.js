@@ -6,15 +6,21 @@ export const GSEL = {
   messageBody: 'div.a3s', // Gmail class name, the only body anchor; expanded messages only
   sender: 'h3 span[email]',
   account: 'a[aria-label^="Google Account:"]',
-  // Blocks in a body that are not the user's own text and must never be rewritten.
-  boundary: '.gmail_quote, blockquote, .gmail_signature, .gmail_signature_prefix',
+  // Blocks in a compose body that are not the user's own text and must never be rewritten. A bare
+  // <blockquote> is not one: Gmail's "Indent more" wraps the user's own paragraph in it.
+  boundary: '.gmail_quote, .gmail_signature, .gmail_signature_prefix',
+  // Stripped from received messages when reading the thread (other mail clients quote with <blockquote>).
+  quoted: '.gmail_quote, blockquote, .gmail_signature, .gmail_signature_prefix',
 };
 
-// The compose container: nearest ancestor of the body that holds the Send button.
+// The compose container: the nearest ancestor of the body that holds a Send button, and only if it holds
+// no other compose body. null while the toolbar has not rendered yet, so a button never lands next to
+// another compose's Send.
 export function composeOf(body) {
-  let c = body.parentElement;
-  while (c && !c.querySelector(GSEL.send)) c = c.parentElement;
-  return c;
+  for (let c = body.parentElement; c; c = c.parentElement) {
+    if (c.querySelector(GSEL.send)) return c.querySelectorAll(GSEL.body).length === 1 ? c : null;
+  }
+  return null;
 }
 
 // Label shape: "Google Account: <name> (<email>)". null if not found.

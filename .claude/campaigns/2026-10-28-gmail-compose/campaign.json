@@ -4,7 +4,7 @@
   "project": "ig-translate",
   "campaign_id": "2026-10-28-gmail-compose",
   "started": "2026-10-28T12:00:00-07:00",
-  "updated": "2026-10-28T15:00:00-07:00",
+  "updated": "2026-10-28T15:40:00-07:00",
   "current_phase": "execute",
   "current_sprint": 3,
   "total_sprints": 3,
@@ -54,9 +54,13 @@
     {
       "timestamp": "2026-10-28T15:00:00-07:00",
       "decision": "Beyond plan: compose drops a result if the user part changed while translating, so typed text is never overwritten"
+    },
+    {
+      "timestamp": "2026-10-28T15:40:00-07:00",
+      "decision": "Code review fixes: button mounts only next to the compose's own Send and retries until the toolbar exists; bare blockquote is user text (Indent more), only .gmail_quote is a boundary; Cancel while translating; errors keep preview controls; editing the translation then Opus/picker asks before replacing; wrapper div descended. Kept: a new Korean draft in preview drops the older Korean from Undo (the body holds the new draft)"
     }
   ],
-  "continuation_prompt": "Sprints 1-2 done (b19102c), Sprint 3 code Tasks 4-7 done (0ff1713), 86 tests pass. Left: code review of src/content/gmail, then Task 8 live check (user presses every key and Send).",
+  "continuation_prompt": "Sprints 1-2 done, Sprint 3 code done and reviewed (review fixes committed), 97 tests pass. Left: Task 8 live check incl. steps 7b/7c (user presses every key and Send).",
   "artifacts": {
     "plan": "docs/plans/2026-10-28-gmail-compose.md",
     "design": "docs/plans/2026-10-28-gmail-compose-design.md",

@@ -9,7 +9,7 @@ export function readThread(root, viewerEmail, { maxMessages = 5, maxChars = 1500
     const body = item.querySelector(GSEL.messageBody);
     if (!body) continue;
     const clone = body.cloneNode(true);
-    clone.querySelectorAll(GSEL.boundary).forEach((n) => n.remove()); // quoted history, signatures
+    clone.querySelectorAll(GSEL.quoted).forEach((n) => n.remove()); // quoted history, signatures
     let text = nodesToText([...clone.childNodes]).replace(/\n{3,}/g, '\n\n').trim();
     if (!text) continue;
     if (text.length > maxChars) text = `${text.slice(0, maxChars)} [...]`;
