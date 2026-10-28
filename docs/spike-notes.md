@@ -74,7 +74,7 @@ Made with `scripts/sanitize-snapshot.js`. Every text node is `msg N`; usernames 
 only role, aria-label, aria-roledescription, dir and data-igd-message-actions-hidden attributes are kept. Grep for
 the real names and message words: 0 hits.
 
-Expected values (Task 13):
+Expected values (Task 15):
 - `[role="article"][aria-roledescription="message"]` count: 9
 - text rows (with `div[dir="auto"]`), in order: `msg 13`, `msg 17`, `msg 21`, `msg 25`, `msg 29`, `msg 33`, `msg 37`
 - senders of those text rows with viewer `viewer_user`: partner x5, then me x2
@@ -82,6 +82,6 @@ Expected values (Task 13):
 
 ## IME Enter
 
-The log could not be read: Claude in Chrome cannot script or screenshot `file://` pages. The Task 18 handler covers both
-possible orders (one composing keydown only, or composing keydown followed by a normal one), and Task 19 Step 7
+The log could not be read: Claude in Chrome cannot script or screenshot `file://` pages. The Task 20 handler covers both
+possible orders (one composing keydown only, or composing keydown followed by a normal one), and Task 21
 tests the real behaviour on Instagram. Not re-run, to save the user a second manual pass.

@@ -2294,15 +2294,34 @@ git commit -m "chore: loadable extension, native host smoke test recorded"
 ```js
 // Every Instagram DOM assumption lives here. When Instagram changes, re-run the Task 3 spike and edit this file.
 export const SEL = {
-  threadRoot: '__FILL__',   // scrollable message list
-  messageRow: '__FILL__',   // one bubble/row, relative to threadRoot
-  messageText: '__FILL__',  // text element inside a row
-  composer: 'div[role="textbox"][contenteditable="true"]', // confirm in Task 3
+  threadRoot: '[role="main"]',                                     // holds the message scroller (and the inbox list, which has no articles)
+  messageRow: '[role="article"][aria-roledescription="message"]',  // one message
+  messageText: 'div[dir="auto"]',                                  // leaf text div inside a text bubble; media captions are span-only
+  composer: 'div[role="textbox"][contenteditable="true"]',         // Lexical editor
+  replyLabelPrefix: 'Reply to message from ',
+  viewerAvatar: 'img[alt$="\'s profile picture"]',
 };
 
-// Returns 'me' | 'partner' for a row element. Implement the rule recorded in docs/spike-notes.md.
-export function senderOf(row) {
-  __FILL__;
+const AVATAR_SUFFIX = "'s profile picture";
+
+// Viewer username from the sidebar profile link (outside main). null if not found = selector miss.
+export function findViewerName(doc) {
+  for (const img of doc.querySelectorAll(`a[href] ${SEL.viewerAvatar}`)) {
+    if (img.closest(SEL.threadRoot)) continue;
+    const alt = img.getAttribute('alt');
+    return alt.slice(0, -AVATAR_SUFFIX.length);
+  }
+  return null;
+}
+
+// 'me' | 'partner'. The reply button lives in the row group, a sibling of the article.
+// Group chats: everyone except the viewer counts as partner, the safe direction.
+export function senderOf(row, viewer) {
+  const label = row.closest('[role="group"]')
+    ?.querySelector(`[aria-label^="${SEL.replyLabelPrefix}"]`)
+    ?.getAttribute('aria-label');
+  const name = label ? label.slice(SEL.replyLabelPrefix.length) : null;
+  return name === viewer ? 'me' : 'partner';
 }
 ```
 
@@ -2314,22 +2333,33 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { readMessages, findThreadRoot } from '../src/content/dom.js';
+import { findViewerName } from '../src/content/selectors.js';
 
 const html = readFileSync(new URL('./fixtures/thread.html', import.meta.url), 'utf8');
 const doc = new JSDOM(`<body>${html}</body>`).window.document;
 
-const EXPECTED_ROWS = __FILL__;          // from spike-notes
-const EXPECTED_SENDERS = __FILL__;       // e.g. ['partner','partner','me',...] for text rows, from spike-notes
+const EXPECTED_ROWS = 7; // text rows msg 13, 17, 21, 25, 29, 33, 37 (docs/spike-notes.md)
+const EXPECTED_SENDERS = ['partner', 'partner', 'partner', 'partner', 'partner', 'me', 'me'];
+const VIEWER = 'viewer_user'; // the snapshot holds only main, so the viewer is passed in
 
 test('finds thread root', () => {
   assert.ok(findThreadRoot(doc));
 });
 
 test('reads text rows with sender, in order', () => {
-  const msgs = readMessages(findThreadRoot(doc));
+  const msgs = readMessages(findThreadRoot(doc), VIEWER);
   assert.equal(msgs.length, EXPECTED_ROWS);
   assert.deepEqual(msgs.map((m) => m.from), EXPECTED_SENDERS);
   for (const m of msgs) assert.match(m.text, /^msg \d+/);
+});
+
+test('findViewerName reads the sidebar profile link, ignores avatars inside main', () => {
+  const d = new JSDOM(`<body>
+    <div role="main"><a href="/x/"><img alt="partner_user's profile picture"></a></div>
+    <nav><a href="/viewer_user/"><img alt="viewer_user's profile picture"></a></nav>
+  </body>`).window.document;
+  assert.equal(findViewerName(d), 'viewer_user');
+  assert.equal(findViewerName(new JSDOM('<body></body>').window.document), null);
 });
 ```
 
@@ -2341,19 +2371,20 @@ Expected: FAIL, module `dom.js` not found.
 **Step 4: Implement the reader part of `src/content/dom.js`**
 
 ```js
-import { SEL, senderOf } from './selectors.js';
+import { SEL, senderOf, findViewerName } from './selectors.js';
 
 export const findThreadRoot = (doc) => doc.querySelector(SEL.threadRoot);
 export const findComposer = (doc) => doc.querySelector(SEL.composer);
 
 // Text bubbles only, top to bottom. Rows without a text element (media, stickers) are skipped.
-export function readMessages(root) {
+// viewer defaults to the live page's sidebar username; tests pass it explicitly.
+export function readMessages(root, viewer = findViewerName(root.ownerDocument)) {
   const out = [];
   for (const row of root.querySelectorAll(SEL.messageRow)) {
     const textEl = row.querySelector(SEL.messageText);
     const text = textEl?.innerText ?? textEl?.textContent ?? '';
     if (!text.trim()) continue;
-    out.push({ row, textEl, text: text.trim(), from: senderOf(row) });
+    out.push({ row, textEl, text: text.trim(), from: senderOf(row, viewer) });
   }
   return out;
 }
@@ -2363,12 +2394,12 @@ jsdom has no layout, so `innerText` is undefined there and `textContent` is used
 
 Check that `SEL.messageText` cannot match the `.igt-tr` elements this extension inserts (Task 16), or translations would be read back as messages.
 
-If `senderOf` depends on layout (`getBoundingClientRect`), it cannot run in jsdom. In that case, find a structural signal instead. If none exists, test `senderOf` live in Task 19 only and drop `EXPECTED_SENDERS` from this test, noting why in spike-notes.
+`senderOf` is structural (aria-label), so it runs in jsdom. Without a viewer name every row would count as partner, so Task 17 treats a missing viewer as a selector miss.
 
 **Step 5: Run, expect PASS**
 
 Run: `node --test tests/dom.test.js`
-Expected: 2 tests PASS.
+Expected: 3 tests PASS.
 
 **Step 6: Commit**
 
@@ -2534,6 +2565,7 @@ Thread switch safety:
 import { threadIdFromPath } from '../lib/keys.js';
 import { isKoreanOnly } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
+import { findViewerName } from './selectors.js';
 import { findThreadRoot, readMessages, renderTranslation, renderRetry, setHoverOriginal, clearTranslation } from './dom.js';
 
 const CONTEXT_N = 30;
@@ -2581,7 +2613,8 @@ function teardown() {
 
 function waitForThread(threadId, tries = 0, lastCount = -1) {
   if (threadIdFromPath(location.pathname) !== threadId) return; // navigated away meanwhile
-  const root = findThreadRoot(document);
+  // No viewer name means senders cannot be told apart: treat it like a missing root (selector miss).
+  const root = findViewerName(document) ? findThreadRoot(document) : null;
   const msgs = root ? readMessages(root) : [];
   const clean = !msgs.some((m) => staleRows.has(m.row));
   // Stable over two checks; an empty thread (new chat) must stay empty for about 1 s.
