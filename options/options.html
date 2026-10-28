@@ -1,0 +1,26 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ig-translate options</title>
+<style>
+  body { font: 14px system-ui, sans-serif; max-width: 520px; margin: 24px auto; padding: 0 16px; }
+  label { display: block; margin: 14px 0 4px; font-weight: 600; }
+  select { width: 100%; padding: 6px; box-sizing: border-box; }
+  #saved { color: green; margin-left: 8px; }
+  p.note { color: #666; }
+</style>
+<h1>ig-translate</h1>
+<p class="note">API key: read by the native host from <code>~/.config/anthropic/api-key</code>. Install the host with <code>host/install.sh &lt;extension id&gt;</code>.</p>
+<label for="incoming">Incoming model</label>
+<select id="incoming"></select>
+<label for="outgoing">Outgoing model (Enter)</label>
+<select id="outgoing"></select>
+<label for="hard">Hard model (Alt+Enter)</label>
+<select id="hard"></select>
+<label for="otherTarget">Default: non-English incoming to</label>
+<select id="otherTarget"><option value="ko">Korean</option><option value="en">English</option></select>
+<label for="pastMode">Default: past messages</label>
+<select id="pastMode"><option value="replace">Replace text</option><option value="below">Below bubble</option></select>
+<label for="newMode">Default: new messages</label>
+<select id="newMode"><option value="below">Below bubble</option><option value="replace">Replace text</option></select>
+<p><button id="save" type="button">Save</button><span id="saved"></span></p>
+<script type="module" src="options.js"></script>
