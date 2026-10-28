@@ -106,3 +106,16 @@ timeout bounds it. Host-missing path (Step 6) skipped live: covered by `tests/na
 Chrome's message, next call reconnects).
 
 Russian output was feminine (`проспала`) until the outgoing prompt stated the writer is male (commit c0f852a).
+
+## Live check: incoming (2026-10-28)
+
+- User confirmed: incoming translation works on the test thread (past messages replaced, translations shown).
+- Thread switch logged `old thread rows still present after 10 s`: Instagram reuses row nodes across threads.
+  Fixed in 804c148 (text-signature staleness, full DOM cleanup on teardown). Re-check: switch A to B to A,
+  translations within about 2 s, no previous-thread text on reused rows.
+- Remaining Task 19 checklist items not individually recorded yet.
+
+## Live check: outgoing
+
+Pending. First attempt failed with "Could not write the translation into the message box" (nothing sent);
+fixed in 20eac55 (selectAllChildren, 60 ms settle, insertText). Race fixes in a225c66.
