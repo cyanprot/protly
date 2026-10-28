@@ -96,3 +96,14 @@ test('the host error points to the diagnostics', async () => {
   const { ERRORS } = await import('../src/ui/errors.js');
   assert.equal(ERRORS.host, 'Native host not reachable. Open protly options and run Diagnostics.');
 });
+
+test('manifest has the any-site permissions and the Alt+T command', () => {
+  const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
+  for (const p of ['scripting', 'contextMenus']) assert.ok(m.permissions.includes(p), p);
+  assert.equal(m.permissions.filter((p) => p === 'activeTab').length, 1); // added in Task 3.5
+  assert.equal(m.commands.run.suggested_key.default, 'Alt+T');
+  assert.match(m.commands.run.description, /focused text box/);
+  // dist/generic.js is injected by the background, never exposed to pages
+  for (const w of m.web_accessible_resources) assert.equal(w.resources.some((r) => r.startsWith('dist/')), false);
+  assert.equal((m.host_permissions || []).some((h) => h === '<all_urls>' || h.startsWith('*://')), false);
+});
