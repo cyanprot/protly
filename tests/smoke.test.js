@@ -23,3 +23,9 @@ test('manifest injects the Gmail loader on mail.google.com', () => {
   assert.ok(war.resources.includes('src/content/gmail/*.js'));
   assert.ok(war.resources.includes('src/lib/*.js'));
 });
+
+test('the toolbar popup is wired and present', () => {
+  const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
+  assert.equal(m.action.default_popup, 'popup/popup.html');
+  assert.match(readFileSync(new URL('../popup/popup.html', import.meta.url), 'utf8'), /id="polish"/);
+});

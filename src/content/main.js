@@ -1,4 +1,5 @@
 import { threadIdFromPath } from '../lib/keys.js';
+import { watchFlags } from '../lib/flags.js';
 import { isKoreanOnly, hasHangul as isHangulText } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
 import { findViewerName } from './selectors.js';
@@ -52,6 +53,7 @@ const sigOf = (msgs) => msgs.map((m) => m.text).join('\u0001');
 const bannersShown = new Set();
 
 export async function start() {
+  watchFlags();
   const [{ mountPanel }, { mountOutgoing }] = await Promise.all([import('./panel.js'), import('./outgoing.js')]);
   initHooks.push(mountPanel, mountOutgoing);
   let lastPath = null;

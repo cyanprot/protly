@@ -1,7 +1,7 @@
 import { callJson, ApiError } from './lib/api.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
-  buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest,
+  buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
   parseIncoming, parseOutgoing, parseMemo, parseEmail,
 } from './lib/prompts.js';
 import { incomingTarget, resolveOutputLang, latestPartnerLang } from './lib/lang.js';
@@ -110,6 +110,15 @@ async function email({ context, korean, profile, lang }) {
   return { ...r, model };
 }
 
+// English polish (Instagram and Gmail). No storage, like email.
+async function polish({ text, profile }) {
+  const settings = await getSettings();
+  const hard = profile === 'hard';
+  const model = hard ? settings.models.hard : settings.models.outgoing;
+  const r = await api(buildPolishRequest({ model, profile: hard ? 'hard' : 'polish', draft: text }), parseOutgoing);
+  return { ...r, model };
+}
+
 async function sent({ threadId, text, korean }) {
   await store.set({ [await sentKey(threadId, text)]: { korean, ts: Date.now() } });
   return true;
@@ -126,7 +135,7 @@ async function lookupSent({ threadId, texts }) {
 const handlers = {
   getThread: ({ threadId }) => getThread(threadId),
   setThread: ({ threadId, patch }) => setThread(threadId, patch),
-  incoming, outgoing, email, suggestMemo, sent, lookupSent,
+  incoming, outgoing, email, polish, suggestMemo, sent, lookupSent,
   badge: async ({ text }, sender) => { await chrome.action.setBadgeText({ text, tabId: sender.tab?.id }); return true; },
 };
 

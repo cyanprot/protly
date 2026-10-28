@@ -16,7 +16,8 @@
     "type": "module"
   },
   "action": {
-    "default_title": "ig-translate"
+    "default_title": "ig-translate",
+    "default_popup": "popup/popup.html"
   },
   "options_page": "options/options.html",
   "content_scripts": [
