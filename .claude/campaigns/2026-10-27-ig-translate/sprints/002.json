@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "sprint_id": "002",
+  "campaign_id": "2026-10-27-ig-translate",
+  "feature": "Core libraries with TDD (Tasks 4-9)",
+  "deliverables": [
+    "src/lib/lang.js",
+    "src/lib/keys.js",
+    "src/lib/api.js",
+    "src/lib/prompts.js",
+    "src/lib/preview.js",
+    "src/lib/classify.js",
+    "tests for each"
+  ],
+  "success_criteria": [
+    "npm test passes with every listed test from Tasks 4-9",
+    "no request body contains temperature, top_p or top_k",
+    "Task 2 decision gate applied in PROFILES.useFormat"
+  ],
+  "testable_behaviors": [
+    "Spend-limit 429 is not retried",
+    "Alt+Enter in preview re-translates the stored Korean with the hard profile",
+    "Stale API results are ignored by the preview reducer"
+  ],
+  "scope_boundaries": [
+    "No DOM or chrome.* code in src/lib",
+    "No prompt tuning beyond the plan text"
+  ],
+  "evaluation_method": "unit"
+}

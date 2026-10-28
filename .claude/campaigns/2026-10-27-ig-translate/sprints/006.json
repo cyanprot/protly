@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "sprint_id": "006",
+  "campaign_id": "2026-10-27-ig-translate",
+  "feature": "Fixture eval (Task 20)",
+  "deliverables": [
+    "scripts/fixtures/conversations.json",
+    "scripts/eval-fixtures.mjs"
+  ],
+  "success_criteria": [
+    "eval-fixtures.mjs reports 0 src_lang failures with Sonnet and with --hard",
+    "user has reviewed the printed translations"
+  ],
+  "testable_behaviors": [
+    "Prompts handle en, ru, es, ja and Korean no-op correctly"
+  ],
+  "scope_boundaries": [
+    "No real DM text in fixtures"
+  ],
+  "evaluation_method": "manual"
+}

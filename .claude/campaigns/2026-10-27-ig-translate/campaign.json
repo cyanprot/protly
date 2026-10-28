@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "harness": "claude",
+  "project": "ig-translate",
+  "campaign_id": "2026-10-27-ig-translate",
+  "started": "2026-10-27T00:00:00-07:00",
+  "updated": "2026-10-27T00:00:00-07:00",
+  "current_phase": "plan",
+  "current_sprint": 1,
+  "total_sprints": 6,
+  "completed_sprints": [],
+  "blocked_reason": null,
+  "resume_instruction": null,
+  "decisions_log": [
+    {
+      "timestamp": "2026-10-27T00:00:00-07:00",
+      "decision": "Direct Anthropic API calls from the background service worker; no proxy (prot goes offline for the move)"
+    },
+    {
+      "timestamp": "2026-10-27T00:00:00-07:00",
+      "decision": "Sonnet 5.5 default; incoming thinking off via between_tools + effort low; outgoing adaptive + medium; Opus 5.5 high on Alt+Enter"
+    },
+    {
+      "timestamp": "2026-10-27T00:00:00-07:00",
+      "decision": "Both past/new display toggles kept per user request despite reviewer YAGNI note"
+    },
+    {
+      "timestamp": "2026-10-27T00:00:00-07:00",
+      "decision": "Chip language pick persists as the thread output language"
+    },
+    {
+      "timestamp": "2026-10-27T00:00:00-07:00",
+      "decision": "use_dynamic_url not set on web_accessible_resources; content dynamic import verified in Task 12"
+    }
+  ],
+  "continuation_prompt": "Plan created for ig-translate. 6 sprints. Ready for plancheck-flow, then execute-flow.",
+  "artifacts": {
+    "plan": "docs/plans/2026-10-27-ig-translate.md",
+    "design": "docs/plans/2026-10-27-ig-translate-design.md"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "sprint_id": "003",
+  "campaign_id": "2026-10-27-ig-translate",
+  "feature": "Background router and options (Tasks 10-12)",
+  "deliverables": [
+    "src/background.js",
+    "options/options.html and options.js",
+    "loadable unpacked extension"
+  ],
+  "success_criteria": [
+    "node --check src/background.js passes and npm test passes",
+    "options-page console smoke call returns ok:true with a translation",
+    "content-script dynamic import confirmed in spike-notes"
+  ],
+  "testable_behaviors": [
+    "Saving options persists the key and models across reloads",
+    "Background answers outgoing messages with translation, back_translation, lang, model"
+  ],
+  "scope_boundaries": [
+    "No content-script features",
+    "Claude never types the API key"
+  ],
+  "evaluation_method": "manual"
+}
