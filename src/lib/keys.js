@@ -3,7 +3,7 @@ export const PRUNE_MS = 90 * 24 * 60 * 60 * 1000;
 export const DEFAULT_SETTINGS = {
   models: {
     incoming: 'claude-sonnet-5-5',
-    outgoing: 'claude-sonnet-5-5',
+    outgoing: 'claude-opus-5-5',
     hard: 'claude-opus-5-5',
   },
   threadDefaults: { otherTarget: 'ko', pastMode: 'replace', newMode: 'below' },
