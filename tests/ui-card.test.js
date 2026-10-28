@@ -108,6 +108,25 @@ test('float: fixed under the rect, above it when there is no room, re-placed on 
   assert.equal(card.host.style.top, '694px');
 });
 
+test('float: a host the page removed without hide() drops its scroll and resize listeners', () => {
+  let rect = { top: 100, bottom: 120, left: 30, right: 300 };
+  const card = createCard({ doc, place: { float: () => rect } });
+  card.host.getBoundingClientRect = () => ({ width: 200, height: 40 });
+  card.message('x');
+  assert.equal(card.host.style.top, '126px');
+  card.host.remove();
+  rect = { top: 300, bottom: 320, left: 30, right: 300 };
+  win.dispatchEvent(new win.Event('scroll')); // sees the detached host and cleans up
+  assert.equal(card.host.style.top, '126px');
+  doc.body.appendChild(card.host); // reattached by hand, not through render: no listener left
+  win.dispatchEvent(new win.Event('resize'));
+  assert.equal(card.host.style.top, '126px');
+  card.host.remove();
+  card.message('again'); // a later render re-inserts and re-places it
+  assert.equal(card.isOpen(), true);
+  assert.equal(card.host.style.top, '326px');
+});
+
 test('the theme follows the page', () => {
   doc.body.style.backgroundColor = 'rgb(10, 10, 10)';
   const card = createCard({ doc, place: { before: doc.getElementById('row') } });

@@ -4,6 +4,7 @@ import { TOKENS, BASE } from '../ui/tokens.css.js';
 import { PANEL_CSS } from '../ui/panel.css.js';
 import { bindTheme } from '../ui/theme.js';
 import { showToast } from '../ui/toast.js';
+import { errorText } from '../ui/errors.js';
 
 export function mountPanel(cur) {
   const host = document.createElement('div');
@@ -52,7 +53,7 @@ export function mountPanel(cur) {
     try {
       c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch });
     } catch (e) {
-      showToast(`Could not save: ${e.message}`, { error: true });
+      showToast(`Could not save: ${errorText(e)}`, { transient: true, error: true });
       fill(c.thread); // show what is actually stored
       return;
     }
@@ -70,7 +71,7 @@ export function mountPanel(cur) {
     try {
       $('memo').value = await ask({ type: 'suggestMemo', threadId: c.threadId, context: contextFor(c.root) });
     } catch (e) {
-      showToast(`Memo suggestion failed: ${e.message}`, { error: true });
+      showToast(`Memo suggestion failed: ${errorText(e)}`, { transient: true, error: true });
     } finally {
       $('suggest').disabled = false;
     }

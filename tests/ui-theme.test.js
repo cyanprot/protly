@@ -31,7 +31,7 @@ test('pickTheme: dark body, light body, transparent falls back to html, then lig
 
 test('bindTheme sets data-pl-theme and follows body style changes until unbound', async () => {
   const doc = page('background-color: rgb(250, 250, 250)');
-  const el = doc.createElement('div');
+  const el = doc.body.appendChild(doc.createElement('div'));
   const unbind = bindTheme(el, doc);
   assert.equal(el.dataset.plTheme, 'light');
   doc.body.style.backgroundColor = 'rgb(10, 10, 10)';
@@ -41,6 +41,28 @@ test('bindTheme sets data-pl-theme and follows body style changes until unbound'
   doc.body.style.backgroundColor = 'rgb(250, 250, 250)';
   await tick();
   assert.equal(el.dataset.plTheme, 'dark');
+});
+
+test('bindTheme drops an element the page detached without unbinding', async () => {
+  const doc = page('background-color: rgb(250, 250, 250)');
+  const el = doc.body.appendChild(doc.createElement('div'));
+  const kept = doc.body.appendChild(doc.createElement('div'));
+  bindTheme(el, doc);
+  bindTheme(kept, doc);
+  el.remove(); // e.g. Gmail closing a compose window without hide()
+  doc.body.style.backgroundColor = 'rgb(10, 10, 10)';
+  await tick();
+  assert.equal(el.dataset.plTheme, 'light');
+  assert.equal(kept.dataset.plTheme, 'dark');
+  doc.body.appendChild(el); // back in the page but never re-bound: it was dropped, not just skipped
+  doc.body.style.backgroundColor = 'rgb(250, 250, 250)';
+  await tick();
+  assert.equal(el.dataset.plTheme, 'light');
+  assert.equal(kept.dataset.plTheme, 'light');
+  doc.body.style.backgroundColor = 'rgb(10, 10, 10)';
+  await tick();
+  assert.equal(el.dataset.plTheme, 'light');
+  assert.equal(kept.dataset.plTheme, 'dark');
 });
 
 test('tokens define paper, ink and a dark swap, with no shadows or gradients', () => {

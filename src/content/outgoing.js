@@ -73,7 +73,7 @@ export function mountOutgoing(cur) {
     try {
       if (c) c.thread = await ask({ type: 'setThread', threadId: c.threadId, patch: { outputLang: lang } });
     } catch (err) {
-      showToast(`Could not save the reply language: ${err.message}`, { error: true });
+      showToast(`Could not save the reply language: ${errorText(err)}`, { transient: true, error: true });
     }
     dispatch({ type: 'lang', lang });
   }

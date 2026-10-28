@@ -51,6 +51,7 @@ export function createCard({ doc = document, place }) {
   };
 
   function placeFloat() {
+    if (!host.isConnected) { api.hide(); return; } // the page removed it without hide(): drop the listeners
     const r = place.float();
     const box = host.getBoundingClientRect();
     const h = box.height || 0;
@@ -90,7 +91,7 @@ export function createCard({ doc = document, place }) {
     ...(hints ? [el('span', 'hints', hints)] : []),
   ];
 
-  return {
+  const api = {
     host,
     // text without trailing dots: the card animates them.
     working(text, { onCancel } = {}) {
@@ -113,4 +114,5 @@ export function createCard({ doc = document, place }) {
     },
     isOpen: () => host.isConnected,
   };
+  return api;
 }

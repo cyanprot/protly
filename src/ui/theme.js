@@ -26,6 +26,8 @@ export function pickTheme(doc) {
 const bound = new WeakMap(); // document -> Set of elements kept in sync
 
 // Sets el.dataset.plTheme now and whenever html or body change class or style. Returns an unbind function.
+// An element the page detached without unbinding (Gmail closing a compose window) is dropped on the next
+// change, so it and its listeners are not kept alive; card.js and toast.js bind again when they re-insert.
 export function bindTheme(el, doc = el.ownerDocument) {
   el.dataset.plTheme = pickTheme(doc);
   let set = bound.get(doc);
@@ -34,7 +36,10 @@ export function bindTheme(el, doc = el.ownerDocument) {
     bound.set(doc, set);
     const mo = new doc.defaultView.MutationObserver(() => {
       const t = pickTheme(doc);
-      for (const e of set) e.dataset.plTheme = t;
+      for (const e of set) {
+        if (e.isConnected) e.dataset.plTheme = t;
+        else set.delete(e);
+      }
     });
     const opts = { attributes: true, attributeFilter: ['class', 'style'] };
     mo.observe(doc.documentElement, opts);
