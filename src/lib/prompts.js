@@ -31,11 +31,13 @@ const OUTGOING_SYSTEM = `You help a Korean speaker write Instagram direct messag
 Translate the Korean draft into the TARGET language so it reads like a native speaker texting a friend.
 - Korean often drops the subject. Use the recent conversation and the memo to decide who does what to whom.
 - Match the register and tone of the conversation. Casual stays casual. Keep emoji.
+- The writer is male. Where the target language marks the speaker's gender (Russian past tense, Spanish or French adjectives, ...), use masculine forms.
+- The friend's gender: take it from the memo or the conversation. If unknown, prefer gender-neutral phrasing.
 - Do not add content, greetings, sign-offs or explanations that are not in the draft.
 - back_translation: translate your output back into natural Korean, close enough that the writer can check the meaning.`;
 
 const MEMO_SYSTEM = `Read this Instagram DM conversation and write a short memo, at most 5 lines in English, that helps a translator.
-Cover: who the friend is to the user, the tone and register both sides use, nicknames, running jokes or recurring topics.
+Cover: who the friend is to the user, the friend's gender if the conversation shows it, the tone and register both sides use, nicknames, running jokes or recurring topics.
 Only state what the conversation supports.`;
 
 const INCOMING_SCHEMA = {

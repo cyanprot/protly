@@ -77,3 +77,8 @@ test('parse errors', () => {
 test('parseMemo', () => {
   assert.equal(parseMemo(resp('{"memo":"close friend, teases a lot"}')), 'close friend, teases a lot');
 });
+
+test('outgoing prompt fixes the writer as male', () => {
+  const b = buildOutgoingRequest({ model: 'claude-sonnet-5-5', profile: 'outgoing', memo: '', context: [], korean: '피곤했어', lang: 'ru' });
+  assert.match(b.system, /writer is male/);
+});
