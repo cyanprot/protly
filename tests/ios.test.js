@@ -44,3 +44,10 @@ test('the Cherri source takes the key from a placeholder Text action and guards 
   assert.equal(src.includes('#question'), false);
   assert.match(src, /matchText\('\^sk-ant-'/);
 });
+
+test('the Cherri source has the fix mode and expiring clipboard results', () => {
+  const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
+  assert.match(src, /MODE: fix/);
+  assert.match(src, /adjustDate\("\{now\}", "Add", qty\(3, "min"\)\)/);
+  assert.match(src, /setClipboard\(translation, false, "\{expiry\}"\)/);
+});

@@ -17,12 +17,13 @@ const fill = (text) => template
   .replace('{{IMAGE_B64}}', () => image)
   .replace('{{TEXT}}', () => JSON.stringify(text).slice(1, -1));
 const textFor = (mode, memo, draft) =>
-  `PEOPLE:\n${memo || '(none)'}\n\nMODE: ${mode}` + (mode === 'out' ? `\n\nDRAFT:\n${draft}` : '');
+  `PEOPLE:\n${memo || '(none)'}\n\nMODE: ${mode}` + (mode !== 'in' ? `\n\nDRAFT:\n${draft}` : '');
 
 const CASES = [
   { name: 'in, memo', text: textFor('in', MEMO), check: (r) => /[가-힣]/.test(r.translation) },
   { name: 'out, memo says Russian', text: textFor('out', MEMO, DRAFT), check: (r) => /[а-яё]/i.test(r.translation) && /[가-힣]/.test(r.back_translation) },
   { name: 'out, ja: prefix beats memo', text: textFor('out', MEMO, 'ja: ' + DRAFT), check: (r) => /[\u3040-\u30ff]/.test(r.translation) && !/^ja:/i.test(r.translation) && !/^ja:/i.test(r.back_translation) },
+  { name: 'fix, English draft', text: textFor('fix', MEMO, 'i dont know what your saying but its very good idea, lets do it tommorow'), check: (r) => !/[가-힣]/.test(r.translation) && /tomorrow/i.test(r.translation) && /[가-힣]/.test(r.back_translation) },
   { name: 'out, no memo', text: textFor('out', '', DRAFT), check: (r) => r.translation.length > 0 && !/[가-힣]/.test(r.translation) },
 ];
 
