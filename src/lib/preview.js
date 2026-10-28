@@ -1,18 +1,30 @@
-import { hasHangul } from './lang.js';
+import { hasHangul, parseLangPrefix } from './lang.js';
 
-export const initial = () => ({ mode: 'idle', korean: null, profile: null, lang: null, shown: null, reqId: 0 });
+// korean: the source text. The Korean draft (prefix included, so Esc restores it), or the English draft being polished.
+// kind: 'translate' | 'polish'.
+export const initial = () => ({ mode: 'idle', kind: null, korean: null, profile: null, lang: null, shown: null, reqId: 0 });
 
 const norm = (t) => (t ?? '').replace(/\s+/g, ' ').trim();
 
+// lang: an explicit choice (chip or a re-run), else the draft's prefix, else null (the thread decides).
 function translate(s, korean, profile, lang) {
   const reqId = s.reqId + 1;
+  const p = parseLangPrefix(korean);
   return {
-    state: { mode: 'translating', korean, profile, lang, shown: null, reqId },
-    effect: { type: 'translate', reqId, korean, profile, lang },
+    state: { mode: 'translating', kind: 'translate', korean, profile, lang, shown: null, reqId },
+    effect: { type: 'translate', kind: 'translate', reqId, korean: p.text, profile, lang: lang ?? p.lang },
   };
 }
 
-const idle = (s) => ({ ...s, mode: 'idle', korean: null, profile: null, lang: null, shown: null });
+function polish(s, text, profile) {
+  const reqId = s.reqId + 1;
+  return {
+    state: { mode: 'translating', kind: 'polish', korean: text, profile, lang: null, shown: null, reqId },
+    effect: { type: 'translate', kind: 'polish', reqId, korean: text, profile, lang: null },
+  };
+}
+
+const idle = (s) => ({ ...s, mode: 'idle', kind: null, korean: null, profile: null, lang: null, shown: null });
 
 export function reduce(s, e) {
   switch (e.type) {
@@ -22,16 +34,18 @@ export function reduce(s, e) {
       if (s.mode === 'preview') {
         // New draft: Hangul that is not the shown translation (which may keep ㅋㅋ or a Korean name).
         if (hasHangul(e.text) && s.lang !== 'ko' && norm(e.text) !== norm(s.shown)) return translate(s, e.text, profile, null);
-        if (e.hard) return translate(s, s.korean, 'hard', s.lang);
+        if (e.hard) return s.kind === 'polish' ? polish(s, s.korean, 'hard') : translate(s, s.korean, 'hard', s.lang);
+        // Anything else is sent as is, an edit included: polish starts only from idle.
         return { state: idle(s), effect: { type: 'sent', korean: s.korean } };
       }
-      if (!hasHangul(e.text)) return { state: s, effect: { type: 'pass' } };
-      return translate(s, e.text, profile, null);
+      if (hasHangul(e.text)) return translate(s, e.text, profile, null);
+      if (e.polish && /\p{L}/u.test(e.text)) return polish(s, e.text, profile);
+      return { state: s, effect: { type: 'pass' } };
     }
     case 'result':
       if (s.mode !== 'translating' || e.reqId !== s.reqId) return { state: s, effect: { type: 'none' } };
       return {
-        state: { ...s, mode: 'preview', lang: e.lang, shown: e.translation },
+        state: { ...s, mode: 'preview', lang: s.kind === 'polish' ? null : e.lang, shown: e.translation },
         effect: {
           type: 'show', translation: e.translation, back_translation: e.back_translation,
           profile: s.profile, lang: e.lang, model: e.model,

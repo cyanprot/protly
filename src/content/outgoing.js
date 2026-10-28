@@ -3,6 +3,7 @@ import { hasHangul, langName, LANG_NAMES } from '../lib/lang.js';
 import { findComposer, getComposerText, setComposerText } from './dom.js';
 import { ask, getCurrent, contextFor, showBanner, bannerFor } from './main.js';
 import { threadIdFromPath } from '../lib/keys.js';
+import { flags } from '../lib/flags.js';
 
 const COMPOSE_ENTER_MS = 300; // a deferred IME Enter must be followed by compositionend within this window
 const WRITE_SETTLE_MS = 50;   // editors such as Lexical commit DOM updates asynchronously
@@ -101,14 +102,17 @@ export function mountOutgoing(cur) {
     switch (effect.type) {
       case 'translate': {
         if (c) srcText = getComposerText(c);
-        showNote([text(effect.profile === 'hard' ? 'Translating (hard)...' : 'Translating...')]);
+        const verb = effect.kind === 'polish' ? 'Polishing' : 'Translating';
+        showNote([text(effect.profile === 'hard' ? `${verb} (Opus)...` : `${verb}...`)]);
         try {
           const cur2 = getCurrent();
           if (!cur2) throw new Error('thread closed');
-          const r = await ask({
-            type: 'outgoing', threadId: cur2.threadId, context: contextFor(cur2.root),
-            korean: effect.korean, profile: effect.profile, lang: effect.lang,
-          });
+          const r = effect.kind === 'polish'
+            ? await ask({ type: 'polish', text: effect.korean, profile: effect.profile })
+            : await ask({
+              type: 'outgoing', threadId: cur2.threadId, context: contextFor(cur2.root),
+              korean: effect.korean, profile: effect.profile, lang: effect.lang,
+            });
           dispatch({ type: 'result', reqId: effect.reqId, ...r });
         } catch (e) {
           if (bannerFor(e)) showBanner(bannerFor(e));
@@ -135,7 +139,8 @@ export function mountOutgoing(cur) {
           break;
         }
         lastText = effect.translation;
-        showNote([text(`${effect.back_translation}  · ${modelLabel(effect.model)}`), chip(effect.lang)]);
+        const label = text(`${effect.back_translation}  · ${modelLabel(effect.model)}`);
+        showNote(state.kind === 'polish' ? [label] : [label, chip(effect.lang)]); // no target language to pick
         break;
       }
       case 'restore':
@@ -224,7 +229,7 @@ export function mountOutgoing(cur) {
       return;
     }
 
-    const eff = dispatch({ type: 'enter', text: getComposerText(c), hard: e.altKey });
+    const eff = dispatch({ type: 'enter', text: getComposerText(c), hard: e.altKey, polish: flags.polish });
     // 'sent' lets the real Enter through so Instagram sends the composer text itself.
     if (eff.type !== 'pass' && eff.type !== 'sent') block(e);
   }
@@ -239,7 +244,7 @@ export function mountOutgoing(cur) {
     setTimeout(() => {
       const c = composer();
       if (!c || !live()) return;
-      const ev = { type: 'enter', text: getComposerText(c), hard: pending.hard };
+      const ev = { type: 'enter', text: getComposerText(c), hard: pending.hard, polish: flags.polish };
       // The real Enter was blocked, so a deferred 'sent' or 'pass' would send nothing: ask for another Enter.
       const kind = reduce(state, ev).effect.type;
       if (kind === 'sent' || kind === 'pass') { showNote([text('Press Enter again to send.')]); return; }
