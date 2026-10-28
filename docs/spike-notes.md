@@ -45,3 +45,43 @@ Composer: `div[role="textbox"][contenteditable="true"][data-lexical-editor="true
 - Empty composer `innerText` is `"\n"`; `getComposerText` strips the trailing newline.
 
 `setComposerText` must therefore be: focus, `selectAllChildren`, wait 60 ms, `insertText`. It becomes async.
+
+## Selectors (2026-10-27, live thread, 1:1 between the user's two accounts)
+
+No hashed class names are used. Every selector is a role / aria / dir attribute.
+
+| Name | Selector / rule | Evidence |
+|---|---|---|
+| `threadRoot` | `[role="main"]` | The message scroller has no attributes besides `class`; `main` holds it (and the inbox list, which has no `article` elements) |
+| `messageRow` | `[role="article"][aria-roledescription="message"]` | 9 matches = 9 loaded messages; nothing else in the page uses that roledescription |
+| `messageText` | `div[dir="auto"]` inside the article | Text bubbles are `span[dir=auto] > div[dir=auto]` (leaf). Shared posts/clips have only `span[dir=auto]` captions, so they are skipped. The day separator is a `span[dir=auto]` outside any article |
+| sender | `article.closest('[role="group"]')` then `[aria-label^="Reply to message from "]`; the rest of the label is the username | Partner rows say `from northprot`, own rows `from cyanprot`. The actions group is a sibling of the article inside the row group, not inside the article |
+| viewer username | first `a[href]` outside `[role="main"]` that contains `img[alt$="'s profile picture"]`; name = alt without `'s profile picture` | Exactly one such link: the sidebar profile link, alt `cyanprot's profile picture` |
+| `composer` | `div[role="textbox"][contenteditable="true"]` | 1 match, also carries `data-lexical-editor="true"` |
+
+`senderOf(article, viewer)` = `'me'` if the label name equals `viewer`, else `'partner'`. Group chats then treat
+everyone else as partner, which is the safe direction.
+
+Row layout (for reference only, not used): partner bubbles sit at left offset 51 px in the scroller, own bubbles
+at right offset 31 px.
+
+Mutations: hovering a message toggles `data-igd-message-actions-hidden` (attribute only). The observer uses
+`childList`, so hover does not trigger it.
+
+### Snapshot `tests/fixtures/thread.html`
+
+Made with `scripts/sanitize-snapshot.js`. Every text node is `msg N`; usernames are `partner_user` / `viewer_user`;
+only role, aria-label, aria-roledescription, dir and data-igd-message-actions-hidden attributes are kept. Grep for
+the real names and message words: 0 hits.
+
+Expected values (Task 13):
+- `[role="article"][aria-roledescription="message"]` count: 9
+- text rows (with `div[dir="auto"]`), in order: `msg 13`, `msg 17`, `msg 21`, `msg 25`, `msg 29`, `msg 33`, `msg 37`
+- senders of those text rows with viewer `viewer_user`: partner x5, then me x2
+  (`['partner','partner','partner','partner','partner','me','me']`)
+
+## IME Enter
+
+The log could not be read: Claude in Chrome cannot script or screenshot `file://` pages. The Task 18 handler covers both
+possible orders (one composing keydown only, or composing keydown followed by a normal one), and Task 19 Step 7
+tests the real behaviour on Instagram. Not re-run, to save the user a second manual pass.
