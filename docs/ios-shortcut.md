@@ -90,6 +90,8 @@ Run it once from the Shortcuts app and pick Always Allow for `api.anthropic.com`
 
 - Read: open the chat, double-tap the back.
 - Write: type Korean, Select All, Copy, double-tap, Select All, Paste, send.
+- Target language: start the draft with a language code and a colon (`en:`, `ru:`, `ja:`) to pick it for that message. Without a prefix: the memo reply language, else the friend's language on screen, else English.
+- The `[out]` notification shows the translation first, then `KO:` with the back translation.
 
 ## Troubleshooting
 
