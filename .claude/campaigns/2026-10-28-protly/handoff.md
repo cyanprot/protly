@@ -1,9 +1,10 @@
 # protly campaign handoff
 
-- Phase: plan written, reviewed twice (Sprints 1-2, 3-4), fixes folded in, committed cfafa86. Ready for execute-flow.
+- Phase: execute. Sprint 1 (rename) DONE 2026-10-28 and verified live; next is Sprint 2 (design system), Task 2.1.
 - Plan: docs/plans/2026-10-28-protly.md (header holds the binding shared contracts). Design: docs/plans/2026-10-28-protly-design.md.
-- Next skill: plancheck-flow (or fix review findings), then execute-flow from Task 1.1.
-- Sprint 1 moves the repo to ~/projects/protly (Task 1.4) and needs two user clicks in chrome://extensions (Task 1.5).
-  After Task 1.5 continue in a fresh session launched from ~/projects/protly.
-- Already shipped before the plan: drafts on Opus low, incoming on Sonnet (07cf085). Plan test counts are approximate; gate is fail 0.
-- Never press Enter or Send in Instagram or Gmail composers. Never push. Never print the API key.
+- Repo now at /home/cyan/projects/protly. Extension ID X = idkdlhcfhfdbbpakkaifjlmjhhfepidg (manifest key; private key ~/.config/protly/extension-key.pem, never committed).
+- Storage backup of the old ID: ~/.config/protly/storage-backup-dcfndjml/ (keep until campaign closes; deleting is the user's call).
+- Old ig-translate card vanished from chrome://extensions by itself after the move; its storage folder and Preferences entry still exist. Harmless; Claude never edits Preferences.
+- Claude in Chrome cannot open chrome-extension:// pages (Task 3.9 probe already answered: use the user fallback or the page-side check).
+- Exit checks passed: loaded ID == X, stored memo present (thread 17846068155161024), Suggest memo went through com.northprot.protly, .pl-tr rendered.
+- Never press Enter or Send in Instagram or Gmail composers. Never push. Never print the API key. Plan test counts approximate; gate is fail 0 + Python OK.
