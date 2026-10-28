@@ -85,3 +85,24 @@ Expected values (Task 15):
 The log could not be read: Claude in Chrome cannot script or screenshot `file://` pages. The Task 20 handler covers both
 possible orders (one composing keydown only, or composing keydown followed by a normal one), and Task 21
 tests the real behaviour on Instagram. Not re-run, to save the user a second manual pass.
+
+## Task 14 smoke test (2026-10-27)
+
+Extension ID `dcfndjmllblfabckkelnflfmnkdochai` (derived from the folder path; computed before loading and confirmed on the card).
+Host installed with `host/install.sh`.
+
+Run from a temporary content-script loader on the test thread (content-script `console.log` is not visible to Claude in
+Chrome, so the loader wrote its result into `document.documentElement.dataset.igtSmoke`):
+
+| Check | Result |
+|---|---|
+| Content-script dynamic `import(chrome.runtime.getURL(...))` | OK, `hasHangul('안녕') === true` |
+| content script -> background -> native host -> API, Sonnet outgoing | OK, 1.2 s |
+| Same path, Opus `hard`, ru | OK, 5.8 s |
+| Host alone (shell, framed stdin), Opus `hard` with the long 7-sentence text | OK, 23.5 s |
+
+The >30 s case was not reached; the open port keeps the worker alive per Chrome 105+ docs, and the 150 s transport
+timeout bounds it. Host-missing path (Step 6) skipped live: covered by `tests/native.test.js` (disconnect rejects with
+Chrome's message, next call reconnects).
+
+Russian output was feminine (`проспала`) until the outgoing prompt stated the writer is male (commit c0f852a).
