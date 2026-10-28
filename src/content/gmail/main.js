@@ -1,6 +1,6 @@
 import { watchFlags } from '../../lib/flags.js';
 import { GSEL } from './selectors.js';
-import { mountCompose, translate } from './compose.js';
+import { mountCompose, translate, escape } from './compose.js';
 
 const SCAN_MS = 300;
 const COMPOSE_WAIT_MS = 500;
@@ -26,5 +26,14 @@ export async function start() {
     const go = () => { clearTimeout(t); translate(body); };
     const t = setTimeout(() => { body.removeEventListener('compositionend', go); translate(body); }, COMPOSE_WAIT_MS);
     body.addEventListener('compositionend', go, { once: true });
+  }, true);
+
+  // Esc in a compose body undoes protly's preview. Only swallowed when there was something to undo.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.isComposing) return;
+    const body = e.target?.closest?.(GSEL.body);
+    if (!body || !escape(body)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
   }, true);
 }

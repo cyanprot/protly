@@ -1,13 +1,14 @@
 import { GSEL, composeOf, findViewerEmail } from './selectors.js';
 import { userNodes, nodesToText, textToNodes, replaceUserNodes, hasMedia } from './body.js';
 import { readThread } from './thread.js';
-import { hasHangul, LANG_NAMES, parseLangPrefix } from '../../lib/lang.js';
+import { hasHangul, parseLangPrefix } from '../../lib/lang.js';
 import { flags } from '../../lib/flags.js';
-import { errorText } from '../../ui/errors.js';
+import { createCard } from '../../ui/card.js';
+import { ERRORS, errorText } from '../../ui/errors.js';
 
 const MOUNT_GRACE_MS = 3000; // Gmail can render a body before its toolbar
+const HINTS = 'Esc undo';
 const norm = (s) => (s ?? '').replace(/\s+/g, ' ').trim();
-const modelLabel = (m) => (m && m.includes('opus') ? 'Opus' : 'Sonnet');
 const states = new WeakMap(); // compose body -> state; dropped with the compose
 let badgeSet = false;
 let viewerWarned = false;
@@ -17,8 +18,9 @@ async function ask(msg) {
   try {
     r = await chrome.runtime.sendMessage(msg);
   } catch (err) {
-    const e = new Error(/context invalidated/i.test(err?.message) ? 'protly was reloaded. Reload this tab.' : err?.message || String(err));
-    e.kind = 'internal';
+    const stale = /context invalidated/i.test(err?.message);
+    const e = new Error(stale ? ERRORS.stale : err?.message || String(err));
+    e.kind = stale ? 'stale' : 'internal';
     throw e;
   }
   if (!r?.ok) { const e = new Error(r?.error?.message || 'no response'); e.kind = r?.error?.kind; throw e; }
@@ -31,7 +33,7 @@ function stateOf(body) {
     // korean is the source text: the Korean draft, or the English draft being polished (kind 'polish').
     s = {
       mode: 'idle', reqId: 0, saved: null, kind: 'translate', korean: null, shown: null, lang: 'auto', profile: 'email',
-      last: null, note: null, anchor: null, btn: null, firstMiss: 0, warned: false,
+      last: null, card: null, cardAnchor: null, anchor: null, btn: null, firstMiss: 0, warned: false,
     };
     states.set(body, s);
   }
@@ -72,59 +74,40 @@ export function mountCompose(body) {
   if (s.warned) { s.warned = false; setBadge(false); }
 }
 
-const span = (t) => { const e = document.createElement('span'); e.textContent = t; return e; };
-function button(label, onClick) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.textContent = label;
-  b.addEventListener('click', onClick);
-  return b;
+// One card per compose, above its toolbar table; rebuilt when Gmail replaces the toolbar.
+function cardOf(body, s) {
+  const anchor = s.anchor?.isConnected ? s.anchor : null;
+  if (!s.card || s.cardAnchor !== anchor) {
+    s.card?.hide();
+    s.card = createCard({ place: anchor ? { before: anchor } : { after: body } });
+    s.cardAnchor = anchor;
+  }
+  return s.card;
 }
 
-function showNote(body, s, children, isError = false) {
-  if (!s.note?.isConnected) {
-    s.note = document.createElement('div');
-    s.note.className = 'pl-g-note';
-    if (s.anchor?.isConnected) s.anchor.before(s.note); else body.after(s.note);
-  }
-  s.note.classList.toggle('pl-g-err', isError);
-  s.note.replaceChildren(...children);
+const act = (label, onClick) => ({ label, onClick });
+// A polish preview has no target language, so no picker.
+const pickerOf = (body, s) => (s.kind === 'polish' ? {} : { lang: s.lang, onLang: (lang) => retranslate(body, { lang }) });
+const previewActions = (body) => [act('Opus', () => retranslate(body, { profile: 'hard' })), act('Undo', () => undo(body))];
+
+function say(body, s, text, { error = false, actions = [], picker = false } = {}) {
+  cardOf(body, s).message(text, { error, actions, ...(picker ? pickerOf(body, s) : {}) });
 }
 
 function hideNote(s) {
-  s.note?.remove();
-  s.note = null;
+  s.card?.hide();
 }
-
-function langPicker(body, current) {
-  const sel = document.createElement('select');
-  const codes = Object.keys(LANG_NAMES).filter((c) => c !== 'ko');
-  if (!codes.includes(current)) codes.unshift(current);
-  for (const c of codes) {
-    const o = document.createElement('option');
-    o.value = c;
-    o.textContent = LANG_NAMES[c] || c;
-    o.selected = c === current;
-    sel.appendChild(o);
-  }
-  sel.addEventListener('change', () => retranslate(body, { lang: sel.value }));
-  return sel;
-}
-
-// A polish preview has no target language, so no picker.
-const previewControls = (body, s) => [
-  ...(s.kind === 'polish' ? [] : [langPicker(body, s.lang)]),
-  button('Opus', () => retranslate(body, { profile: 'hard' })),
-  button('Undo', () => undo(body)),
-];
 
 function showPreview(body, s) {
-  showNote(body, s, [span(`${s.last.back_translation}  · ${modelLabel(s.last.model)}`), ...previewControls(body, s)]);
+  cardOf(body, s).preview({
+    text: s.last.back_translation, model: s.last.model, ...pickerOf(body, s), actions: previewActions(body), hints: HINTS,
+  });
 }
 
-// An error note that keeps the preview controls when there is a preview to go back to.
+// An error that keeps the preview controls when there is a preview to go back to.
 function showError(body, s, message) {
-  showNote(body, s, [span(message), ...(s.mode === 'preview' ? previewControls(body, s) : [])], true);
+  const inPreview = s.mode === 'preview';
+  say(body, s, message, { error: true, actions: inPreview ? previewActions(body) : [], picker: inPreview });
 }
 
 // Translate button and Alt+T.
@@ -152,13 +135,13 @@ export function translate(body) {
   } else if (flags.polish && /\p{L}/u.test(text)) {
     opts = { kind: 'polish', korean: text, profile: 'email' };
   } else {
-    return showNote(body, s, [span(flags.polish
+    return say(body, s, flags.polish
       ? 'Nothing to polish.'
-      : 'No Korean text to translate. Turn on Polish English in the toolbar popup to polish English drafts.')], true);
+      : 'No Korean text to translate. Turn on Polish English in the toolbar popup to polish English drafts.', { error: true });
   }
   if (hasMedia(nodes)) {
     const verb = opts.kind === 'polish' ? 'Polish' : 'Translate';
-    return showNote(body, s, [span(`The draft contains images. ${verb} the text before adding images.`)], true);
+    return say(body, s, `The draft contains images. ${verb} the text before adding images.`, { error: true });
   }
   return request(body, opts);
 }
@@ -169,12 +152,13 @@ function retranslate(body, { lang, profile, force = false }) {
   if (s.mode !== 'preview') return;
   const opts = { kind: s.kind, korean: s.korean, profile: profile ?? s.profile, lang: lang ?? s.lang };
   if (!force && norm(nodesToText(userNodes(body))) !== norm(s.shown)) {
-    return showNote(body, s, [
-      span('You edited the translation. Translating again replaces your edit.'),
-      button('Replace anyway', () => retranslate(body, { ...opts, force: true })),
-      button('Keep my edit', () => showPreview(body, s)),
-      button('Undo', () => undo(body)),
-    ]);
+    return say(body, s, 'You edited the translation. Translating again replaces your edit.', {
+      actions: [
+        act('Replace anyway', () => retranslate(body, { ...opts, force: true })),
+        act('Keep my edit', () => showPreview(body, s)),
+        act('Undo', () => undo(body)),
+      ],
+    });
   }
   return request(body, opts);
 }
@@ -185,6 +169,14 @@ export function undo(body) {
   Object.assign(s, { mode: 'idle', saved: null, kind: 'translate', korean: null, shown: null, lang: 'auto', profile: 'email', last: null });
   s.reqId++; // drop any result still in flight
   hideNote(s);
+}
+
+// Esc in a compose body: undo a preview or a translation in flight. False when there is nothing to undo.
+export function escape(body) {
+  const s = states.get(body);
+  if (!s || s.mode === 'idle') return false;
+  undo(body);
+  return true;
 }
 
 function cancel(body, reqId, prevMode) {
@@ -215,10 +207,7 @@ async function request(body, { kind = 'translate', korean, profile, lang }) {
   s.mode = 'translating';
   const polish = kind === 'polish';
   const verb = polish ? 'Polishing' : 'Translating';
-  showNote(body, s, [
-    span(profile === 'hard' ? `${verb} with Opus...` : `${verb}...`),
-    button('Cancel', () => cancel(body, reqId, prevMode)),
-  ]);
+  cardOf(body, s).working(profile === 'hard' ? `${verb} with Opus` : verb, { onCancel: () => cancel(body, reqId, prevMode) });
   try {
     // Polish takes no thread context: one draft does not need it.
     const r = polish

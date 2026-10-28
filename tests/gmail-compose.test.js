@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { GSEL } from '../src/content/gmail/selectors.js';
 import { userNodes, nodesToText } from '../src/content/gmail/body.js';
-import { mountCompose, translate, undo } from '../src/content/gmail/compose.js';
+import { mountCompose, translate, undo, escape } from '../src/content/gmail/compose.js';
 import { flags } from '../src/lib/flags.js';
 
 const html = readFileSync(new URL('./fixtures/gmail.html', import.meta.url), 'utf8');
@@ -29,7 +29,8 @@ function setup() {
   };
   const [inline, dialog] = document.querySelectorAll(GSEL.body);
   const reply = async (r) => { pending.shift()(r); await flush(); };
-  const note = () => document.querySelector('.pl-g-note');
+  // The card renders in an open shadow root; its .pl-root holds the text, buttons and picker.
+  const note = () => document.querySelector('.pl-card')?.shadowRoot.querySelector('.pl-root') ?? null;
   const buttonIn = (label) => [...(note()?.querySelectorAll('button') || [])].find((b) => b.textContent === label);
   return { inline, dialog, calls, reply, note, buttonIn };
 }
@@ -167,7 +168,7 @@ test('polish on: an English draft gets one polish call, Undo restores the Englis
   const { dialog, calls, reply, note, buttonIn } = setup();
   draft(dialog, ENGLISH);
   translate(dialog);
-  assert.match(note().textContent, /Polishing\.\.\./);
+  assert.match(note().textContent, /^Polishing/);
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0], { type: 'polish', text: ENGLISH, profile: 'email' });
   await reply(polished('Hi Prof. Allen,\nI have a question.\n\nThanks,\nCyan'));
@@ -280,3 +281,26 @@ test('Korean typed over a polish preview starts a translation', withPolish(async
   await reply(ok('New draft'));
   assert.ok(note().querySelector('select')); // back to a translate preview
 }));
+
+test('Esc undoes a preview and cancels a translation in flight', async () => {
+  const { inline, reply, note } = setup();
+  assert.equal(escape(inline), false); // idle: Gmail keeps the key
+  translate(inline);
+  await reply(ok('First'));
+  assert.equal(escape(inline), true);
+  assert.equal(userText(inline), KOREAN);
+  assert.equal(note(), null);
+  translate(inline);
+  assert.equal(escape(inline), true);
+  await reply(ok('Late'));
+  assert.equal(userText(inline), KOREAN);
+  assert.equal(note(), null);
+});
+
+test('the preview card shows the model and the Esc hint', async () => {
+  const { inline, reply, note } = setup();
+  translate(inline);
+  await reply(ok('First', 'claude-opus-5-5'));
+  assert.equal(note().querySelector('.model').textContent, 'Opus');
+  assert.equal(note().querySelector('.hints').textContent, 'Esc undo');
+});
