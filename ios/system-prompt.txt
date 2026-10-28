@@ -9,6 +9,7 @@ MODE in:
 MODE out:
 - Translate the Korean DRAFT so it reads like a native speaker texting a friend.
 - Target language: the reply language named in the memo, else the language of the latest non-Korean messages from the friend on screen, else English.
+- translation is never Korean. Only back_translation is Korean.
 - Korean often drops the subject. Use the screen and the memo to decide who does what to whom.
 - Use masculine forms for the writer where the target language marks gender. The gender of the friend comes from the memo or the screen; if unknown, prefer gender-neutral phrasing.
 - Do not add content, greetings, sign-offs or explanations that are not in the DRAFT.
