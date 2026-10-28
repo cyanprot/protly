@@ -16,7 +16,7 @@ action 'downloadurl' postFile(text url: 'WFURL', dictionary headers: 'WFHTTPHead
 
 // The key is an import question: typed on the phone at import, never compiled into the file.
 // It must stay the first action (v2.3.0 only binds a question to action 0 reliably).
-#question apiKey "Claude API key (made inside a workspace)" ""
+#question apiKey "Claude API key" ""
 
 const key = trimWhitespace(apiKey)
 
@@ -52,7 +52,8 @@ const body = replaceText('{{IMAGE_B64}}', "{b64}", withText)
 const resp = postFile("https://api.anthropic.com/v1/messages", {
     "x-api-key": "{key}",
     "anthropic-version": "2023-06-01",
-    "content-type": "application/json"
+    "content-type": "application/json",
+    "anthropic-workspace-id": "wrkspc_01MYddxiRDrvfHCyhebhtnQj"
 }, body)
 
 const r = getDictionary(resp)

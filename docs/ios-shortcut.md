@@ -18,6 +18,8 @@ On the iPhone: Google Drive app > `IG Translate.shortcut` > Share > Shortcuts > 
 
 Cherri v2.3.0 quirks found while writing it: a `rawAction` whose result is assigned loses its identifier (custom `action` definitions are used instead); an import question is bound only to action 0, so the key question must feed the first action; multi-line default blocks in user `action` definitions fail to parse; a string cannot end in a backslash; conditions need a text constant on the left.
 
+The build sends `anthropic-workspace-id` (the laptop's workspace, from `~/.config/anthropic/configs/default.json`): the user's phone key turned out to be org-level, and the API rejected it without the header (2026-10-28).
+
 The manual build below is the fallback.
 
 ## 0. Before you start
