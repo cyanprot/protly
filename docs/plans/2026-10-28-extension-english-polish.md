@@ -189,4 +189,4 @@ Eval 2026-10-28 (`scripts/eval-polish.mjs`, Sonnet 5.5): 7/7 PASS on the second 
 - out, never Korean: "lol really?" for "ㅋㅋ 진짜?".
 - Seen, not fixed: the outgoing translation added emoji and "!" the draft did not have ("Спасибо за конспекты! Ты меня спасла 🙏"). OUTGOING_SYSTEM has no add-no-emoji rule; the user decides.
 
-(live-check results go here)
+User decisions 2026-10-28: no add-no-emoji rule for outgoing (declined). Task 7 is not run as a separate check; the user verifies it in daily use.
