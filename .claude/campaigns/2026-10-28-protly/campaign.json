@@ -4,7 +4,7 @@
   "project": "protly",
   "campaign_id": "2026-10-28-protly",
   "started": "2026-10-28T14:08:19-07:00",
-  "updated": "2026-10-28T15:44:20-07:00",
+  "updated": "2026-10-28T16:05:16-07:00",
   "current_phase": "execute",
   "current_sprint": 2,
   "total_sprints": 4,
@@ -19,9 +19,11 @@
     "2026-10-28 popup/options adopt tokens at runtime; no generated tokens.css",
     "2026-10-28 Instagram/Gmail fonts loaded as bytes via fetchFonts (page CSP font-src)",
     "2026-10-28 Sprint 1 done: repo at ~/projects/protly, extension ID idkdlhcfhfdbbpakkaifjlmjhhfepidg pinned by manifest key; old ig-translate card vanished on its own when its folder moved (old storage folder and Preferences entry remain, harmless; backup kept)",
-    "2026-10-28 Claude in Chrome cannot open chrome-extension:// pages (confirmed); storage checks use the Instagram page fallback"
+    "2026-10-28 Claude in Chrome cannot open chrome-extension:// pages (confirmed); storage checks use the Instagram page fallback",
+    "2026-10-28 Sprint 2: pickTheme takes an optional from element; bindTheme judges each element by its surroundings (Gmail compose is white on a dark page) (ea352d4)",
+    "2026-10-28 Sprint 2: Gmail Esc on an edited translation shows the edited-translation prompt instead of undoing (c80c92a)"
   ],
-  "continuation_prompt": "Sprint 1 (rename) done and verified live. Start Sprint 2 (design system), Task 2.1 of docs/plans/2026-10-28-protly.md, in a session launched from ~/projects/protly.",
+  "continuation_prompt": "Sprint 2 code done (2d78875..ea352d4, 175 tests green); Task 2.11 live check done except the user's Instagram Enter step and a re-check after reloading for ea352d4. Finish 2.11, close Sprint 2, then Sprint 3 Task 3.1.",
   "artifacts": {
     "plan": "docs/plans/2026-10-28-protly.md",
     "design": "docs/plans/2026-10-28-protly-design.md"
