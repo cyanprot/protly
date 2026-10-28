@@ -13,3 +13,13 @@ test('manifest uses native messaging, not direct API access', () => {
   assert.ok(m.permissions.includes('nativeMessaging'));
   assert.equal(m.host_permissions.some((h) => h.includes('anthropic')), false);
 });
+
+test('manifest injects the Gmail loader on mail.google.com', () => {
+  const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
+  const g = m.content_scripts.find((c) => c.matches.includes('https://mail.google.com/*'));
+  assert.deepEqual(g.js, ['src/content/gmail/loader.js']);
+  assert.deepEqual(g.css, ['src/content/gmail/style.css']);
+  const war = m.web_accessible_resources.find((w) => w.matches.includes('https://mail.google.com/*'));
+  assert.ok(war.resources.includes('src/content/gmail/*.js'));
+  assert.ok(war.resources.includes('src/lib/*.js'));
+});

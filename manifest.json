@@ -2,26 +2,67 @@
   "manifest_version": 3,
   "name": "ig-translate",
   "version": "0.1.0",
-  "description": "Translate Instagram DMs with Claude.",
-  "permissions": ["storage", "unlimitedStorage", "nativeMessaging"],
+  "description": "Translate Instagram DMs and Gmail drafts with Claude.",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "nativeMessaging"
+  ],
   "host_permissions": [
     "https://www.instagram.com/*"
   ],
-  "background": { "service_worker": "src/background.js", "type": "module" },
-  "action": { "default_title": "ig-translate" },
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "ig-translate"
+  },
   "options_page": "options/options.html",
   "content_scripts": [
     {
-      "matches": ["https://www.instagram.com/*"],
-      "js": ["src/content/loader.js"],
-      "css": ["src/content/style.css"],
+      "matches": [
+        "https://www.instagram.com/*"
+      ],
+      "js": [
+        "src/content/loader.js"
+      ],
+      "css": [
+        "src/content/style.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://mail.google.com/*"
+      ],
+      "js": [
+        "src/content/gmail/loader.js"
+      ],
+      "css": [
+        "src/content/gmail/style.css"
+      ],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["src/content/*.js", "src/lib/*.js"],
-      "matches": ["https://www.instagram.com/*"]
+      "resources": [
+        "src/content/*.js",
+        "src/lib/*.js"
+      ],
+      "matches": [
+        "https://www.instagram.com/*"
+      ]
+    },
+    {
+      "resources": [
+        "src/content/gmail/*.js",
+        "src/lib/*.js"
+      ],
+      "matches": [
+        "https://mail.google.com/*"
+      ]
     }
   ]
 }

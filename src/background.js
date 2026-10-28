@@ -1,8 +1,8 @@
 import { callJson, ApiError } from './lib/api.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
-  buildIncomingRequest, buildOutgoingRequest, buildMemoRequest,
-  parseIncoming, parseOutgoing, parseMemo,
+  buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest,
+  parseIncoming, parseOutgoing, parseMemo, parseEmail,
 } from './lib/prompts.js';
 import { incomingTarget, resolveOutputLang, latestPartnerLang } from './lib/lang.js';
 import { DEFAULT_SETTINGS, withThreadDefaults, threadKey, cacheKey, sentKey, expiredKeys } from './lib/keys.js';
@@ -100,6 +100,16 @@ async function suggestMemo({ context }) {
   return api(buildMemoRequest({ model: settings.models.outgoing, context }), parseMemo);
 }
 
+// Gmail drafts. No storage: nothing is cached or remembered per thread.
+async function email({ context, korean, profile, lang }) {
+  const settings = await getSettings();
+  const hard = profile === 'hard';
+  const model = hard ? settings.models.hard : settings.models.outgoing;
+  const body = buildEmailRequest({ model, profile: hard ? 'hard' : 'email', context, korean, lang: lang || 'auto' });
+  const r = await api(body, parseEmail);
+  return { ...r, model };
+}
+
 async function sent({ threadId, text, korean }) {
   await store.set({ [await sentKey(threadId, text)]: { korean, ts: Date.now() } });
   return true;
@@ -116,7 +126,7 @@ async function lookupSent({ threadId, texts }) {
 const handlers = {
   getThread: ({ threadId }) => getThread(threadId),
   setThread: ({ threadId, patch }) => setThread(threadId, patch),
-  incoming, outgoing, suggestMemo, sent, lookupSent,
+  incoming, outgoing, email, suggestMemo, sent, lookupSent,
   badge: async ({ text }, sender) => { await chrome.action.setBadgeText({ text, tabId: sender.tab?.id }); return true; },
 };
 

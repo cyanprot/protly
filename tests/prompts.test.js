@@ -87,3 +87,37 @@ test('parseIncoming drops empty translations so they are never cached', () => {
   const r = parseIncoming(resp('{"items":[{"id":"0","src_lang":"en","translation":"  "},{"id":"1","src_lang":"en","translation":"안녕"}]}'));
   assert.deepEqual(Object.keys(r), ['1']);
 });
+
+import { buildEmailRequest, parseEmail } from '../src/lib/prompts.js';
+
+test('email request: auto target, thread roles, male writer, schema has lang', () => {
+  const b = buildEmailRequest({
+    model: 'claude-sonnet-5-5',
+    context: [{ from: 'them', text: 'Dear Mr Kim' }, { from: 'me', text: 'Hello' }],
+    korean: '확인했습니다',
+  });
+  assert.match(b.messages[0].content, /TARGET: auto/);
+  assert.match(b.messages[0].content, /--- THEM:\nDear Mr Kim/);
+  assert.match(b.messages[0].content, /KOREAN DRAFT:\n확인했습니다/);
+  assert.match(b.system, /writer is male/);
+  assert.deepEqual(b.output_config.format.schema.required, ['lang', 'translation', 'back_translation']);
+  assert.equal(b.output_config.effort, 'medium');
+  assert.equal('temperature' in b, false);
+});
+
+test('email request: fixed language, no thread, Opus hard profile', () => {
+  const b = buildEmailRequest({ model: 'claude-opus-5-5', profile: 'hard', context: [], korean: '네', lang: 'ru' });
+  assert.match(b.messages[0].content, /TARGET: Russian/);
+  assert.match(b.messages[0].content, /new email/);
+  assert.equal(b.output_config.effort, 'high');
+  assert.deepEqual(b.thinking, { type: 'adaptive' });
+});
+
+test('parseEmail normalizes lang and rejects an empty translation', () => {
+  assert.deepEqual(
+    parseEmail(resp('{"lang":"EN-us","translation":"Confirmed.","back_translation":"확인했습니다."}')),
+    { lang: 'en', translation: 'Confirmed.', back_translation: '확인했습니다.' },
+  );
+  assert.throws(() => parseEmail(resp('{"lang":"en","translation":"  ","back_translation":"x"}')), (e) => e.kind === 'parse');
+  assert.throws(() => parseEmail(resp('{}', 'max_tokens')), (e) => e.kind === 'truncated');
+});

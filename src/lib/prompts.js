@@ -7,6 +7,7 @@ export const PROFILES = {
   outgoing: { thinkingOff: false, effort: 'medium', max_tokens: 16000, useFormat: true },
   hard: { thinkingOff: false, effort: 'high', max_tokens: 32000, useFormat: true },
   memo: { thinkingOff: false, effort: 'medium', max_tokens: 16000, useFormat: true },
+  email: { thinkingOff: false, effort: 'medium', max_tokens: 16000, useFormat: true },
 };
 
 export function thinkingFor(model, off) {
@@ -152,4 +153,48 @@ export function parseMemo(resp) {
   const j = extractJson(resp);
   if (typeof j.memo !== 'string') throw new ApiError('parse', 'memo missing');
   return j.memo;
+}
+
+const EMAIL_SYSTEM = `You help a Korean speaker write emails: replies inside a thread and new emails.
+Translate the Korean draft into the TARGET language.
+- TARGET "auto": write in the language of the most recent thread message written by THEM. If there is none, write English.
+- Register: match the formality of the thread. A formal email gets a formal reply, a casual one stays casual. With no thread, use a neutral, polite email style.
+- The writer is male. Where the target language marks the speaker's gender, use masculine forms.
+- Keep the draft's paragraphs and line breaks. Keep names, numbers, dates, URLs and email addresses exactly.
+- Korean often drops the subject. Use the thread to decide who does what to whom.
+- Do not add greetings, sign-offs, signatures or content that are not in the draft.
+- lang: the ISO 639-1 code of the language you wrote in.
+- back_translation: translate your output back into natural Korean so the writer can check the meaning.`;
+
+const EMAIL_SCHEMA = {
+  type: 'object',
+  properties: {
+    lang: { type: 'string' },
+    translation: { type: 'string' },
+    back_translation: { type: 'string' },
+  },
+  required: ['lang', 'translation', 'back_translation'],
+  additionalProperties: false,
+};
+
+const formatEmailThread = (context) =>
+  context.map((m) => `--- ${m.from === 'me' ? 'ME' : 'THEM'}:\n${m.text}`).join('\n\n') || '(none: this is a new email)';
+
+// profile: 'email' (Sonnet, medium) or 'hard' (Opus, high). lang: 'auto' or an ISO 639-1 code.
+export function buildEmailRequest({ model, profile = 'email', context, korean, lang = 'auto' }) {
+  const text = [
+    `TARGET: ${lang === 'auto' ? 'auto' : langName(lang)}`,
+    `EMAIL THREAD (oldest first):\n${formatEmailThread(context)}`,
+    `KOREAN DRAFT:\n${korean}`,
+  ].join('\n\n');
+  return request(model, profile, EMAIL_SYSTEM, text, EMAIL_SCHEMA);
+}
+
+export function parseEmail(resp) {
+  const j = extractJson(resp);
+  if (typeof j.translation !== 'string' || !j.translation.trim() || typeof j.back_translation !== 'string') {
+    throw new ApiError('parse', 'translation fields missing');
+  }
+  const lang = typeof j.lang === 'string' ? j.lang.toLowerCase().split(/[-_]/)[0] : 'und';
+  return { lang, translation: j.translation, back_translation: j.back_translation };
 }

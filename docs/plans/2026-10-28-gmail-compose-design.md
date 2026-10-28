@@ -27,6 +27,8 @@ memo, rich formatting inside the user's own text, attachments, Gmail mobile.
 | Storage | None. No cache, no per-thread state, no Korean-original record |
 | API path | Same as DMs: content script -> background `email` handler -> native host -> Claude API |
 | Manifest | Second content script for `https://mail.google.com/*` with its own loader; `src/content/gmail/*.js` and `src/lib/*.js` web-accessible there |
+| Pop-out reply | A popped-out reply window counts as a new compose and gets no thread context. Accepted by the user 2026-10-28 |
+| Button label | `Translate` (English), confirmed by the user 2026-10-28 |
 
 ## Components
 
