@@ -30,7 +30,7 @@ test('iOS template asks for the translation schema', () => {
 });
 
 test('the Cherri source carries the same template, with no apostrophe', () => {
-  const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../ios/protly.cherri', import.meta.url), 'utf8');
   const m = src.match(/^@template = '(.*)'$/m);
   assert.ok(m);
   assert.equal(m[1], raw.trim());
@@ -38,7 +38,7 @@ test('the Cherri source carries the same template, with no apostrophe', () => {
 });
 
 test('the Cherri source takes the key from a placeholder Text action and guards it', () => {
-  const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../ios/protly.cherri', import.meta.url), 'utf8');
   const code = src.split('\n').filter((l) => l.trim() && !/^\s*(\/\/|#include|action )/.test(l));
   assert.equal(code[0], '@keyText = "PASTE_API_KEY_HERE"');
   assert.equal(src.includes('#question'), false);
@@ -46,17 +46,17 @@ test('the Cherri source takes the key from a placeholder Text action and guards 
 });
 
 test('the Cherri source has the fix mode and expiring clipboard results', () => {
-  const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../ios/protly.cherri', import.meta.url), 'utf8');
   assert.match(src, /MODE: fix/);
   assert.match(src, /adjustDate\("\{now\}", "Add", qty\(3, "min"\)\)/);
   assert.match(src, /setClipboard\(translation, false, "\{expiry\}"\)/);
 });
 
 test('mode comes from the launch input, and the write shortcut passes it', () => {
-  const src = readFileSync(new URL('../ios/ig-translate.cherri', import.meta.url), 'utf8');
-  const write = readFileSync(new URL('../ios/ig-translate-write.cherri', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../ios/protly.cherri', import.meta.url), 'utf8');
+  const write = readFileSync(new URL('../ios/protly-write.cherri', import.meta.url), 'utf8');
   assert.match(src, /const writeFlag = matchText\('\^write\$', "\{ShortcutInput\}"\)/);
   // The clipboard is read only inside the write branch.
   assert.ok(src.indexOf('getClipboard()') > src.indexOf('if writeFlag {'));
-  assert.match(write, /@flag = "write"\nrun\("IG Translate", @flag\)/);
+  assert.match(write, /@flag = "write"\nrun\("Protly", @flag\)/);
 });

@@ -13,5 +13,5 @@ build() { # $1 source basename, $2 name in Google Drive
   cp "$out/$1.shortcut" "$HOME/GoogleDrive/$2.shortcut"
   echo "Copied to ~/GoogleDrive/$2.shortcut"
 }
-build ig-translate "IG Translate"
-build ig-translate-write "IG Translate Write"
+build protly "Protly"
+build protly-write "Protly Write"

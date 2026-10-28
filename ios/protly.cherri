@@ -1,7 +1,7 @@
-// IG Translate: iOS Shortcut source. Compile: cherri ios/ig-translate.cherri (see docs/ios-shortcut.md).
+// Protly: iOS Shortcut source. Compile: cherri ios/protly.cherri (see docs/ios-shortcut.md).
 // Double-tap the back of the phone in any chat app (Instagram first), or on any screen with text to translate.
 // Double tap: translate the friend's latest messages (or the main text) on screen to Korean.
-// Triple tap (via IG Translate Write): clipboard Korean is my draft, translate it; clipboard English is polished. Results are copied
+// Triple tap (via Protly Write): clipboard Korean is my draft, translate it; clipboard English is polished. Results are copied
 // and expire from the clipboard after 3 minutes.
 // The API key and the memos are pasted into Text actions on the phone, so neither is in the compiled file.
 
@@ -23,7 +23,7 @@ action 'downloadurl' postFile(text url: 'WFURL', dictionary headers: 'WFHTTPHead
 const key = trimWhitespace("{@keyText}")
 const keyCheck = matchText('^sk-ant-', "{key}")
 if !keyCheck {
-    alert("No API key. Edit the shortcut and paste the key (sk-ant-...) into the first Text action.", "IG Translate setup")
+    alert("No API key. Edit the shortcut and paste the key (sk-ant-...) into the first Text action.", "Protly setup")
     stop()
 }
 
@@ -33,7 +33,7 @@ if !keyCheck {
 
 // Mode comes from how the shortcut was started, never from what happens to sit on the clipboard.
 // Back Tap double tap runs this shortcut with no input: always "in" (translate the screen).
-// Back Tap triple tap runs "IG Translate Write", which runs this one with the input "write": translate or polish the clipboard.
+// Back Tap triple tap runs "Protly Write", which runs this one with the input "write": translate or polish the clipboard.
 @tail = "MODE: in"
 @mode = "in"
 const writeFlag = matchText('^write$', "{ShortcutInput}")
@@ -55,7 +55,7 @@ if writeFlag {
         }
     }
     if @mode == "in" {
-        alert("Copy a Korean draft or an English sentence first, then triple-tap.", "IG Translate")
+        alert("Copy a Korean draft or an English sentence first, then triple-tap.", "Protly")
         stop()
     }
 }
@@ -91,13 +91,13 @@ if rType == "error" {
     const errRaw = getValue(r, "error")
     const err = getDictionary(errRaw)
     const errMsg = getValue(err, "message")
-    alert("{errMsg}", "IG Translate error")
+    alert("{errMsg}", "Protly error")
     stop()
 }
 const stopRaw = getValue(r, "stop_reason")
 const stopReason = "{stopRaw}"
 if stopReason != "end_turn" {
-    alert("Stopped: {stopReason}", "IG Translate")
+    alert("Stopped: {stopReason}", "Protly")
     stop()
 }
 // With thinking on, a thinking block can come first: the answer is the last block.
