@@ -124,13 +124,13 @@ test('parseEmail normalizes lang and rejects an empty translation', () => {
 
 import { buildPolishRequest } from '../src/lib/prompts.js';
 
-test('polish request: CyanStyle rules, draft last, effort low; hard is Opus high', () => {
+test('polish request: CyanStyle rules, draft last, effort medium; hard is Opus high', () => {
   const b = buildPolishRequest({ model: 'claude-sonnet-5-5', draft: 'i think its good' });
   assert.match(b.system, /Canadian spelling/);
   assert.match(b.system, /never an em dash/);
   assert.match(b.system, /An email keeps its greeting/);
   assert.equal(b.messages[0].content, 'DRAFT:\ni think its good');
-  assert.equal(b.output_config.effort, 'low');
+  assert.equal(b.output_config.effort, 'medium');
   assert.deepEqual(b.output_config.format.schema.required, ['translation', 'back_translation']);
   const h = buildPolishRequest({ model: 'claude-opus-5-5', profile: 'hard', draft: 'x' });
   assert.equal(h.output_config.effort, 'high');

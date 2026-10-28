@@ -8,7 +8,7 @@ export const PROFILES = {
   hard: { thinkingOff: false, effort: 'high', max_tokens: 32000, useFormat: true },
   memo: { thinkingOff: false, effort: 'medium', max_tokens: 16000, useFormat: true },
   email: { thinkingOff: false, effort: 'medium', max_tokens: 16000, useFormat: true },
-  polish: { thinkingOff: false, effort: 'low', max_tokens: 8000, useFormat: true },
+  polish: { thinkingOff: false, effort: 'medium', max_tokens: 16000, useFormat: true },
 };
 
 export function thinkingFor(model, off) {
