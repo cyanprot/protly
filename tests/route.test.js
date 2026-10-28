@@ -69,3 +69,11 @@ test('a failure inside the generic run is still routed to generic', async () => 
   deps.runGeneric = async () => { throw new Error('page threw'); };
   assert.equal(await routeCommand({ tabId: 7, frameId: 0, args, ...deps }), 'generic');
 });
+
+// Inside a Gmail or Instagram composer the adapter would answer handled and translate the whole draft.
+test('translate selection skips the adapter, even when it would answer handled', async () => {
+  const { log, deps } = fakes({ answer: { handled: true } });
+  const sel = { source: 'menu-selection', selectionText: 'quoted text' };
+  assert.equal(await routeCommand({ tabId: 7, frameId: 0, args: sel, ...deps }), 'generic');
+  assert.deepEqual(log, [['inject', 7, 0], ['run', 7, 0, sel]]);
+});

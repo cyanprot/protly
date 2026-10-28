@@ -23,7 +23,7 @@
     "Alt+T in textarea/input/contenteditable/same-origin iframe: Korean to English with a preview card; Esc and Undo restore",
     "English is polished; ru: prefix translates to Russian",
     "Alt+T during a preview re-runs on Opus",
-    "a selection gets a Korean popover with Copy; a Korean selection toasts Already Korean.",
+    "a selection gets a Korean popover with Close (text selectable, no Copy button per plan Task 4.12); a Korean selection toasts Already Korean.",
     "nothing usable toasts Put the cursor in a text box or select text.",
     "a refused page shows Unavailable here in the popup",
     "Instagram composer Alt+T previews without sending; Gmail Alt+T arrives via the command"

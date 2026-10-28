@@ -1,9 +1,12 @@
 // Adapter-first routing for Alt+T and the context menu. All Chrome calls are injected so this stays testable.
 // Returns 'adapter' | 'generic' | 'unavailable'.
 export async function routeCommand({ tabId, frameId = 0, args, sendToTab, injectFile, runGeneric, setBadge, toastInMain }) {
-  let answer = null;
-  try { answer = await sendToTab(tabId, { type: 'command' }, frameId); } catch {} // no content script there
-  if (answer?.handled) return 'adapter';
+  // A selection always goes to the generic popover: an adapter would take the whole draft around it.
+  if (args?.source !== 'menu-selection') {
+    let answer = null;
+    try { answer = await sendToTab(tabId, { type: 'command' }, frameId); } catch {} // no content script there
+    if (answer?.handled) return 'adapter';
+  }
 
   try {
     await injectFile(tabId, frameId);
