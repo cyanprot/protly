@@ -108,7 +108,7 @@ Commit messages follow `type: summary` and end with the `Co-Authored-By` line fr
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test \"tests/*.test.js\""
   },
   "devDependencies": {
     "jsdom": "30.1.3"
