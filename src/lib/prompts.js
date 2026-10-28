@@ -220,3 +220,19 @@ Return the DRAFT improved: correct spelling, grammar and punctuation, make the s
 export function buildPolishRequest({ model, profile = 'polish', draft }) {
   return request(model, profile, POLISH_SYSTEM, `DRAFT:\n${draft}`, OUTGOING_SCHEMA);
 }
+
+// Any-site text box (Alt+T). The DM prompt plus one line about where the text goes, so forms and forums keep
+// their register. No memo, no conversation. The hostname is sent to the API on purpose.
+export function buildBoxRequest({ model, profile = 'outgoing', korean, lang, hostname }) {
+  const text = [
+    `TARGET: ${langName(lang)}`,
+    `This text goes into a text box on ${hostname || 'a web page'}. Keep the register the writer used: a form stays formal, a forum post stays a forum post.`,
+    `KOREAN DRAFT:\n${korean}`,
+  ].join('\n\n');
+  return request(model, profile, OUTGOING_SYSTEM, text, OUTGOING_SCHEMA);
+}
+
+// A selection on any page, to Korean. The incoming prompt with no thread: parse with parseIncoming, item '0'.
+export function buildSelectionRequest({ model, text }) {
+  return buildIncomingRequest({ model, memo: '', context: [], otherTarget: 'ko', items: [{ id: '0', text }] });
+}

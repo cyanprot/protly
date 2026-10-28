@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS } from '../src/lib/keys.js';
 import assert from 'node:assert/strict';
 import {
   PROFILES, thinkingFor, buildIncomingRequest, buildOutgoingRequest, buildMemoRequest,
-  parseIncoming, parseOutgoing, parseMemo,
+  parseIncoming, parseOutgoing, parseMemo, buildBoxRequest, buildSelectionRequest,
 } from '../src/lib/prompts.js';
 
 const ctx = [{ from: 'partner', text: 'hey' }, { from: 'me', text: 'yo' }];
@@ -156,4 +156,32 @@ test('outgoing prompt checks gendered words and never answers in Korean; email s
   assert.match(e.system, /never Korean/);
   assert.match(e.system, /non-Korean message/);
   assert.doesNotMatch(e.system, /ty spasla/);
+});
+
+test('box request: outgoing system, hostname line, no memo or conversation', () => {
+  const b = buildBoxRequest({ model: 'claude-sonnet-5-5', profile: 'outgoing', korean: '안녕하세요', lang: 'en', hostname: 'forum.example.org' });
+  const dm = buildOutgoingRequest({ model: 'claude-sonnet-5-5', profile: 'outgoing', memo: '', context: [], korean: 'x', lang: 'en' });
+  assert.equal(b.system, dm.system);
+  assert.equal(b.output_config.effort, PROFILES.outgoing.effort);
+  const u = b.messages[0].content;
+  assert.match(u, /^TARGET: English/);
+  assert.match(u, /This text goes into a text box on forum\.example\.org\. Keep the register the writer used/);
+  assert.match(u, /KOREAN DRAFT:\n안녕하세요$/);
+  assert.doesNotMatch(u, /THREAD MEMO|RECENT CONVERSATION/);
+});
+
+test('box request: hard profile and another language', () => {
+  const b = buildBoxRequest({ model: 'claude-opus-5-5', profile: 'hard', korean: '안녕', lang: 'ru', hostname: 'x.test' });
+  assert.equal(b.output_config.effort, PROFILES.hard.effort);
+  assert.match(b.messages[0].content, /^TARGET: Russian/);
+});
+
+test('selection request: incoming prompt, Korean target, one item, no memo or context', () => {
+  const b = buildSelectionRequest({ model: 'claude-sonnet-5-5', text: 'hello there' });
+  assert.equal(b.output_config.effort, PROFILES.incoming.effort);
+  const u = b.messages[0].content;
+  assert.match(u, /TARGET_FOR_OTHER: Korean/);
+  assert.match(u, /THREAD MEMO:\n\(none\)/);
+  assert.match(u, /RECENT CONVERSATION \(oldest first\):\n\(none\)/);
+  assert.match(u, /\[\{"id":"0","text":"hello there"\}\]/);
 });

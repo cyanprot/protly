@@ -6,7 +6,7 @@ import { DEFAULT_SITES } from './lib/flags.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
-  parseIncoming, parseOutgoing, parseMemo, parseEmail,
+  buildBoxRequest, buildSelectionRequest, parseIncoming, parseOutgoing, parseMemo, parseEmail,
 } from './lib/prompts.js';
 import { incomingTarget, resolveOutputLang, latestPartnerLang } from './lib/lang.js';
 import { DEFAULT_SETTINGS, withThreadDefaults, threadKey, cacheKey, sentKey, expiredKeys } from './lib/keys.js';
@@ -129,6 +129,26 @@ async function polish({ text, profile }) {
   return { ...r, model };
 }
 
+// Any-site text box. Stateless like email and polish: nothing cached, nothing remembered.
+async function box({ text, lang, profile, hostname }) {
+  const settings = await getSettings();
+  const hard = profile === 'hard';
+  const model = hard ? settings.models.hard : settings.models.outgoing;
+  const target = lang || 'en';
+  const body = buildBoxRequest({ model, profile: hard ? 'hard' : 'outgoing', korean: text, lang: target, hostname });
+  const r = await api(body, parseOutgoing);
+  return { ...r, lang: target, model };
+}
+
+// A selection on any page, to Korean. Never the thread-keyed incoming handler: no c: cache, no partnerLang.
+async function selection({ text }) {
+  const settings = await getSettings();
+  const res = await api(buildSelectionRequest({ model: settings.models.incoming, text }), parseIncoming);
+  const r = res['0'];
+  if (!r) throw new ApiError('parse', 'no translation returned');
+  return { src_lang: r.src_lang, translation: r.src_lang === 'ko' ? text : r.translation };
+}
+
 async function sent({ threadId, text, korean }) {
   await store.set({ [await sentKey(threadId, text)]: { korean, ts: Date.now() } });
   return true;
@@ -152,7 +172,7 @@ async function setTabBadge(tabId, text, reason) {
 const handlers = {
   getThread: ({ threadId }) => getThread(threadId),
   setThread: ({ threadId, patch }) => setThread(threadId, patch),
-  incoming, outgoing, email, polish, suggestMemo, sent, lookupSent,
+  incoming, outgoing, email, polish, box, selection, suggestMemo, sent, lookupSent,
   tabStatus: async ({ tabId, url }) => {
     const { sites } = await store.get('sites');
     return statusFor({ url, sites: { ...DEFAULT_SITES, ...sites }, badge: tabId == null ? null : await badges.get(tabId) });
