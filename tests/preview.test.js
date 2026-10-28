@@ -200,3 +200,43 @@ test('prefix: the chip overrides it', () => {
   assert.equal(c.effect.lang, 'ja');
   assert.equal(c.effect.korean, '안녕');
 });
+
+test('run in idle: Hangul translates without sending, like Enter', () => {
+  const { s, effects } = run([{ type: 'run', text: '내일 봐' }]);
+  assert.equal(s.mode, 'translating');
+  assert.equal(effects[0].type, 'translate');
+  assert.equal(effects[0].kind, 'translate');
+  assert.equal(effects[0].profile, 'outgoing');
+  assert.equal(effects[0].korean, '내일 봐');
+});
+
+test('run in idle: a prefix picks the language', () => {
+  const { effects } = run([{ type: 'run', text: 'ru: 안녕' }]);
+  assert.equal(effects[0].lang, 'ru');
+  assert.equal(effects[0].korean, '안녕');
+});
+
+test('run in idle: English is polished whatever the polish toggle says', () => {
+  const { s, effects } = run([{ type: 'run', text: 'i has a question' }]);
+  assert.equal(s.mode, 'translating');
+  assert.equal(effects[0].kind, 'polish');
+  assert.equal(effects[0].profile, 'outgoing');
+  assert.equal(effects[0].korean, 'i has a question');
+});
+
+test('run in idle: no letters does nothing', () => {
+  const { s, effects } = run([{ type: 'run', text: '123 🙂' }]);
+  assert.equal(s.mode, 'idle');
+  assert.deepEqual(effects[0], { type: 'none' });
+});
+
+test('run is ignored while translating and in preview', () => {
+  const a = reduce(initial(), { type: 'run', text: '내일 봐' });
+  const b = reduce(a.state, { type: 'run', text: '내일 봐' });
+  assert.equal(b.state, a.state);
+  assert.deepEqual(b.effect, { type: 'none' });
+  const p = toPreview('내일 봐');
+  const c = reduce(p, { type: 'run', text: 'T' });
+  assert.equal(c.state, p);
+  assert.deepEqual(c.effect, { type: 'none' });
+});

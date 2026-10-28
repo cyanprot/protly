@@ -42,6 +42,13 @@ export function reduce(s, e) {
       if (e.polish && /\p{L}/u.test(e.text)) return polish(s, e.text, profile);
       return { state: s, effect: { type: 'pass' } };
     }
+    // Alt+T in the composer: translate or polish without sending. Explicit, so polish needs no toggle.
+    case 'run': {
+      if (s.mode !== 'idle') return { state: s, effect: { type: 'none' } };
+      if (hasHangul(e.text)) return translate(s, e.text, 'outgoing', null);
+      if (/\p{L}/u.test(e.text)) return polish(s, e.text, 'outgoing');
+      return { state: s, effect: { type: 'none' } };
+    }
     case 'result':
       if (s.mode !== 'translating' || e.reqId !== s.reqId) return { state: s, effect: { type: 'none' } };
       return {
