@@ -144,6 +144,7 @@ async function lookupSent({ threadId, texts }) {
 
 // text '' clears the reason too: SPA navigation may never fire a 'loading' update.
 async function setTabBadge(tabId, text, reason) {
+  if (tabId == null) return; // an undefined tabId would set the badge on every tab
   await chrome.action.setBadgeText({ text, tabId });
   await badges.set(tabId, { text, reason });
 }

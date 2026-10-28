@@ -88,6 +88,12 @@ class Headers(unittest.TestCase):
         self.assertNotIn('origin', names)
         self.assertNotIn('anthropic-dangerous-direct-browser-access', names)
 
+    def test_missing_workspace_config_is_no_header(self):
+        home = make_home()
+        os.remove(os.path.join(home, '.config', 'anthropic', 'configs', 'default.json'))
+        hd = h.build_headers(home)
+        self.assertNotIn('anthropic-workspace-id', hd)
+
     def test_workspace_optional(self):
         hd = h.build_headers(make_home(ws=None))
         self.assertNotIn('anthropic-workspace-id', hd)

@@ -18,16 +18,21 @@ for (const id of DEFAULT_IDS) $(id).value = threadDefaults[id];
 
 let savedTimer = null;
 async function save() {
-  const { settings: current = {} } = await chrome.storage.local.get('settings');
-  await chrome.storage.local.set({
-    settings: {
-      ...current,
-      models: Object.fromEntries(MODEL_IDS.map((id) => [id, $(id).value])),
-      threadDefaults: Object.fromEntries(DEFAULT_IDS.map((id) => [id, $(id).value])),
-    },
-  });
-  $('saved').textContent = ' Saved.';
   clearTimeout(savedTimer);
+  try {
+    const { settings: current = {} } = await chrome.storage.local.get('settings');
+    await chrome.storage.local.set({
+      settings: {
+        ...current,
+        models: Object.fromEntries(MODEL_IDS.map((id) => [id, $(id).value])),
+        threadDefaults: Object.fromEntries(DEFAULT_IDS.map((id) => [id, $(id).value])),
+      },
+    });
+  } catch (e) {
+    $('saved').textContent = ` Save failed: ${e?.message || e}`;
+    return; // stays visible
+  }
+  $('saved').textContent = ' Saved.';
   savedTimer = setTimeout(() => { $('saved').textContent = ''; }, 1500);
 }
 for (const id of [...MODEL_IDS, ...DEFAULT_IDS]) $(id).addEventListener('change', save);
@@ -50,7 +55,9 @@ $('check').onclick = async () => {
     ];
     show('host-result', parts.join(' · '), !p.key_present);
   } catch (e) {
-    show('host-result', e.kind === 'host' ? `Host not reachable: ${e.message}` : errorText(e), true);
+    const text = e.kind === 'host' ? `Host not reachable: ${e.message}`
+      : e.kind === 'timeout' ? 'Host did not answer within 5 s.' : errorText(e);
+    show('host-result', text, true);
   }
 };
 

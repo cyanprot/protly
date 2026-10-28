@@ -1,4 +1,5 @@
 import { TOKENS, BASE } from './tokens.css.js';
+import { addFonts, FONT_FILES } from './fonts.js';
 
 // Popup and options: the same tokens as the in-page components; light or dark follows the OS.
 export function stylePage(doc = document) {
@@ -7,6 +8,8 @@ export function stylePage(doc = document) {
   doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, sheet(TOKENS), sheet(BASE)];
   const root = doc.documentElement;
   root.classList.add('pl-root');
+  // Extension pages load the bundled fonts by URL; no page CSP stands in the way here.
+  addFonts(doc, { regular: chrome.runtime.getURL(FONT_FILES.regular), medium: chrome.runtime.getURL(FONT_FILES.medium) });
   const dark = win.matchMedia('(prefers-color-scheme: dark)');
   const apply = () => { root.dataset.plTheme = dark.matches ? 'dark' : 'light'; };
   apply();

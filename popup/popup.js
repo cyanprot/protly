@@ -12,9 +12,12 @@ $('site-instagram').checked = sites.instagram;
 $('site-gmail').checked = sites.gmail;
 
 $('polish').onchange = () => chrome.storage.local.set({ polish: $('polish').checked });
-const saveSites = () => chrome.storage.local.set({
-  sites: { instagram: $('site-instagram').checked, gmail: $('site-gmail').checked },
-});
+const saveSites = async () => {
+  await chrome.storage.local.set({
+    sites: { instagram: $('site-instagram').checked, gmail: $('site-gmail').checked },
+  });
+  showStatus();
+};
 $('site-instagram').onchange = saveSites;
 $('site-gmail').onchange = saveSites;
 

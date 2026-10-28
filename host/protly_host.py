@@ -57,8 +57,12 @@ def build_headers(home):
     base = os.path.join(home, '.config', 'anthropic')
     with open(os.path.join(base, 'api-key')) as f:
         key = f.read().strip()
-    with open(os.path.join(base, 'configs', 'default.json')) as f:
-        workspace = json.load(f).get('workspace_id')
+    workspace = None
+    try:  # optional, like ping() reports it
+        with open(os.path.join(base, 'configs', 'default.json')) as f:
+            workspace = json.load(f).get('workspace_id')
+    except (OSError, ValueError, AttributeError):
+        pass
     headers = {
         'x-api-key': key,
         'anthropic-version': '2023-06-01',
