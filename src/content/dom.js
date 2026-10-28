@@ -32,7 +32,24 @@ export function renderTranslation(m, translation, mode) {
 
 export function clearTranslation(m) {
   m.textEl.removeAttribute('data-igt-hide');
+  if (m.textEl.hasAttribute('data-igt-title')) {
+    m.textEl.removeAttribute('title');
+    m.textEl.removeAttribute('data-igt-title');
+  }
   m.textEl.parentElement?.querySelectorAll(':scope > .igt-tr').forEach((n) => n.remove());
+}
+
+// Instagram reuses message nodes across threads, so everything we added must go on teardown.
+export function clearAllTranslations(root) {
+  root.querySelectorAll('.igt-tr').forEach((n) => n.remove());
+  root.querySelectorAll('[data-igt-hide]').forEach((n) => n.removeAttribute('data-igt-hide'));
+  root.querySelectorAll('[data-igt-title]').forEach((n) => { n.removeAttribute('title'); n.removeAttribute('data-igt-title'); });
+}
+
+// True while the row still shows the text it was read with (nodes get reused for other messages).
+export function stillShows(m) {
+  const el = m.textEl;
+  return el.isConnected && (el.innerText ?? el.textContent ?? '').trim() === m.text;
 }
 
 export function renderRetry(m, onClick) {
@@ -47,6 +64,7 @@ export function renderRetry(m, onClick) {
 
 export function setHoverOriginal(m, korean) {
   m.textEl.title = korean;
+  m.textEl.setAttribute('data-igt-title', '');
 }
 
 export function getComposerText(el) {

@@ -70,3 +70,18 @@ test('setHoverOriginal sets title on own bubble', () => {
   setHoverOriginal(m, '안녕');
   assert.equal(m.textEl.title, '안녕');
 });
+
+test('clearAllTranslations removes everything we added, including hover titles', async () => {
+  const { clearAllTranslations, setHoverOriginal, renderTranslation, stillShows } = await import('../src/content/dom.js');
+  const d = new JSDOM('<body><div role="main"><div><div dir="auto">hello</div></div><div><div dir="auto">mine</div></div></div></body>').window.document;
+  const [a, b] = d.querySelectorAll('div[dir="auto"]');
+  renderTranslation({ textEl: a, text: 'hello' }, '안녕', 'replace');
+  setHoverOriginal({ textEl: b, text: 'mine' }, '내 원문');
+  assert.ok(stillShows({ textEl: a, text: 'hello' }));
+  clearAllTranslations(d.querySelector('[role="main"]'));
+  assert.equal(d.querySelectorAll('.igt-tr').length, 0);
+  assert.equal(a.hasAttribute('data-igt-hide'), false);
+  assert.equal(b.hasAttribute('title'), false);
+  a.textContent = 'other message';
+  assert.equal(stillShows({ textEl: a, text: 'hello' }), false);
+});

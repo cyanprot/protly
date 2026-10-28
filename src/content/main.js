@@ -2,7 +2,10 @@ import { threadIdFromPath } from '../lib/keys.js';
 import { isKoreanOnly } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
 import { findViewerName } from './selectors.js';
-import { findThreadRoot, readMessages, renderTranslation, renderRetry, setHoverOriginal, clearTranslation } from './dom.js';
+import {
+  findThreadRoot, readMessages, renderTranslation, renderRetry, setHoverOriginal, clearTranslation,
+  clearAllTranslations, stillShows,
+} from './dom.js';
 
 const CONTEXT_N = 30;
 const DEBOUNCE_MS = 400;
@@ -23,7 +26,10 @@ export const ask = async (msg) => {
 
 export const initHooks = [];
 let current = null; // { threadId, thread, root, observer, known, timer, onTeardown, onThreadUpdate, onMutate }
-let staleRows = new WeakSet();
+// Text signature of the thread we just left. Instagram reuses row nodes across threads, so node identity
+// cannot tell old rows from new ones; the visible texts can.
+let staleSig = null;
+const sigOf = (msgs) => msgs.map((m) => m.text).join('\u0001');
 const bannersShown = new Set();
 
 export async function start() {
@@ -43,21 +49,23 @@ export async function start() {
 
 function teardown() {
   if (!current) return;
-  for (const m of readMessages(current.root)) staleRows.add(m.row);
   current.observer?.disconnect();
+  staleSig = sigOf(readMessages(current.root));
+  clearAllTranslations(current.root);
   clearTimeout(current.timer);
   current.onTeardown.forEach((f) => f());
   current = null;
 }
 
-function waitForThread(threadId, tries = 0, lastCount = -1) {
+function waitForThread(threadId, tries = 0, lastSig = null) {
   if (threadIdFromPath(location.pathname) !== threadId) return; // navigated away meanwhile
   // No viewer name means senders cannot be told apart: treat it like a missing root (selector miss).
   const root = findViewerName(document) ? findThreadRoot(document) : null;
   const msgs = root ? readMessages(root) : [];
-  const clean = !msgs.some((m) => staleRows.has(m.row));
-  // Stable over two checks; an empty thread (new chat) must stay empty for about 1 s.
-  if (root && clean && msgs.length === lastCount && (msgs.length > 0 || tries >= 3)) return initThread(threadId, root);
+  const sig = sigOf(msgs);
+  const clean = msgs.length === 0 || sig !== staleSig;
+  // Same texts over two checks; an empty thread (new chat) must stay empty for about 1 s.
+  if (root && clean && sig === lastSig && (msgs.length > 0 || tries >= 3)) return initThread(threadId, root);
   if (tries >= WAIT_TRIES) {
     if (root) {
       if (!clean) console.warn('[igt] old thread rows still present after 10 s; initialising anyway');
@@ -67,7 +75,7 @@ function waitForThread(threadId, tries = 0, lastCount = -1) {
     console.warn('[igt] thread root not found; extension inactive on this page');
     return;
   }
-  setTimeout(() => waitForThread(threadId, tries + 1, clean ? msgs.length : -1), WAIT_MS);
+  setTimeout(() => waitForThread(threadId, tries + 1, clean ? sig : null), WAIT_MS);
 }
 
 async function initThread(threadId, root) {
@@ -76,12 +84,12 @@ async function initThread(threadId, root) {
   teardown(); // anything a racing init set up meanwhile
   ask({ type: 'badge', text: '' }).catch(() => {});
   current = {
-    threadId, thread, root, known: new WeakSet(), timer: null,
+    threadId, thread, root, known: new WeakMap(), timer: null, // row -> text it was seen with
     onTeardown: [], onThreadUpdate: [], onMutate: [],
   };
 
   const msgs = readMessages(root);
-  msgs.forEach((m) => current.known.add(m.row));
+  msgs.forEach((m) => current.known.set(m.row, m.text));
   if (thread.enabled) {
     translate(msgs, thread.pastMode, true);
     hoverSent(msgs);
@@ -100,8 +108,9 @@ function onMutate(threadId) {
     if (!current || current.threadId !== threadId) return;
     current.onMutate.forEach((f) => f());
     const msgs = readMessages(current.root);
-    const { past, fresh } = classifyAdded(msgs, (m) => current.known.has(m.row));
-    for (const m of [...past, ...fresh]) current.known.add(m.row);
+    // A row counts as known only with the same text: a reused node showing another message is new.
+    const { past, fresh } = classifyAdded(msgs, (m) => current.known.get(m.row) === m.text);
+    for (const m of [...past, ...fresh]) { current.known.set(m.row, m.text); clearTranslation(m); }
     if (!current.thread.enabled) return;
     translate(past, current.thread.pastMode, false);
     translate(fresh, current.thread.newMode, true);
@@ -123,7 +132,7 @@ async function translate(msgs, mode, updateLang) {
   try {
     const data = await ask({ type: 'incoming', threadId, context: contextFor(current.root), items, updateLang });
     if (current?.threadId !== threadId) return;
-    todo.forEach((m, i) => { const r = data[String(i)]; if (r) renderTranslation(m, r.translation, mode); });
+    todo.forEach((m, i) => { const r = data[String(i)]; if (r && stillShows(m)) renderTranslation(m, r.translation, mode); });
     if (updateLang) {
       const t = await ask({ type: 'getThread', threadId }); // partnerLang may have changed
       if (current?.threadId === threadId) current.thread = t;
@@ -131,7 +140,7 @@ async function translate(msgs, mode, updateLang) {
   } catch (e) {
     if (current?.threadId !== threadId) return;
     if (ERROR_BANNERS[e.kind]) showBanner(ERROR_BANNERS[e.kind]);
-    todo.forEach((m) => renderRetry(m, () => translate([m], mode, false)));
+    todo.forEach((m) => { if (stillShows(m)) renderRetry(m, () => translate([m], mode, false)); });
   }
 }
 
@@ -142,7 +151,7 @@ async function hoverSent(msgs) {
   try {
     const map = await ask({ type: 'lookupSent', threadId, texts: mine.map((m) => m.text) });
     if (current?.threadId !== threadId) return;
-    for (const m of mine) if (map[m.text]) setHoverOriginal(m, map[m.text]);
+    for (const m of mine) if (map[m.text] && stillShows(m)) setHoverOriginal(m, map[m.text]);
   } catch {}
 }
 
