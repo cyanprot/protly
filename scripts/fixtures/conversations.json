@@ -1,0 +1,40 @@
+[
+  {
+    "name": "en casual slang",
+    "memo": "college friend, teases a lot",
+    "otherTarget": "ko",
+    "context": [
+      { "from": "partner", "text": "bro you coming tonight or nah" },
+      { "from": "me", "text": "maybe lol" }
+    ],
+    "items": [{ "id": "0", "text": "ngl that party was lowkey mid", "expect_src": "en" }],
+    "outgoing": { "korean": "아 미안 오늘은 좀 피곤해서 패스", "lang": "en" }
+  },
+  {
+    "name": "ru informal",
+    "memo": "",
+    "otherTarget": "en",
+    "context": [{ "from": "partner", "text": "Привет! Как дела?" }],
+    "items": [{ "id": "0", "text": "Слушай, давай завтра созвонимся, ок?", "expect_src": "ru" }],
+    "outgoing": { "korean": "좋아 몇 시가 편해?", "lang": "ru" }
+  },
+  {
+    "name": "es and korean mixed",
+    "memo": "met at language exchange",
+    "otherTarget": "ko",
+    "context": [],
+    "items": [
+      { "id": "0", "text": "jajaja qué buena onda", "expect_src": "es" },
+      { "id": "1", "text": "ㅋㅋㅋ 고마워", "expect_src": "ko" }
+    ],
+    "outgoing": { "korean": "다음 주에 시간 돼?", "lang": "es" }
+  },
+  {
+    "name": "ja subject drop",
+    "memo": "",
+    "otherTarget": "ko",
+    "context": [{ "from": "me", "text": "I went to the new ramen place" }],
+    "items": [{ "id": "0", "text": "え、まじ？どうだった？", "expect_src": "ja" }],
+    "outgoing": { "korean": "생각보다 별로였어 국물이 너무 짰어", "lang": "ja" }
+  }
+]
