@@ -10,8 +10,6 @@ extension KeyboardViewController {
     /// Build with true to read the keyboard's memory (now / peak MB) in the bar's right slot when it has no
     /// suggestion. Only for the Sprint 6 phone check; ships false.
     static let showsMemory = false
-    /// LearnedWords.changes at the last save.
-    private static var savedChanges = 0
 
     /// From viewDidLoad: learned words from the keyboard's own container, and the phone's text replacements and
     /// contact names (no Full Access needed).
@@ -20,15 +18,17 @@ extension KeyboardViewController {
            let learned = try? JSONDecoder().decode(LearnedWords.self, from: data) {
             session.suggester.learned = learned
         }
-        Self.savedChanges = session.suggester.learned.changes
+        savedChanges = session.suggester.learned.changes
         requestSupplementaryLexicon { [weak self] lexicon in
             // Called on an XPC queue: store the map on the main actor, where the session lives. A contact name
             // comes as its own shortcut ("will" -> "Will"); Suggester treats such an entry as a known word.
             Task { @MainActor in
-                self?.session.suggester.lexicon = Dictionary(
+                guard let self else { return }
+                self.session.suggester.lexicon = Dictionary(
                     lexicon.entries.map { ($0.userInput.lowercased(), $0.documentText) },
                     uniquingKeysWith: { first, _ in first }
                 )
+                self.refreshMode()  // the bar shows what a pick would accept
             }
         }
     }
@@ -39,9 +39,9 @@ extension KeyboardViewController {
         if s == nil, Self.showsMemory { s = Self.memoryText() }
         if mode.suggestion != s { mode.suggestion = s }
         let learned = session.suggester.learned
-        if learned.changes != Self.savedChanges, let data = try? JSONEncoder().encode(learned) {
+        if learned.changes != savedChanges, let data = try? JSONEncoder().encode(learned) {
             UserDefaults.standard.set(data, forKey: Self.learnedKey)
-            Self.savedChanges = learned.changes
+            savedChanges = learned.changes
         }
     }
 

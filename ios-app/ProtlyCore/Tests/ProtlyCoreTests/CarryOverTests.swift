@@ -18,6 +18,18 @@ final class CarryOverTests: XCTestCase {
         XCTAssertEqual(d.decide(keys("RO"), complete: true, previous: .english), .english)  // caps lock: 꺠 is not meant
     }
 
+    func testShiftOnTheFirstKeyIsACapital() {
+        // A capitalized sentence start (Tom = ㅆㅐㅡ, Rest = ㄲㄷㄴㅅ) is not the mid-word shift rule.
+        let d = LanguageDetector(
+            english: WordList(entries: [("tom", 900), ("rest", 900)]),
+            korean: WordList(entries: [("dkssud", 50)]),
+            priorBonus: 2.0
+        )
+        for w in ["Tom", "Rest"] {
+            XCTAssertEqual(d.decide(keys(w), complete: true, previous: nil), .english, w)
+        }
+    }
+
     func testMissingWordsJoinTheKoreanList() {
         let list = WordList.korean("", adding: [("걍", 400)])
         XCTAssertEqual(list.frequency(of: "rid"), 400)

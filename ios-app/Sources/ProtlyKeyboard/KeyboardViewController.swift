@@ -41,6 +41,8 @@ final class KeyboardViewController: KeyboardInputViewController {
     private var actionTask: Task<Void, Never>?
     /// Text protly inserted and what it replaced, for Undo.
     private var lastInsert: (inserted: String, original: String, isSelection: Bool)?
+    /// LearnedWords.changes at the last save (Words.swift). Per controller: each one loads its own copy.
+    var savedChanges = 0
 
     override var primaryLanguage: String? {
         get { "ko-KR" }  // KeyboardKit would report its English locale; protly is mainly Korean
@@ -78,6 +80,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     private func setDetector(_ detector: LanguageDetector?) {
         session.detector = detector
+        refreshMode()  // the word being typed may change language and suggestion
     }
 
     override func viewWillSetupKeyboardView() {
@@ -141,8 +144,10 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     /// The bar's right slot: the word becomes the suggestion, then a space typed like any other.
     func pickSuggestion() {
+        let shown = mode.suggestion  // what the user tapped, before noticeFieldMoved can refresh the bar
         noticeFieldMoved()
-        guard let edit = session.accept() else { return }
+        // If the suggestion changed since the bar showed it, do nothing.
+        guard session.suggestion == shown, let edit = session.accept() else { return }
         apply(edit)
         savePrevious()
         insertText(" ")
@@ -327,7 +332,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         if mode.clipboardIsNew != isNew { mode.clipboardIsNew = isNew }
     }
 
-    private func refreshMode() {
+    /// Not private: Words.swift calls it when the system lexicon arrives.
+    func refreshMode() {
         let korean = session.keycapLanguage == .korean
         if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
