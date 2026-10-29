@@ -306,6 +306,24 @@ class Install(unittest.TestCase):
         self.assertEqual(m['allowed_origins'], ['chrome-extension://' + 'a' * 32 + '/'])
         self.assertEqual(sorted(m), ['allowed_origins', 'description', 'name', 'path', 'type'])
 
+    def test_a_failed_write_keeps_the_old_manifest(self):
+        p, manifest, src = self.run_install('protly')
+        self.assertEqual(p.returncode, 0, p.stderr)
+        with open(manifest) as f:
+            before = f.read()
+        tmp = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(manifest))))
+        bin_dir = os.path.join(tmp, 'bin')
+        os.makedirs(bin_dir)
+        with open(os.path.join(bin_dir, 'python3'), 'w') as f:
+            f.write('#!/bin/sh\nexit 3\n')
+        os.chmod(os.path.join(bin_dir, 'python3'), 0o755)
+        env = {'HOME': tmp, 'PATH': bin_dir + ':' + os.environ.get('PATH', '/usr/bin:/bin')}
+        q = subprocess.run(['bash', os.path.join(src, 'install.sh'), 'a' * 32], env=env, capture_output=True, text=True)
+        self.assertNotEqual(q.returncode, 0)
+        with open(manifest) as f:
+            self.assertEqual(f.read(), before)
+        self.assertEqual([n for n in os.listdir(os.path.dirname(manifest)) if n.startswith('.')], [])
+
     def test_rejects_a_bad_extension_id(self):
         p, manifest, _ = self.run_install('protly', ext_id='a' * 31 + '"')
         self.assertNotEqual(p.returncode, 0)

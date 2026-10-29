@@ -10,7 +10,10 @@ dir="$HOME/.config/google-chrome/NativeMessagingHosts"
 mkdir -p "$dir"
 chmod +x "$host"
 # json.dumps, not a heredoc: a quote or backslash in the checkout path must stay inside "path".
-python3 -I - "$host" "$id" > "$dir/com.northprot.protly.json" <<'PY'
+# Written to a temp file and moved into place: a failed run never leaves an empty manifest behind.
+tmp="$(mktemp "$dir/.com.northprot.protly.json.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+python3 -I - "$host" "$id" > "$tmp" <<'PY'
 import json, sys
 host, ext = sys.argv[1], sys.argv[2]
 print(json.dumps({
@@ -21,4 +24,6 @@ print(json.dumps({
     'allowed_origins': [f'chrome-extension://{ext}/'],
 }, indent=2))
 PY
+chmod 644 "$tmp"
+mv "$tmp" "$dir/com.northprot.protly.json"
 echo "installed $dir/com.northprot.protly.json"
