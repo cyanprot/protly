@@ -12,10 +12,12 @@ struct ProtlyBar: View {
     let undo: () -> Void
 
     var body: some View {
+        // Each slot sits on Color.clear: an `if` with no else draws nothing, and an empty slot must still take
+        // its third (Sprint 5 phone check: with no flip, Translate slid to the left quarter).
         HStack(spacing: 0) {
-            left.frame(maxWidth: .infinity)
-            center.frame(maxWidth: .infinity)
-            Color.clear.frame(maxWidth: .infinity)
+            ZStack { Color.clear; left }
+            ZStack { Color.clear; center }
+            Color.clear
         }
         .lineLimit(1)
         .frame(height: ProtlyGeometry.toolbarHeight)
