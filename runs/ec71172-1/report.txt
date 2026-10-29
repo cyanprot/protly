@@ -1,0 +1,239 @@
+STATUS test-failed
+source ec71172e7aa02dbf2efb57dd19f2d12a2bbf48d3
+xcode Xcode 26.6 Build version 17F113 
+runtime iOS 26.5 (com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+device iPhone-13-Pro (4550333E-E9EC-4D12-9195-B223ECFD2E9C), 390 pt wide
+build ok
+AppleKeyboards ("com.northprot.protly.cihost.keyboard","emoji@sw=Emoji","en_US@sw=QWERTY;hw=Automatic")
+appearance dark
+tests failed (xcodebuild exit 65)
+01-apple: FAIL missing 01-apple.png
+screen 1170x2532 px, 390 pt wide, scale 3.00
+02-first-open: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 9.67(15) 380.33(15)
+03-after-emoji: top 495.00 row1 564.00 band 69.00 pitch 54.00 key 43.00 bar-text-centers 9.67(15) 380.33(15)
+04-after-background: top 495.00 row1 564.00 band 69.00 pitch 54.00 key 43.00 bar-text-centers 9.67(15) 380.33(15)
+05-after-second-emoji: top 509.00 row1 561.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 9.67(15) 65.17(2) 195.00(28) 325.17(21) 380.33(15)
+06-word-typed: top 509.00 row1 561.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 9.67(15) 65.17(2) 195.67(21) 324.83(39) 380.33(15)
+07-empty-left-slot: top 509.00 row1 561.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 55.00(106) 194.83(84) 336.33(103)
+CHECK top-edge FAIL range 495.00..512.00 (17.00 pt)
+CHECK band-02-first-open FAIL 52.00 vs apple n/a
+CHECK band-03-after-emoji FAIL 69.00 vs apple n/a
+CHECK band-04-after-background FAIL 69.00 vs apple n/a
+CHECK band-05-after-second-emoji FAIL 52.00 vs apple n/a
+CHECK band-06-word-typed FAIL 52.00 vs apple n/a
+CHECK band-07-empty-left-slot FAIL 52.00 vs apple n/a
+CHECK pitch-02-first-open PASS 54.00 vs 54.00
+CHECK key-02-first-open PASS 43.00 vs 43.00
+CHECK pitch-03-after-emoji PASS 54.00 vs 54.00
+CHECK key-03-after-emoji PASS 43.00 vs 43.00
+CHECK pitch-04-after-background PASS 54.00 vs 54.00
+CHECK key-04-after-background PASS 43.00 vs 43.00
+CHECK pitch-05-after-second-emoji PASS 54.00 vs 54.00
+CHECK key-05-after-second-emoji PASS 43.00 vs 43.00
+CHECK pitch-06-word-typed PASS 54.00 vs 54.00
+CHECK key-06-word-typed PASS 43.00 vs 43.00
+CHECK pitch-07-empty-left-slot PASS 54.00 vs 54.00
+CHECK key-07-empty-left-slot PASS 43.00 vs 43.00
+CHECK bar-center-07 PASS text center 194.83 vs 195.00 (-0.17), words 3
+RESULT FAIL
+--- last 200 lines of test.log
+    t =    51.71s Checking existence of `Any (First Match)`
+    t =    52.53s Checking existence of `"q" Key`
+    t =    52.58s Checking existence of `"Q" Key`
+    t =    52.66s Checking existence of `Any (First Match)`
+    t =    53.54s Checking existence of `Any (First Match)`
+    t =    53.61s Find the Any (First Match)
+    t =    54.03s Tap "Next keyboard" Button
+    t =    54.03s     Wait for com.northprot.protly.cihost to idle
+    t =    54.03s     Find the "Next keyboard" Button
+    t =    54.14s     Check for interrupting elements affecting "Next keyboard" Button
+    t =    54.32s     Synthesize event
+    t =    54.65s     Wait for com.northprot.protly.cihost to idle
+    t =    55.03s Find the "Next keyboard" Button
+    t =    55.37s Checking existence of `"q" Key`
+    t =    55.45s Checking existence of `"Q" Key`
+    t =    55.98s Checking existence of `"q" Key`
+    t =    56.02s Checking existence of `"Q" Key`
+    t =    56.57s Checking existence of `"q" Key`
+    t =    56.63s Checking existence of `"Q" Key`
+    t =    57.18s Checking existence of `"q" Key`
+    t =    57.23s Checking existence of `"Q" Key`
+    t =    57.79s Checking existence of `"q" Key`
+    t =    57.83s Checking existence of `"Q" Key`
+    t =    58.37s Checking existence of `"q" Key`
+    t =    58.42s Checking existence of `"Q" Key`
+    t =    58.95s Checking existence of `"q" Key`
+    t =    59.00s Checking existence of `"Q" Key`
+    t =    59.53s Checking existence of `Any (First Match)`
+    t =    59.58s Find the Any (First Match)
+    t =    59.65s Tap "Next keyboard" Button
+    t =    59.65s     Wait for com.northprot.protly.cihost to idle
+    t =    59.65s     Find the "Next keyboard" Button
+    t =    59.70s     Check for interrupting elements affecting "Next keyboard" Button
+    t =    59.76s     Synthesize event
+    t =    60.08s     Wait for com.northprot.protly.cihost to idle
+    t =    60.41s Find the "Next keyboard" Button
+    t =    60.45s Checking existence of `"q" Key`
+    t =    60.54s Checking existence of `"Q" Key`
+    t =    60.59s Checking existence of `Any (First Match)`
+    t =    61.41s Checking existence of `"q" Key`
+    t =    61.55s Checking existence of `"Q" Key`
+    t =    61.62s Checking existence of `Any (First Match)`
+    t =    62.43s Checking existence of `"q" Key`
+    t =    62.48s Checking existence of `"Q" Key`
+    t =    62.54s Checking existence of `Any (First Match)`
+    t =    63.38s Checking existence of `"q" Key`
+    t =    63.45s Checking existence of `"Q" Key`
+    t =    63.55s Checking existence of `Any (First Match)`
+    t =    64.40s Checking existence of `"q" Key`
+    t =    64.46s Checking existence of `"Q" Key`
+    t =    64.53s Checking existence of `Any (First Match)`
+    t =    65.35s Checking existence of `Any (First Match)`
+    t =    65.38s Find the Any (First Match)
+    t =    65.44s Tap "Next keyboard" Button
+    t =    65.44s     Wait for com.northprot.protly.cihost to idle
+    t =    65.44s     Find the "Next keyboard" Button
+    t =    65.50s     Check for interrupting elements affecting "Next keyboard" Button
+    t =    65.57s     Synthesize event
+    t =    65.87s     Wait for com.northprot.protly.cihost to idle
+    t =    66.25s Find the "Next keyboard" Button
+    t =    66.29s Checking existence of `"q" Key`
+    t =    66.34s Checking existence of `"Q" Key`
+    t =    66.88s Checking existence of `"q" Key`
+    t =    66.93s Checking existence of `"Q" Key`
+    t =    67.48s Checking existence of `"q" Key`
+    t =    67.53s Checking existence of `"Q" Key`
+    t =    68.08s Checking existence of `"q" Key`
+    t =    68.12s Checking existence of `"Q" Key`
+    t =    68.67s Checking existence of `"q" Key`
+    t =    68.71s Checking existence of `"Q" Key`
+    t =    69.28s Checking existence of `"q" Key`
+    t =    69.33s Checking existence of `"Q" Key`
+    t =    69.88s Checking existence of `"q" Key`
+    t =    69.92s Checking existence of `"Q" Key`
+    t =    70.48s Checking existence of `"q" Key`
+    t =    70.52s Checking existence of `"Q" Key`
+/Users/runner/work/protly/protly/ios-app/CI/UITests/KeyboardShotsUITests.swift:147: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : failed - emoji keyboard not reached
+    t =    72.88s Checking existence of `"q" Key`
+    t =    72.91s Checking existence of `"Q" Key`
+/Users/runner/work/protly/protly/ios-app/CI/UITests/KeyboardShotsUITests.swift:290: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : failed - 05-after-second-emoji: expected protly, found english
+    t =    73.09s Added attachment named '05-after-second-emoji'
+    t =    73.26s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (233.3, 636.5)
+    t =    73.26s     Wait for com.northprot.protly.cihost to idle
+    t =    73.27s     Find the Target Application 'com.northprot.protly.cihost'
+    t =    73.30s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =    73.34s     Synthesize event
+    t =    73.34s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    73.37s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    73.40s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    73.71s     Wait for com.northprot.protly.cihost to idle
+    t =    74.12s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (99.3, 582.5)
+    t =    74.12s     Wait for com.northprot.protly.cihost to idle
+    t =    74.12s     Find the Target Application 'com.northprot.protly.cihost'
+    t =    74.16s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =    74.20s     Synthesize event
+    t =    74.20s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    74.24s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    74.27s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    74.58s     Wait for com.northprot.protly.cihost to idle
+    t =    74.99s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (348.1, 636.5)
+    t =    74.99s     Wait for com.northprot.protly.cihost to idle
+    t =    75.00s     Find the Target Application 'com.northprot.protly.cihost'
+    t =    75.03s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =    75.07s     Synthesize event
+    t =    75.08s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    75.11s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    75.14s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    75.46s     Wait for com.northprot.protly.cihost to idle
+    t =    75.86s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (348.1, 636.5)
+    t =    75.86s     Wait for com.northprot.protly.cihost to idle
+    t =    75.87s     Find the Target Application 'com.northprot.protly.cihost'
+    t =    75.90s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =    75.93s     Synthesize event
+    t =    75.93s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    75.95s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    75.98s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    76.29s     Wait for com.northprot.protly.cihost to idle
+    t =    76.70s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (328.9, 582.5)
+    t =    76.71s     Wait for com.northprot.protly.cihost to idle
+    t =    76.71s     Find the Target Application 'com.northprot.protly.cihost'
+    t =    76.75s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =    76.78s     Synthesize event
+    t =    76.78s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    76.80s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    76.83s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    77.14s     Wait for com.northprot.protly.cihost to idle
+    t =    77.56s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (175.5, 744.5)
+    t =    77.56s     Wait for com.northprot.protly.cihost to idle
+    t =    77.56s     Find the Target Application 'com.northprot.protly.cihost'
+    t =    77.60s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =    77.66s     Synthesize event
+    t =    77.66s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    77.70s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    77.74s         Find the Target Application 'com.northprot.protly.cihost'
+    t =    78.06s     Wait for com.northprot.protly.cihost to idle
+    t =    79.98s Checking existence of `"q" Key`
+/Users/runner/work/protly/protly/ios-app/CI/UITests/KeyboardShotsUITests.swift:290: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : failed - 06-word-typed: expected protly, found english
+    t =    80.19s Added attachment named '06-word-typed'
+    t =    80.19s Terminate com.northprot.protly.cihost:5736
+    t =    81.21s Open com.northprot.protly.cihost
+    t =    81.21s     Launch com.northprot.protly.cihost
+2026-10-29 09:58:59.177 xcodebuild[4704:22355] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-29 09:58:59.177 xcodebuild[4704:22355] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =    81.64s         Setting up automation session
+    t =    83.32s         Wait for com.northprot.protly.cihost to idle
+    t =    84.66s Checking existence of `"q" Key`
+    t =    86.31s Checking existence of `"q" Key`
+/Users/runner/work/protly/protly/ios-app/CI/UITests/KeyboardShotsUITests.swift:290: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : failed - 07-empty-left-slot: expected protly, found english
+    t =    86.49s Added attachment named '07-empty-left-slot'
+    t =    86.49s Checking existence of `Any (First Match)`
+    t =    86.53s Find the Any (First Match)
+    t =    86.62s Press "Next keyboard" Button for 1.2 seconds
+    t =    86.62s     Wait for com.northprot.protly.cihost to idle
+    t =    86.63s     Find the "Next keyboard" Button
+    t =    86.69s     Check for interrupting elements affecting "Next keyboard" Button
+    t =    86.73s     Synthesize event
+    t =    88.19s     Wait for com.northprot.protly.cihost to idle
+    t =    89.46s Requesting snapshot of accessibility hierarchy for app with pid 8318
+    t =    89.94s Requesting snapshot of accessibility hierarchy for app with pid 8318
+    t =    90.00s Checking existence of `Any (First Match)`
+    t =    90.03s Find the Any (First Match)
+    t =    90.13s Tap "English (US)" Cell
+    t =    90.13s     Wait for com.northprot.protly.cihost to idle
+    t =    90.14s     Find the "English (US)" Cell
+    t =    90.17s     Check for interrupting elements affecting "English (US)" Cell
+    t =    90.22s     Synthesize event
+    t =    90.52s     Wait for com.northprot.protly.cihost to idle
+    t =    90.53s Find the "English (US)" Cell
+    t =    91.66s     Find the "English (US)" Cell (retry 1)
+    t =    92.76s     Find the "English (US)" Cell (retry 2)
+    t =    92.88s     Collecting debug information to assist test failure triage
+    t =    92.88s         Requesting snapshot of accessibility hierarchy for app with pid 8318
+    t =    92.94s     Requesting snapshot of accessibility hierarchy for app with pid 8318
+    t =    93.00s     Requesting snapshot of accessibility hierarchy for app with pid 8318
+/Users/runner/work/protly/protly/ios-app/CI/UITests/KeyboardShotsUITests.swift:179: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : Failed to get matching snapshot: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate 'label BEGINSWITH[c] "English"'`, given input App element pid: 8318
+    t =    93.07s Tear Down
+Test Case '-[ProtlyCIUITests.KeyboardShotsUITests testScenarios]' failed (93.407 seconds).
+Test Suite 'KeyboardShotsUITests' failed at 2026-10-29 09:59:11.373.
+	 Executed 1 test, with 5 failures (0 unexpected) in 93.407 (93.408) seconds
+Test Suite 'ProtlyCIUITests.xctest' failed at 2026-10-29 09:59:11.374.
+	 Executed 1 test, with 5 failures (0 unexpected) in 93.407 (93.408) seconds
+Test Suite 'All tests' failed at 2026-10-29 09:59:11.374.
+	 Executed 1 test, with 5 failures (0 unexpected) in 93.407 (93.409) seconds
+2026-10-29 09:59:31.044 xcodebuild[4704:22355] [MT] IDETestOperationsObserverDebug: 129.506 elapsed -- Testing started completed.
+2026-10-29 09:59:31.045 xcodebuild[4704:22355] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-29 09:59:31.045 xcodebuild[4704:22355] [MT] IDETestOperationsObserverDebug: 129.506 sec, +129.506 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/_temp/protly-shots-work/Tests.xcresult
+
+Failing tests:
+	KeyboardShotsUITests.testScenarios()
+	KeyboardShotsUITests.testScenarios()
+	KeyboardShotsUITests.testScenarios()
+	KeyboardShotsUITests.testScenarios()
+	KeyboardShotsUITests.testScenarios()
+
+** TEST EXECUTE FAILED **
+
+Testing started

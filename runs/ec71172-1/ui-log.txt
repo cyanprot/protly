@@ -1,0 +1,20 @@
+screen 390.0x844.0 pt, shots in /Users/runner/work/_temp/shots
+protly after 0 globe taps
+02-first-open: protly
+globe tapped (element at (8.47726568115926, 775.6989567998571, 68.0852958475086, 68.73516393505099))
+emoji after 1 globe taps
+no ABC key on Emoji
+globe tapped (element at (8.47726568115926, 775.6989567998571, 68.0852958475086, 68.73516393505099))
+globe tapped (element at (8.47726568115926, 775.6989567998571, 68.0852958475086, 68.73516393505099))
+protly after 2 globe taps
+03-after-emoji: protly
+04-after-background: protly
+globe tapped (element at (8.47726568115926, 775.6989567998571, 68.0852958475086, 68.73516393505099))
+globe tapped (element at (8.47726568115926, 775.6989567998571, 68.0852958475086, 68.73516393505099))
+globe tapped (element at (8.47726568115926, 775.6989567998571, 68.0852958475086, 68.73516393505099))
+emoji not reached after 3 globe taps; now english
+05-after-second-emoji: english
+typing: keyboard top 509.00, row 1 561.00
+typed hello 
+06-word-typed: english
+07-empty-left-slot: english
