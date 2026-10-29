@@ -38,12 +38,24 @@ final class ProtlyHeight: NSObject {
     private let constraint: NSLayoutConstraint
     private var orientation: AnyCancellable?
     private var bounds: NSKeyValueObservation?
-    private let loaded = ProcessInfo.processInfo.systemUptime
+    private var loaded = ProcessInfo.processInfo.systemUptime
 
     /// Call once from viewDidLoad. The pin lives as long as the controller.
     static func pin(_ controller: KeyboardInputViewController) {
         let pin = ProtlyHeight(controller)
         objc_setAssociatedObject(controller, &key, pin, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    }
+
+    /// Call from viewWillAppear. A controller that iOS shows again later (older than `freshWindow`) starts over:
+    /// the full portrait pin, and a new window for the host's return. The first appearance after loading is
+    /// left alone, so the path the simulator runs verified does not change.
+    static func presented(_ controller: KeyboardInputViewController) {
+        guard let pin = objc_getAssociatedObject(controller, &key) as? ProtlyHeight else { return }
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now - pin.loaded >= freshWindow else { return }
+        pin.loaded = now
+        pin.constraint.constant = portrait
+        pin.report("presented again, reset")
     }
 
     private init(_ controller: KeyboardInputViewController) {
@@ -68,6 +80,16 @@ final class ProtlyHeight: NSObject {
         NotificationCenter.default.addObserver(
             self, selector: #selector(hostBecameActive), name: .NSExtensionHostDidBecomeActive, object: nil
         )
+        // Log only, for the phone check: whether WillEnterForeground is a tighter signal for the app-switch path.
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(hostWillEnterForeground), name: .NSExtensionHostWillEnterForeground, object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(hostDidEnterBackground), name: .NSExtensionHostDidEnterBackground, object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(hostWillResignActive), name: .NSExtensionHostWillResignActive, object: nil
+        )
         report("pinned")
     }
 
@@ -79,6 +101,10 @@ final class ProtlyHeight: NSObject {
         constraint.constant = Self.portrait - Self.hostTopMargin
         report("host became active")
     }
+
+    @objc private func hostWillEnterForeground(_ note: Notification) { report("host will enter foreground") }
+    @objc private func hostDidEnterBackground(_ note: Notification) { report("host did enter background") }
+    @objc private func hostWillResignActive(_ note: Notification) { report("host will resign active") }
 
     private func report(_ reason: String) {
         guard let view else { return }

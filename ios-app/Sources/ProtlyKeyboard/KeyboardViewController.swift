@@ -84,6 +84,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        ProtlyHeight.presented(self)
         setKeyboardCase(state.keyboardContext.preferredKeyboardCase)
         refreshField()
     }
