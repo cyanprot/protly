@@ -1,7 +1,10 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking  // URLRequest on Linux
+#endif
 
-// Translate/Polish over the Anthropic Messages API: request body and headers in, result or error out.
-// No networking here (FoundationNetworking differs on Linux): the keyboard sends the bytes.
+// Translate/Polish over the Anthropic Messages API: the request in, result or error out.
+// No networking here (FoundationNetworking differs on Linux): the keyboard sends the request.
 
 public enum ActionMode: String, Sendable, CaseIterable {
     case `in`   // someone else's text -> Korean
@@ -17,6 +20,7 @@ public struct ActionResult: Sendable, Equatable {
 public struct ActionError: Error, Sendable, Equatable {
     public enum Kind: String, Sendable {
         case auth, spendLimit, rate, overloaded, server, badRequest, network, timeout, refused, truncated, parse
+        case tooLong
     }
     public let kind: Kind
     /// Short English line for the bar.
@@ -33,6 +37,7 @@ public struct ActionError: Error, Sendable, Equatable {
         case .refused: return "The model declined this text."
         case .truncated: return "The reply was cut off. Try a shorter text."
         case .parse: return "The reply was not readable. Try again."
+        case .tooLong: return "The text is too long. Try a shorter text."
         }
     }
     public init(_ kind: Kind) { self.kind = kind }
@@ -58,6 +63,24 @@ public enum ActionAPI {
 
     public static func model(for mode: ActionMode) -> String {
         mode == .in ? "claude-sonnet-5-5" : "claude-opus-5-5"
+    }
+
+    /// Longest text sent, in UTF-16 units. A longer text cannot fit the 16000-token reply anyway, and a
+    /// multi-megabyte clipboard would cost the keyboard its memory and the account its money.
+    public static let maxInputLength = 50_000
+
+    /// The request for one action, or the error to show without sending anything.
+    public static func request(mode: ActionMode, text: String, system: String, apiKey: String) -> Result<URLRequest, ActionError> {
+        guard text.utf16.count <= maxInputLength else { return .failure(ActionError(.tooLong)) }
+        guard let url = URL(string: url), let body = try? body(mode: mode, text: text, system: system) else {
+            return .failure(ActionError(.badRequest))
+        }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 30
+        for (name, value) in headers(apiKey: apiKey) { req.setValue(value, forHTTPHeaderField: name) }
+        req.httpBody = body
+        return .success(req)
     }
 
     public static func headers(apiKey: String) -> [String: String] {
