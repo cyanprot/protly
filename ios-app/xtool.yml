@@ -1,6 +1,8 @@
 version: 1
 bundleID: com.northprot.protly
 product: Protly
+infoPath: Support/Protly-Info.plist
+iconPath: Support/AppIcon.png
 extensions:
   - product: ProtlyKeyboard
     infoPath: Support/ProtlyKeyboard-Info.plist
