@@ -32,6 +32,10 @@ final class UnicodeRobustnessTests: XCTestCase {
         XCTAssertEqual(ActionAPI.mode(forDraft: "\u{FFA1}\u{FFC2}"), .out)  // halfwidth ㄱㅏ
         XCTAssertEqual(ActionAPI.mode(forDraft: "\u{A960}"), .out)  // jamo extended-A
         XCTAssertEqual(ActionAPI.mode(forDraft: "café, naïve, 日本語"), .fix)
+        // Hangul fillers are invisible: Instagram users paste them as blank names and spacers. Not Korean.
+        for filler in ["\u{115F}", "\u{1160}", "\u{3164}", "\u{FFA0}"] {
+            XCTAssertEqual(ActionAPI.mode(forDraft: "see you" + filler), .fix, filler.debugDescription)
+        }
     }
 
     // Scalars a key could carry if a future keycap passed through: emoji, ZWJ sequences, flags, combining

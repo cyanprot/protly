@@ -60,8 +60,13 @@ public enum ActionAPI {
 
     /// The action for the user's own draft: Korean anywhere -> translate out, else polish.
     public static func mode(forDraft text: String) -> ActionMode {
-        text.unicodeScalars.contains { s in hangulScalars.contains { $0.contains(s.value) } } ? .out : .fix
+        text.unicodeScalars.contains { s in
+            !hangulFillers.contains(s.value) && hangulScalars.contains { $0.contains(s.value) }
+        } ? .out : .fix
     }
+
+    /// Invisible Hangul fillers (pasted as blank names and spacers on Instagram): not Korean text.
+    static let hangulFillers: Set<UInt32> = [0x115F, 0x1160, 0x3164, 0xFFA0]
 
     /// Syllables, compatibility jamo, and the forms they take elsewhere: conjoining jamo (decomposed text,
     /// as in Mac file names), the jamo extensions, halfwidth jamo.
