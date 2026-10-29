@@ -105,3 +105,15 @@ test('error text is always a bounded string, whatever kind or message arrives', 
   assert.equal((await errOf(['<b>', 'x'])).message, 'HTTP 400');
   assert.equal((await errOf('model: not found')).message, 'model: not found');
 });
+
+test('a hostile retry_after never makes an instant retry or an unbounded wait', async () => {
+  const { callClaude } = await import('../src/lib/api.js');
+  for (const ra of ['1e400', 'Infinity', '-5', 'NaN', 'Wed, 21 Oct 2026 07:28:00 GMT', '', '0x10', '0.001', '0', 'abc', null, {}, '29']) {
+    const sleeps = [];
+    let n = 0;
+    const transport = async () => (n++ === 0 ? { status: 429, retry_after: ra, body: {} } : { status: 200, retry_after: null, body: { ok: 1 } });
+    await callClaude({}, { transport, sleep: async (ms) => { sleeps.push(ms); } });
+    assert.equal(sleeps.length, 1);
+    assert.ok(Number.isFinite(sleeps[0]) && sleeps[0] >= 1000 && sleeps[0] <= 30000, `${JSON.stringify(ra)} -> ${sleeps[0]}`);
+  }
+});

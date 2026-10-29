@@ -58,7 +58,8 @@ export async function callClaude(body, { transport, sleep = realSleep, retries =
     const kind = classify(res.status, res.body);
     if (RETRYABLE.has(kind) && attempt < retries) {
       const ra = Number(res.retry_after);
-      await sleep(ra > 0 ? Math.min(ra, 30) * 1000 : backoff(attempt));
+      // Seconds from the host, clamped to 1-30: '0.001' must not retry at once into the rate limit.
+      await sleep(ra > 0 ? Math.min(Math.max(ra, 1), 30) * 1000 : backoff(attempt));
       continue;
     }
     throw new ApiError(kind, apiMessage(res.body) || `HTTP ${res.status}`, res.status);
