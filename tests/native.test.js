@@ -101,7 +101,10 @@ test('a malformed host reply to an API request is a host_bug, never a success or
   for (const bad of [{ ping: { ok: true } }, {}, { status: '200', body: {} }, { status: 200.5 }, { status: null }, { status: -1 }, { status: 99999 }]) {
     const { t, ports } = setup(undefined, 1000);
     const p = callClaude({}, { transport: t, sleep: async () => {} });
-    while (!ports[0]?.sent.length) await new Promise((r) => setImmediate(r)); // the request is on the port
+    for (let i = 0; !ports[0]?.sent.length; i++) { // the request is on the port
+      if (i > 100) assert.fail('the request never reached the port');
+      await new Promise((r) => setImmediate(r));
+    }
     ports[0].reply({ id: ports[0].sent[0].id, ...bad });
     await assert.rejects(p, (e) => e.kind === 'host_bug', JSON.stringify(bad));
   }

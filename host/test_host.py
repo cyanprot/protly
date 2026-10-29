@@ -243,20 +243,14 @@ class HostileInput(unittest.TestCase):
         self.assertEqual(reply['body']['error']['type'], 'host_error')
 
     def test_deeply_nested_api_body_gets_a_reply_not_a_hang(self):
-        deep = '[' * 20000 + ']' * 20000
-
-        class Resp(FakeResp):
-            def read(self):
-                return ('{"content": ' + deep + '}').encode()
-        try:
-            r = h.handle({'id': 8, 'body': {}}, make_home(), urlopen=mock.Mock(return_value=Resp(200, {})))
-        except RecursionError:
-            r = h.local_error(8, 'host_error', 'RecursionError')  # json.loads itself gave up: safe_handle's path
+        body = []
+        for _ in range(100000):  # deeper than json.dumps can encode (its C encoder allows a few thousand)
+            body = [body]
         out = io.BytesIO()
-        h.write_message(out, r)
+        h.write_message(out, {'id': 8, 'status': 200, 'body': body})
         out.seek(0)
-        reply = h.read_message(out)
-        self.assertEqual(reply['id'], 8)
+        r = h.read_message(out)
+        self.assertEqual((r['id'], r['status'], r['body']['error']['type']), (8, 0, 'host_error'))
 
     def test_write_message_survives_an_unencodable_reply(self):
         out = io.BytesIO()

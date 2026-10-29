@@ -71,7 +71,8 @@ export function mountPanel(cur) {
     if (!c) return;
     $('suggest').disabled = true;
     try {
-      $('memo').value = await ask({ type: 'suggestMemo', threadId: c.threadId, context: contextFor(c.root) });
+      const memo = await ask({ type: 'suggestMemo', threadId: c.threadId, context: contextFor(c.root) });
+      $('memo').value = String(memo).slice(0, LIMITS.memo); // .value ignores maxLength; Save would be refused
     } catch (e) {
       showToast(`Memo suggestion failed: ${errorText(e)}`, { transient: true, error: true });
     } finally {
