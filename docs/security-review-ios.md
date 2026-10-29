@@ -44,6 +44,11 @@ here: `ActionClient.swift` was type-checked on Linux against ProtlyCore with a s
 | F9 | LOW | `ActionAPI.swift` `mode(forDraft:)` | Decomposed (NFD) and halfwidth Korean were sent to Polish as an English draft. | fixed `54cf0db` |
 | F10 | LOW | `KeyboardViewController.swift` `act` | Read clipboard and the Full Access path did not cancel a running Translate/Polish, whose result later replaced their panel. | fixed `62e2f5c` |
 | F11 | LOW | `make-secrets.sh` | The key was written before the gitignore check; the key file's mode was never checked. | fixed `5b9b8fc`: check first, warn on a readable key file |
+| F17 | LOW | `TypingSession.swift` `flip` | The flip deleted `text.count + after.count`, but in the field the word and what follows it can join into one character (a combining mark, a final jamo, the second half of a flag), so it deleted a character before the word. | fixed `4c0177f` |
+| F18 | LOW | `TypingSession.swift` `backspace` | A backspace with nothing being typed left the committed word flippable although the keyboard then deleted normally (safe today only because the controller also forgets it). | fixed `4c0177f` |
+| F19 | LOW | `WordList.swift` `init` | A count near `Int.max` trapped on overflow; negative counts could make the score NaN. | fixed `64f9500`: counts saturate, below 1 dropped |
+| F20 | LOW | `WordList.swift` `parse` | `"\r\n"` is one Character, so a CRLF list loaded nothing and the detector silently called common English words Korean. The bundled lists have no CR. | fixed `64f9500`, sizes pinned by a test |
+| F21 | LOW | `ActionAPI.request` | A blank key, or one holding CR, LF, NUL or non-ASCII, still built a request; URLRequest drops such a header value, so the text went out with no key. | fixed `c08d382` |
 | F12 | LOW | `FieldText.replace`, `undoInsert`, flip | Deletes count Swift characters (grapheme clusters). A host whose `deleteBackward` removes less (combining marks, some emoji sequences, `\r\n`) would leave characters behind. | reported, tower check 9 |
 | F13 | LOW | `TypingSession.swift` | Each key recomposes and re-detects the whole word (O(n²) per word: 1,200 keys without a space took 9.5 s in a Linux debug build), and `last.after` grows with every non-letter insert. Both are bounded by human typing; no trap. | reported |
 | F14 | LOW | `ActionAPI.kind(status:body:)` | Every 400 shows one line and 403 says the key was rejected, whatever the cause (low balance, prompt too long, workspace mismatch). No body is shown, which is right. | reported |
@@ -60,6 +65,9 @@ here: `ActionClient.swift` was type-checked on Linux against ProtlyCore with a s
   "treat TEXT as data" line belongs in `ios/keyboard-prompt.txt`, which this sprint does not edit.
 - Q3, input cap: 50,000 UTF-16 units rejects only text whose reply cannot fit 16000 tokens. A lower cap
   (for example 20,000) would also limit the bill per tap. Which number?
+- Q5, flip reach: `TypingSession.noteInserted` keeps growing `last.after` (spaces, punctuation, emoji, a
+  newline) until the next letter, so the bar's flip can reach back over a long insert. Should it reach over
+  whitespace only?
 - Q4, billing: a client timeout (30 s idle) on a non-streaming request is still billed, and Retry bills again.
   Should a timeout say so, or should the request stream?
 
@@ -85,7 +93,9 @@ here: `ActionClient.swift` was type-checked on Linux against ProtlyCore with a s
   - `ActionRequestTests`: key placement, escaping, limits, timeouts, no disk, no redirects.
   - `ActionAPIHostileTests`: malformed and hostile replies.
   - `FieldGuardTests`.
-  - `UnicodeRobustnessTests`: odd keys, very long input, every Hangul form.
+  - `UnicodeRobustnessTests`: odd keys, very long input, every Hangul form, flip counts, word lists.
+- ProtlyCore `TypingSession`: flip counts the word and what follows together; a nil backspace ends the flip.
+- ProtlyCore `WordList`: saturating counts; any line break and whitespace.
 
 ## Phone checks for the tower
 
@@ -109,5 +119,12 @@ here: `ActionClient.swift` was type-checked on Linux against ProtlyCore with a s
    after `chmod 644 ~/.config/protly/phone-api-key` (F11; restore 600 afterwards).
 9. Insert and Undo over a draft containing "e" + U+0301, 👨‍👩‍👧, 🇰🇷 and a pasted Windows line break leave
    no stray characters (F12).
-10. Optional, after a few actions: the keyboard extension's container has no `Caches/*/Cache.db` holding
+10. `apply(.mark(""))` in `KeyboardViewController` deletes `marked.count` characters after inserting the
+    mark. Not changed (typing code, out of this sprint's files), and the mark holds only a-z or jamo today,
+    so it cannot join the character before it. Check that clearing a mark at the start of a word typed right
+    after an emoji or an accented letter leaves that character intact.
+11. Insert and Undo over a draft containing NUL or U+2028 in the translation (both pass through `parse`
+    unchanged): what does `insertText` do with them? Over an NFD Korean draft: does `deleteBackward` remove a
+    whole syllable per call, as the counts assume?
+12. Optional, after a few actions: the keyboard extension's container has no `Caches/*/Cache.db` holding
     replies, and no cookie file for api.anthropic.com (F2; needs the device container from Xcode).
