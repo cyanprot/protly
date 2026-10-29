@@ -173,6 +173,14 @@ export function contextFor(root) {
   return readMessages(root).slice(-CONTEXT_N).map(({ from, text }) => ({ from, text: cut(text) }));
 }
 
+// incomingItems split so no request carries more than LIMITS.items (the background refuses a longer list).
+export function incomingBatches(msgs) {
+  return chunks(incomingItems(msgs).todo, LIMITS.items).map(incomingItems);
+}
+
+// My own messages for the hover-original lookup, at most LIMITS.texts per request.
+export const sentBatches = (msgs) => chunks(msgs.filter((m) => m.from === 'me'), LIMITS.texts);
+
 // The partner messages worth translating, and the request items for them. A message over the size limit is
 // skipped (left as it is): the background would refuse the whole batch for it.
 export function incomingItems(msgs) {
@@ -183,13 +191,17 @@ export function incomingItems(msgs) {
 // updateLang: true only for the initial scan and fresh arrivals (see Task 12).
 async function translate(msgs, mode, updateLang) {
   if (!current) return;
-  const { todo, items } = incomingItems(msgs);
-  if (!todo.length) return;
-  if (todo.length > LIMITS.items) { // a long thread after a re-render: one message per chunk, newest decides the language
-    const parts = chunks(todo, LIMITS.items);
-    parts.forEach((part, i) => translate(part, mode, updateLang && i === parts.length - 1));
+  const batches = incomingBatches(msgs);
+  if (!batches.length) return;
+  if (batches.length > 1) { // a long thread after a re-render: one request per batch, in order; the newest sets the language
+    const threadId = current.threadId;
+    for (const [i, b] of batches.entries()) {
+      if (current?.threadId !== threadId) return; // switched threads: these rows are not the new thread's
+      await translate(b.todo, mode, updateLang && i === batches.length - 1);
+    }
     return;
   }
+  const [{ todo, items }] = batches;
   const threadId = current.threadId;
   try {
     const data = await ask({ type: 'incoming', threadId, context: contextFor(current.root), items, updateLang });
@@ -215,9 +227,14 @@ async function translate(msgs, mode, updateLang) {
 export const sentOriginal = (map, text) => (Object.hasOwn(map, text) && typeof map[text] === 'string' ? map[text] : null);
 
 async function hoverSent(msgs) {
-  const mine = msgs.filter((m) => m.from === 'me');
-  if (!mine.length || !current) return;
-  if (mine.length > LIMITS.texts) { chunks(mine, LIMITS.texts).forEach(hoverSent); return; }
+  const batches = sentBatches(msgs);
+  if (!batches.length || !current) return;
+  if (batches.length > 1) {
+    const threadId = current.threadId;
+    for (const b of batches) { if (current?.threadId !== threadId) return; await hoverSent(b); }
+    return;
+  }
+  const [mine] = batches;
   const threadId = current.threadId;
   try {
     const map = await ask({ type: 'lookupSent', threadId, texts: mine.map((m) => m.text) });

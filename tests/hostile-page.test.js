@@ -247,11 +247,17 @@ test('a thread longer than the item limit goes out in chunks that each pass the 
   const { checkShape } = await import('../src/lib/messages.js');
   assert.deepEqual(chunks([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
   assert.deepEqual(chunks([], 2), []);
-  const msgs = Array.from({ length: LIMITS.items * 2 + 1 }, (_, i) => ({ from: 'partner', text: `hello ${i}` }));
-  const parts = chunks(incomingItems(msgs).todo, LIMITS.items);
-  assert.equal(parts.length, 3);
-  for (const part of parts) checkShape('incoming', { threadId: '1', context: [], items: incomingItems(part).items });
-  assert.equal(parts.flat().length, msgs.length);
+  const { incomingBatches, sentBatches } = await import('../src/content/main.js');
+  const msgs = Array.from({ length: LIMITS.items * 2 + 1 }, (_, i) => ({ from: i % 2 ? 'me' : 'partner', text: `hello ${i}` }));
+  const both = [...msgs, ...msgs.map((m) => ({ ...m, from: m.from === 'me' ? 'partner' : 'me' }))];
+  const batches = incomingBatches(both);
+  assert.ok(batches.length > 1);
+  for (const b of batches) checkShape('incoming', { threadId: '1', context: [], items: b.items });
+  assert.deepEqual(batches.flatMap((b) => b.todo), incomingItems(both).todo); // all of them, in order
+  const sent = sentBatches(both);
+  assert.ok(sent.length > 1);
+  for (const b of sent) checkShape('lookupSent', { threadId: '1', texts: b.map((m) => m.text) });
+  assert.equal(sent.flat().length, both.filter((m) => m.from === 'me').length);
 });
 
 test('Instagram: an Enter the user did not press never sends Hangul or an unconfirmed draft', async () => {
