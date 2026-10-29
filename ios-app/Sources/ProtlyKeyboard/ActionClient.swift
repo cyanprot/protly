@@ -14,7 +14,13 @@ enum ActionClient {
         case .failure(let e): return .failure(e)
         }
         do {
-            let (data, resp) = try await session.data(for: req)
+            let (bytes, resp) = try await session.bytes(for: req)
+            // Read at most maxResponseBytes: a huge body must not take the keyboard's memory.
+            var data = Data()
+            for try await byte in bytes {
+                guard data.count < ActionAPI.maxResponseBytes else { return .failure(ActionError(.parse)) }
+                data.append(byte)
+            }
             return ActionAPI.parse(status: (resp as? HTTPURLResponse)?.statusCode ?? 0, body: data)
         } catch let error as URLError where error.code == .timedOut {
             return .failure(ActionError(.timeout))

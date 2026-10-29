@@ -68,6 +68,12 @@ public enum ActionAPI {
     /// Longest text sent, in UTF-16 units. A longer text cannot fit the 16000-token reply anyway, and a
     /// multi-megabyte clipboard would cost the keyboard its memory and the account its money.
     public static let maxInputLength = 50_000
+    /// Largest reply read. 16000 tokens of output are about 100 KB; anything this big is not a reply.
+    public static let maxResponseBytes = 2_000_000
+    /// Seconds without a byte (the API sends the reply whole, so this is also the wait for it), and the
+    /// cap on the whole request, so a reply dribbled byte by byte still ends.
+    public static let idleTimeout: TimeInterval = 30
+    public static let totalTimeout: TimeInterval = 90
 
     /// The request for one action, or the error to show without sending anything.
     public static func request(mode: ActionMode, text: String, system: String, apiKey: String) -> Result<URLRequest, ActionError> {
@@ -75,7 +81,7 @@ public enum ActionAPI {
         guard let url = URL(string: url), let body = try? body(mode: mode, text: text, system: system) else {
             return .failure(ActionError(.badRequest))
         }
-        var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
+        var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: idleTimeout)
         req.httpMethod = "POST"
         req.httpShouldHandleCookies = false
         for (name, value) in headers(apiKey: apiKey) { req.setValue(value, forHTTPHeaderField: name) }
@@ -91,6 +97,8 @@ public enum ActionAPI {
         c.httpShouldSetCookies = false
         c.urlCredentialStorage = nil
         c.requestCachePolicy = .reloadIgnoringLocalCacheData
+        c.timeoutIntervalForRequest = idleTimeout
+        c.timeoutIntervalForResource = totalTimeout
         return c
     }
 
@@ -127,6 +135,7 @@ public enum ActionAPI {
 
     /// HTTP status and body -> result. Thinking blocks are skipped; the answer is the joined text blocks.
     public static func parse(status: Int, body: Data) -> Result<ActionResult, ActionError> {
+        guard body.count <= maxResponseBytes else { return .failure(ActionError(.parse)) }
         guard status == 200 else { return .failure(ActionError(kind(status: status, body: body))) }
         guard let resp = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else {
             return .failure(ActionError(.parse))

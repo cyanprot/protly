@@ -41,4 +41,19 @@ final class ActionRequestTests: XCTestCase {
         XCTAssertNil(c.urlCredentialStorage)
         XCTAssertEqual(c.requestCachePolicy, .reloadIgnoringLocalCacheData)
     }
+
+    func testARequestEndsInBoundedTimeAndSize() throws {
+        // 30 s without a byte fails, as before; a reply dribbled byte by byte also ends, at 90 s in all.
+        XCTAssertEqual(try request("hi").get().timeoutInterval, 30)
+        let c = ActionAPI.sessionConfiguration()
+        XCTAssertEqual(c.timeoutIntervalForRequest, 30)
+        XCTAssertEqual(c.timeoutIntervalForResource, 90)
+        // A 16000-token reply is far below the cap; a bigger body is not parsed at all.
+        XCTAssertGreaterThanOrEqual(ActionAPI.maxResponseBytes, 1_000_000)
+        let ok = #"{"stop_reason":"end_turn","content":[{"type":"text","text":"{\"translation\":\"Hi\",\"back_translation\":\"\"}"}]}"#
+        let padded = String(ok.dropLast()) + #","pad":""# + String(repeating: "x", count: ActionAPI.maxResponseBytes) + #""}"#
+        XCTAssertEqual(try ActionAPI.parse(status: 200, body: Data(ok.utf8)).get().translation, "Hi")
+        guard case .failure(let e) = ActionAPI.parse(status: 200, body: Data(padded.utf8)) else { return XCTFail("parsed") }
+        XCTAssertEqual(e.kind, .parse)
+    }
 }
