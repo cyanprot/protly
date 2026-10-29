@@ -5,3 +5,4 @@ dist/
 ios-app/xtool/
 ios-app/.swiftpm/
 ios-app/Sources/ProtlyKeyboard/Secrets.swift
+ios-app/.bsp/
