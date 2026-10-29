@@ -18,7 +18,7 @@ export const ERRORS = {
 // Kinds worth a page toast (once per text), not only an inline message. Replaces bannerFor's list.
 export const GLOBAL_KINDS = new Set(['auth', 'host', 'host_bug', 'spend_limit', 'bad_request', 'stale']);
 export function errorText(e) {
-  const base = ERRORS[e?.kind];
+  const base = Object.hasOwn(ERRORS, e?.kind ?? '') ? ERRORS[e.kind] : null; // kind crosses the message boundary
   if (!base) return String(e?.message || e || 'Unknown error');
   return e.kind === 'host_bug' || e.kind === 'bad_request' ? `${base}: ${e.message}` : base;
 }

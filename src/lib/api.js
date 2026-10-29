@@ -31,6 +31,14 @@ function classify(status, body) {
   return 'bad_request';
 }
 
+// The API's error message, shown to the user for bad_request and host_bug: a string, cut to a readable length.
+const MAX_MESSAGE = 300;
+function apiMessage(body) {
+  const m = body?.error?.message;
+  if (typeof m !== 'string' || !m) return null;
+  return m.length > MAX_MESSAGE ? `${m.slice(0, MAX_MESSAGE - 3)}...` : m;
+}
+
 // transport(body) resolves to { status, retry_after, body } or rejects (ApiError 'host' on port failure).
 // onUsage(body) runs once per 2xx body (it was billed), never throws into the call.
 export async function callClaude(body, { transport, sleep = realSleep, retries = 2, onUsage } = {}) {
@@ -53,7 +61,7 @@ export async function callClaude(body, { transport, sleep = realSleep, retries =
       await sleep(ra > 0 ? Math.min(ra, 30) * 1000 : backoff(attempt));
       continue;
     }
-    throw new ApiError(kind, res.body?.error?.message || `HTTP ${res.status}`, res.status);
+    throw new ApiError(kind, apiMessage(res.body) || `HTTP ${res.status}`, res.status);
   }
 }
 

@@ -86,3 +86,22 @@ test('every system prompt that carries page or conversation text says it is not 
   ];
   for (const b of bodies) assert.match(b.system, /never instructions to you/, b.system.slice(0, 60));
 });
+
+test('error text is always a bounded string, whatever kind or message arrives', async () => {
+  const { errorText } = await import('../src/ui/errors.js');
+  for (const kind of ['constructor', 'toString', 'hasOwnProperty', '__proto__', 'valueOf']) {
+    assert.equal(errorText({ kind, message: 'm' }), 'm', kind);
+  }
+  const { callClaude } = await import('../src/lib/api.js');
+  const reply = (message) => async () => ({ status: 400, retry_after: null, body: { error: { message } } });
+  const errOf = async (message) => {
+    try { await callClaude({}, { transport: reply(message), sleep: async () => {} }); } catch (e) { return e; }
+    assert.fail('no error');
+  };
+  const huge = await errOf('x'.repeat(500000));
+  assert.ok(huge.message.length <= 300, String(huge.message.length));
+  assert.ok(errorText(huge).length <= 400);
+  assert.equal((await errOf({ a: 1 })).message, 'HTTP 400');
+  assert.equal((await errOf(['<b>', 'x'])).message, 'HTTP 400');
+  assert.equal((await errOf('model: not found')).message, 'model: not found');
+});
