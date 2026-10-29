@@ -4,4 +4,7 @@ import regular from '../ui/fonts/protly-mono-400.woff2';
 import medium from '../ui/fonts/protly-mono-500.woff2';
 import { createInstance } from './instance.js';
 
-globalThis.__protly ??= createInstance({ doc: document, fonts: { regular, medium } });
+// Only a real instance counts: an element with id or name "__protly" shows through window's named access.
+if (typeof globalThis.__protly?.run !== 'function') {
+  globalThis.__protly = createInstance({ doc: document, fonts: { regular, medium } });
+}
