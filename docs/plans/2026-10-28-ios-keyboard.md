@@ -3786,19 +3786,1615 @@ whole-field read into Sprint 6's re-plan; item 7 over 10 s puts streaming into S
 
 ---
 
-## Sprint 6: Completion, autocorrect, learning (contract; detailed after Sprint 5)
+## Sprint 6: Completion, suggestions, learning
 
-Written in detail after Sprint 5's phone check, because the bar's final slot layout and the measured latency
-and memory come from it.
+Written 2026-10-29 after Sprint 5's phone check, revised the same day after an independent review. Delivers
+Apple-like suggestions in the bar's right slot (English completion, one-typo and apostrophe fixes, Korean
+whole-word completion, the phone's text replacements), words the user teaches by flipping, the two open detector
+carry-overs (걍, 걔), and a memory measurement. **Autocorrect is off** (user decision): nothing is ever replaced
+on space, return or punctuation; a suggestion goes in only when the slot is tapped.
 
-- English completion and autocorrect on space (frequency rule, never for learned or lexicon words, undone by
-  backspace like Apple); Korean whole-word completion on key prefixes; text replacements from
-  `requestSupplementaryLexicon` (no Full Access needed; hop to the main actor in its completion, it is called on
-  an XPC queue). `UITextChecker` has `ko_KR` completions on iOS 27 (first call 50 ms to 2 s: warm it up).
-- Learned words in the keyboard's own container (no App Group), ranking first, also fed to the detector;
-  bar flips are recorded as learning signal.
-- Memory: measured on device; budget 40 MB (no published limit; 48-50 MB reported). Word lists move to
-  memory-mapped sorted binaries (`Data(contentsOf:options:.alwaysMapped)`, searched in place) if the
-  measurement asks for it. Check the SwiftUI hosting leak reported by sky-earth-human (about 1 MB per appearance).
-- Success: Apple-like suggestions in both languages; corpus accuracy not below Sprint 3; memory under budget
-  after 30 keyboard appearances.
+**Order.** Two cloud campaigns touch the same code and land first. Security-review Sprint 002 (already flying,
+plan `docs/plans/2026-10-29-security-review.md` L78-112) owns all of `ios-app/ProtlyCore` and the action,
+clipboard and field-reading code of the keyboard. Keyboard-visual PR #1 (branch
+`origin/opus/intelligent-bohr-c7kj6u`) adds `ProtlyHeight.swift`, one `ProtlyHeight.pin(self)` line after
+`super.viewDidLoad()`, and a vendored hosting patch.
+
+1. Now, on a local branch `sprint6` made from main: Tasks 6.1 and 6.2, which add the new files
+   `LearnedWords.swift` and `Suggester.swift` and their tests. New files cannot collide. The one exception is
+   that Task 6.2 inserts one function, `completion(of:)`, after `WordList.hasPrefix`, because `Suggester` needs a
+   completion search over the list's private arrays. It only adds code: the unused `bestFrequency` stays until
+   step 3, so a caller that 002 might add to it still builds after the rebase.
+2. Wait for the security 002 PR to merge into main.
+3. Rebase `sprint6` onto main. If `WordList.swift` conflicts, keep 002's change and re-insert `completion(of:)`.
+   Then Tasks 6.3, 6.4, 6.5 and 6.6 (6.3 deletes `bestFrequency` only if nothing calls it).
+   Every edit in them is anchored. From here on, add S, the number of tests 002 added, to every expected count.
+4. Visual PR #1 merges into main.
+5. Rebase again, then Task 6.7. Its edits 4 and 5 sit beside field-reading code that 002 may have changed:
+   edit 4 inserts `pickSuggestion()` above `noticeFieldMoved()` and calls it, and edit 5 adds a line to
+   `refreshMode()` right before its `refreshField()` call. Read 002's version of those two functions first.
+6. Task 6.8, the phone check.
+
+**Verified while planning (2026-10-29, scratch worktree of main at 1b4f408):** every code block below was applied
+task by task. `swift test` gave the counts stated per task (49 -> 54 -> 62 -> 65 -> 67 -> 74), and every "fails
+with" line is the real first compiler error. The eval output in Task 6.4 is the real output; it was unchanged
+after Task 6.6. Every anchored edit's old text occurs exactly once on main. `xtool dev build` with Task 6.7
+applied printed `Build complete!` twice: once on main, and once on main plus visual PR #1's diff. Neither build
+had a warning from protly's own files (all 7 warnings are in vendored KeyboardKit). `npm test` gave `# pass 290`,
+`# fail 0`, Python `OK`. The counts assume the 49 tests at 1b4f408, so steps 3-6 add S.
+
+**Anchored edits.** Each edit replaces text that occurs exactly once in the file. If, after a rebase, the old text
+is not there exactly once, a campaign changed that spot: read its change, make the same edit by hand around it,
+and keep its change. No file is replaced whole.
+
+Run every command from the repo root after `. ~/.local/share/swiftly/env.sh`. The test line used below is
+`swift test --package-path ios-app/ProtlyCore 2>&1 | grep -E "error|Executed" | tail -1`. When the build fails,
+it prints only `error: fatalError`. The first compiler error comes from the first-error line:
+`swift test --package-path ios-app/ProtlyCore 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | command grep -m1 -oE 'swift:[0-9]+:[0-9]+: error: .*'`
+(`grep` in this shell is ugrep; `command grep` is GNU grep).
+
+### Decisions (they amend the contract)
+
+1. **One suggestion, in the right slot. Nothing is replaced automatically.** This is the user's decision of
+   2026-10-29 and it drops the contract's "autocorrect on space, undone by backspace". Left stays the flip, center
+   stays Undo / Translate / Polish / Read clipboard. The right slot shows a fix for the word being typed when
+   there is one (Decisions 2 and 3), else a completion. It has no highlight. A tap takes the suggestion and types
+   a space; nothing else applies it. Space, return and punctuation never replace anything, so the field keeps
+   exactly what was typed. KeyboardKit's own autocomplete stays off (`Keyboard+Services.swift:56`, `.disabled`);
+   `ProtlyBar` is the only suggestion UI. No next-word prediction after a space.
+2. **English fixes** (`Suggester.fix`) come in this order: a text replacement (Decision 3), then a contraction
+   typed without its apostrophe, from a table (i -> I, im -> I'm, dont -> don't, ...), then one typo. A typo is
+   a missed key, an extra key, a QWERTY neighbour or two keys swapped, and the fix is the most frequent list word
+   of 3+ letters with count >= 5,000 (about the 6,300 most common words). No typo fix is offered for a word 1-2
+   letters long, a list word, a learned word, a lexicon word (text replacement or contact name), chat slang
+   (lmao, pls, irl, wyd, ...), a word flipped by hand, or typed letters that a common longer word (count >=
+   5,000) starts with: `abo` is on its way to "about", not a typo of "ago". Measured on the real lists while
+   planning: of the 2,076 words of 5+ letters among en_50k's top 3,000, 700 showed a wrong typo fix while being
+   typed without that last rule, and none with it. The only wrong offer left is "I'm" from the contraction table
+   while typing the 8 of them that start with `im` (important, imagine, ...). The other limits were measured the
+   same way: at count 1,000 subtitle junk won (lmao -> "mao", brb -> "barb", wyd -> "syd", thx -> "th"), hence
+   5,000, the 3-letter target rule and the slang list. With nothing applied automatically, they keep bad offers
+   out of the slot. `FrequencyWords` splits don't into "don" + "'t", so the stems (don, didn, isn, ...) show as
+   the contraction in completions and are never a fix. Korean gets no typo fixes.
+3. **Text replacements and contact names** come from `requestSupplementaryLexicon` (Settings > General >
+   Keyboard > Text Replacement, plus contact names; no Full Access needed) and work in both languages. This is
+   the only way a third-party keyboard gets text replacements. When a shortcut is typed, the slot shows its phrase
+   (`omw` -> "On my way!"); a tap puts the phrase in, and space leaves the shortcut. The shortcut is looked up in
+   both readings of the keys, the current language first, so `ty` still finds "Thank you" after a Korean word
+   turned it into 쇼. A contact name comes as its own shortcut ("will" -> "Will"). An entry whose text equals its
+   shortcut apart from case is a known word only, never a fix, so a contact named Will cannot turn `will` into
+   "Will".
+4. **Korean: completion only, on key prefixes.** `dkssu` (안녀) completes to 안녕, `dkssudg` (안녕ㅎ) to 안녕하세요.
+   List words are stored by keys and rendered back with `Hangul.compose` (all 49,314 encodable ko_50k words
+   round-trip exactly; `KeyEncoderTests` already checks it). Completions come from ko_50k and learned words
+   only. **UITextChecker is not used**: the contract's warm-up and its `ko_KR` gap-fill are cut.
+5. **Learning is by flip only.** A word is taught when the user flips it after commit, or flips it while typing
+   and then commits it (or picks its completion) in a language that differs from the detected one; a pick after
+   such a flip teaches the picked word. Every flip of a committed word also takes one count off its old reading
+   (a no-op when that was never learned). So a word flipped there and back ends up learned once, only in its
+   final language, and a word learned English on an earlier day and now flipped to Korean is not left learned in
+   both (where the two bonuses would cancel and the flip would change nothing). A double flip while typing
+   returns to the detected reading and teaches nothing. A pick without a flip teaches nothing: a pick of 해 for
+   `g` would have taught Korean "go". Learned words rank first in completions, never get a typo fix, and feed the
+   detector: a learned word counts as known in its language, scores at least relative frequency 1e-4, plus a 1.0
+   bonus. Learned 걍 then wins after a Korean word and at a message start but "get rid of" stays English, and one
+   flip of "go" cannot take 해 (tests check both at the real frequencies). At most 1,000 words per language, the
+   least used goes first, and keys longer than 32 characters are not learned. The store holds typed text, so it
+   stays bounded at 2 x 1,000 entries of at most 32 key characters each. It is saved as JSON in the keyboard's
+   own `UserDefaults` (no App Group).
+6. **Detector carry-overs.** 걍 걔 꽤 얘 쟤 뜰 are missing from ko_50k (a subtitle list); they join the Korean list
+   at count 400. A manual shift on a doubled-jamo key inside a word (`rO` 걔, `dO` 얘, `goT` 했) is Korean unless
+   every key is shifted (caps lock). Eval: chat korean 98.51% -> 100%, tatoeba-kor 99.83% -> 99.95%, tatoeba-eng
+   unchanged at 99.55%. 새 (`to`) stays a known loss: no rule can take "to" from English; the flip fixes it.
+7. **Memory** is read on the phone from `task_vm_info.phys_footprint` (what iOS counts against an extension) in the
+   right slot of a measuring build (`showsMemory = true`, ships false). Budget 40 MB after 30 keyboard
+   appearances. Memory-mapped word lists are NOT planned: they are written only if the measurement is over budget.
+8. **Speed (release, laptop):** completion 0.25 ms for a one-letter prefix (about 5,000 keys scanned), 15 us for
+   two letters; a typo-fix search 0.12 ms. The slot is recomputed after every key; no cache needed.
+
+**Cut, not deferred:** autocorrect on space and its one-backspace undo, and UITextChecker (its warm-up, its
+main-actor workaround, and Korean gap-fill).
+
+**Deferred, with reasons:**
+- Space-drag smoothness and vertical cursor movement (Sprint 4 item 10): the fix is in KeyboardKit's space gesture
+  and the controller's text-position code while the visual campaign is changing the vendored tree and the
+  controller, and a keyboard can only move by character offsets (a vertical move needs line lengths that soft
+  wraps hide). Its own small sprint after the visual campaign lands.
+- A better whole-field read and streaming (Sprint 5 items 5 and 7): item 7 was "not slow", and item 5's partial
+  read is refused safely. Not needed now.
+- Fixing a SwiftUI hosting leak: Task 6.8 measures it; a fix would be in `ProtlyRoot` and hosting, the visual
+  campaign's files.
+- The keyboard height instability: the visual campaign.
+
+### Files added or changed by Sprint 6
+
+```
+ios-app/ProtlyCore/
+  Sources/ProtlyCore/LearnedWords.swift           (6.1, new)
+  Sources/ProtlyCore/Suggester.swift              (6.2, new)
+  Sources/ProtlyCore/WordList.swift               (6.2: completion added; 6.3: korean adding, unused bestFrequency deleted)
+  Sources/ProtlyCore/ChatShorthand.swift          (6.3: missing words)
+  Sources/ProtlyCore/LanguageDetector.swift       (6.3: bundled, mid-word shift; 6.5: learned words; one edit per spot)
+  Sources/ProtlyCore/TypingSession.swift          (6.6, anchored edits)
+  Tests/ProtlyCoreTests/{LearnedWords,Suggester,CarryOver,LearnedDetector,SuggestionSession}Tests.swift   (new)
+ios-app/Sources/ProtlyKeyboard/
+  Words.swift                                     (6.7, new)
+  KeyboardViewController.swift, ProtlyBar.swift   (6.7, anchored edits)
+docs/ios-keyboard-notes.md                        (6.4, 6.8)
+```
+
+---
+
+### Task 6.1: Learned words (order step 1)
+
+Words the user taught by flipping (Task 6.6 feeds it). Keyed like the word lists, so the detector (Task 6.5) and
+the completions (Task 6.2) read them the same way. A new file only.
+
+**Files:**
+- Create: `ios-app/ProtlyCore/Sources/ProtlyCore/LearnedWords.swift`
+- Test: `ios-app/ProtlyCore/Tests/ProtlyCoreTests/LearnedWordsTests.swift`
+
+**Step 0: Branch.** `git switch -c sprint6 main`
+
+**Step 1: Write the failing tests**
+
+`ios-app/ProtlyCore/Tests/ProtlyCoreTests/LearnedWordsTests.swift`:
+
+```swift
+import Foundation
+import XCTest
+@testable import ProtlyCore
+
+final class LearnedWordsTests: XCTestCase {
+    func testWordsAreKeyedLikeTheLists() {
+        var l = LearnedWords()
+        l.learn("iPhone", as: .english)
+        l.learn("걍", as: .korean)
+        l.learn("걍", as: .korean)
+        l.learn("don't", as: .english)  // not typable as one word: ignored
+        XCTAssertEqual(l.count(of: "iphone", in: .english), 1)
+        XCTAssertEqual(l.count(of: "rid", in: .korean), 2)
+        XCTAssertEqual(l.count(of: "rid", in: .english), 0)
+        XCTAssertTrue(l.hasPrefix("ri", in: .korean))
+        XCTAssertFalse(l.hasPrefix("ri", in: .english))
+        XCTAssertEqual(l.changes, 3)
+    }
+
+    func testCompletionIsTheMostUsedLongerWord() {
+        var l = LearnedWords()
+        l.learn("Theo", as: .english)
+        l.learn("Theo", as: .english)
+        l.learn("thermos", as: .english)
+        XCTAssertEqual(l.completion(of: "th", in: .english), "Theo")
+        XCTAssertEqual(l.completion(of: "ther", in: .english), "thermos")
+        XCTAssertNil(l.completion(of: "theo", in: .english))  // not longer than what was typed
+    }
+
+    func testUnlearnTakesBackOneLearn() {
+        var l = LearnedWords()
+        l.learn("걍", as: .korean)
+        l.learn("걍", as: .korean)
+        l.unlearn("걍", as: .korean)
+        XCTAssertEqual(l.count(of: "rid", in: .korean), 1)
+        l.unlearn("걍", as: .korean)
+        XCTAssertEqual(l.count(of: "rid", in: .korean), 0)
+        XCTAssertFalse(l.hasPrefix("ri", in: .korean))
+        l.unlearn("걍", as: .korean)  // nothing left to take back: no change
+        XCTAssertEqual(l.changes, 4)
+    }
+
+    func testLongWordsAreNotLearned() {
+        var l = LearnedWords()
+        let max = LearnedWords.maxKeyLength
+        l.learn(String(repeating: "a", count: max + 1), as: .english)
+        l.learn(String(repeating: "a", count: max), as: .english)
+        XCTAssertEqual(l.size(.english), 1)
+        XCTAssertEqual(l.changes, 1)
+        // Korean counts keys, not syllables: 안 is three keys (dks).
+        XCTAssertEqual(LearnedWords.key(of: String(repeating: "안", count: 10), in: .korean)?.count, 30)
+        XCTAssertNil(LearnedWords.key(of: String(repeating: "안", count: 11), in: .korean))
+    }
+
+    func testLimitDropsTheLeastUsedAndJSONKeepsCounts() throws {
+        var l = LearnedWords()
+        l.learn("keep", as: .english)
+        l.learn("keep", as: .english)
+        let letters = Array("abcdefghijklmnopqrstuvwxyz")
+        for i in 0..<LearnedWords.limit {
+            l.learn("x" + String(letters[i / 26 % 26]) + String(letters[i % 26]) + String(letters[i / 676]), as: .english)
+        }
+        XCTAssertEqual(l.size(.english), LearnedWords.limit)
+        XCTAssertEqual(l.count(of: "keep", in: .english), 2)
+        let back = try JSONDecoder().decode(LearnedWords.self, from: JSONEncoder().encode(l))
+        XCTAssertEqual(back.count(of: "keep", in: .english), 2)
+        XCTAssertEqual(back.size(.english), LearnedWords.limit)
+    }
+}
+```
+
+**Step 2: Run them to see them fail**
+
+Expected: the test line prints `error: fatalError`; the first-error line prints
+`swift:7:17: error: cannot find 'LearnedWords' in scope`.
+
+**Step 3: Implement**
+
+`ios-app/ProtlyCore/Sources/ProtlyCore/LearnedWords.swift`:
+
+```swift
+// Words the user taught protly by flipping a word to the other language. Keyed like the word lists (English:
+// lowercase; Korean: key string), so the detector and the completions read them the same way. Saved by the
+// keyboard in its own container as JSON.
+
+public struct LearnedWords: Sendable, Equatable, Codable {
+    struct Entry: Sendable, Equatable, Codable {
+        var text: String
+        var count: Int
+    }
+
+    private var english: [String: Entry] = [:]
+    private var korean: [String: Entry] = [:]
+    /// Bumped on every change, not saved: the keyboard saves when it moved.
+    public private(set) var changes = 0
+    /// Per language. A new word past the limit pushes out the least used one.
+    public static let limit = 1000
+    /// Longer keys are not learned. Typed text is saved, so the store stays small: at most
+    /// 2 x 1,000 x 32 key characters.
+    public static let maxKeyLength = 32
+
+    private enum CodingKeys: String, CodingKey { case english, korean }
+
+    public init() {}
+
+    /// The list key of a word, nil when it cannot be typed as one word (English: a-z only; Korean: Hangul only)
+    /// or its key is longer than `maxKeyLength`.
+    public static func key(of text: String, in language: Language) -> String? {
+        guard !text.isEmpty, text.count <= maxKeyLength else { return nil }  // a key is never shorter than its text
+        let key: String?
+        switch language {
+        case .english:
+            let lower = text.lowercased()
+            key = lower.allSatisfy { $0.isASCII && $0.isLetter } ? lower : nil
+        case .korean:
+            key = KeyEncoder.keys(forHangul: text).map(Dubeolsik.koreanKeyString)
+        }
+        return key.flatMap { $0.count <= maxKeyLength ? $0 : nil }
+    }
+
+    public mutating func learn(_ text: String, as language: Language) {
+        guard let key = Self.key(of: text, in: language) else { return }
+        edit(language) { words in
+            if words[key] == nil, words.count >= Self.limit,
+               let least = words.min(by: { ($0.value.count, $1.key) < ($1.value.count, $0.key) })?.key {
+                words[least] = nil
+            }
+            words[key] = Entry(text: text, count: (words[key]?.count ?? 0) + 1)
+        }
+    }
+
+    /// Takes back one `learn` (a committed word flipped again). The word goes when its count reaches 0.
+    public mutating func unlearn(_ text: String, as language: Language) {
+        guard let key = Self.key(of: text, in: language), let entry = words(language)[key] else { return }
+        edit(language) { words in
+            words[key] = entry.count > 1 ? Entry(text: entry.text, count: entry.count - 1) : nil
+        }
+    }
+
+    public func count(of key: String, in language: Language) -> Int {
+        words(language)[key]?.count ?? 0
+    }
+
+    public func hasPrefix(_ prefix: String, in language: Language) -> Bool {
+        words(language).keys.contains { $0.hasPrefix(prefix) }
+    }
+
+    /// The most used learned word whose key starts with `prefix` and is longer: its text as taught.
+    public func completion(of prefix: String, in language: Language) -> String? {
+        words(language)
+            .filter { $0.key.count > prefix.count && $0.key.hasPrefix(prefix) }
+            .max { ($0.value.count, $1.key) < ($1.value.count, $0.key) }?
+            .value.text
+    }
+
+    /// Number of learned words in a language (tests check the limits with it).
+    func size(_ language: Language) -> Int { words(language).count }
+
+    private func words(_ language: Language) -> [String: Entry] {
+        language == .english ? english : korean
+    }
+
+    private mutating func edit(_ language: Language, _ change: (inout [String: Entry]) -> Void) {
+        if language == .english { change(&english) } else { change(&korean) }
+        changes += 1
+    }
+}
+```
+
+**Step 4: Run all tests**
+
+Expected: `Executed 54 tests, with 0 failures` (49 + 5).
+
+**Step 5: Commit**
+
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+git add ios-app/ProtlyCore/Sources/ProtlyCore/LearnedWords.swift ios-app/ProtlyCore/Tests/ProtlyCoreTests/LearnedWordsTests.swift
+git commit -F - <<'MSG'
+feat(ios): learned words in ProtlyCore
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+### Task 6.2: Suggester (completion, fixes, text replacements) (order step 1)
+
+The rules of Decisions 1-5 as pure functions over the word lists, the learned words and the lexicon. Nothing in
+it edits the field. `WordList` gains `completion(of:)`, inserted after `hasPrefix`; nothing is deleted here.
+
+**Files:**
+- Create: `ios-app/ProtlyCore/Sources/ProtlyCore/Suggester.swift`
+- Modify: `ios-app/ProtlyCore/Sources/ProtlyCore/WordList.swift` (insert `completion(of:)` after `hasPrefix`)
+- Test: `ios-app/ProtlyCore/Tests/ProtlyCoreTests/SuggesterTests.swift`
+
+**Step 1: Write the failing tests**
+
+`ios-app/ProtlyCore/Tests/ProtlyCoreTests/SuggesterTests.swift`:
+
+```swift
+import XCTest
+@testable import ProtlyCore
+
+final class SuggesterTests: XCTestCase {
+    let lists = LanguageDetector(
+        english: WordList(entries: [("the", 50_000), ("there", 30_000), ("they", 20_000), ("happy", 5_000),
+                                    ("do", 60_000), ("don", 40_000), ("tea", 900), ("plus", 30_000), ("th", 6_000),
+                                    ("about", 40_000), ("ago", 30_000), ("tehran", 900)]),
+        korean: WordList(entries: [("dkssud", 500), ("dkssudgktpdy", 300), ("rmfo", 400)]),  // 안녕 안녕하세요 그래
+        priorBonus: 2.0
+    )
+    private func keys(_ s: String) -> [KeyEvent] { s.map { KeyEvent($0) } }
+
+    func testEnglishCompletionIsTheMostFrequentLongerWord() {
+        let s = Suggester()
+        XCTAssertEqual(s.completion(keys("th"), as: .english, lists: lists), "the")
+        XCTAssertEqual(s.completion(keys("the"), as: .english, lists: lists), "there")
+        XCTAssertEqual(s.completion(keys("Th"), as: .english, lists: lists), "The")
+        XCTAssertEqual(s.completion(keys("do"), as: .english, lists: lists), "don't")  // stem of don't
+        XCTAssertNil(s.completion(keys("xy"), as: .english, lists: lists))
+    }
+
+    func testKoreanCompletionFollowsKeys() {
+        let s = Suggester()
+        XCTAssertEqual(s.completion(keys("dkssu"), as: .korean, lists: lists), "안녕")      // 안녀: the last syllable is still open
+        XCTAssertEqual(s.completion(keys("dkssudg"), as: .korean, lists: lists), "안녕하세요")  // 안녕ㅎ
+        XCTAssertNil(s.completion(keys("gkr"), as: .korean, lists: lists))                 // 학: nothing listed
+    }
+
+    func testLearnedWordsRankFirst() {
+        var s = Suggester()
+        s.learned.learn("Theo", as: .english)
+        XCTAssertEqual(s.completion(keys("th"), as: .english, lists: lists), "Theo")
+        s.learned.learn("안녕들", as: .korean)
+        XCTAssertEqual(s.completion(keys("dkssu"), as: .korean, lists: lists), "안녕들")
+    }
+
+    func testOneTypoSuggestsAFix() {
+        let s = Suggester()
+        XCTAssertEqual(s.fix(keys("teh"), as: .english, lists: lists), "the")    // swapped; "tehran" is too rare to wait for
+        XCTAssertEqual(s.fix(keys("thw"), as: .english, lists: lists), "the")    // neighbour key
+        XCTAssertEqual(s.fix(keys("hapy"), as: .english, lists: lists), "happy") // missed key
+        XCTAssertEqual(s.fix(keys("Teh"), as: .english, lists: lists), "The")
+        XCTAssertNil(s.fix(keys("te"), as: .english, lists: lists))              // too short to guess
+        XCTAssertNil(s.fix(keys("tez"), as: .english, lists: lists))             // only "tea", too rare
+        XCTAssertNil(s.fix(keys("dkn"), as: .english, lists: lists))             // only "don", a stem, never a fix
+        XCTAssertNil(s.fix(keys("teh"), as: .korean, lists: lists))              // no Korean typo fixes
+        XCTAssertNil(s.fix(keys("pls"), as: .english, lists: lists))             // slang, not "plus"
+        XCTAssertNil(s.fix(keys("thq"), as: .english, lists: lists))             // "th" is too short a target
+        // Still being typed, not a typo: "about" starts with abo, so no "ago".
+        XCTAssertNil(s.fix(keys("abo"), as: .english, lists: lists))
+        XCTAssertEqual(s.completion(keys("abo"), as: .english, lists: lists), "about")
+    }
+
+    func testKnownWordsGetNoFix() {
+        var s = Suggester()
+        XCTAssertNil(s.fix(keys("tea"), as: .english, lists: lists))  // in the list
+        s.learned.learn("thw", as: .english)
+        XCTAssertNil(s.fix(keys("thw"), as: .english, lists: lists))  // learned
+    }
+
+    func testAContactNameIsAKnownWordNotAFix() {
+        // A contact name maps to itself: "will" must never become "Will", nor be treated as a typo.
+        var s = Suggester()
+        s.lexicon = ["will": "Will", "teh": "teh"]
+        XCTAssertNil(s.fix(keys("will"), as: .english, lists: lists))
+        XCTAssertNil(s.fix(keys("teh"), as: .english, lists: lists))
+    }
+
+    func testContractionsAndTextReplacements() {
+        var s = Suggester()
+        XCTAssertEqual(s.fix(keys("i"), as: .english, lists: lists), "I")
+        XCTAssertEqual(s.fix(keys("dont"), as: .english, lists: lists), "don't")
+        XCTAssertEqual(s.fix(keys("Im"), as: .english, lists: lists), "I'm")
+        XCTAssertNil(s.fix(keys("I"), as: .english, lists: lists))
+        s.lexicon = ["omw": "On my way!", "ㅎㅇ": "안녕하세요"]
+        XCTAssertEqual(s.fix(keys("omw"), as: .english, lists: lists), "On my way!")
+        XCTAssertEqual(s.fix(keys("gd"), as: .korean, lists: lists), "안녕하세요")
+    }
+
+    func testAShortcutIsFoundInEitherReading() {
+        // After a Korean word, the keys of "ty" compose as 쇼; after an English word, ㅎㅇ reads "gd".
+        var s = Suggester()
+        s.lexicon = ["ty": "Thank you", "ㅎㅇ": "안녕하세요"]
+        XCTAssertEqual(s.fix(keys("ty"), as: .korean, lists: lists), "Thank you")
+        XCTAssertEqual(s.fix(keys("gd"), as: .english, lists: lists), "안녕하세요")
+        s.lexicon["쇼"] = "show time"  // the current reading wins
+        XCTAssertEqual(s.fix(keys("ty"), as: .korean, lists: lists), "show time")
+    }
+}
+```
+
+**Step 2: Run them to see them fail**
+
+Expected: the test line prints `error: fatalError`; the first-error line prints
+`swift:15:17: error: cannot find 'Suggester' in scope`.
+
+**Step 3: Implement**
+
+`ios-app/ProtlyCore/Sources/ProtlyCore/Suggester.swift`:
+
+```swift
+// The suggestion for the bar's right slot while a word is typed: a fix (one English typo, a missing apostrophe,
+// the user's text replacement) or a completion. Nothing here changes the field: a fix goes in only when the slot
+// is tapped, never on space, return or punctuation. Learned words rank first in completions, the lists next.
+
+public struct Suggester: Sendable {
+    public var learned = LearnedWords()
+    /// The system lexicon (text replacements, contact names): lowercased shortcut -> the text it stands for.
+    /// An entry that is its own shortcut but for case (a contact "Will" comes as "will" -> "Will") marks a known
+    /// word: no fix is offered for it.
+    public var lexicon: [String: String] = [:]
+
+    /// An unknown English word is offered a fix only to a list word at least this common (FrequencyWords counts
+    /// out of 725 million, about 7 per million: the 6,300 most common words). At 1,000, subtitle junk took over
+    /// chat slang: lmao -> "mao", wyd -> "syd", brb -> "barb".
+    public static let minFixCount = 5_000
+
+    /// Chat abbreviations one typo away from a common word (pls "plus", irl "girl", rly "fly", thx "th"): never
+    /// offered a fix.
+    static let slang: Set<String> = [
+        "lol", "lmao", "lmfao", "rofl", "idk", "idc", "ikr", "ngl", "tbh", "smh", "imo", "imho", "hmu", "wyd", "wbu",
+        "brb", "btw", "fyi", "irl", "pls", "plz", "thx", "omg", "omw", "nvm", "rly", "srsly", "abt", "cuz", "tho",
+        "ofc", "ily", "asap", "lmk", "ttyl", "gtg", "wtf", "istg", "frfr",
+    ]
+
+    public init() {}
+
+    /// Typed without the apostrophe; Apple suggests these too. Real words stay out (ill, well, were, its, id, hell).
+    static let contractions: [String: String] = [
+        "i": "I", "im": "I'm", "ive": "I've", "dont": "don't", "cant": "can't", "wont": "won't",
+        "didnt": "didn't", "doesnt": "doesn't", "isnt": "isn't", "wasnt": "wasn't", "arent": "aren't",
+        "werent": "weren't", "couldnt": "couldn't", "wouldnt": "wouldn't", "shouldnt": "shouldn't",
+        "havent": "haven't", "hasnt": "hasn't", "hadnt": "hadn't", "thats": "that's", "whats": "what's",
+        "youre": "you're", "theyre": "they're", "youve": "you've", "theyve": "they've", "weve": "we've",
+    ]
+
+    /// FrequencyWords splits "don't" into "don" + "'t": as a completion a stem shows the contraction, and a stem
+    /// is never a fix.
+    static let stems: Set<String> = [
+        "don", "didn", "doesn", "isn", "wasn", "aren", "weren", "couldn", "wouldn", "shouldn", "haven", "hasn", "hadn",
+    ]
+
+    /// QWERTY neighbours (same row, row above, row below). A substitution only swaps neighbours.
+    static let neighbours: [Character: String] = [
+        "q": "wa", "w": "qeas", "e": "wrsd", "r": "etdf", "t": "ryfg", "y": "tugh", "u": "yihj", "i": "uojk",
+        "o": "ipkl", "p": "ol", "a": "sqwz", "s": "adwezx", "d": "sferxc", "f": "dgrtcv", "g": "fhtyvb",
+        "h": "gjyubn", "j": "hkuinm", "k": "jliom", "l": "kop", "z": "xas", "x": "zcsd", "c": "xvdf",
+        "v": "cbfg", "b": "vngh", "n": "bmhj", "m": "njk",
+    ]
+
+    /// The fix the slot offers for the typed word, nil when none. Order: the lexicon (text replacements),
+    /// then contractions, then one typo. Korean: text replacements only.
+    public func fix(_ keys: [KeyEvent], as language: Language, lists: LanguageDetector?) -> String? {
+        let typed = TypingSession.render(keys, as: language)
+        let lower = typed.lowercased()
+        // A shortcut is found in either reading, the current one first: after a Korean word the keys of "ty"
+        // compose as 쇼.
+        for reading in [lower, TypingSession.render(keys, as: language.other).lowercased()] {
+            if let r = lexicon[reading] { return r.lowercased() == reading ? nil : r }
+        }
+        guard language == .english else { return nil }
+        if let c = Self.contractions[lower] {
+            let fixed = Self.matchCase(typed, c)
+            return fixed == typed ? nil : fixed
+        }
+        guard let english = lists?.english, lower.count >= 3, !Self.slang.contains(lower),
+              english.frequency(of: lower) == 0, learned.count(of: lower, in: .english) == 0 else { return nil }
+        // A common longer word starts with the typed letters: the word is still being typed (abo -> "about"),
+        // not a typo of "ago". Without this, 700 of the 2,076 en_50k top-3,000 words of 5+ letters showed a wrong
+        // fix on the way (othe -> "the", thos -> "this", gre -> "grew").
+        if let c = english.completion(of: lower), english.frequency(of: c) >= Self.minFixCount { return nil }
+        // Two-letter targets are mostly subtitle fragments (th, sh, hm): never a fix.
+        let best = Self.edits(lower).filter { $0.count >= 3 && !Self.stems.contains($0) }
+            .max { (english.frequency(of: $0), $1) < (english.frequency(of: $1), $0) }
+        guard let best, english.frequency(of: best) >= Self.minFixCount else { return nil }
+        return Self.matchCase(typed, best)
+    }
+
+    /// A longer word for the keys typed so far, nil when none.
+    public func completion(_ keys: [KeyEvent], as language: Language, lists: LanguageDetector?) -> String? {
+        guard !keys.isEmpty else { return nil }
+        switch language {
+        case .english:
+            let typed = Dubeolsik.latin(keys)
+            let prefix = typed.lowercased()
+            if let w = learned.completion(of: prefix, in: .english) { return Self.matchCase(typed, w) }
+            return lists?.english.completion(of: prefix).map { Self.matchCase(typed, Self.stems.contains($0) ? $0 + "'t" : $0) }
+        case .korean:
+            let key = Dubeolsik.koreanKeyString(keys)
+            if let w = learned.completion(of: key, in: .korean) { return w }
+            return lists?.korean.completion(of: key).map { Hangul.compose($0.map { KeyEvent($0) }).text }
+        }
+    }
+
+    /// Words one typo away: a key missed, an extra key, a neighbour key, two keys swapped.
+    static func edits(_ word: String) -> Set<String> {
+        let c = Array(word)
+        var out: Set<String> = []
+        for i in c.indices {
+            var d = c
+            d.remove(at: i)
+            out.insert(String(d))
+            for n in neighbours[c[i]] ?? "" {
+                var s = c
+                s[i] = n
+                out.insert(String(s))
+            }
+            if i + 1 < c.count {
+                var t = c
+                t.swapAt(i, i + 1)
+                out.insert(String(t))
+            }
+        }
+        for i in 0...c.count {
+            for l in "abcdefghijklmnopqrstuvwxyz" {
+                var s = c
+                s.insert(l, at: i)
+                out.insert(String(s))
+            }
+        }
+        out.remove(word)
+        return out
+    }
+
+    /// The typed word's case on a suggestion: all caps stays all caps, a capital first letter stays.
+    static func matchCase(_ typed: String, _ word: String) -> String {
+        if typed.count >= 2, typed.allSatisfy(\.isUppercase) { return word.uppercased() }
+        if typed.first?.isUppercase == true { return word.prefix(1).uppercased() + word.dropFirst() }
+        return word
+    }
+}
+```
+
+With only `Suggester.swift` added, the first-error line prints
+`swift:70:28: error: value of type 'WordList' has no member 'completion'`. In `WordList.swift`, replace
+
+```swift
+    public func hasPrefix(_ prefix: String) -> Bool {
+        let i = lowerBound(prefix)
+        return i < keys.count && keys[i].hasPrefix(prefix)
+    }
+```
+
+with
+
+```swift
+    public func hasPrefix(_ prefix: String) -> Bool {
+        let i = lowerBound(prefix)
+        return i < keys.count && keys[i].hasPrefix(prefix)
+    }
+
+    /// The most frequent key that starts with `prefix` and is longer than it (a completion), nil when none.
+    /// Scans every match: about 5,000 keys and 0.25 ms (release, laptop) for a one-letter prefix.
+    public func completion(of prefix: String) -> String? {
+        var i = lowerBound(prefix), best: Int?
+        while i < keys.count, keys[i].hasPrefix(prefix) {
+            if keys[i].count > prefix.count, best.map({ counts[i] > counts[$0] }) ?? true { best = i }
+            i += 1
+        }
+        return best.map { keys[$0] }
+    }
+```
+
+**Step 4: Run all tests**
+
+Expected: `Executed 62 tests, with 0 failures` (54 + 8).
+
+**Step 5: Commit**
+
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+git add ios-app/ProtlyCore/Sources/ProtlyCore/Suggester.swift ios-app/ProtlyCore/Sources/ProtlyCore/WordList.swift \
+  ios-app/ProtlyCore/Tests/ProtlyCoreTests/SuggesterTests.swift
+git commit -F - <<'MSG'
+feat(ios): completion, typo fixes and text replacements in ProtlyCore
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+Stop here until the security 002 PR has merged (order step 2), then rebase `sprint6` onto main (step 3) and run
+the test line: `Executed 62 + S tests, with 0 failures`.
+
+### Task 6.3: Detector carry-overs (걍, 걔) (order step 3)
+
+Sprint 3 left 걔 (`rO` -> "ro") and Sprint 4 found 걍 (`rid` -> "rid"). Both are missing from ko_50k, as are 꽤 얘
+쟤 뜰 (the tatoeba-kor errors). They join the Korean list at count 400; a mid-word manual shift on a doubled-jamo
+key is Korean. `LanguageDetector.swift` gets two edits here (`bundled`, `decide`) and Task 6.5 edits other lines
+of it: one edit per spot. `WordList.bestFrequency`, unused since Sprint 3's `hasPrefix`, goes here if nothing
+calls it after the rebase.
+
+**Files:**
+- Modify: `ios-app/ProtlyCore/Sources/ProtlyCore/ChatShorthand.swift` (add `missingWords`)
+- Modify: `ios-app/ProtlyCore/Sources/ProtlyCore/WordList.swift` (`korean(_:adding:)`; delete `bestFrequency`)
+- Modify: `ios-app/ProtlyCore/Sources/ProtlyCore/LanguageDetector.swift` (`bundled`, `decide`)
+- Test: `ios-app/ProtlyCore/Tests/ProtlyCoreTests/CarryOverTests.swift`
+
+**Step 1: Write the failing tests**
+
+`ios-app/ProtlyCore/Tests/ProtlyCoreTests/CarryOverTests.swift`:
+
+```swift
+import XCTest
+@testable import ProtlyCore
+
+final class CarryOverTests: XCTestCase {
+    private func keys(_ s: String) -> [KeyEvent] { s.map { KeyEvent($0) } }  // uppercase = manual shift
+
+    func testShiftInsideAWordIsKorean() {
+        let d = LanguageDetector(
+            english: WordList(entries: [("ro", 900), ("got", 900), ("do", 900)]),
+            korean: WordList(entries: [("dkssud", 50)]),
+            priorBonus: 2.0
+        )
+        for w in ["rO", "dO", "goT"] {  // 걔 얘 했
+            for complete in [true, false] {
+                XCTAssertEqual(d.decide(keys(w), complete: complete, previous: .english), .korean, w)
+            }
+        }
+        XCTAssertEqual(d.decide(keys("RO"), complete: true, previous: .english), .english)  // caps lock: 꺠 is not meant
+    }
+
+    func testMissingWordsJoinTheKoreanList() {
+        let list = WordList.korean("", adding: [("걍", 400)])
+        XCTAssertEqual(list.frequency(of: "rid"), 400)
+    }
+
+    func testBundledListsDecideTheCarryOvers() throws {
+        let d = try LanguageDetector.bundled()
+        XCTAssertEqual(d.decide(keys("rid"), complete: true, previous: .korean), .korean)   // 걍
+        XCTAssertEqual(d.decide(keys("rid"), complete: true, previous: nil), .korean)
+        XCTAssertEqual(d.decide(keys("rid"), complete: true, previous: .english), .english) // get rid of
+        XCTAssertEqual(d.decide(keys("rO"), complete: true, previous: .english), .korean)   // 걔
+        XCTAssertEqual(d.decide(keys("Rho"), complete: true, previous: .korean), .korean)   // 꽤
+    }
+}
+```
+
+**Step 2: Run them to see them fail**
+
+Expected: the test line prints `error: fatalError`; the first-error line prints
+`swift:22:48: error: extra argument 'adding' in call`.
+
+**Step 3: Implement**
+
+In `ChatShorthand.swift`, insert before the `/// Jamo whose repeated runs glue` comment:
+
+```swift
+    /// Everyday words missing from ko_50k (a subtitle list) whose keys spell an English list word: 걍 "rid",
+    /// 걔 "rO", 꽤 "Rho", 얘 "dO", 쟤 "wO", 뜰 "Emf". Added to the Korean list at `missingWordCount`, so 걍 beats
+    /// "rid" after a Korean word and at a message start, and "get rid of" stays English after an English word.
+    public static let missingWords = ["걍", "걔", "꽤", "얘", "쟤", "뜰"]
+    public static let missingWordCount = 400
+```
+
+In `WordList.swift`, replace
+
+```swift
+    public static func korean(_ text: String) -> WordList {
+        WordList(entries: parse(text).compactMap { w in
+```
+
+with
+
+```swift
+    /// `adding`: words missing from the list (ChatShorthand.missingWords), with their counts.
+    public static func korean(_ text: String, adding extra: [(word: String, count: Int)] = []) -> WordList {
+        WordList(entries: (parse(text) + extra).compactMap { w in
+```
+
+In `LanguageDetector.swift`, in `bundled`, replace
+
+```swift
+            korean: .korean(try WordList.bundled("ko_50k")),
+```
+
+with
+
+```swift
+            korean: .korean(try WordList.bundled("ko_50k"),
+                            adding: ChatShorthand.missingWords.map { ($0, ChatShorthand.missingWordCount) }),
+```
+
+and in `decide`, replace the repeated-jamo rule
+
+```swift
+        if hangul.text.count >= 2, Set(hangul.text).count == 1, Hangul.isLoneJamo(hangul.text.first!) {
+            return .korean
+        }
+```
+
+with
+
+```swift
+        if hangul.text.count >= 2, Set(hangul.text).count == 1, Hangul.isLoneJamo(hangul.text.first!) {
+            return .korean
+        }
+        // Shift inside a word on a key with a doubled jamo (rO = 걔, dO = 얘, goT = 했) is Korean: English does not
+        // capitalize mid-word in a word that also composes as Hangul. Every key shifted is caps lock, not Korean.
+        if keys.dropFirst().contains(where: { $0.shift == .manual && Dubeolsik.shifted[$0.letter] != nil }),
+           keys.contains(where: { $0.shift == .none }) {
+            return .korean
+        }
+```
+
+Last, run `grep -rn bestFrequency ios-app/ProtlyCore/Sources ios-app/ProtlyCore/Tests`. If it prints only the
+definition in `WordList.swift` (as on main), delete these lines from `WordList.swift`, with the blank line above
+them. If anything else calls it (security 002 may have added a caller), leave it.
+
+```swift
+    /// Highest count among words starting with `prefix` (0 when none). Scans every match, so a short
+    /// prefix walks a large part of the list; use `hasPrefix` when only presence matters.
+    public func bestFrequency(prefix: String) -> Int {
+        var i = lowerBound(prefix), best = 0
+        while i < keys.count, keys[i].hasPrefix(prefix) {
+            best = max(best, counts[i])
+            i += 1
+        }
+        return best
+    }
+```
+
+**Step 4: Run all tests**
+
+Expected: `Executed 65 + S tests, with 0 failures` (62 + 3).
+
+**Step 5: Commit**
+
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+git add ios-app/ProtlyCore/Sources/ProtlyCore/ChatShorthand.swift ios-app/ProtlyCore/Sources/ProtlyCore/WordList.swift \
+  ios-app/ProtlyCore/Sources/ProtlyCore/LanguageDetector.swift ios-app/ProtlyCore/Tests/ProtlyCoreTests/CarryOverTests.swift
+git commit -F - <<'MSG'
+feat(ios): 걍 걔 and mid-word doubled jamo are Korean
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+### Task 6.4: Re-measure the detector (order step 3)
+
+**Files:**
+- Modify: `docs/ios-keyboard-notes.md` (new section at the end)
+
+**Step 1: Run the eval**
+
+Run: `swift run -c release --package-path ios-app/ProtlyCore protly-eval ios-app/ProtlyCore/Corpus 2>&1 | grep -A5 "priorBonus 2.0"`
+Expected (measured while planning; the order of tied English errors varies between runs):
+
+```
+chat.txt korean: 67 words, accuracy 100.00%, words that flip while typing 17.9% | top errors: 
+chat.txt english: 14 words, accuracy 100.00%, words that flip while typing 35.7% | top errors: 
+tatoeba-eng.txt english: 16544 words, accuracy 99.55%, words that flip while typing 0.8% | top errors: Zirix44 Rimax16 Aksaix1 glaivex1 clarifiesx1 vibratedx1 Sorosx1 RSFx1
+tatoeba-kor.txt korean: 8626 words, accuracy 99.95%, words that flip while typing 0.3% | top errors: 새x4
+tatoeba-kor.txt english: 5 words, accuracy 100.00%, words that flip while typing 40.0% | top errors: 
+```
+
+Pass: chat korean 100%, tatoeba-kor >= 99.95%, tatoeba-eng >= 99.55%. If tatoeba-eng drops, stop and report: the
+mid-word shift rule caught English. (Security 002 may change the detector; if a number moved before this task,
+compare against main's eval output, run the same way, and report the difference.)
+
+**Step 2: Record.** Append to `docs/ios-keyboard-notes.md`:
+
+```markdown
+## Sprint 6: detector carry-overs
+
+Measured <date> with the same command (priorBonus 2.0). <paste the five lines>.
+걍 걔 꽤 얘 쟤 뜰 joined the Korean list at count 400 (missing from ko_50k), and a manual shift on a doubled-jamo
+key inside a word is Korean unless every key is shifted. 새 (keys `to`) stays a known loss; the flip fixes it.
+```
+
+**Step 3: Commit**
+
+```bash
+git add docs/ios-keyboard-notes.md
+git commit -F - <<'MSG'
+docs: detector re-measured after the Sprint 6 carry-overs
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+### Task 6.5: The detector reads learned words (order step 3)
+
+Six anchored edits to `LanguageDetector.swift`, none on a line Task 6.3 touched. `decide` gains a `learned:`
+argument with an empty default, so every existing call (the eval, the tests, Sprint 3's code) is unchanged.
+
+**Files:**
+- Modify: `ios-app/ProtlyCore/Sources/ProtlyCore/LanguageDetector.swift` (6 edits)
+- Test: `ios-app/ProtlyCore/Tests/ProtlyCoreTests/LearnedDetectorTests.swift`
+
+**Step 1: Write the failing tests**
+
+`ios-app/ProtlyCore/Tests/ProtlyCoreTests/LearnedDetectorTests.swift`:
+
+```swift
+import XCTest
+@testable import ProtlyCore
+
+final class LearnedDetectorTests: XCTestCase {
+    private func keys(_ s: String) -> [KeyEvent] { s.map { KeyEvent($0) } }
+
+    func testLearnedWordFeedsTheDetector() {
+        // Relative frequencies like the real lists: "rid" 64 per million, 걍 missing from Korean.
+        let d = LanguageDetector(
+            english: WordList(entries: [("the", 999_936), ("rid", 64)]),
+            korean: WordList(entries: [("dkssud", 1_000)]),
+            priorBonus: 2.0
+        )
+        XCTAssertEqual(d.decide(keys("rid"), complete: true, previous: .korean), .english)
+        var l = LearnedWords()
+        l.learn("걍", as: .korean)
+        XCTAssertEqual(d.decide(keys("rid"), complete: true, previous: .korean, learned: l), .korean)
+        XCTAssertEqual(d.decide(keys("rid"), complete: true, previous: nil, learned: l), .korean)
+        XCTAssertEqual(d.decide(keys("rid"), complete: true, previous: .english, learned: l), .english)
+        // While typing, a learned Korean word keeps ㄱㅑ Korean after a Korean word.
+        XCTAssertEqual(d.decide(keys("ri"), complete: false, previous: .korean), .english)
+        XCTAssertEqual(d.decide(keys("ri"), complete: false, previous: .korean, learned: l), .korean)
+    }
+
+    func testOneFlipCannotTakeACommonWord() {
+        // "go" and 해 at their real relative frequencies (FrequencyWords 2018).
+        let d = LanguageDetector(
+            english: WordList(entries: [("go", 2_500_000), ("the", 722_500_000)]),
+            korean: WordList(entries: [("go", 13_611), ("rmfo", 5_168_389)]),
+            priorBonus: 2.0
+        )
+        var l = LearnedWords()
+        l.learn("go", as: .english)
+        l.learn("해", as: .korean)
+        XCTAssertEqual(d.decide(keys("go"), complete: true, previous: .korean, learned: l), .korean)
+        XCTAssertEqual(d.decide(keys("go"), complete: true, previous: .english, learned: l), .english)
+    }
+}
+```
+
+**Step 2: Run them to see them fail**
+
+Expected: the test line prints `error: fatalError`; the first-error line prints
+`swift:17:90: error: extra argument 'learned' in call`.
+
+**Step 3: Implement.** In `LanguageDetector.swift`:
+
+1. The header comment. Replace
+
+```swift
+// While typing (`complete == false`) a word with that key prefix stands in for the word.
+```
+
+   with
+
+```swift
+// While typing (`complete == false`) a word with that key prefix stands in for the word.
+// Words the user taught (LearnedWords) count as known in their language, with `learnedBonus` on top.
+```
+
+2. The learned-word constants. Replace
+
+```swift
+    public var priorBonus: Double
+```
+
+   with
+
+```swift
+    public var priorBonus: Double
+
+    /// A learned word scores at least this relative frequency (a fairly rare listed word), plus `learnedBonus`.
+    /// Learned 걍 then beats "rid" after a Korean word and at a message start, not after an English word, and
+    /// one flip can never take a common word (해 = "go") from its language.
+    public static let learnedFloor = 1e-4
+    public static let learnedBonus = 1.0
+```
+
+3. The signature. Replace
+
+```swift
+    public func decide(_ keys: [KeyEvent], complete: Bool, previous: Language?) -> Language {
+```
+
+   with
+
+```swift
+    public func decide(_ keys: [KeyEvent], complete: Bool, previous: Language?,
+                       learned: LearnedWords = LearnedWords()) -> Language {
+```
+
+4. While typing, a learned word keeps its language possible. Replace
+
+```swift
+            if !english.hasPrefix(enKey) { return .korean }  // no English word fits, valid Hangul
+            if !korean.hasPrefix(koKey) { return .english }
+```
+
+   with
+
+```swift
+            // No English word fits: valid Hangul is Korean.
+            if !english.hasPrefix(enKey), !learned.hasPrefix(enKey, in: .english) { return .korean }
+            if !korean.hasPrefix(koKey), !learned.hasPrefix(koKey, in: .korean) { return .english }
+```
+
+5. A complete word. Replace
+
+```swift
+        if en == 0 { return .korean }  // unknown English, valid Hangul
+        if ko == 0 { return .english }
+        var enScore = log(Double(en) / english.total)
+        var koScore = log(Double(ko) / korean.total)
+```
+
+   with
+
+```swift
+        let enLearned = learned.count(of: enKey, in: .english) > 0
+        let koLearned = learned.count(of: koKey, in: .korean) > 0
+        if en == 0, !enLearned { return .korean }  // unknown English, valid Hangul
+        if ko == 0, !koLearned { return .english }
+        var enScore = Self.score(en, english.total, learned: enLearned)
+        var koScore = Self.score(ko, korean.total, learned: koLearned)
+```
+
+6. The score, before `render`. Replace
+
+```swift
+    /// The text the keys produce in a language.
+```
+
+   with
+
+```swift
+    /// Log relative frequency; a learned word gets the floor and the bonus (count 0 is -inf before the floor).
+    static func score(_ count: Int, _ total: Double, learned: Bool) -> Double {
+        let s = log(Double(count) / total)
+        return learned ? max(s, log(learnedFloor)) + learnedBonus : s
+    }
+
+    /// The text the keys produce in a language.
+```
+
+**Step 4: Run all tests and the eval**
+
+Expected: `Executed 67 + S tests, with 0 failures`. The Task 6.4 eval command prints the same five lines (the
+eval teaches nothing).
+
+**Step 5: Commit**
+
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+git add ios-app/ProtlyCore/Sources/ProtlyCore/LanguageDetector.swift ios-app/ProtlyCore/Tests/ProtlyCoreTests/LearnedDetectorTests.swift
+git commit -F - <<'MSG'
+feat(ios): the detector counts learned words
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+### Task 6.6: TypingSession suggests, accepts, learns flips (order step 3)
+
+`TypingSession` owns a `Suggester`. New: `suggestion` (for the bar) and `accept()` (the bar was tapped). `commit()`
+keeps its signature and still commits exactly what was typed. Flips teach (Decision 5): a flip while typing at
+commit or pick, a flip of a committed word at once, taking one count off its old reading. The committed-word
+tuple is unchanged. Six anchored edits.
+
+**Files:**
+- Modify: `ios-app/ProtlyCore/Sources/ProtlyCore/TypingSession.swift` (6 edits)
+- Test: `ios-app/ProtlyCore/Tests/ProtlyCoreTests/SuggestionSessionTests.swift`
+
+**Step 1: Write the failing tests**
+
+`ios-app/ProtlyCore/Tests/ProtlyCoreTests/SuggestionSessionTests.swift`:
+
+```swift
+import XCTest
+@testable import ProtlyCore
+
+final class SuggestionSessionTests: XCTestCase {
+    let detector = LanguageDetector(
+        english: WordList(entries: [("the", 50_000), ("there", 30_000)]),
+        korean: WordList(entries: [("dkssud", 500), ("dkssudgktpdy", 300)]),  // 안녕 안녕하세요
+        priorBonus: 2.0
+    )
+
+    private func type(_ s: String, into session: inout TypingSession) {
+        for c in s { _ = session.type(KeyEvent(c)) }
+    }
+
+    func testSpaceNeverReplacesOnlyATapDoes() {
+        var s = TypingSession(detector: detector, previous: .english)
+        type("teh", into: &s)
+        XCTAssertEqual(s.suggestion, "the")
+        XCTAssertEqual(s.commit(), .commit("teh"))  // space, return, punctuation: what was typed
+        XCTAssertNil(s.suggestion)
+        type("teh", into: &s)
+        XCTAssertEqual(s.accept(), .commit("the"))
+    }
+
+    func testAcceptTakesTheSuggestion() {
+        var s = TypingSession(detector: detector, previous: .english)
+        type("th", into: &s)
+        XCTAssertEqual(s.suggestion, "the")
+        XCTAssertEqual(s.accept(), .commit("the"))
+        XCTAssertFalse(s.isComposing)
+        XCTAssertNil(s.lastTail)
+        XCTAssertNil(s.accept())
+        XCTAssertEqual(s.suggester.learned.changes, 0)  // a pick teaches nothing
+    }
+
+    func testAcceptAKoreanCompletion() {
+        var s = TypingSession(detector: detector, previous: .korean)
+        type("dkssudg", into: &s)  // 안녕ㅎ
+        XCTAssertEqual(s.suggestion, "안녕하세요")
+        XCTAssertEqual(s.accept(), .commit("안녕하세요"))
+        XCTAssertEqual(s.previous, .korean)
+        XCTAssertEqual(s.keycapLanguage, .korean)
+        XCTAssertEqual(s.suggester.learned.changes, 0)
+    }
+
+    func testAPickAfterAFlipTeachesTheFlip() {
+        // "go" reads English after an English word; flipped to 해, the slot completes 해요.
+        let d = LanguageDetector(
+            english: WordList(entries: [("go", 900), ("good", 500)]),
+            korean: WordList(entries: [("gody", 400)]),  // 해요
+            priorBonus: 2.0
+        )
+        var s = TypingSession(detector: d, previous: .english)
+        type("go", into: &s)
+        XCTAssertEqual(s.flip(), .mark("해"))
+        XCTAssertEqual(s.suggestion, "해요")
+        XCTAssertEqual(s.accept(), .commit("해요"))
+        XCTAssertEqual(s.suggester.learned.count(of: "gody", in: .korean), 1)
+        XCTAssertEqual(s.suggester.learned.changes, 1)
+    }
+
+    func testFlippedWordGetsNoFixAndFlipsTeach() {
+        var s = TypingSession(detector: detector, previous: .english)
+        type("teh", into: &s)
+        _ = s.flip()
+        _ = s.flip()  // back to English, by hand
+        XCTAssertNil(s.suggestion)  // the user chose this reading: no fix
+        XCTAssertEqual(s.commit(), .commit("teh"))
+        XCTAssertEqual(s.suggester.learned.changes, 0)  // flipped back to what was detected: nothing taught
+        type("dkssud", into: &s)
+        _ = s.commit()
+        s.noteInserted(" ")
+        XCTAssertEqual(s.flip(), .replace(deleting: 3, inserting: "dkssud "))
+        XCTAssertEqual(s.suggester.learned.count(of: "dkssud", in: .english), 1)
+    }
+
+    func testFlippingAgainReplacesTheLearning() {
+        // A committed word flipped there and back ends learned only in its final language.
+        var s = TypingSession(detector: detector, previous: .english)
+        type("dkssud", into: &s)
+        _ = s.commit()  // 안녕, as detected
+        s.noteInserted(" ")
+        _ = s.flip()    // dkssud, taught as English
+        XCTAssertEqual(s.flip(), .replace(deleting: 7, inserting: "안녕 "))
+        XCTAssertEqual(s.suggester.learned.count(of: "dkssud", in: .english), 0)
+        XCTAssertEqual(s.suggester.learned.count(of: "dkssud", in: .korean), 1)
+        // Flipped while typing (taught at commit), then flipped back after the commit: the same rule.
+        var t = TypingSession(detector: detector, previous: .korean)
+        type("dkssud", into: &t)
+        _ = t.flip()
+        XCTAssertEqual(t.commit(), .commit("dkssud"))
+        XCTAssertEqual(t.suggester.learned.count(of: "dkssud", in: .english), 1)
+        _ = t.flip()
+        XCTAssertEqual(t.suggester.learned.count(of: "dkssud", in: .english), 0)
+        XCTAssertEqual(t.suggester.learned.count(of: "dkssud", in: .korean), 1)
+    }
+
+    func testAFlipTakesBackAnEarlierDaysLearning() {
+        // "the" was taught as English by a flip on an earlier day; now it is flipped to Korean (솓).
+        var s = TypingSession(detector: detector, previous: .english)
+        s.suggester.learned.learn("the", as: .english)
+        type("the", into: &s)
+        XCTAssertEqual(s.commit(), .commit("the"))
+        XCTAssertEqual(s.flip(), .replace(deleting: 3, inserting: "솓"))
+        XCTAssertEqual(s.suggester.learned.count(of: "the", in: .english), 0)
+        XCTAssertEqual(s.suggester.learned.count(of: "the", in: .korean), 1)
+    }
+}
+```
+
+**Step 2: Run them to see them fail**
+
+Expected: the test line prints `error: fatalError`; the first-error line prints
+`swift:18:26: error: value of type 'TypingSession' has no member 'suggestion'`.
+
+**Step 3: Implement.** In `TypingSession.swift`:
+
+1. The suggester. Replace
+
+```swift
+    public var detector: LanguageDetector?
+```
+
+   with
+
+```swift
+    public var detector: LanguageDetector?
+    /// Learned words and the system lexicon, for the bar's suggestion. Flips teach it.
+    public var suggester = Suggester()
+```
+
+2. The bar's suggestion, after `lastTail`. Replace
+
+```swift
+    public var lastTail: String? { last.map { $0.text + $0.after } }
+```
+
+   with
+
+```swift
+    public var lastTail: String? { last.map { $0.text + $0.after } }
+
+    /// For the bar's right slot while a word is typed: a fix (typo, contraction, text replacement) ahead of a
+    /// completion. Only a tap puts it in (`accept`). A flipped word gets no fix: the user chose its reading.
+    public var suggestion: String? {
+        guard isComposing else { return nil }
+        if forced == nil, let r = suggester.fix(keys, as: language, lists: detector) { return r }
+        return suggester.completion(keys, as: language, lists: detector)
+    }
+```
+
+3. `commit()` teaches a word flipped while typing. Replace
+
+```swift
+        let lang = forced ?? decide(complete: true)
+        let text = Self.render(keys, as: lang)
+```
+
+   with
+
+```swift
+        let decided = decide(complete: true)
+        let lang = forced ?? decided
+        let text = Self.render(keys, as: lang)
+        if lang != decided { suggester.learned.learn(text, as: lang) }  // flipped while typing: teach the reading
+```
+
+4. `accept()`, before `noteInserted`; a pick after a flip while typing teaches the flip. Replace
+
+```swift
+    /// The keyboard inserted text right after a commit (the space). Flipping still reaches the word.
+```
+
+   with
+
+```swift
+    /// The bar's suggestion was tapped: the word becomes it. The keyboard then types a space. A pick alone teaches
+    /// nothing (a pick of 해 for `g` would teach Korean "go"); after a flip while typing, the picked word is taught
+    /// in the language the user flipped to, as `commit` would teach the flip.
+    public mutating func accept() -> FieldEdit? {
+        guard let s = suggestion else { return nil }
+        if let forced, forced != decide(complete: true) { suggester.learned.learn(s, as: forced) }
+        previous = language
+        keys = []
+        forced = nil
+        last = nil
+        return .commit(s)
+    }
+
+    /// The keyboard inserted text right after a commit (the space). Flipping still reaches the word.
+```
+
+5. Flipping a committed word teaches the new reading and takes one count off the old one. Replace
+
+```swift
+    /// Flip the word being typed, or the word just committed, to the other language.
+    public mutating func flip() -> FieldEdit? {
+        if isComposing {
+            forced = language.other
+            language = language.other
+            return .mark(Self.render(keys, as: language))
+        }
+        guard let l = last else { return nil }
+        let text = Self.render(l.keys, as: l.language.other)
+```
+
+   with
+
+```swift
+    /// Flip the word being typed, or the word just committed, to the other language. Flipping a committed word
+    /// teaches its new reading and takes one count off its old one (a no-op when that was never learned), so a
+    /// word flipped there and back, or learned in the other language on an earlier day, is not left learned in
+    /// both. A word flipped while typing is taught when it is committed or its suggestion is picked.
+    public mutating func flip() -> FieldEdit? {
+        if isComposing {
+            forced = language.other
+            language = language.other
+            return .mark(Self.render(keys, as: language))
+        }
+        guard let l = last else { return nil }
+        let text = Self.render(l.keys, as: l.language.other)
+        suggester.learned.unlearn(l.text, as: l.language)
+        suggester.learned.learn(text, as: l.language.other)
+```
+
+6. The detector reads the learned words. Replace
+
+```swift
+        if let detector { return detector.decide(keys, complete: complete, previous: previous) }
+```
+
+   with
+
+```swift
+        if let detector {
+            return detector.decide(keys, complete: complete, previous: previous, learned: suggester.learned)
+        }
+```
+
+**Step 4: Run all tests and the eval**
+
+Expected: `Executed 74 + S tests, with 0 failures` (the 11 existing `TypingSessionTests` pass unchanged); the Task
+6.4 eval lines are unchanged.
+
+**Step 5: Commit**
+
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+git add ios-app/ProtlyCore/Sources/ProtlyCore/TypingSession.swift ios-app/ProtlyCore/Tests/ProtlyCoreTests/SuggestionSessionTests.swift
+git commit -F - <<'MSG'
+feat(ios): TypingSession suggests, accepts a tapped suggestion, learns flips
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+### Task 6.7: Wire it into the keyboard (order step 5)
+
+Only after visual PR #1 has merged and `sprint6` is rebased onto it. One new file holds the phone-only code; the
+existing files get anchored edits. Every old text below occurs exactly once on main and on the visual branch.
+
+**Files:**
+- Create: `ios-app/Sources/ProtlyKeyboard/Words.swift`
+- Modify: `ios-app/Sources/ProtlyKeyboard/KeyboardViewController.swift` (6 edits)
+- Modify: `ios-app/Sources/ProtlyKeyboard/ProtlyBar.swift` (4 edits)
+
+How the pieces fit:
+- `refreshMode()` runs after every event, so one call there (`refreshWords()`) sets the slot's suggestion and
+  saves the learned words when `LearnedWords.changes` moved (flips; also on hide, since `viewWillDisappear` calls
+  `refreshMode`).
+- A tap on the slot runs `pickSuggestion()`: `session.accept()`, then `insertText(" ")` through the same override
+  as a typed space. Space, return and punctuation reach `insertText` unchanged, and its `commitWord()` commits
+  exactly what was typed. No typing path changes.
+- `requestSupplementaryLexicon` calls back on an XPC queue; the map is stored from a main-actor `Task`.
+- Nothing slow runs on load: `setUpWords()` decodes the learned words (at most 2,000 short entries) and asks for
+  the lexicon asynchronously.
+
+`ios-app/Sources/ProtlyKeyboard/Words.swift`:
+
+```swift
+import Foundation
+import ProtlyCore
+import UIKit
+
+// Suggestions and learning on the phone. The rules live in ProtlyCore (Suggester, LearnedWords); this file
+// connects the system lexicon, the learned-word store and the memory readout.
+
+extension KeyboardViewController {
+    private static let learnedKey = "protly.learnedWords"
+    /// Build with true to read the keyboard's memory (now / peak MB) in the bar's right slot when it has no
+    /// suggestion. Only for the Sprint 6 phone check; ships false.
+    static let showsMemory = false
+    /// LearnedWords.changes at the last save.
+    private static var savedChanges = 0
+
+    /// From viewDidLoad: learned words from the keyboard's own container, and the phone's text replacements and
+    /// contact names (no Full Access needed).
+    func setUpWords() {
+        if let data = UserDefaults.standard.data(forKey: Self.learnedKey),
+           let learned = try? JSONDecoder().decode(LearnedWords.self, from: data) {
+            session.suggester.learned = learned
+        }
+        Self.savedChanges = session.suggester.learned.changes
+        requestSupplementaryLexicon { [weak self] lexicon in
+            // Called on an XPC queue: store the map on the main actor, where the session lives. A contact name
+            // comes as its own shortcut ("will" -> "Will"); Suggester treats such an entry as a known word.
+            Task { @MainActor in
+                self?.session.suggester.lexicon = Dictionary(
+                    lexicon.entries.map { ($0.userInput.lowercased(), $0.documentText) },
+                    uniquingKeysWith: { first, _ in first }
+                )
+            }
+        }
+    }
+
+    /// After every event: the bar's suggestion, and the learned words saved when they changed.
+    func refreshWords() {
+        var s = session.suggestion
+        if s == nil, Self.showsMemory { s = Self.memoryText() }
+        if mode.suggestion != s { mode.suggestion = s }
+        let learned = session.suggester.learned
+        if learned.changes != Self.savedChanges, let data = try? JSONEncoder().encode(learned) {
+            UserDefaults.standard.set(data, forKey: Self.learnedKey)
+            Self.savedChanges = learned.changes
+        }
+    }
+
+    /// phys_footprint is what iOS counts against an extension's memory limit.
+    static func memoryText() -> String {
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+        let result = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+            }
+        }
+        guard result == KERN_SUCCESS else { return "memory ?" }
+        let now = Double(info.phys_footprint) / 1_048_576
+        let peak = Double(info.ledger_phys_footprint_peak) / 1_048_576
+        return String(format: "%.1f / %.1f MB", now, peak)
+    }
+}
+```
+
+`KeyboardViewController.swift`:
+
+1. ProtlyMode: the bar's suggestion. Replace
+
+```swift
+    @Published var clipboardIsNew = false
+}
+```
+
+   with
+
+```swift
+    @Published var clipboardIsNew = false
+    /// The bar's right slot: a fix or a completion for the word being typed. Only a tap puts it in.
+    @Published var suggestion: String?
+}
+```
+
+2. `session` is written from `Words.swift`. Replace
+
+```swift
+    private(set) var session = TypingSession()
+```
+
+   with
+
+```swift
+    /// Not private(set): Words.swift fills its suggester.
+    var session = TypingSession()
+```
+
+3. `viewDidLoad`: one line (after PR #1, `ProtlyHeight.pin(self)` sits higher up in the same function; leave it).
+   Replace
+
+```swift
+        session = TypingSession(previous: Self.loadPrevious())
+```
+
+   with
+
+```swift
+        session = TypingSession(previous: Self.loadPrevious())
+        setUpWords()
+```
+
+4. The slot's tap, next to `flipWord`. Replace the start of the doc comment line (it continues ` (a chat app
+   sent the message ...`)
+
+```swift
+    /// The host changed the field under protly
+```
+
+   with
+
+```swift
+    /// The bar's right slot: the word becomes the suggestion, then a space typed like any other.
+    func pickSuggestion() {
+        noticeFieldMoved()
+        guard let edit = session.accept() else { return }
+        apply(edit)
+        savePrevious()
+        insertText(" ")
+    }
+
+    /// The host changed the field under protly
+```
+
+5. `refreshMode` refreshes the suggestion and saves learned words. Replace
+
+```swift
+        if mode.alternative != session.alternative { mode.alternative = session.alternative }
+```
+
+   with
+
+```swift
+        if mode.alternative != session.alternative { mode.alternative = session.alternative }
+        refreshWords()
+```
+
+6. `ProtlyRoot`: one argument. Replace
+
+```swift
+                    undo: { [unowned host] in host.undoInsert() }
+                )
+```
+
+   with
+
+```swift
+                    undo: { [unowned host] in host.undoInsert() },
+                    pick: { [unowned host] in host.pickSuggestion() }
+                )
+```
+
+`ProtlyBar.swift` (PR #1 does not change it):
+
+1. Doc comment. Replace
+
+```swift
+/// Right: empty until Sprint 6 (completion).
+```
+
+   with
+
+```swift
+/// Right: a fix (typo, contraction, text replacement) or a completion for the word being typed; tap takes it.
+```
+
+2. The tap. Replace
+
+```swift
+    let undo: () -> Void
+```
+
+   with
+
+```swift
+    let undo: () -> Void
+    let pick: () -> Void
+```
+
+3. The third slot. Replace
+
+```swift
+            ZStack { Color.clear; center }
+            Color.clear
+```
+
+   with
+
+```swift
+            ZStack { Color.clear; center }
+            ZStack { Color.clear; right }
+```
+
+4. The slot's view, before `center`. Replace
+
+```swift
+    @ViewBuilder
+    private var center: some View {
+```
+
+   with
+
+```swift
+    @ViewBuilder
+    private var right: some View {
+        if let s = mode.suggestion {
+            Button(s, action: pick).foregroundStyle(.primary)
+        }
+    }
+
+    @ViewBuilder
+    private var center: some View {
+```
+
+**Build:** `. ~/.local/share/swiftly/env.sh && (cd ios-app && xtool dev build < /dev/null 2>&1 | tail -2)`
+Expected: `Build complete!` and `Wrote to .../ios-app/xtool/Protly.app`. Then:
+`llvm-nm ios-app/xtool/Protly.app/PlugIns/ProtlyKeyboard.appex/ProtlyKeyboard | grep -cF 'OBJC_CLASS_$_KeyboardViewController'`
+Expected: `1`. No warning may come from `ios-app/Sources/` (the 7 KeyboardKit warnings under `ios-app/Vendor/`
+were there before).
+
+**Commit:**
+
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+swift test --package-path ios-app/ProtlyCore 2>&1 | grep Executed | tail -1
+git add ios-app/Sources/ProtlyKeyboard/Words.swift ios-app/Sources/ProtlyKeyboard/KeyboardViewController.swift \
+  ios-app/Sources/ProtlyKeyboard/ProtlyBar.swift
+git commit -F - <<'MSG'
+feat(ios): suggestions in the bar's right slot, learned words on the phone
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+### Task 6.8: Install and check on the phone (USER) (order step 6)
+
+**Step 1 (Claude):** set `static let showsMemory = true` in `Words.swift` (do not commit it), then install (see
+"Build and install" above Sprint 3).
+
+**Step 2 (USER), setup (optional, for the second half of item 5):** Settings > General > Keyboard > Text
+Replacement > `+`: Phrase `감사합니다`, Shortcut `ㄱㅅㄱㅅ`, Save (delete it after the check if unwanted). Then open
+Messages. Claude prints this checklist and waits. Every iPhone label is the English UI string. About 10 minutes.
+
+1. Type `i dont think its ok teh.` using only the keys (no slot taps): the field says exactly that, so nothing was
+   replaced on space or `.`. Then type `teh` and tap the slot once (it shows `the`): `the ` with one space.
+2. Type `recieve`: the slot shows `receive`; `.` leaves `recieve.`.
+3. Type `tomo`: the right slot shows `tomorrow`; tap it: `tomorrow ` with one space.
+4. Korean: type `안녀`: the slot shows `안녕` or a longer word; type `안녕ㅎ`: `안녕하세요`; tap: inserted with a space.
+5. Type `omw`: the slot shows `On my way!` (an iPhone default replacement); space leaves `omw `. Type `omw` again
+   and tap the slot: `On my way! `. If `ㄱㅅㄱㅅ` was set up: the slot shows `감사합니다`, space leaves `ㄱㅅㄱㅅ `,
+   a tap gives `감사합니다 `.
+6. Contact names (skip if no contact has a first name that is a common word, such as Will, Grace or Mark): type
+   that word in lowercase (`will`): the slot never shows the name (`Will`), and space leaves `will `.
+7. In a Korean conversation, typed in one go: `걍 가자`, `걔 진짜 웃겨`, `얘 뭐야`, `꽤 좋다`: all Korean, no
+   flip. Then `I need to get rid of it`: all English.
+8. New message: type `wyd` (keys w, y, d): it shows `죵`. Tap the left slot: `wyd`. Space, clear the field, type
+   `wyd ` again: English with no flip.
+9. The next time you use the keyboard (another app or later): `wyd ` is still English (the learned word was
+   saved).
+10. Memory: on an empty field the right slot shows `now / peak MB`; write it down. Then 30 times: swipe the
+    keyboard down (or switch apps) and tap the field again. Write the number down again.
+11. Regression: the flip (left slot) and `Translate` (center) still work after typing a Korean draft.
+
+**Step 3 (Claude):**
+- Memory: now over 40 MB after 30 appearances: stop, record, and re-plan with memory-mapped word lists (the
+  contract's fallback), measured the same way. Growth over 10 MB across the 30 (about 1 MB each is the SwiftUI
+  hosting leak sky-earth-human reported): record and hand to the visual campaign (`ProtlyRoot` and hosting are its
+  files).
+- Set `showsMemory` back to `false`, rebuild and install.
+- Append `## Sprint 6: completion, suggestions, learning` to `docs/ios-keyboard-notes.md`: the checklist table
+  with results, the two memory readings, every failure with what was seen. Commit:
+
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+swift test --package-path ios-app/ProtlyCore 2>&1 | grep Executed | tail -1
+git diff --quiet ios-app/Sources/ProtlyKeyboard/Words.swift || echo "showsMemory is still changed: set it back"
+git add docs/ios-keyboard-notes.md
+git commit -F - <<'MSG'
+docs: Sprint 6 phone check
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+**Sprint 6 done when:** items 1-9 and 11 pass (item 6 may be skipped with no matching contact) with no crash or
+fallback to Apple's keyboard during the check; memory is under 40 MB after 30 appearances (item 10); 74 + S
+ProtlyCore tests and `npm test` pass; the Task 6.4 eval is not below Sprint 3 (chat korean >= 98.51%,
+tatoeba-kor >= 99.83%, tatoeba-eng >= 99.55%).
