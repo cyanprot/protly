@@ -5,6 +5,7 @@ import { hasHangul, parseLangPrefix } from '../../lib/lang.js';
 import { createCard } from '../../ui/card.js';
 import { ERRORS, errorText } from '../../ui/errors.js';
 import { trusted } from '../../ui/trust.js';
+import { LIMITS } from '../../lib/limits.js';
 
 const MOUNT_GRACE_MS = 3000; // Gmail can render a body before its toolbar
 const HINTS = 'Esc undo';
@@ -129,6 +130,7 @@ export function translate(body) {
     // A new Korean draft replaced the preview. The body holds it, so the older Korean is not needed for Undo.
     Object.assign(s, { mode: 'idle', saved: null });
   }
+  if (text.length > LIMITS.text) return say(body, s, `Too long for protly (over ${LIMITS.text} characters).`, { error: true });
   let opts;
   if (hasHangul(text)) {
     // The prefix ("ru: ...") is a one-off override; the saved nodes keep it, so Undo brings it back.

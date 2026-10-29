@@ -1,4 +1,7 @@
 import { ApiError } from './api.js';
+import { LIMITS } from './limits.js';
+
+export { LIMITS };
 
 export const INSTAGRAM = 'https://www.instagram.com';
 export const GMAIL = 'https://mail.google.com';
@@ -38,7 +41,6 @@ export function allowed(type, sender, extensionId, senders = SENDERS) {
 // Message shapes. Content scripts pass page text (messages, drafts, the thread) and their own UI state; the checks
 // keep the documented fields, types and enum values, and bound the sizes so a hostile page cannot make one
 // command arbitrarily large or write arbitrary fields into stored thread state.
-export const LIMITS = { text: 32000, memo: 8000, items: 1000, context: 50, texts: 1000, reason: 200, url: 8192 };
 const LANG = /^[a-z]{2,12}$/; // ISO 639 codes; also any stored partner language from before src_lang was checked
 const THREAD_ID = /^[^/\s]{1,128}$/;
 const ITEM_ID = /^[\w-]{1,32}$/;

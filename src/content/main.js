@@ -1,4 +1,5 @@
 import { threadIdFromPath } from '../lib/keys.js';
+import { LIMITS } from '../lib/limits.js';
 import { watchFlags, siteEnabled } from '../lib/flags.js';
 import { isKoreanOnly, hasHangul as isHangulText } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
@@ -162,17 +163,28 @@ function onMutate(threadId) {
   }, DEBOUNCE_MS);
 }
 
+// Each context message is cut like Gmail's thread reading: one huge message must not crowd out the rest or exceed
+// the background's size limit.
+const CONTEXT_CHARS = 2000;
+const cut = (text) => (text.length > CONTEXT_CHARS ? `${text.slice(0, CONTEXT_CHARS)} [...]` : text);
+
 export function contextFor(root) {
-  return readMessages(root).slice(-CONTEXT_N).map(({ from, text }) => ({ from, text }));
+  return readMessages(root).slice(-CONTEXT_N).map(({ from, text }) => ({ from, text: cut(text) }));
+}
+
+// The partner messages worth translating, and the request items for them. A message over the size limit is
+// skipped (left as it is): the background would refuse the whole batch for it.
+export function incomingItems(msgs) {
+  const todo = msgs.filter((m) => m.from === 'partner' && !isKoreanOnly(m.text) && m.text.length <= LIMITS.text);
+  return { todo, items: todo.map((m, i) => ({ id: String(i), text: m.text, from: m.from })) };
 }
 
 // updateLang: true only for the initial scan and fresh arrivals (see Task 12).
 async function translate(msgs, mode, updateLang) {
   if (!current) return;
-  const todo = msgs.filter((m) => m.from === 'partner' && !isKoreanOnly(m.text));
+  const { todo, items } = incomingItems(msgs);
   if (!todo.length) return;
   const threadId = current.threadId;
-  const items = todo.map((m, i) => ({ id: String(i), text: m.text, from: m.from }));
   try {
     const data = await ask({ type: 'incoming', threadId, context: contextFor(current.root), items, updateLang });
     if (current?.threadId !== threadId) return;

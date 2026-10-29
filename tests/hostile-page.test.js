@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
+import { readFileSync } from 'node:fs';
 import { createCard, shadowOf } from '../src/ui/card.js';
 
 test('page scripts cannot reach into the card: its shadow root is closed', () => {
@@ -158,4 +159,42 @@ test('very long page text: the any-site path refuses it before any request', asy
   await inst.run({ source: 'menu-selection', selectionText: 'a'.repeat(100000) });
   assert.equal(asks.length, 0);
   assert.match(doc.querySelector('.pl-toasts')?.shadowRoot?.textContent ?? '', /Too long/);
+});
+
+// One message the size of a novel must not cost the thread its translations: the background refuses oversized
+// fields (E2), so the adapters bound what they send.
+const igThread = (texts) => new JSDOM(`<body><nav><a href="/me/"><img alt="me's profile picture"></a></nav><div role="main">${
+  texts.map((t) => `<div role="group"><div role="article" aria-roledescription="message"><div dir="auto">${t}</div></div>
+    <div aria-label="Reply to message from them"></div></div>`).join('')}</div></body>`).window.document;
+
+test('Instagram: an oversized partner message neither blocks the batch nor the reply context', async () => {
+  const { contextFor, incomingItems } = await import('../src/content/main.js');
+  const { readMessages } = await import('../src/content/dom.js');
+  const { checkShape } = await import('../src/lib/messages.js');
+  const doc = igThread(['hello', 'x'.repeat(40000), 'привет']);
+  const root = doc.querySelector('[role="main"]');
+  const ctx = contextFor(root);
+  checkShape('outgoing', { threadId: '1', context: ctx, korean: '안녕', profile: 'outgoing' });
+  checkShape('suggestMemo', { threadId: '1', context: ctx });
+  assert.match(ctx[1].text, /\[\.\.\.\]$/);
+  const { todo, items } = incomingItems(readMessages(root, 'me'));
+  checkShape('incoming', { threadId: '1', context: ctx, items, updateLang: true });
+  assert.deepEqual(items.map((it) => it.text), ['hello', 'привет']);
+  assert.equal(todo.length, 2);
+});
+
+test('Gmail: a draft over the size limit gets a readable message and no request', async () => {
+  const { LIMITS } = await import('../src/lib/limits.js');
+  globalThis.document = new JSDOM(`<body>${readFileSync(new URL('./fixtures/gmail.html', import.meta.url), 'utf8')}</body>`).window.document;
+  const asks = [];
+  globalThis.chrome = { runtime: { id: 'x', sendMessage: async (m) => { asks.push(m); return { ok: true, data: true }; } } };
+  const { translate } = await import('../src/content/gmail/compose.js');
+  const { GSEL } = await import('../src/content/gmail/selectors.js');
+  const body = document.querySelector(GSEL.body);
+  body.replaceChildren(document.createTextNode('한'.repeat(LIMITS.text + 1)));
+  translate(body);
+  assert.equal(asks.filter((m) => m.type !== 'badge').length, 0);
+  const card = shadowOf(document.querySelector('.pl-card'));
+  assert.match(card.textContent, /Too long for protly/);
+  assert.equal(body.textContent.length, LIMITS.text + 1);
 });
