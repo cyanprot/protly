@@ -253,3 +253,29 @@ test('a thread longer than the item limit goes out in chunks that each pass the 
   for (const part of parts) checkShape('incoming', { threadId: '1', context: [], items: incomingItems(part).items });
   assert.equal(parts.flat().length, msgs.length);
 });
+
+test('Instagram: an Enter the user did not press never sends Hangul or an unconfirmed draft', async () => {
+  const { holdUntrustedEnter } = await import('../src/content/outgoing.js');
+  const win = new JSDOM('<body><div id="c" contenteditable="true"></div><div id="o" contenteditable="true"></div><input id="i"></body>').window;
+  const c = win.document.getElementById('c');
+  const key = (target, init = {}) => {
+    const e = new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, ...init });
+    Object.defineProperty(e, 'target', { value: target });
+    return e;
+  };
+  const hold = (e, s = {}) => holdUntrustedEnter(e, { composer: c, writing: false, mode: 'idle', ...s });
+  c.textContent = '안녕';
+  assert.equal(hold(key(c)), true); // Hangul in the composer
+  c.textContent = 'hello';
+  assert.equal(hold(key(c)), false); // plain English, idle: nothing protly guards
+  assert.equal(hold(key(c), { mode: 'translating' }), true);
+  assert.equal(hold(key(c), { mode: 'preview' }), true); // only the user confirms a preview
+  assert.equal(hold(key(c), { writing: true }), true);
+  assert.equal(hold(key(c, { shiftKey: true }), { mode: 'preview' }), false); // a new line, not a send
+  assert.equal(hold(key(c, { key: 'a' }), { mode: 'preview' }), false);
+  assert.equal(hold(key(win.document.getElementById('i'))), false); // outside the composer
+  // Composer selector broken: any Hangul contenteditable is held, as for the user's own Enter.
+  const other = win.document.getElementById('o');
+  other.textContent = '안녕';
+  assert.equal(holdUntrustedEnter(key(other), { composer: null, writing: false, mode: 'idle' }), true);
+});

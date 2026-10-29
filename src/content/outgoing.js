@@ -18,6 +18,16 @@ const norm = (s) => s.replace(/\s+/g, ' ').trim();
 const isEnter = (e) => e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter';
 const block = (e) => { e.preventDefault(); e.stopImmediatePropagation(); };
 
+// An Enter the user did not make (isTrusted false) never starts a translation. It is held whenever the user's own
+// Enter would not simply send: Hangul in the box (or in any editable box when the composer selector is broken),
+// a translation or write in progress, or a preview only the user may confirm.
+export function holdUntrustedEnter(e, { composer: c, writing, mode }) {
+  if (!isEnter(e) || e.shiftKey) return false;
+  const box = c ? (c.contains(e.target) ? c : null) : (e.target?.isContentEditable || e.target?.getAttribute?.('contenteditable') === 'true' ? e.target : null);
+  if (!box) return false;
+  return writing || mode !== 'idle' || hasHangul(box.innerText || box.textContent || '');
+}
+
 export function mountOutgoing(cur) {
   let state = initial();
   let enterAfterComposition = null; // { hard, at }
@@ -188,11 +198,14 @@ export function mountOutgoing(cur) {
   }
 
   function onKeyDown(e) {
-    if (!trusted(e)) return; // a page script's Enter must not start a billed translation
     if (!live()) return; // main.js guards Hangul Enter until the new thread's handler is mounted
     const cur2 = getCurrent();
     if (!cur2?.thread.enabled) return;
     const c = composer();
+    if (!trusted(e)) { // a page script or another extension: never a billed translation, never an unconfirmed send
+      if (holdUntrustedEnter(e, { composer: c, writing, mode: state.mode })) block(e);
+      return;
+    }
 
     if (!c || !c.contains(e.target)) {
       // Composer selector broken: never let Hangul go out untranslated by accident.
