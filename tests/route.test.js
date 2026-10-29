@@ -77,3 +77,10 @@ test('translate selection skips the adapter, even when it would answer handled',
   assert.equal(await routeCommand({ tabId: 7, frameId: 0, args: sel, ...deps }), 'generic');
   assert.deepEqual(log, [['inject', 7, 0], ['run', 7, 0, sel]]);
 });
+
+test('an answer without a truthy handled runs the generic path', async () => {
+  for (const [answer, path] of [[null, 'generic'], ['handled', 'generic'], [{ handled: 0 }, 'generic'], [{ handled: 'yes' }, 'adapter'], [{ handled: true }, 'adapter']]) {
+    const f = fakes({ answer });
+    assert.equal(await routeCommand({ tabId: 1, args, ...f.deps }), path, JSON.stringify(answer));
+  }
+});
