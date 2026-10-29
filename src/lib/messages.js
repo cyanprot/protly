@@ -6,7 +6,8 @@ export { LIMITS };
 export const INSTAGRAM = 'https://www.instagram.com';
 export const GMAIL = 'https://mail.google.com';
 export const PAGE = 'extension page'; // the popup and the options page
-export const ANY_SITE = 'any site'; // a content script in a tab on any http(s) origin (the generic Alt+T bundle)
+export const ANY_SITE = 'any site'; // any of our content scripts in a tab (the generic Alt+T bundle)
+export const OTHER_ORIGIN = 'other origin'; // our content script in a frame with no http(s) origin (sandboxed, file:)
 
 // Who may send each command. A command missing here is refused. Content scripts run inside hostile pages, so each
 // one gets only what its own adapter calls: thread state is Instagram's, email is Gmail's, the popup and options
@@ -20,16 +21,17 @@ export const SENDERS = {
   tabStatus: [PAGE], diag: [PAGE], testCall: [PAGE], usageSummary: [PAGE],
 };
 
-// PAGE, the http(s) origin of a content script's frame, or null for anything else (another extension, no tab).
+// PAGE, the http(s) origin of a content script's frame, OTHER_ORIGIN for a content script in a sandboxed, file: or
+// data: frame (any-site commands only), or null for anything else (another extension, no tab).
 export function senderClass(sender, extensionId) {
   if (!sender || !extensionId || sender.id !== extensionId) return null;
   if (typeof sender.url === 'string' && sender.url.startsWith(`chrome-extension://${extensionId}/`)) return PAGE;
   if (sender.tab?.id == null) return null;
   let origin = sender.origin;
   if (typeof origin !== 'string') {
-    try { origin = new URL(sender.url).origin; } catch { return null; }
+    try { origin = new URL(sender.url).origin; } catch { origin = null; }
   }
-  return /^https?:\/\/[^/]+$/.test(origin) ? origin : null;
+  return typeof origin === 'string' && /^https?:\/\/[^/]+$/.test(origin) ? origin : OTHER_ORIGIN;
 }
 
 export function allowed(type, sender, extensionId, senders = SENDERS) {

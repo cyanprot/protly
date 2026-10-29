@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { senderClass, allowed, SENDERS, PAGE } from '../src/lib/messages.js';
+import { senderClass, allowed, SENDERS, PAGE, OTHER_ORIGIN } from '../src/lib/messages.js';
 
 const ID = 'abcdefghijklmnopabcdefghijklmnop';
 
@@ -13,11 +13,19 @@ test('senderClass: extension pages, content-script origins, and everything else'
   for (const s of [
     null, undefined, {}, { id: 'x'.repeat(32), url: 'https://a.example/', tab: { id: 1 } },
     { id: ID, url: 'https://a.example/' }, // no tab
-    { id: ID, url: 'not a url', tab: { id: 1 } },
-    { id: ID, url: 'https://a.example/', origin: 'null', tab: { id: 1 } }, // sandboxed frame
-    { id: ID, url: 'file:///etc/passwd', tab: { id: 1 } },
-    { id: ID, url: `chrome-extension://${'x'.repeat(32)}/a.html`, tab: { id: 1 } },
   ]) assert.equal(senderClass(s, ID), null, JSON.stringify(s));
+  // Our content script in a frame with no http(s) origin: the generic bundle still works there (any-site commands).
+  for (const s of [
+    { id: ID, url: 'https://a.example/', origin: 'null', tab: { id: 1 } }, // sandboxed frame
+    { id: ID, url: 'file:///home/me/x.html', origin: 'file://', tab: { id: 1 } },
+    { id: ID, url: 'data:text/html,x', tab: { id: 1 } },
+    { id: ID, url: 'not a url', tab: { id: 1 } },
+  ]) {
+    assert.equal(senderClass(s, ID), OTHER_ORIGIN, JSON.stringify(s));
+    assert.equal(allowed('box', s, ID), true);
+    assert.equal(allowed('getThread', s, ID), false);
+    assert.equal(allowed('diag', s, ID), false);
+  }
   assert.equal(senderClass({ id: undefined, url: 'chrome-extension://undefined/x' }, undefined), null);
 });
 
