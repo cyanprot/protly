@@ -1,6 +1,7 @@
 import { GSEL } from './selectors.js';
 
 const BLOCK = /^(DIV|P|LI|H[1-6]|UL|OL|BLOCKQUOTE)$/;
+const HIDDEN = /^(SCRIPT|STYLE|TEMPLATE|NOSCRIPT)$/; // an email's CSS or script is not text anyone reads
 const MEDIA = 'img, video, iframe';
 
 const isBoundary = (n) => n.nodeType === 1 && (n.matches(GSEL.boundary) || !!n.querySelector(GSEL.boundary));
@@ -38,7 +39,7 @@ export function nodesToText(nodes) {
   let out = '';
   const walk = (n) => {
     if (n.nodeType === 3) { out += n.textContent; return; }
-    if (n.nodeType !== 1) return;
+    if (n.nodeType !== 1 || HIDDEN.test(n.nodeName)) return;
     if (n.nodeName === 'BR') { out += '\n'; return; }
     const block = BLOCK.test(n.nodeName);
     if (block && out && !out.endsWith('\n')) out += '\n';

@@ -166,7 +166,8 @@ function onMutate(threadId) {
 // Each context message is cut like Gmail's thread reading: one huge message must not crowd out the rest or exceed
 // the background's size limit.
 const CONTEXT_CHARS = 2000;
-const cut = (text) => (text.length > CONTEXT_CHARS ? `${text.slice(0, CONTEXT_CHARS)} [...]` : text);
+const cut = (text) => (text.length > CONTEXT_CHARS
+  ? `${text.slice(0, CONTEXT_CHARS).replace(/[\uD800-\uDBFF]$/, '')} [...]` : text); // whole emoji only
 
 export function contextFor(root) {
   return readMessages(root).slice(-CONTEXT_N).map(({ from, text }) => ({ from, text: cut(text) }));
