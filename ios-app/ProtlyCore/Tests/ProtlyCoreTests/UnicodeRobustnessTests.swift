@@ -12,4 +12,14 @@ final class UnicodeRobustnessTests: XCTestCase {
         XCTAssertEqual(s.type(KeyEvent("ß", .manual)), .mark("SS"))
         XCTAssertEqual(s.commit(), .commit("SS"))
     }
+
+    func testCompoundFinalPassedThroughThenVowelDoesNotTrap() {
+        // ㄳ is a final but cannot lead a syllable: a vowel after it must not move it into the lead.
+        for compound in "ㄳㄵㄶㄺㄻㄼㄽㄾㄿㅀㅄ" {
+            let keys = [KeyEvent("r"), KeyEvent("k"), KeyEvent(compound), KeyEvent("k")]
+            let c = Hangul.compose(keys)
+            XCTAssertEqual(c.text, "가\(compound)ㅏ")
+            XCTAssertFalse(c.isValid)
+        }
+    }
 }

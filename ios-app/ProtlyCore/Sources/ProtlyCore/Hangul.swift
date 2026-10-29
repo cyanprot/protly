@@ -92,7 +92,9 @@ private struct Composer {
 
     mutating func feedConsonant(_ c: Character) {
         if cho != nil, jung != nil {
-            if jong.isEmpty, Hangul.jongseong.contains(c) { jong = [c]; return }
+            // A single final must also lead a syllable: a vowel moves it there. Keys never type a compound
+            // final (ㄳ) directly; one passed through as a raw key stays as-is.
+            if jong.isEmpty, Hangul.jongseong.contains(c), Hangul.choseong.contains(c) { jong = [c]; return }
             if jong.count == 1, Hangul.finalPairs[String([jong[0], c])] != nil { jong.append(c); return }
         }
         flush()
