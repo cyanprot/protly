@@ -6,8 +6,8 @@ enum PanelState: Equatable {
     case loading(ActionMode)
     case result(ActionMode, ActionResult, original: String, isSelection: Bool)
     case failed(String, retry: ActionMode)
-    /// A clipboard note waiting for Save (insert) or Cancel (close).
-    case confirmNote(String)
+    /// A clipboard note waiting for Save (insert) or Cancel (close). shownAt: systemUptime when it appeared.
+    case confirmNote(String, shownAt: Double)
     /// A message with no action, such as the about-me note being saved.
     case notice(String)
 }
@@ -42,7 +42,7 @@ struct PanelView: View {
                 Text(message).foregroundStyle(.secondary).frame(maxWidth: .infinity)
                 Spacer()
                 buttons(primary: ("Retry", { retry(mode) }), closeLabel: "Cancel")
-            case .confirmNote(let note):
+            case .confirmNote(let note, _):
                 ScrollView {
                     Text(AboutMe.confirmText(for: note)).font(.system(size: 15))
                         .frame(maxWidth: .infinity, alignment: .leading)

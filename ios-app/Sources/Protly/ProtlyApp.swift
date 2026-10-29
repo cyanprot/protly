@@ -36,11 +36,14 @@ struct SetupView: View {
                     TextField("Who you are, in a few facts", text: $aboutMe, axis: .vertical)
                         .lineLimit(4...12)
                         .onChange(of: aboutMe) { _, new in
-                            if new.count > AboutMeLink.cap { aboutMe = String(new.prefix(AboutMeLink.cap)) }
+                            // Scalars, as AboutMe counts: combining marks must not hide inside one character.
+                            if new.unicodeScalars.count > AboutMeLink.cap {
+                                aboutMe = String(String.UnicodeScalarView(new.unicodeScalars.prefix(AboutMeLink.cap)))
+                            }
                             copied = false
                         }
                     HStack {
-                        Text("\(aboutMe.count) / \(AboutMeLink.cap)").foregroundStyle(.secondary)
+                        Text("\(aboutMe.unicodeScalars.count) / \(AboutMeLink.cap)").foregroundStyle(.secondary)
                         Spacer()
                         Button(copied ? "Copied" : "Copy for the keyboard", action: copyForKeyboard)
                     }

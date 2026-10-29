@@ -5558,7 +5558,7 @@ Run every command from the repo root after `. ~/.local/share/swiftly/env.sh`. Th
    and a `Copy for the keyboard` button that puts `protly about me v1` + newline + the note on the clipboard (local
    only, expires after 10 minutes). In the keyboard, `Read clipboard` (bar or protly key, empty field) sees that
    first line and, instead of translating, shows a **confirm panel**: the length, a warning to save only a note
-   copied in the Protly app, and the first 200 characters, with `Save` and `Cancel`. Only `Save` stores the note in
+   copied in the Protly app, and the whole note (it scrolls; review fix 3), with `Save` and `Cancel`. Only `Save` stores the note in
    the keyboard's own `UserDefaults` ("About me saved: N characters."). An empty note asks to clear the saved one.
    Ordinary clipboard text is translated exactly as before.
 9. **The marker is not a secret, so a save always needs a tap.** Any app or web page can copy text that starts with
@@ -6048,6 +6048,32 @@ Record the table under `## Sprint 7: style eval` in `docs/ios-keyboard-notes.md`
 ---
 
 ## Sprint 7b: about-me note
+
+**Review fixes (2026-10-29, after an independent review said MERGE_WITH_FIXES).** Applied on top of Tasks 7.4 and
+7.5, test first; the code blocks below show the code as first landed, and `AboutMe.swift` on the branch wins.
+1. The cap and every count are in Unicode scalars, not graphemes (`AboutMe` and the app's counter and cut):
+   `String.count` let combining marks and Tag characters hide, for example `"a"` plus 100,000 U+0301 counted 1.
+   `parse` also refuses a note with Tag characters (U+E0000-E007F), bidi controls (U+202A-202E, U+2066-2069) or
+   any other format (Cf) scalar but ZWJ, with its own result `.hiddenCharacters` and a notice in the panel.
+   `system` drops such scalars from a stored note as a last guard.
+2. `KeyboardSourceRulesTests` is tighter: the note write must sit in the body of `insertResult()`, right under the
+   `case let .confirmNote(` line that also calls `AboutMe.canSave(`; receivers match `\s*\.` so a write chained
+   onto the next line is caught; `setPersistentDomain`, `removePersistentDomain`, `setVolatileDomain`,
+   `CFPreferencesSet*` and `@SceneStorage` are forbidden; `ProtlyApp.swift` holds exactly one `@AppStorage`; and
+   a new test pins `insertResult(` to one caller, the panel's `insert:` closure. Mutations that passed the first
+   rule (a write in `readClipboard` under a `confirmNote` if, a newline-chained write, `setPersistentDomain`) and
+   four more (a second `insertResult()` caller, a write without the delay, a second `@AppStorage`,
+   `@SceneStorage`) each fail it now.
+3. The confirm panel shows the whole note (at most 1,000 scalars, in a ScrollView); `previewLength` is gone.
+4. Save is ignored for `AboutMe.saveDelay` (0.5 s) after the confirm panel appears (`AboutMe.canSave`, on
+   `systemUptime`; `PanelState.confirmNote` carries `shownAt`), so a double tap on Retry, whose slot Save takes,
+   cannot save.
+5. `parse` turns `\r\n` and `\r` into `\n` and drops a leading U+FEFF before it looks for the marker.
+6. The note goes into the system prompt inside `<about_writer>` and `</about_writer>`, after a header that names
+   the tags; every about_writer tag in the note is stripped (repeatedly, case-insensitive) so it cannot close its
+   own block. `scripts/eval-polish.mjs` builds the same text, and `tests/about-me.test.js` checks both.
+
+Counts after the fixes: Swift 142 -> 149, npm 363 -> 365.
 
 ### Task 7.4: AboutMe in ProtlyCore
 

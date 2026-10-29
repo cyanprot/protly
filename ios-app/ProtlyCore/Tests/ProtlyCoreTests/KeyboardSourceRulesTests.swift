@@ -108,21 +108,36 @@ final class KeyboardSourceRulesTests: XCTestCase {
         }
     }
 
+    /// The range of a function's body: from its declaration to the first line that is only `    }`.
+    private func body(of declaration: String, in ns: NSString) -> NSRange? {
+        let start = ns.range(of: declaration)
+        guard start.location != NSNotFound else { return nil }
+        let end = ns.range(of: "\n    }\n", range: NSRange(location: start.location, length: ns.length - start.location))
+        guard end.location != NSNotFound else { return nil }
+        return NSRange(location: start.location, length: end.location - start.location)
+    }
+
     func testUserDefaultsHoldsOnlyTheChangeCountTheLanguageTheLearnedWordsAndTheNote() throws {
         var noteSaves: [String] = []
+        var appStorage: [String] = []
         for (name, text) in try sources() {
             let ns = text as NSString
             let receivers = [#"UserDefaults\.standard"#, #"UserDefaults\([^)]*\)"#]
                 + boundNames(#"UserDefaults\b"#, in: text).map { #"\b\#($0)"# }
             for receiver in receivers {
-                for r in matches(receiver + #"\.(set|setValue)\("#, in: text) {
+                // \s* catches a write chained onto the next line.
+                for r in matches(receiver + #"\s*\.(set|setValue)\("#, in: text) {
                     let line = lineText(ns, r)
-                    // The about-me note (at most AboutMe.cap characters), saved only by Save on its confirm
-                    // panel, because any app can put the marker on the clipboard.
+                    // The about-me note (at most AboutMe.cap scalars), saved only by Save on its confirm panel,
+                    // because any app can put the marker on the clipboard.
                     if line.contains("forKey: AboutMe.defaultsKey)") {
                         let above = ns.substring(to: ns.lineRange(for: r).location)
                             .components(separatedBy: "\n").dropLast().last ?? ""
-                        XCTAssertTrue(above.contains("case let .confirmNote("), "\(name): note saved off the confirm panel: \(line)")
+                        XCTAssertTrue(above.contains("case let .confirmNote(") && above.contains("AboutMe.canSave("),
+                                      "\(name): note saved off the confirm panel or without the Save delay: \(line)")
+                        let insert = body(of: "func insertResult()", in: ns)
+                        XCTAssertTrue(insert.map { NSLocationInRange(r.location, $0) } == true,
+                                      "\(name): note saved outside insertResult: \(line)")
                         noteSaves.append("\(name): \(line)")
                         continue
                     }
@@ -133,14 +148,35 @@ final class KeyboardSourceRulesTests: XCTestCase {
                                   "\(name): \(line)")
                 }
             }
+            // No other way into the defaults or the preferences.
+            for call in [#"\bsetPersistentDomain\b"#, #"\bremovePersistentDomain\b"#, #"\bsetVolatileDomain\b"#,
+                         #"\bCFPreferencesSet\w*"#, #"@SceneStorage"#] {
+                XCTAssertEqual(matches(call, in: text).count, 0, "\(name): \(call)")
+            }
             // The container app keeps the note the user types there, under that key and no other.
             for r in matches(#"@AppStorage"#, in: text) {
                 XCTAssertTrue(name == "ProtlyApp.swift" && lineText(ns, r).contains("@AppStorage(AboutMeLink.defaultsKey)"),
                               "\(name): \(lineText(ns, r))")
+                appStorage.append("\(name): \(lineText(ns, r))")
             }
         }
         XCTAssertEqual(noteSaves.count, 1, noteSaves.joined(separator: "\n"))
         XCTAssertTrue(noteSaves.first?.hasPrefix("KeyboardViewController.swift:") == true, noteSaves.joined())
+        XCTAssertEqual(appStorage.count, 1, appStorage.joined(separator: "\n"))
+    }
+
+    /// Save is the panel's insert button: insertResult has one caller, that closure.
+    func testInsertResultIsCalledOnlyByThePanelsInsertButton() throws {
+        var calls: [String] = []
+        for (name, text) in try sources() {
+            let ns = text as NSString
+            calls += matches(#"\binsertResult\("#, in: text)
+                .filter { !ns.substring(to: $0.location).hasSuffix("func ") }
+                .map { "\(name): \(lineText(ns, $0))" }
+        }
+        XCTAssertEqual(calls.count, 1, calls.joined(separator: "\n"))
+        XCTAssertTrue(calls.first?.hasPrefix("KeyboardViewController.swift:") == true, calls.joined())
+        XCTAssertTrue(calls.first?.contains("insert: { [unowned host] in host.insertResult() }") == true, calls.joined())
     }
 
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {

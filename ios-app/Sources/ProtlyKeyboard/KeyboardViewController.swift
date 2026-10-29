@@ -259,9 +259,11 @@ final class KeyboardViewController: KeyboardInputViewController {
         case .notAboutMe:
             run(.in, text: text, original: "", isSelection: false)
         case .note(let note):
-            mode.panel = .confirmNote(note)
+            mode.panel = .confirmNote(note, shownAt: ProcessInfo.processInfo.systemUptime)
         case .tooLong(let count):
             mode.panel = .notice("About me is \(count) characters. Shorten it to \(AboutMe.cap) in the Protly app.")
+        case .hiddenCharacters:
+            mode.panel = .notice("About me has hidden characters. Retype it in the Protly app.")
         }
     }
 
@@ -281,8 +283,10 @@ final class KeyboardViewController: KeyboardInputViewController {
     }
 
     func insertResult() {
-        // Save on the About me confirm panel: the only way a clipboard note is kept.
-        if case let .confirmNote(note) = mode.panel {
+        // Save on the About me confirm panel: the only way a clipboard note is kept. A tap in the first
+        // AboutMe.saveDelay seconds is dropped (it falls to the guard below, which returns).
+        let now = ProcessInfo.processInfo.systemUptime
+        if case let .confirmNote(note, shownAt) = mode.panel, AboutMe.canSave(shownAt: shownAt, now: now) {
             UserDefaults.standard.set(note, forKey: AboutMe.defaultsKey)
             mode.panel = .notice(AboutMe.savedText(for: note))
             return
