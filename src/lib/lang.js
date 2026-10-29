@@ -28,7 +28,8 @@ export function resolveOutputLang(thread) {
 export function latestPartnerLang(results) {
   for (let i = results.length - 1; i >= 0; i--) {
     const r = results[i];
-    if (r.from === 'partner' && r.src_lang && r.src_lang !== 'ko') return r.src_lang;
+    // und: emoji only, or a code the parser refused. Neither says which language to answer in.
+    if (r.from === 'partner' && r.src_lang && r.src_lang !== 'ko' && r.src_lang !== 'und') return r.src_lang;
   }
   return null;
 }
