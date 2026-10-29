@@ -76,8 +76,15 @@ final class ActionRequestTests: XCTestCase {
         let moved = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: 307, httpVersion: "HTTP/1.1",
                                                   headerFields: ["Location": "https://example.com/collect"]))
         let next = Box(URLRequest(url: url))
-        ActionSessionDelegate().urlSession(URLSession.shared, task: task, willPerformHTTPRedirection: moved,
-                                           newRequest: URLRequest(url: URL(string: "https://example.com/collect")!)) { next.value = $0 }
+        // Through the protocol, as URLSession calls it: a signature that only nearly matches would not compile.
+        // (Darwin's Objective-C optional requirement is the tower's build check.)
+        let delegate: URLSessionTaskDelegate = ActionSessionDelegate()
+        let target = URLRequest(url: URL(string: "https://example.com/collect")!)
+        #if canImport(FoundationNetworking)
+        delegate.urlSession(URLSession.shared, task: task, willPerformHTTPRedirection: moved, newRequest: target) { next.value = $0 }
+        #else
+        delegate.urlSession?(URLSession.shared, task: task, willPerformHTTPRedirection: moved, newRequest: target) { next.value = $0 }
+        #endif
         XCTAssertNil(next.value)
         XCTAssertEqual(ActionAPI.parse(status: 307, body: Data()).failureKind, .badRequest)
     }

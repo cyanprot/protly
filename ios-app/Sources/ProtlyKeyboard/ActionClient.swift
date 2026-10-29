@@ -19,7 +19,10 @@ enum ActionClient {
             // Read at most maxResponseBytes: a huge body must not take the keyboard's memory.
             var data = Data()
             for try await byte in bytes {
-                guard data.count < ActionAPI.maxResponseBytes else { return .failure(ActionError(.parse)) }
+                guard data.count < ActionAPI.maxResponseBytes else {
+                    bytes.task.cancel()  // stop the download now, not when the sequence is released
+                    return .failure(ActionError(.parse))
+                }
                 data.append(byte)
             }
             return ActionAPI.parse(status: (resp as? HTTPURLResponse)?.statusCode ?? 0, body: data)
