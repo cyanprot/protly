@@ -28,4 +28,17 @@ final class ActionRequestTests: XCTestCase {
         XCTAssertEqual(kind(request(String(repeating: "가", count: 5_000_000), mode: .in)), .tooLong)
         XCTAssertFalse(ActionError(.tooLong).message.isEmpty)
     }
+
+    func testNothingIsKeptOnDisk() throws {
+        // Field text, clipboard text and the reply live only in memory: no URL cache, no cookie store.
+        let req = try request("hi").get()
+        XCTAssertEqual(req.cachePolicy, .reloadIgnoringLocalCacheData)
+        XCTAssertFalse(req.httpShouldHandleCookies)
+        let c = ActionAPI.sessionConfiguration()
+        XCTAssertNil(c.urlCache)
+        XCTAssertNil(c.httpCookieStorage)
+        XCTAssertFalse(c.httpShouldSetCookies)
+        XCTAssertNil(c.urlCredentialStorage)
+        XCTAssertEqual(c.requestCachePolicy, .reloadIgnoringLocalCacheData)
+    }
 }

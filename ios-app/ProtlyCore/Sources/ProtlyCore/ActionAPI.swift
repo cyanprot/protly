@@ -75,12 +75,23 @@ public enum ActionAPI {
         guard let url = URL(string: url), let body = try? body(mode: mode, text: text, system: system) else {
             return .failure(ActionError(.badRequest))
         }
-        var req = URLRequest(url: url)
+        var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
         req.httpMethod = "POST"
-        req.timeoutInterval = 30
+        req.httpShouldHandleCookies = false
         for (name, value) in headers(apiKey: apiKey) { req.setValue(value, forHTTPHeaderField: name) }
         req.httpBody = body
         return .success(req)
+    }
+
+    /// The session for action requests: the text and the reply stay in memory, never in a cache or cookie store.
+    public static func sessionConfiguration() -> URLSessionConfiguration {
+        let c = URLSessionConfiguration.ephemeral
+        c.urlCache = nil
+        c.httpCookieStorage = nil
+        c.httpShouldSetCookies = false
+        c.urlCredentialStorage = nil
+        c.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return c
     }
 
     public static func headers(apiKey: String) -> [String: String] {
