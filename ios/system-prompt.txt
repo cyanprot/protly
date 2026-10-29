@@ -4,9 +4,12 @@ The text gives PEOPLE (memos about friends), MODE, and for MODE out or fix a DRA
 - Memo: use the PEOPLE entry whose name or handle matches the chat header, the sender or the author on screen. If none matches, use no memo.
 MODE in:
 - In a chat, first find the last message from the writer (right side, or the sender named in the Me: line). Translate only the messages below it. Everything above it was already read and must not appear in the output, in group chats too. If the writer has no message on screen, translate the last few messages. With several people, start each line with the sender name and a colon.
+- A reply shows a small quoted copy of an earlier message (indented, often with a vertical bar, under a label such as "Replied to you" or "replied to X") above the new message. A quote is not a message: never translate it and never count it as the last message from the writer, even when it has the colour of the writer.
+- Skip interface text: labels such as Replied to you, Seen or Edited, timestamps, reactions, typing dots, and truncation markers such as "more" or "See more". From a cut-off message translate only the visible part, without the marker.
+- If nothing new is left to translate, translation is one short Korean sentence saying there are no new messages.
 - On a screen that is not a chat, translate the main non-Korean text being read (the post, article or email body). Skip menus, buttons, ads and the address bar. Keep paragraphs.
 - Skip bubbles already in Korean. Translate everything else into Korean, casual speech (banmal) unless the memo says otherwise.
-- In a chat, one line per message, oldest first. back_translation is an empty string.
+- In a chat, one line per message, oldest first, with no blank lines, labels or comments. A message that wraps over several lines on screen is still one line. back_translation is an empty string.
 MODE out:
 - Translate the Korean DRAFT so it reads like a native speaker texting a friend.
 - Target language: if the DRAFT starts with a language code and a colon (for example en: ru: ja: es:), use that language and leave the prefix out of the translation and back_translation. Otherwise the reply language named in the memo, else the language of the latest non-Korean messages from the friend on screen, else English.

@@ -24,6 +24,7 @@ test('iOS template system prompt matches ios/system-prompt.txt', () => {
 test('iOS template asks for the translation schema', () => {
   assert.equal(body.model, 'claude-sonnet-5-5');
   assert.ok(body.max_tokens > 0);
+  assert.deepEqual(body.thinking, { type: 'between_tools' }); // MODE in: thinking off, like the extension's incoming
   const f = body.output_config.format;
   assert.equal(f.type, 'json_schema');
   assert.deepEqual(f.schema.required, ['translation', 'back_translation']);
@@ -59,4 +60,18 @@ test('mode comes from the launch input, and the write shortcut passes it', () =>
   // The clipboard is read only inside the write branch.
   assert.ok(src.indexOf('getClipboard()') > src.indexOf('if writeFlag {'));
   assert.match(write, /@flag = "write"\nrun\("Protly", @flag\)/);
+});
+
+test('drafts swap in Opus with adaptive thinking, reading the screen stays on Sonnet', () => {
+  const src = readFileSync(new URL('../ios/protly.cherri', import.meta.url), 'utf8');
+  const i = src.indexOf('if @mode != "in" {');
+  assert.ok(i > src.indexOf("@template = '") && i < src.indexOf("replaceText('{{TEXT}}'"));
+  assert.match(src, /replaceText\('claude-sonnet-5-5', "claude-opus-5-5"/);
+  assert.match(src, /replaceText\('between_tools', "adaptive"/);
+});
+
+test('MODE in skips reply quotes and interface text', () => {
+  const sys = readFileSync(new URL('../ios/system-prompt.txt', import.meta.url), 'utf8');
+  assert.match(sys, /A quote is not a message/);
+  assert.match(sys, /truncation markers/);
 });

@@ -76,6 +76,8 @@ New shortcut, name `Protly`. Add these actions in order. "Regex ON" means the Re
 | 35 | Otherwise | Get Dictionary Value `translation` in Result; Show Alert title `[in]`, message = that value |
 | 36 | End If | |
 
+Model split (same as the extension): the template is MODE in, Sonnet with thinking off (`between_tools`). Right after Set Variable `template`, an If `mode` is not `in` block runs Replace Text `claude-sonnet-5-5` -> `claude-opus-5-5` and `between_tools` -> `adaptive`, each followed by Set Variable `template` to Updated Text.
+
 Why the escaping: Shortcuts has no JSON-escape action. Steps 9 to 12 turn the memos and draft into a valid JSON string (backslash first, then quotes, newlines, and any other control character to a space). Steps 19 and 20 must have regex OFF, or `\\` and `$` in the text get rewritten.
 
 ## 2. Back Tap

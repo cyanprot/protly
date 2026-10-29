@@ -5,8 +5,10 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const system = readFileSync(new URL('../ios/system-prompt.txt', import.meta.url), 'utf8').trim();
 const body = {
   model: 'claude-sonnet-5-5',
-  max_tokens: 4000,
-  thinking: { type: 'adaptive' },
+  // Base = MODE in: Sonnet, thinking off (between_tools, as in src/lib/prompts.js). The shortcut swaps in Opus with
+  // adaptive thinking for MODE out and fix, the same split as the extension.
+  max_tokens: 16000,
+  thinking: { type: 'between_tools' },
   output_config: {
     effort: 'low',
     format: {
