@@ -191,6 +191,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         commitWord()
         session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
         refreshMode()
+        // Every path below shows its own panel: a request still running must not replace it later.
+        actionTask?.cancel()
         guard hasFullAccess else {
             mode.panel = .failed("Turn on Full Access in Settings to use protly actions", retry: requested ?? .in)
             return
@@ -199,7 +201,6 @@ final class KeyboardViewController: KeyboardInputViewController {
             readClipboard()
             return
         }
-        actionTask?.cancel()
         // The panel shows at once: a second tap during the field read cannot start a second request.
         mode.panel = .loading(requested ?? mode.draftMode ?? .in)
         actionTask = Task { [weak self] in
