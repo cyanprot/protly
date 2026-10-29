@@ -25,6 +25,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false  # the publish step brings its own token; the build runs repo code
 
       - uses: actions/setup-python@v5
         with:
@@ -63,8 +65,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/shots"
           bash ios-app/CI/publish-shots.sh "$RUNNER_TEMP/shots" "runs/${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}"
 
-      - name: Require RESULT PASS
+      - name: Require STATUS measured and RESULT PASS
         if: ${{ !cancelled() }}
         run: |
           head -n 1 "$RUNNER_TEMP/shots/report.txt"
+          [ "$(head -n 1 "$RUNNER_TEMP/shots/report.txt")" = "STATUS measured" ]
           grep -qx 'RESULT PASS' "$RUNNER_TEMP/shots/report.txt"
