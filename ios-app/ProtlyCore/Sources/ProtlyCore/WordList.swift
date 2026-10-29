@@ -41,8 +41,9 @@ public struct WordList: Sendable {
         })
     }
 
-    public static func korean(_ text: String) -> WordList {
-        WordList(entries: parse(text).compactMap { w in
+    /// `adding`: words missing from the list (ChatShorthand.missingWords), with their counts.
+    public static func korean(_ text: String, adding extra: [(word: String, count: Int)] = []) -> WordList {
+        WordList(entries: (parse(text) + extra).compactMap { w in
             guard let k = KeyEncoder.keys(forHangul: w.word) else { return nil }
             return (Dubeolsik.koreanKeyString(k), w.count)
         })
@@ -86,16 +87,5 @@ public struct WordList: Sendable {
             i += 1
         }
         return best.map { keys[$0] }
-    }
-
-    /// Highest count among words starting with `prefix` (0 when none). Scans every match, so a short
-    /// prefix walks a large part of the list; use `hasPrefix` when only presence matters.
-    public func bestFrequency(prefix: String) -> Int {
-        var i = lowerBound(prefix), best = 0
-        while i < keys.count, keys[i].hasPrefix(prefix) {
-            best = max(best, counts[i])
-            i += 1
-        }
-        return best
     }
 }

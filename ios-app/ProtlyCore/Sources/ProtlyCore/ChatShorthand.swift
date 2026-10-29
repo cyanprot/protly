@@ -8,6 +8,12 @@ public enum ChatShorthand {
         "ㄱㅅ", "ㅎㅇ", "ㅈㅅ", "ㄹㅇ", "ㅇㅋ", "ㅅㄱ", "ㅊㅋ", "ㅇㅈ", "ㅈㅂ", "ㅂㅇ", "ㄱㅊ", "ㅃㅇ",
     ]
 
+    /// Everyday words missing from ko_50k (a subtitle list) whose keys spell an English list word: 걍 "rid",
+    /// 걔 "rO", 꽤 "Rho", 얘 "dO", 쟤 "wO", 뜰 "Emf". Added to the Korean list at `missingWordCount`, so 걍 beats
+    /// "rid" after a Korean word and at a message start, and "get rid of" stays English after an English word.
+    public static let missingWords = ["걍", "걔", "꽤", "얘", "쟤", "뜰"]
+    public static let missingWordCount = 400
+
     /// Jamo whose repeated runs glue onto words (laughing, crying): ㅋㅋ진짜, 아ㅋㅋ진짜 (composes 앜ㅋ진짜), ㅠㅠ나도.
     static let glueJamo: Set<Character> = ["ㅋ", "ㅎ", "ㅠ", "ㅜ"]
 

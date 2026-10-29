@@ -25,7 +25,8 @@ public struct LanguageDetector: Sendable {
     public static func bundled(priorBonus: Double = 2.0) throws -> LanguageDetector {
         LanguageDetector(
             english: .english(try WordList.bundled("en_50k")),
-            korean: .korean(try WordList.bundled("ko_50k")),
+            korean: .korean(try WordList.bundled("ko_50k"),
+                            adding: ChatShorthand.missingWords.map { ($0, ChatShorthand.missingWordCount) }),
             priorBonus: priorBonus
         )
     }
@@ -38,6 +39,12 @@ public struct LanguageDetector: Sendable {
         if complete, ChatShorthand.abbreviations.contains(hangul.text) { return .korean }
         // Chat shorthand: one jamo repeated (ㅋㅋ ㅇㅇ ㄱㄱ ㅠㅠ). "dd", "gg" also occur in English subtitles.
         if hangul.text.count >= 2, Set(hangul.text).count == 1, Hangul.isLoneJamo(hangul.text.first!) {
+            return .korean
+        }
+        // Shift inside a word on a key with a doubled jamo (rO = 걔, dO = 얘, goT = 했) is Korean: English does not
+        // capitalize mid-word in a word that also composes as Hangul. Every key shifted is caps lock, not Korean.
+        if keys.dropFirst().contains(where: { $0.shift == .manual && Dubeolsik.shifted[$0.letter] != nil }),
+           keys.contains(where: { $0.shift == .none }) {
             return .korean
         }
         let enKey = Dubeolsik.latin(keys).lowercased()
