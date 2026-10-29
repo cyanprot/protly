@@ -46,6 +46,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        ProtlyHeight.pin(self)
         setup(for: KeyboardApp(name: "Protly"))
 
         let handler = ProtlyActionHandler(controller: self)
