@@ -4,11 +4,13 @@
   "project": "protly",
   "campaign_id": "2026-10-28-ios-keyboard",
   "started": "2026-10-28T21:46:10-07:00",
-  "updated": "2026-10-28T22:34:42-07:00",
+  "updated": "2026-10-28T22:54:28-07:00",
   "current_phase": "execute",
-  "current_sprint": 1,
+  "current_sprint": 2,
   "total_sprints": 6,
-  "completed_sprints": [],
+  "completed_sprints": [
+    1
+  ],
   "blocked_reason": null,
   "resume_instruction": null,
   "decisions_log": [
@@ -18,9 +20,12 @@
     "2026-10-28 toolchain: Swift 6.4.1 via swiftly --platform fedora41 (Fedora swift-lang 6.3.2 too old for xtool 1.24.0); Xcode 27.1 .xip for the SDK",
     "2026-10-28 detector measured in planning: Korean 99.83%, English 99.55%, chat 98.3% per word; priorBonus 2.0; repeated single jamo = Korean; sticky previous language while typing, Korean at message start",
     "2026-10-28 Sprints 3-6 are contracts only; re-run plan-flow after the Sprint 2 gate",
-    "2026-10-28 setup done: Swift 6.4.1 (swiftly, ~/.bashrc.d/swiftly.sh), swift-lang removed, xtool 1.24.0, xtool auth (team HAFRPRP47A), Darwin SDK iPhoneOS27.1, phone key file saved; plan Task 1.1 and Task 2.1 Steps 1-4 complete"
+    "2026-10-28 setup done: Swift 6.4.1 (swiftly, ~/.bashrc.d/swiftly.sh), swift-lang removed, xtool 1.24.0, xtool auth (team HAFRPRP47A), Darwin SDK iPhoneOS27.1, phone key file saved; plan Task 1.1 and Task 2.1 Steps 1-4 complete",
+    "2026-10-28 Sprint 1 landed (6a8080a..5457ed8), byte-identical to plan; spec PASS, quality APPROVED. Added repeated-jamo test (1899066), 17 tests. Review fixes (crash guards, hasPrefix, chat gap lines) dispatched; Sprint 3 carry-overs recorded in docs/ios-keyboard-notes.md: glued chat shorthand, 2-consonant abbreviations, 136 ms list load off main thread, mixed tokens",
+    "2026-10-28 Task 2.2 landed (1683208): xtool dev build OK, KeyboardViewController survives link via -u flag, -ObjC not needed. Spike review fixes f9c3327: IsASCIICapable true, height priority 999, make-secrets.sh key regex + rm before write. ios-app/.bsp/ gitignored (2062a2e)",
+    "2026-10-28 Sprint 1 COMPLETE: review fixes cac2b30 (crash guards, hasPrefix: 1-key decide 58us -> ~1.3us), 274b2e4 (.swiftpm/ anywhere), 7ec201b (chat gap lines: chat korean 98.33% -> 91.04% by design; tatoeba unchanged; Sprint 3 carry-overs in notes). 22 tests. Task 2.3: app installed on iPhone via xtool dev run (signing OK, no zsign LoadCommands error); checklist sent to user"
   ],
-  "continuation_prompt": "Setup complete. Next: execute-flow from Task 1.2, Sprint 2 Task 2.2 in parallel; Task 2.3 needs the phone on USB.",
+  "continuation_prompt": "Sprint 1 complete. Sprint 2: Task 2.2 done; Task 2.3 app installed on the phone, waiting on the user's 9-item checklist results -> record under 'Sprint 2: bare spike' in docs/ios-keyboard-notes.md and commit 'docs: Sprint 2 bare keyboard findings'. Then Task 2.4 KeyboardKit 9.9.1 vendored + patched, then 2.5 gate.",
   "artifacts": {
     "plan": "docs/plans/2026-10-28-ios-keyboard.md",
     "design": "docs/plans/2026-10-28-ios-keyboard-design.md",
