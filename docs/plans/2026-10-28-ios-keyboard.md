@@ -2303,6 +2303,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         super.viewWillDisappear(animated)
         // The host keeps the marked word as text; forget it so the next key does not replace it.
         session.abandon()
+        savePrevious()  // the abandoned word's language carries to the next message
         marked = ""
         refreshMode()
     }
@@ -2348,6 +2349,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         if session.isComposing {
             guard !p.hasText || before != wordStartBefore else { return }
             session.abandon()
+            savePrevious()
             marked = ""
         } else if let tail = session.lastTail, !before.hasSuffix(tail) {
             session.forgetLast()
@@ -2721,7 +2723,7 @@ Run: `node scripts/sync-ios-app.mjs` -> `synced ios-app/ProtlyCore/Sources/Protl
 
 **Step 5:** `npm test 2>&1 | grep -E '^# fail|^OK'` -> `# fail 0` and `OK`;
 `swift test --package-path ios-app/ProtlyCore 2>&1 | grep -E "warning|Executed" | tail -2` -> no warning,
-`Executed 37 tests, with 0 failures`.
+`Executed 40 tests, with 0 failures` (37 from Task 3.4 plus 3 from the Sprint 3 quality review).
 
 **Step 6: Commit**
 
@@ -2988,7 +2990,7 @@ public enum ActionAPI {
 }
 ```
 
-**Step 4:** Run all tests -> Expected: `Executed 46 tests, with 0 failures`.
+**Step 4:** Run all tests -> Expected: `Executed 49 tests, with 0 failures`.
 
 **Step 5: Commit**
 
@@ -3310,6 +3312,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         super.viewWillDisappear(animated)
         // The host keeps the marked word as text; forget it so the next key does not replace it.
         session.abandon()
+        savePrevious()  // the abandoned word's language carries to the next message
         marked = ""
         actionTask?.cancel()
         mode.panel = nil
@@ -3359,6 +3362,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         if session.isComposing {
             guard !p.hasText || before != wordStartBefore else { return }
             session.abandon()
+            savePrevious()
             marked = ""
         } else if let tail = session.lastTail, !before.hasSuffix(tail) {
             session.forgetLast()

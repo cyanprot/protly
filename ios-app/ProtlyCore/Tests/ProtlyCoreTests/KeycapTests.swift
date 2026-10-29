@@ -13,5 +13,12 @@ final class KeycapTests: XCTestCase {
         XCTAssertNil(Dubeolsik.letter(forKeycap: "1"))
         XCTAssertNil(Dubeolsik.letter(forKeycap: ""))
         XCTAssertNil(Dubeolsik.letter(forKeycap: "ab"))
+        // Every keycap the layouts show maps back to its key.
+        for (key, jamo) in Dubeolsik.plain { XCTAssertEqual(Dubeolsik.letter(forKeycap: String(jamo)), key) }
+        for (key, jamo) in Dubeolsik.shifted { XCTAssertEqual(Dubeolsik.letter(forKeycap: String(jamo)), key) }
+        for key in "abcdefghijklmnopqrstuvwxyz" {
+            XCTAssertEqual(Dubeolsik.letter(forKeycap: String(key)), key)
+            XCTAssertEqual(Dubeolsik.letter(forKeycap: key.uppercased()), key)
+        }
     }
 }

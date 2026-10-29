@@ -20,6 +20,13 @@ final class ChatShorthandTests: XCTestCase {
         XCTAssertFalse(Hangul.compose(keys("strong")).isValid)    // ㄴㅅ개ㅜㅎ
         XCTAssertFalse(Hangul.compose(keys("llama")).isValid)     // ㅣㅣ마: ㅣ is not a glue jamo
     }
+
+    func testGlueRunStartingAsAFinalIsValid() {
+        // Typed in one go, the first ㅋ/ㅎ becomes the vowel syllable's final: 그랰ㅋ좋아, 핳ㅎ고마워.
+        XCTAssertEqual(Hangul.compose(keys("rmfozzwhgdk")), Composition(text: "그랰ㅋ좋아", isValid: true))
+        XCTAssertEqual(Hangul.compose(keys("gkggrhakdnj")), Composition(text: "핳ㅎ고마워", isValid: true))
+        XCTAssertFalse(Hangul.compose(keys("rmfozgwhgdk")).isValid)  // 그랰ㅎ좋아: the final is not the run's jamo
+    }
 }
 
 final class ShorthandDetectorTests: XCTestCase {

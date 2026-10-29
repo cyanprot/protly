@@ -75,14 +75,40 @@ final class TypingSessionTests: XCTestCase {
         XCTAssertEqual(type("dkssud", into: &s).last, .mark("안녕"))
         _ = s.commit()
         XCTAssertEqual(type("hello", into: &s).last, .mark("hello"))
+        _ = s.commit()
+        // After an English word, valid Hangul shows as English while typing but commits as Korean.
+        XCTAssertEqual(type("dkssud", into: &s).last, .mark("dkssud"))
+        XCTAssertEqual(s.commit(), .commit("안녕"))
     }
 
-    func testAbandonKeepsPreviousLanguage() {
+    func testAbandonKeepsTheAbandonedWordsLanguage() {
         var s = TypingSession(detector: detector, previous: .english)
         _ = type("dkssud", into: &s)
         s.abandon()
         XCTAssertFalse(s.isComposing)
-        XCTAssertEqual(s.keycapLanguage, .english)
+        XCTAssertNil(s.alternative)
+        XCTAssertEqual(s.previous, .korean)  // the word stays in the field (or was sent) as Korean
+        XCTAssertEqual(s.keycapLanguage, .korean)
+    }
+
+    func testAbandonAfterFlipClearsTheForcedLanguage() {
+        var s = TypingSession(detector: detector, previous: .korean)
+        _ = type("dkssud", into: &s)
+        _ = s.flip()  // forced English
+        s.abandon()
+        XCTAssertEqual(s.previous, .english)
+        XCTAssertEqual(type("dkssud", into: &s).last, .mark("안녕"))  // decided again, not forced
+    }
+
+    func testTypingAfterCommitEndsTheFlip() {
+        var s = TypingSession(detector: detector)
+        _ = type("dkssud", into: &s)
+        _ = s.commit()
+        s.noteInserted(" ")
+        _ = type("the", into: &s)
+        XCTAssertNil(s.lastTail)
+        XCTAssertEqual(s.alternative, "솓")  // the new word's other reading, not 안녕's
+        XCTAssertEqual(s.flip(), .mark("솓"))
     }
 
     func testManualShiftReachesKoreanAndAutomaticDoesNot() {

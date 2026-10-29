@@ -84,8 +84,10 @@ public struct TypingSession: Sendable {
     /// Something else happened (delete, cursor move, field change): the committed word can no longer be flipped.
     public mutating func forgetLast() { last = nil }
 
-    /// The field changed under us (keyboard hidden, other field): drop the word without editing the field.
+    /// The field changed under us (keyboard hidden, message sent, other field): drop the word without editing
+    /// the field. The word stays in the field (or was just sent) in its language, so that becomes `previous`.
     public mutating func abandon() {
+        if isComposing { previous = language }
         keys = []
         forced = nil
         last = nil
@@ -109,7 +111,9 @@ public struct TypingSession: Sendable {
 
     private func decide(complete: Bool) -> Language {
         if let detector { return detector.decide(keys, complete: complete, previous: previous) }
-        return Hangul.compose(keys).isValid ? (previous ?? .korean) : .english
+        // Valid Hangul commits as Korean; while typing it keeps the previous language to avoid flicker.
+        guard Hangul.compose(keys).isValid else { return .english }
+        return complete ? .korean : (previous ?? .korean)
     }
 
     public static func render(_ keys: [KeyEvent], as language: Language) -> String {

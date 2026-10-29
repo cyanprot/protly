@@ -187,3 +187,12 @@ tatoeba-kor.txt english: 5 words, accuracy 100.00%, words that flip while typing
 The six gap words from the Sprint 1 review are fixed except 걔 (keys `rO` = "ro", a short-syllable clash
 that the prior cannot beat). 아+ㅋㅋ typed in one go composes as 앜ㅋ, like Apple's keyboard.
 Mixed tokens (nice하더라) stay a known loss: a word is one language; the bar flip fixes a wrong word.
+
+Quality review fixes (2026-10-29), eval unchanged on every line:
+- 그래ㅋㅋ좋아 typed in one go composes as 그랰ㅋ좋아. The lone ㅋ before 좋 used to make the word invalid
+  Hangul, so it committed as English. A glue run now counts the preceding syllable's matching final (ㅋ/ㅎ).
+- Without word lists (load failure or the first 136 ms), valid Hangul commits as Korean even after an
+  English word; while typing it still keeps the previous language.
+- An abandoned word (keyboard hidden, message sent, cursor moved) sets the previous language, so the next
+  message starts in the language just used.
+- 40 tests (3 added: glue after a final, abandon after a flip, typing after a commit ends the flip).

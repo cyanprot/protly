@@ -57,12 +57,26 @@ public enum Hangul {
     /// Every run of lone jamo in `head` (the word minus its trailing run) is chat shorthand.
     static func headRunsAreGlue(_ head: Substring) -> Bool {
         var run = ""
+        var prev: Character?
         for ch in head {
-            if isLoneJamo(ch) { run.append(ch); continue }
-            if !run.isEmpty, !ChatShorthand.isGlueRun(run) { return false }
-            run = ""
+            if isLoneJamo(ch) {
+                // 그래ㅋㅋ typed in one go composes as 그랰ㅋ: the syllable's final is the run's first jamo.
+                if run.isEmpty, ChatShorthand.glueJamo.contains(ch), let p = prev, finalJamo(p) == ch { run.append(ch) }
+                run.append(ch)
+            } else {
+                if !run.isEmpty, !ChatShorthand.isGlueRun(run) { return false }
+                run = ""
+            }
+            prev = ch
         }
         return true  // head never ends in a lone jamo: that run is the tail
+    }
+
+    /// The single final consonant of a syllable (랰 -> ㅋ), nil without one.
+    static func finalJamo(_ c: Character) -> Character? {
+        guard isSyllable(c), let v = c.unicodeScalars.first?.value else { return nil }
+        let t = Int(v - 0xAC00) % 28
+        return t == 0 ? nil : jongseong[t - 1]
     }
 }
 

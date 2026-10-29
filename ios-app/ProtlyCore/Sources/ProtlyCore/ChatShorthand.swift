@@ -8,7 +8,7 @@ public enum ChatShorthand {
         "ㄱㅅ", "ㅎㅇ", "ㅈㅅ", "ㄹㅇ", "ㅇㅋ", "ㅅㄱ", "ㅊㅋ", "ㅇㅈ", "ㅈㅂ", "ㅂㅇ", "ㄱㅊ", "ㅃㅇ",
     ]
 
-    /// Jamo whose repeated runs glue onto words (laughing, crying): ㅋㅋ진짜, 아ㅋㅋ진짜, ㅠㅠ나도.
+    /// Jamo whose repeated runs glue onto words (laughing, crying): ㅋㅋ진짜, 아ㅋㅋ진짜 (composes 앜ㅋ진짜), ㅠㅠ나도.
     static let glueJamo: Set<Character> = ["ㅋ", "ㅎ", "ㅠ", "ㅜ"]
 
     /// A run of lone jamo allowed before or between syllables: an abbreviation, or two or more of one glue jamo.

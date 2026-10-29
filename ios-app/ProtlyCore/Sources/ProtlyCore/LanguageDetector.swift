@@ -63,6 +63,6 @@ public struct LanguageDetector: Sendable {
 
     /// The text the keys produce in a language.
     public func render(_ keys: [KeyEvent], as language: Language) -> String {
-        language == .english ? Dubeolsik.latin(keys) : Hangul.compose(keys).text
+        TypingSession.render(keys, as: language)
     }
 }
