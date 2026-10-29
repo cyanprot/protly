@@ -192,4 +192,20 @@ final class UnicodeRobustnessTests: XCTestCase {
         XCTAssertGreaterThan(d.english.count, 40_000)
         XCTAssertGreaterThan(d.korean.count, 40_000)
     }
+
+    func testEmptyAndOddInputToTheSmallFunctions() {
+        XCTAssertEqual(detector.decide([], complete: true, previous: nil), .korean)
+        XCTAssertEqual(detector.decide([], complete: false, previous: .english), .english)
+        XCTAssertEqual(KeyEncoder.keys(forHangul: ""), [])
+        XCTAssertEqual(KeyEncoder.keys(forLatin: "", sentenceStart: true), [])
+        for odd in ["안".decomposedStringWithCanonicalMapping, "\u{318D}", "\u{3164}", "e\u{301}", "😀"] {
+            XCTAssertNil(KeyEncoder.keys(forHangul: odd), odd.debugDescription)
+        }
+        XCTAssertNil(KeyEncoder.keys(forLatin: "naïve", sentenceStart: false))
+        for cap in ["", "e\u{301}", "ẞ", "ㄳ", "\u{0}", "\n", "🇰🇷"] {
+            XCTAssertNil(Dubeolsik.letter(forKeycap: cap), cap.debugDescription)
+        }
+        XCTAssertEqual(Hangul.compose([]).text, "")
+        XCTAssertEqual(TypingSession.render([], as: .english), "")
+    }
 }

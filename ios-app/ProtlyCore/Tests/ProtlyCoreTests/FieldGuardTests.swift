@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import ProtlyCore
 
@@ -32,5 +33,21 @@ final class FieldGuardTests: XCTestCase {
         XCTAssertEqual(String(cut.suffix(40)), String(inserted.suffix(40)))
         XCTAssertFalse(FieldGuard.canUndo(inserted, before: "Earlier text. " + cut))
         XCTAssertFalse(FieldGuard.canUndo("", before: "x"))
+    }
+
+    func testCharacterBoundariesDecide() {
+        // An insert that joined the character before it is not intact: its delete count would take that
+        // character too. Swift's hasSuffix compares whole characters; a UTF-16 or scalar compare would not.
+        XCTAssertFalse(FieldGuard.canUndo("\u{301}abc", before: "xe\u{301}abc"))
+        XCTAssertFalse(FieldGuard.canUndo("\u{11A8}bc", before: "가\u{11A8}bc"))
+        XCTAssertFalse(FieldGuard.canUndo("🇷ab", before: "🇰🇷ab"))
+        XCTAssertFalse(FieldGuard.canUndo("\u{200D}👦", before: "👨\u{200D}👦"))
+        XCTAssertFalse(FieldGuard.canUndo("\n", before: "a\r\n"))  // "\r\n" is one character
+        XCTAssertFalse(FieldGuard.canUndo("a\r", before: "a\r\n"))
+        // Canonically equal text is the same text, with the same character count.
+        let nfc = "안녕", nfd = "안녕".decomposedStringWithCanonicalMapping
+        XCTAssertTrue(FieldGuard.canReplace(nfc, before: nfd, after: ""))
+        XCTAssertEqual(nfc.count, nfd.count)
+        XCTAssertTrue(FieldGuard.canUndo("\u{00C5}", before: "x\u{212B}"))
     }
 }

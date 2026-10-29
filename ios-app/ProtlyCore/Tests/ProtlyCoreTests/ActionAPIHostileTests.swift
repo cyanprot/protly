@@ -120,4 +120,36 @@ final class ActionAPIHostileTests: XCTestCase {
         XCTAssertLessThan(reply(text).count, ActionAPI.maxResponseBytes)
         XCTAssertEqual(try ActionAPI.parse(status: 200, body: reply(text)).get().translation, t)
     }
+
+    func testErrorsNeverCarryTheBodyInAnyForm() {
+        let body = Data(#"{"error":{"message":"sk-ant-SECRET echo USERTEXT"}}"#.utf8)
+        for status in [200, 400, 401, 429, 500, 529] {
+            guard case .failure(let e) = ActionAPI.parse(status: status, body: body) else { return XCTFail("\(status)") }
+            for shown in [e.message, "\(e)", e.localizedDescription, String(reflecting: e)] {
+                XCTAssertFalse(shown.contains("SECRET"), shown)
+                XCTAssertFalse(shown.contains("USERTEXT"), shown)
+            }
+        }
+    }
+
+    func testOddEscapesAndEncodings() {
+        // Lone surrogates: an error or a replacement character, never a trap.
+        for text in [#"{"translation":"\ud800","back_translation":""}"#, #"\udfff {"translation":"x","back_translation":""}"#] {
+            if case .success(let r) = ActionAPI.parse(status: 200, body: reply(text)) { XCTAssertFalse(r.translation.isEmpty) }
+        }
+        let raw = #"{"stop_reason":"end_turn","content":[{"type":"text","text":"{\"translation\":\"y\",\"back_translation\":\"\"}"}]}"#
+        XCTAssertEqual(try? ActionAPI.parse(status: 200, body: Data([0xEF, 0xBB, 0xBF]) + Data(raw.utf8)).get().translation, "y")
+        XCTAssertEqual(try? ActionAPI.parse(status: 200, body: raw.data(using: .utf16LittleEndian)!).get().translation, "y")
+        XCTAssertEqual(try? ActionAPI.parse(status: 200, body: reply(#"{"translation":"a\u0000b","back_translation":""}"#)).get().translation, "a\u{0}b")
+        // A JSON string holding JSON is not the object; nor is prose with braces of its own before it.
+        XCTAssertEqual(kind(200, reply(#""{\"translation\":\"Hi\",\"back_translation\":\"\"}""#)), .parse)
+        XCTAssertEqual(kind(200, reply(#"Note {x}: {"translation":"Hi","back_translation":""}"#)), .parse)
+        // Duplicate keys: one of them, never a trap.
+        XCTAssertNotNil(try? ActionAPI.parse(status: 200, body: reply(#"{"translation":"A","translation":"B","back_translation":""}"#)).get())
+    }
+
+    func testOddStatusCodes() {
+        for status in [0, -1, 100, 204, 304, 413, Int.min] { XCTAssertEqual(kind(status, "{}"), .badRequest, "\(status)") }
+        for status in [600, 999, Int.max] { XCTAssertEqual(kind(status, "{}"), .server, "\(status)") }
+    }
 }
