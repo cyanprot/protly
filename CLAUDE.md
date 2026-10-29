@@ -7,6 +7,7 @@ that types Korean and English on one QWERTY grid and offers Translate / Polish /
 
 - iPhone keyboard features: `docs/plans/2026-10-28-ios-keyboard.md` (Sprints 1-5 done; Sprint 6 next).
 - Keyboard visual verification (cloud): `docs/plans/2026-10-29-keyboard-visual.md`.
+- Security review and test hardening (cloud): `docs/plans/2026-10-29-security-review.md`.
 - Phone and simulator findings: `docs/ios-keyboard-notes.md`.
 
 ## Layout
