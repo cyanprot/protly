@@ -4,6 +4,7 @@ import { createBadgeStore } from './lib/badge.js';
 import { statusFor } from './lib/status.js';
 import { DEFAULT_SITES } from './lib/flags.js';
 import { routeCommand } from './lib/route.js';
+import { createRouter } from './lib/messages.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
@@ -194,14 +195,7 @@ const handlers = {
   badge: async ({ text, reason }, sender) => { await setTabBadge(sender.tab?.id, text, reason); return true; },
 };
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  const h = handlers[msg?.type];
-  if (!h) return false;
-  Promise.resolve(h(msg, sender))
-    .then((data) => sendResponse({ ok: true, data }))
-    .catch((e) => sendResponse({ ok: false, error: { kind: e instanceof ApiError ? e.kind : 'internal', message: String(e?.message || e) } }));
-  return true;
-});
+chrome.runtime.onMessage.addListener(createRouter({ handlers }));
 
 const GENERIC = 'dist/generic.js';
 const inFrame = (tabId, frameId) => ({ tabId, frameIds: [frameId] });
