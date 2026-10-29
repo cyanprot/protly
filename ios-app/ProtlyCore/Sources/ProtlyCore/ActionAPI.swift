@@ -150,6 +150,19 @@ public enum ActionAPI {
         return try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
     }
 
+    /// The reply's bytes, or nil once they pass `limit`: a huge or endless body never takes the keyboard's
+    /// memory. Stops with CancellationError when the task is cancelled (Cancel, the keyboard hiding).
+    public static func collect<S: AsyncSequence>(_ bytes: S, limit: Int = maxResponseBytes) async throws -> Data?
+    where S.Element == UInt8 {
+        var data = Data()
+        for try await byte in bytes {
+            guard data.count < limit else { return nil }
+            if data.count % 4096 == 0 { try Task.checkCancellation() }
+            data.append(byte)
+        }
+        return data
+    }
+
     /// HTTP status and body -> result. Thinking blocks are skipped; the answer is the joined text blocks.
     public static func parse(status: Int, body: Data) -> Result<ActionResult, ActionError> {
         guard body.count <= maxResponseBytes else { return .failure(ActionError(.parse)) }

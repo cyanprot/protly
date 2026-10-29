@@ -17,13 +17,9 @@ enum ActionClient {
         do {
             let (bytes, resp) = try await session.bytes(for: req)
             // Read at most maxResponseBytes: a huge body must not take the keyboard's memory.
-            var data = Data()
-            for try await byte in bytes {
-                guard data.count < ActionAPI.maxResponseBytes else {
-                    bytes.task.cancel()  // stop the download now, not when the sequence is released
-                    return .failure(ActionError(.parse))
-                }
-                data.append(byte)
+            guard let data = try await ActionAPI.collect(bytes) else {
+                bytes.task.cancel()  // stop the download now, not when the sequence is released
+                return .failure(ActionError(.parse))
             }
             return ActionAPI.parse(status: (resp as? HTTPURLResponse)?.statusCode ?? 0, body: data)
         } catch let error as URLError where error.code == .timedOut {

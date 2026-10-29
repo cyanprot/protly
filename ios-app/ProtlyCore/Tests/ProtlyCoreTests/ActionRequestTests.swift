@@ -137,6 +137,60 @@ extension ActionRequestTests {
     }
 }
 
+// The keyboard reads the reply through ActionAPI.collect: bounded in size, and stoppable.
+final class ActionCollectTests: XCTestCase {
+    private struct Bytes: AsyncSequence {
+        typealias Element = UInt8
+        let count: Int?  // nil = endless
+        var fail = false
+        struct Broken: Error {}
+        struct AsyncIterator: AsyncIteratorProtocol {
+            let count: Int?
+            let fail: Bool
+            var sent = 0
+            mutating func next() async throws -> UInt8? {
+                if let count, sent >= count { if fail { throw Broken() }; return nil }
+                sent += 1
+                if sent % 4096 == 0 { await Task.yield() }
+                return 0x61
+            }
+        }
+        func makeAsyncIterator() -> AsyncIterator { AsyncIterator(count: count, fail: fail) }
+    }
+
+    func testCollectStopsAtTheLimit() async throws {
+        let exact = try await ActionAPI.collect(Bytes(count: 1000), limit: 1000)
+        XCTAssertEqual(exact?.count, 1000)
+        let over = try await ActionAPI.collect(Bytes(count: 1001), limit: 1000)
+        XCTAssertNil(over)
+        let endless = try await ActionAPI.collect(Bytes(count: nil), limit: 1000)
+        XCTAssertNil(endless)
+        let empty = try await ActionAPI.collect(Bytes(count: 0))
+        XCTAssertEqual(empty, Data())
+    }
+
+    func testCollectPassesErrorsOn() async {
+        do {
+            _ = try await ActionAPI.collect(Bytes(count: 10, fail: true))
+            XCTFail("no error")
+        } catch {
+            XCTAssertTrue(error is Bytes.Broken)
+        }
+    }
+
+    func testCollectStopsWhenCancelled() async {
+        // An endless reply under a limit too high to reach: Cancel must still end it.
+        let task = Task { try await ActionAPI.collect(Bytes(count: nil), limit: .max) }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("not cancelled")
+        } catch {
+            XCTAssertTrue(error is CancellationError)
+        }
+    }
+}
+
 private final class Box: @unchecked Sendable {
     var value: URLRequest?
     init(_ value: URLRequest?) { self.value = value }
