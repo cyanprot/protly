@@ -339,3 +339,20 @@ over a live keyboard (Control Center, alerts, Face ID), so a controller older th
   row 1 bubble after an app switch on the phone.
 - Landscape (the pin is portrait only), the row 1 long-press bubble in general and Hangul keycap rendering on the
   device are checked by the tower on the phone.
+
+## Sprint 6: detector carry-overs
+
+Measured 2026-10-29 with the same command (priorBonus 2.0):
+
+```
+chat.txt korean: 67 words, accuracy 100.00%, words that flip while typing 17.9% | top errors: 
+chat.txt english: 14 words, accuracy 100.00%, words that flip while typing 35.7% | top errors: 
+tatoeba-eng.txt english: 16544 words, accuracy 99.55%, words that flip while typing 0.8% | top errors: Zirix44 Rimax16 Aksaix1 glaivex1 garagedx1 Sorosx1 Ddax1 RSFx1
+tatoeba-kor.txt korean: 8626 words, accuracy 99.95%, words that flip while typing 0.3% | top errors: 새x4
+tatoeba-kor.txt english: 5 words, accuracy 100.00%, words that flip while typing 40.0% | top errors: 
+```
+
+Before this sprint (same command on main plus security 002): chat korean 98.51% (걔x1), tatoeba-kor 99.83%
+(꽤x6 걔x4 새x4 뜰x1), tatoeba-eng 99.55%. 걍 걔 꽤 얘 쟤 뜰 joined the Korean list at count 400 (missing from
+ko_50k), and a manual shift on a doubled-jamo key inside a word is Korean unless every key is shifted. 새 (keys
+`to`) stays a known loss; the flip fixes it.
