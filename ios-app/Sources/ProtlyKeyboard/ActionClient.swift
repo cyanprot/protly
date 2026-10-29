@@ -3,8 +3,9 @@ import ProtlyCore
 
 /// One Translate/Polish call. Bytes from ProtlyCore, URLSession here.
 enum ActionClient {
-    /// One session for the process: ephemeral, no cache, no cookies (ActionAPI.sessionConfiguration).
-    private static let session = URLSession(configuration: ActionAPI.sessionConfiguration())
+    /// One session for the process: ephemeral, no cache, no cookies, no redirects (ActionAPI).
+    private static let session = URLSession(
+        configuration: ActionAPI.sessionConfiguration(), delegate: ActionSessionDelegate(), delegateQueue: nil)
 
     static func run(_ mode: ActionMode, text: String) async -> Result<ActionResult, ActionError> {
         guard let system = try? ActionAPI.bundledPrompt() else { return .failure(ActionError(.setup)) }

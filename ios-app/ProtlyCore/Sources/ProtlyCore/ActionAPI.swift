@@ -182,3 +182,12 @@ public enum ActionAPI {
         return try? JSONSerialization.jsonObject(with: d) as? [String: Any]
     }
 }
+
+/// The action session's delegate: redirects are refused, because URLSession would replay every header,
+/// the key included, to the new URL. The 3xx then reads as a rejected request.
+public final class ActionSessionDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    public func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                           newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
+}

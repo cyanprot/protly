@@ -63,4 +63,29 @@ final class ActionRequestTests: XCTestCase {
         XCTAssertNotEqual(ActionError(.noKey).message, ActionError(.auth).message)
         XCTAssertNotEqual(ActionError(.setup).message, ActionError(.badRequest).message)
     }
+
+    func testRedirectsAreNotFollowed() throws {
+        // A redirect would replay every header, the key included, to another URL.
+        let url = try XCTUnwrap(URL(string: ActionAPI.url))
+        let task = URLSession.shared.dataTask(with: url)
+        let moved = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: 307, httpVersion: "HTTP/1.1",
+                                                  headerFields: ["Location": "https://example.com/collect"]))
+        let next = Box(URLRequest(url: url))
+        ActionSessionDelegate().urlSession(URLSession.shared, task: task, willPerformHTTPRedirection: moved,
+                                           newRequest: URLRequest(url: URL(string: "https://example.com/collect")!)) { next.value = $0 }
+        XCTAssertNil(next.value)
+        XCTAssertEqual(ActionAPI.parse(status: 307, body: Data()).failureKind, .badRequest)
+    }
+}
+
+private final class Box: @unchecked Sendable {
+    var value: URLRequest?
+    init(_ value: URLRequest?) { self.value = value }
+}
+
+extension Result where Failure == ActionError {
+    var failureKind: ActionError.Kind? {
+        if case .failure(let e) = self { return e.kind }
+        return nil
+    }
 }
