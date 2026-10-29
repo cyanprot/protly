@@ -60,8 +60,14 @@ public enum ActionAPI {
 
     /// The action for the user's own draft: Korean anywhere -> translate out, else polish.
     public static func mode(forDraft text: String) -> ActionMode {
-        text.unicodeScalars.contains { (0xAC00...0xD7A3).contains($0.value) || (0x3131...0x318E).contains($0.value) } ? .out : .fix
+        text.unicodeScalars.contains { s in hangulScalars.contains { $0.contains(s.value) } } ? .out : .fix
     }
+
+    /// Syllables, compatibility jamo, and the forms they take elsewhere: conjoining jamo (decomposed text,
+    /// as in Mac file names), the jamo extensions, halfwidth jamo.
+    static let hangulScalars: [ClosedRange<UInt32>] = [
+        0xAC00...0xD7A3, 0x3131...0x318E, 0x1100...0x11FF, 0xA960...0xA97F, 0xD7B0...0xD7FF, 0xFFA0...0xFFDC,
+    ]
 
     public static func model(for mode: ActionMode) -> String {
         mode == .in ? "claude-sonnet-5-5" : "claude-opus-5-5"

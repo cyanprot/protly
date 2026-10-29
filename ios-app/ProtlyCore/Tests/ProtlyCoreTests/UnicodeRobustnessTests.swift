@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import ProtlyCore
 
@@ -21,5 +22,15 @@ final class UnicodeRobustnessTests: XCTestCase {
             XCTAssertEqual(c.text, "가\(compound)ㅏ")
             XCTAssertFalse(c.isValid)
         }
+    }
+
+    func testKoreanDraftInAnyFormGoesToTranslate() {
+        // Text copied from a Mac file name is decomposed (NFD): conjoining jamo, no precomposed syllable.
+        let nfd = "안녕하세요".decomposedStringWithCanonicalMapping
+        XCTAssertFalse(nfd.unicodeScalars.contains { (0xAC00...0xD7A3).contains($0.value) })
+        XCTAssertEqual(ActionAPI.mode(forDraft: nfd), .out)
+        XCTAssertEqual(ActionAPI.mode(forDraft: "\u{FFA1}\u{FFC2}"), .out)  // halfwidth ㄱㅏ
+        XCTAssertEqual(ActionAPI.mode(forDraft: "\u{A960}"), .out)  // jamo extended-A
+        XCTAssertEqual(ActionAPI.mode(forDraft: "café, naïve, 日本語"), .fix)
     }
 }
