@@ -163,4 +163,33 @@ final class UnicodeRobustnessTests: XCTestCase {
         XCTAssertNil(s.lastTail)
         XCTAssertNil(s.flip())
     }
+
+    func testWordListCountsNeverOverflow() {
+        // Huge counts saturate instead of trapping; negative and zero counts are dropped.
+        let max = String(Int.max)
+        let a = WordList.english("a \(max)\nb 1\nab \(max)")
+        XCTAssertEqual(a.count, 3)
+        XCTAssertTrue(a.total.isFinite)
+        XCTAssertGreaterThan(a.frequency(of: "a"), a.frequency(of: "b"))
+        let merged = WordList.english("a \(max)\nA \(max)\nA 1")  // one key after lowercasing
+        XCTAssertEqual(merged.count, 1)
+        XCTAssertGreaterThan(merged.frequency(of: "a"), 0)
+        XCTAssertEqual(WordList.english("a -5\nb 0").count, 0)
+        XCTAssertEqual(WordList.korean("가 -5").count, 0)
+        XCTAssertEqual(WordList(entries: [("x", Int.min), ("x", Int.max), ("y", Int.max)]).count, 2)
+    }
+
+    func testWordListReadsCRLFAndTabs() {
+        // "\r\n" is one Character in Swift: splitting on "\n" alone read nothing from a Windows file.
+        XCTAssertEqual(WordList.english("hello 5\r\nworld 3\r\n").count, 2)
+        XCTAssertEqual(WordList.english("hello\t5\nworld  3\n").count, 2)
+        XCTAssertEqual(WordList.korean("안녕 5\r\n").frequency(of: "dkssud"), 5)
+    }
+
+    func testBundledWordListsLoadWhole() throws {
+        // A broken or truncated resource fails here instead of quietly turning English words Korean.
+        let d = try LanguageDetector.bundled()
+        XCTAssertGreaterThan(d.english.count, 40_000)
+        XCTAssertGreaterThan(d.korean.count, 40_000)
+    }
 }
