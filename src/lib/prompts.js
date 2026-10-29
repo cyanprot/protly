@@ -118,30 +118,38 @@ export function buildMemoRequest({ model, context }) {
   return request(model, 'memo', MEMO_SYSTEM, `CONVERSATION (oldest first):\n${formatContext(context)}`, MEMO_SCHEMA);
 }
 
+const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
+
+// The JSON object in the reply's text blocks. Anything else, a malformed body included, is ApiError('parse'):
+// callJson re-requests once, and the user sees a readable message instead of a TypeError.
 function extractJson(resp) {
+  if (!isObject(resp)) throw new ApiError('parse', 'Response is not an object');
   if (resp.stop_reason === 'refusal') throw new ApiError('refused', 'Model refused');
   if (resp.stop_reason === 'max_tokens') throw new ApiError('truncated', 'Output truncated');
-  const text = (resp.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+  if (resp.content != null && !Array.isArray(resp.content)) throw new ApiError('parse', 'Response content is not a list');
+  const text = (resp.content || []).filter((b) => b?.type === 'text' && typeof b.text === 'string').map((b) => b.text).join('');
+  let j;
   try {
-    return JSON.parse(text);
+    j = JSON.parse(text);
   } catch {
     const m = text.match(/\{[\s\S]*\}/);
-    if (m) { try { return JSON.parse(m[0]); } catch {} }
-    throw new ApiError('parse', 'Response is not JSON');
+    if (m) { try { j = JSON.parse(m[0]); } catch {} }
   }
+  if (!isObject(j)) throw new ApiError('parse', 'Response is not a JSON object');
+  return j;
 }
 
 export function parseIncoming(resp) {
   const j = extractJson(resp);
   if (!Array.isArray(j.items)) throw new ApiError('parse', 'items missing');
-  const out = {};
+  const entries = []; // Object.fromEntries: an id of "__proto__" becomes a key, never the prototype
   for (const it of j.items) {
-    if (typeof it.id !== 'string' || typeof it.translation !== 'string') throw new ApiError('parse', 'bad item');
+    if (!isObject(it) || typeof it.id !== 'string' || typeof it.translation !== 'string') throw new ApiError('parse', 'bad item');
     if (!it.translation.trim()) continue; // treated as missing: retry marker, never cached
     const src = typeof it.src_lang === 'string' ? it.src_lang.toLowerCase().split(/[-_]/)[0] : 'und';
-    out[it.id] = { src_lang: src, translation: it.translation };
+    entries.push([it.id, { src_lang: src, translation: it.translation }]);
   }
-  return out;
+  return Object.fromEntries(entries);
 }
 
 export function parseOutgoing(resp) {

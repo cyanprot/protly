@@ -53,11 +53,11 @@ async function incoming({ threadId, context, items, updateLang }) {
   const thread = await getThread(threadId, settings);
   const keys = await Promise.all(items.map((it) => cacheKey(threadId, it.text, thread.otherTarget)));
   const hits = await store.get(keys);
-  const out = {};
+  const out = new Map(); // item id -> entry; ids are page-side strings, so never a plain-object lookup
   const misses = [];
   items.forEach((it, i) => {
     const h = hits[keys[i]];
-    if (h) out[it.id] = h; else misses.push({ it, key: keys[i] });
+    if (h) out.set(it.id, h); else misses.push({ it, key: keys[i] });
   });
 
   for (let i = 0; i < misses.length; i += BATCH) {
@@ -69,11 +69,11 @@ async function incoming({ threadId, context, items, updateLang }) {
     const res = await api(body, parseIncoming);
     const writes = {};
     for (const { it, key } of chunk) {
-      const r = res[it.id];
+      const r = Object.hasOwn(res, it.id) ? res[it.id] : null; // never an inherited 'constructor'
       if (!r) continue;
       const entry = { src_lang: r.src_lang, translation: r.translation, ts: Date.now() };
       writes[key] = entry;
-      out[it.id] = entry;
+      out.set(it.id, entry);
     }
     try {
       await store.set(writes);
@@ -83,18 +83,16 @@ async function incoming({ threadId, context, items, updateLang }) {
   }
 
   if (updateLang) {
-    const ordered = items.filter((it) => out[it.id]).map((it) => ({ from: it.from, src_lang: out[it.id].src_lang }));
+    const ordered = items.filter((it) => out.has(it.id)).map((it) => ({ from: it.from, src_lang: out.get(it.id).src_lang }));
     const lang = latestPartnerLang(ordered);
     if (lang && lang !== thread.partnerLang) await setThread(threadId, { partnerLang: lang });
   }
 
-  const data = {};
-  for (const it of items) {
-    const r = out[it.id];
-    if (!r) { data[it.id] = { missing: true }; continue; } // model skipped it or returned nothing
-    data[it.id] = incomingTarget(r.src_lang, thread.otherTarget) ? { src_lang: r.src_lang, translation: r.translation } : null;
-  }
-  return data;
+  return Object.fromEntries(items.map((it) => {
+    const r = out.get(it.id);
+    if (!r) return [it.id, { missing: true }]; // model skipped it or returned nothing
+    return [it.id, incomingTarget(r.src_lang, thread.otherTarget) ? { src_lang: r.src_lang, translation: r.translation } : null];
+  }));
 }
 
 async function outgoing({ threadId, context, korean, profile, lang }) {

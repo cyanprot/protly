@@ -161,3 +161,13 @@ test('malformed or oversized API commands are refused before any API call', asyn
   assert.deepEqual(local.dump(), {});
   assert.deepEqual(fake.badges, []);
 });
+
+test('incoming: an item the model skipped is missing, even with an id that names an Object method', async () => {
+  native.replyWith = () => apiReply({ items: [{ id: '0', src_lang: 'en', translation: '안녕' }] });
+  const items = ['0', 'constructor', 'toString', '__proto__'].map((id) => ({ id, text: `hi ${id}`, from: 'partner' }));
+  const r = await send({ type: 'incoming', threadId: '1', context: [], items, updateLang: false }, senders.instagram);
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.deepEqual(r.data, { 0: { src_lang: 'en', translation: '안녕' }, constructor: { missing: true }, toString: { missing: true }, ['__proto__']: { missing: true } });
+  const cached = Object.entries(local.dump()).filter(([k]) => k.startsWith('c:'));
+  assert.equal(cached.length, 1); // only the real translation
+});
