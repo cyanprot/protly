@@ -1,3 +1,4 @@
+import http.client
 import io
 import json
 import os
@@ -23,6 +24,11 @@ def make_home(key='sk-ant-test-123', ws='wrkspc_test'):
     with open(os.path.join(base, 'configs', 'default.json'), 'w') as f:
         json.dump({'workspace_id': ws}, f)
     return d
+
+
+def offline(urlopen):
+    """safe_handle calls handle() with its default urlopen, bound at definition: swap that default."""
+    return mock.patch.object(h.handle, '__defaults__', (urlopen,))
 
 
 class FakeResp:
@@ -174,6 +180,79 @@ class Ping(unittest.TestCase):
     def test_reply_never_contains_the_key(self):
         r = h.safe_handle({'id': 15, 'ping': True}, make_home())
         self.assertNotIn('sk-ant-test-123', json.dumps(r))
+
+
+class HostileInput(unittest.TestCase):
+    """Malformed frames and bodies: the host keeps serving, never sends Chrome invalid JSON, never echoes the key."""
+
+    def serve(self, frames):
+        out = io.BytesIO()
+        threads = h.serve(io.BytesIO(b''.join(frames)), out, make_home())
+        for t in threads:
+            t.join(5)
+        out.seek(0)
+        replies = []
+        while (r := h.read_message(out)) is not h.EOF:
+            replies.append(r)
+        return replies
+
+    def test_oversized_frame_length_is_not_read(self):
+        frame = struct.pack('=I', h.MAX_REQUEST + 1)
+        stream = mock.Mock()
+        stream.read.side_effect = [frame]
+        self.assertIs(h.read_message(stream), h.TOO_LARGE)
+        stream.read.assert_called_once_with(4)  # the payload is never allocated
+
+    def test_oversized_frame_stops_the_host(self):
+        big = struct.pack('=I', h.MAX_REQUEST + 1) + b'{}'
+        self.assertEqual(self.serve([big, h.encode_message({'id': 1, 'ping': True})]), [])
+
+    def test_deeply_nested_json_does_not_kill_the_host(self):
+        deep = b'[' * 200000 + b']' * 200000
+        frames = [struct.pack('=I', len(deep)) + deep, h.encode_message({'id': 2, 'ping': True})]
+        replies = self.serve(frames)
+        self.assertEqual([r['id'] for r in replies], [2])
+
+    def test_garbage_frames_are_skipped(self):
+        bad = [b'\xff\xfe', b'{"id": 1,', b'[]', b'"x"', b'null']
+        frames = [struct.pack('=I', len(b)) + b for b in bad] + [h.encode_message({'id': 3, 'ping': True})]
+        self.assertEqual([r['id'] for r in self.serve(frames)], [3])
+
+    def test_nan_in_an_api_body_never_reaches_chrome_as_invalid_json(self):
+        class Resp(FakeResp):
+            def read(self):
+                return b'{"content": NaN, "usage": {"input_tokens": Infinity}}'
+        r = h.handle({'id': 4, 'body': {}}, make_home(), urlopen=mock.Mock(return_value=Resp(200, {})))
+        out = io.BytesIO()
+        h.write_message(out, r)
+        raw = out.getvalue()[4:].decode()
+        reply = json.loads(raw, parse_constant=lambda c: self.fail(f'{c} sent to Chrome'))
+        self.assertEqual(reply['id'], 4)
+        self.assertEqual(reply['status'], 0)
+        self.assertEqual(reply['body']['error']['type'], 'host_error')
+
+    def test_non_json_2xx_body_is_a_host_error_without_the_key(self):
+        class Resp(FakeResp):
+            def read(self):
+                return b'<html>captive portal sk-ant-test-123</html>'
+        with offline(mock.Mock(return_value=Resp(200, {}))):
+            r = h.safe_handle({'id': 5, 'body': {}}, make_home())
+        self.assertEqual(r['body']['error']['type'], 'host_error')
+        self.assertNotIn('sk-ant-test-123', json.dumps(r))
+
+    def test_a_key_that_breaks_the_header_never_appears_in_the_reply(self):
+        home = make_home(key='sk-ant-test\n-123')  # http.client's ValueError text quotes the header value
+
+        def validate_headers_only(request, timeout):  # real http.client header checks, no connection
+            conn = http.client.HTTPSConnection('api.anthropic.com')
+            conn.putrequest('POST', '/v1/messages')
+            for k, v in request.header_items():
+                conn.putheader(k, v)
+            self.fail('the header was accepted')
+        with offline(validate_headers_only):
+            r = h.safe_handle({'id': 6, 'body': {'model': 'x'}}, home)
+        self.assertEqual(r['status'], 0)
+        self.assertNotIn('sk-ant-test', json.dumps(r))
 
 
 if __name__ == '__main__':
