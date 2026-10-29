@@ -1,5 +1,5 @@
 import { threadIdFromPath } from '../lib/keys.js';
-import { LIMITS } from '../lib/limits.js';
+import { LIMITS, chunks } from '../lib/limits.js';
 import { watchFlags, siteEnabled } from '../lib/flags.js';
 import { isKoreanOnly, hasHangul as isHangulText } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
@@ -185,6 +185,11 @@ async function translate(msgs, mode, updateLang) {
   if (!current) return;
   const { todo, items } = incomingItems(msgs);
   if (!todo.length) return;
+  if (todo.length > LIMITS.items) { // a long thread after a re-render: one message per chunk, newest decides the language
+    const parts = chunks(todo, LIMITS.items);
+    parts.forEach((part, i) => translate(part, mode, updateLang && i === parts.length - 1));
+    return;
+  }
   const threadId = current.threadId;
   try {
     const data = await ask({ type: 'incoming', threadId, context: contextFor(current.root), items, updateLang });
@@ -212,6 +217,7 @@ export const sentOriginal = (map, text) => (Object.hasOwn(map, text) && typeof m
 async function hoverSent(msgs) {
   const mine = msgs.filter((m) => m.from === 'me');
   if (!mine.length || !current) return;
+  if (mine.length > LIMITS.texts) { chunks(mine, LIMITS.texts).forEach(hoverSent); return; }
   const threadId = current.threadId;
   try {
     const map = await ask({ type: 'lookupSent', threadId, texts: mine.map((m) => m.text) });

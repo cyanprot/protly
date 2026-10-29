@@ -240,3 +240,16 @@ test('Instagram: a page script clicking Retry starts no request; the user\'s cli
   try { btn.click(); } finally { _trustSyntheticEvents(false); }
   assert.equal(retries, 1);
 });
+
+test('a thread longer than the item limit goes out in chunks that each pass the shape check', async () => {
+  const { chunks, LIMITS } = await import('../src/lib/limits.js');
+  const { incomingItems } = await import('../src/content/main.js');
+  const { checkShape } = await import('../src/lib/messages.js');
+  assert.deepEqual(chunks([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
+  assert.deepEqual(chunks([], 2), []);
+  const msgs = Array.from({ length: LIMITS.items * 2 + 1 }, (_, i) => ({ from: 'partner', text: `hello ${i}` }));
+  const parts = chunks(incomingItems(msgs).todo, LIMITS.items);
+  assert.equal(parts.length, 3);
+  for (const part of parts) checkShape('incoming', { threadId: '1', context: [], items: incomingItems(part).items });
+  assert.equal(parts.flat().length, msgs.length);
+});

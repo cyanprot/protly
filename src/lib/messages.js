@@ -60,6 +60,7 @@ const listOf = (max, f) => (v) => Array.isArray(v) && v.length <= max && v.every
 const text = str(LIMITS.text);
 const someText = str(LIMITS.text, 1);
 const lang = match(LANG);
+export const isLangCode = lang;
 const autoOrLang = (v) => v === 'auto' || lang(v);
 const threadId = match(THREAD_ID);
 const context = listOf(LIMITS.context, record({ from: oneOf('me', 'partner', 'them'), text }));

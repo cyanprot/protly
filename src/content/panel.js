@@ -5,6 +5,7 @@ import { PANEL_CSS } from '../ui/panel.css.js';
 import { bindTheme } from '../ui/theme.js';
 import { showToast } from '../ui/toast.js';
 import { errorText } from '../ui/errors.js';
+import { LIMITS } from '../lib/limits.js';
 
 export function mountPanel(cur) {
   const host = document.createElement('div');
@@ -28,6 +29,7 @@ export function mountPanel(cur) {
     </div>`;
   const unbindTheme = bindTheme(shadow.querySelector('.pl-root'), document);
   const $ = (id) => shadow.getElementById(id);
+  $('memo').maxLength = LIMITS.memo; // the background refuses a longer memo
   const out = $('outputLang');
   out.add(new Option('Auto', 'auto'));
   for (const [code, name] of Object.entries(LANG_NAMES)) if (code !== 'ko') out.add(new Option(name, code));

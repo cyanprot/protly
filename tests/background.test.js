@@ -191,3 +191,23 @@ test('lookupSent: message texts are plain keys, whatever they say', async () => 
   assert.deepEqual(Object.keys(r.data).sort(), ['__proto__', 'hi']);
   assert.equal(r.data.__proto__ === Object.prototype, false);
 });
+
+test('the popup status works for a very long tab URL', async () => {
+  const url = `https://grafana.example/d/x?${'q=1&'.repeat(5000)}`;
+  const r = await send({ type: 'tabStatus', tabId: 1, url }, senders.popup);
+  assert.equal(r.ok, true, JSON.stringify(r));
+});
+
+test('a stored language from before the language check never blocks a re-run', async () => {
+  await local.set({ 't:9': { partnerLang: 'english (us)', outputLang: 'ko/en', memo: 'm' } });
+  const t = (await send({ type: 'getThread', threadId: '9' }, senders.instagram)).data;
+  assert.equal(t.partnerLang, null);
+  assert.equal(t.outputLang, 'auto');
+  assert.equal(t.memo, 'm');
+  native.replyWith = () => apiReply({ translation: 'hi', back_translation: '안녕' });
+  const r = await send({ type: 'outgoing', threadId: '9', context: [], korean: '안녕', profile: 'outgoing' }, senders.instagram);
+  assert.equal(r.ok, true);
+  // The result's lang goes back as the next re-run's lang: it must pass the shape check.
+  const again = await send({ type: 'outgoing', threadId: '9', context: [], korean: '안녕', profile: 'hard', lang: r.data.lang }, senders.instagram);
+  assert.equal(again.ok, true, JSON.stringify(again));
+});

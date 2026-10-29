@@ -4,7 +4,7 @@ import { createBadgeStore } from './lib/badge.js';
 import { statusFor } from './lib/status.js';
 import { DEFAULT_SITES } from './lib/flags.js';
 import { routeCommand } from './lib/route.js';
-import { createRouter } from './lib/messages.js';
+import { createRouter, isLangCode } from './lib/messages.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
@@ -38,7 +38,11 @@ async function getSettings() {
 async function getThread(threadId, settings) {
   const k = threadKey(threadId);
   const got = await store.get(k);
-  return withThreadDefaults(got[k] || {}, (settings || (await getSettings())).threadDefaults);
+  const t = withThreadDefaults(got[k] || {}, (settings || (await getSettings())).threadDefaults);
+  // A language stored before codes were checked would come back in the next request and be refused there.
+  if (t.partnerLang != null && !isLangCode(t.partnerLang)) t.partnerLang = null;
+  if (t.outputLang !== 'auto' && !isLangCode(t.outputLang)) t.outputLang = 'auto';
+  return t;
 }
 
 async function setThread(threadId, patch) {
