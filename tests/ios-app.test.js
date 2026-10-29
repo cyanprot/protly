@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ENGLISH_STYLE, POLISH_VOICE, TRANSLATE_TONE, EMAIL_SHAPE } from '../src/lib/style.js';
+import { LANG_NAMES } from '../src/lib/lang.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const prompt = read('ios/keyboard-prompt.txt');
@@ -25,6 +26,12 @@ test('keyboard prompt carries the shared English style verbatim (src/lib/style.j
 
 test('keyboard prompt stays inside its size budget (it is sent on every call from the phone)', () => {
   assert.ok(prompt.length <= 3900, `keyboard prompt is ${prompt.length} characters, budget 3900`);
+});
+
+test('the keyboard translates into the extension languages (ProtlyCore Languages.swift equals LANG_NAMES)', () => {
+  const swift = read('ios-app/ProtlyCore/Sources/ProtlyCore/Languages.swift');
+  const pairs = [...swift.matchAll(/\("([a-z]{2,3})", "([^"]+)"\)/g)].map((m) => [m[1], m[2]]);
+  assert.deepEqual(pairs, Object.entries(LANG_NAMES));
 });
 
 test('keyboard prompt has no screen or memo material from the Shortcut prompt', () => {
