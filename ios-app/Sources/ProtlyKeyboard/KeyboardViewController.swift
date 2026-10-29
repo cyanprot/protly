@@ -201,7 +201,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         }
         actionTask?.cancel()
         // The panel shows at once: a second tap during the field read cannot start a second request.
-        mode.panel = .loading(requested ?? .fix)
+        mode.panel = .loading(requested ?? mode.draftMode ?? .in)
         actionTask = Task { [weak self] in
             guard let self else { return }
             let field = await FieldText.read(textDocumentProxy)
@@ -211,7 +211,13 @@ final class KeyboardViewController: KeyboardInputViewController {
                 if requested == nil { readClipboard() }
                 return
             }
-            let action = requested ?? ActionAPI.mode(forDraft: field.text)
+            // The bar's mode came from the whole field; a selection gets its own.
+            let action = requested == nil || field.isSelection ? ActionAPI.mode(forDraft: field.text) : requested!
+            // Text left after the cursor = only a prefix was read: Insert would glue the result to the rest.
+            if !field.isSelection, !(textDocumentProxy.documentContextAfterInput ?? "").isEmpty {
+                mode.panel = .failed("Could not read the whole text. Select all, then tap again.", retry: action)
+                return
+            }
             run(action, text: field.text, original: field.text, isSelection: field.isSelection)
         }
     }
@@ -250,7 +256,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         let p = textDocumentProxy
         let unchanged = isSelection
             ? p.selectedText == original
-            : (p.documentContextBeforeInput ?? "").hasSuffix(String(original.suffix(40)))
+            : (p.documentContextAfterInput ?? "").isEmpty
+                && (p.documentContextBeforeInput ?? "").hasSuffix(String(original.suffix(40)))
         guard unchanged else {
             mode.panel = .failed("The text changed. Try again.", retry: action)
             return
@@ -297,7 +304,10 @@ final class KeyboardViewController: KeyboardInputViewController {
         let pb = UIPasteboard.general
         let d = UserDefaults.standard
         if d.object(forKey: Self.clipboardKey) == nil { d.set(pb.changeCount, forKey: Self.clipboardKey) }  // first run: old clipboard is not new
-        let isNew = pb.changeCount != d.integer(forKey: Self.clipboardKey) && pb.hasStrings
+        // Only an empty field offers the clipboard, so the cheap checks skip the pasteboard on most keys.
+        let isNew = !session.isComposing
+            && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && pb.changeCount != d.integer(forKey: Self.clipboardKey) && pb.hasStrings
         if mode.clipboardIsNew != isNew { mode.clipboardIsNew = isNew }
     }
 

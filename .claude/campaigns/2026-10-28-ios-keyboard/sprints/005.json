@@ -11,7 +11,8 @@
   ],
   "success_criteria": [
     "swift test: 49 tests, 0 failures; npm test # fail 0",
-    "Task 5.4 items 1-4, 6, 8-12 pass on the iPhone",
+    "Task 5.4 items 1-4, 6, 8-13 pass on the iPhone",
+    "a partial field read is refused, never replaced in part",
     "no Allow Paste prompt until the user taps Read clipboard"
   ],
   "testable_behaviors": [

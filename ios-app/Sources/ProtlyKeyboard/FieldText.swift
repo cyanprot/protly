@@ -12,12 +12,16 @@ enum FieldText {
             guard let after = proxy.documentContextAfterInput, !after.isEmpty else { break }
             proxy.adjustTextPosition(byCharacterOffset: after.utf16.count)  // UTF-16 units
             // Hosts apply the move asynchronously: poll until the after-context changes (max 1 s).
+            var moved = false
             for _ in 0..<50 {
-                try? await Task.sleep(nanoseconds: 20_000_000)
-                if proxy.documentContextAfterInput != after { break }
+                do { try await Task.sleep(nanoseconds: 20_000_000) } catch { return nil }  // cancelled: stop touching the field
+                if proxy.documentContextAfterInput != after { moved = true; break }
             }
+            guard moved else { break }  // the host never reported the move: never issue it again
         }
-        guard let before = proxy.documentContextBeforeInput, !before.isEmpty else { return nil }
+        // A whitespace-only field counts as empty, as in the bar: the protly key reads the clipboard.
+        guard let before = proxy.documentContextBeforeInput,
+              !before.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         return (before, false)
     }
 

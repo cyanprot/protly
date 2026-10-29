@@ -3098,12 +3098,16 @@ enum FieldText {
             guard let after = proxy.documentContextAfterInput, !after.isEmpty else { break }
             proxy.adjustTextPosition(byCharacterOffset: after.utf16.count)  // UTF-16 units
             // Hosts apply the move asynchronously: poll until the after-context changes (max 1 s).
+            var moved = false
             for _ in 0..<50 {
-                try? await Task.sleep(nanoseconds: 20_000_000)
-                if proxy.documentContextAfterInput != after { break }
+                do { try await Task.sleep(nanoseconds: 20_000_000) } catch { return nil }  // cancelled: stop touching the field
+                if proxy.documentContextAfterInput != after { moved = true; break }
             }
+            guard moved else { break }  // the host never reported the move: never issue it again
         }
-        guard let before = proxy.documentContextBeforeInput, !before.isEmpty else { return nil }
+        // A whitespace-only field counts as empty, as in the bar: the protly key reads the clipboard.
+        guard let before = proxy.documentContextBeforeInput,
+              !before.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         return (before, false)
     }
 
@@ -3445,7 +3449,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         }
         actionTask?.cancel()
         // The panel shows at once: a second tap during the field read cannot start a second request.
-        mode.panel = .loading(requested ?? .fix)
+        mode.panel = .loading(requested ?? mode.draftMode ?? .in)
         actionTask = Task { [weak self] in
             guard let self else { return }
             let field = await FieldText.read(textDocumentProxy)
@@ -3455,7 +3459,13 @@ final class KeyboardViewController: KeyboardInputViewController {
                 if requested == nil { readClipboard() }
                 return
             }
-            let action = requested ?? ActionAPI.mode(forDraft: field.text)
+            // The bar's mode came from the whole field; a selection gets its own.
+            let action = requested == nil || field.isSelection ? ActionAPI.mode(forDraft: field.text) : requested!
+            // Text left after the cursor = only a prefix was read: Insert would glue the result to the rest.
+            if !field.isSelection, !(textDocumentProxy.documentContextAfterInput ?? "").isEmpty {
+                mode.panel = .failed("Could not read the whole text. Select all, then tap again.", retry: action)
+                return
+            }
             run(action, text: field.text, original: field.text, isSelection: field.isSelection)
         }
     }
@@ -3494,7 +3504,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         let p = textDocumentProxy
         let unchanged = isSelection
             ? p.selectedText == original
-            : (p.documentContextBeforeInput ?? "").hasSuffix(String(original.suffix(40)))
+            : (p.documentContextAfterInput ?? "").isEmpty
+                && (p.documentContextBeforeInput ?? "").hasSuffix(String(original.suffix(40)))
         guard unchanged else {
             mode.panel = .failed("The text changed. Try again.", retry: action)
             return
@@ -3541,7 +3552,10 @@ final class KeyboardViewController: KeyboardInputViewController {
         let pb = UIPasteboard.general
         let d = UserDefaults.standard
         if d.object(forKey: Self.clipboardKey) == nil { d.set(pb.changeCount, forKey: Self.clipboardKey) }  // first run: old clipboard is not new
-        let isNew = pb.changeCount != d.integer(forKey: Self.clipboardKey) && pb.hasStrings
+        // Only an empty field offers the clipboard, so the cheap checks skip the pasteboard on most keys.
+        let isNew = !session.isComposing
+            && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && pb.changeCount != d.integer(forKey: Self.clipboardKey) && pb.hasStrings
         if mode.clipboardIsNew != isNew { mode.clipboardIsNew = isNew }
     }
 
@@ -3732,7 +3746,8 @@ Install, then Claude prints this checklist and waits:
 4. Copy a friend's English message, come back to an empty composer: bar shows `Read clipboard` and NO Allow
    Paste prompt appears yet. Tap it: Allow Paste prompt, then the Korean translation; `Done` returns to keys.
 5. A three-paragraph draft: tap at the start of the first paragraph, then tap `Translate`: it gets all of it
-   and Insert replaces all of it.
+   and Insert replaces all of it, or it says "Could not read the whole text. Select all, then tap again." It
+   never replaces only part of the draft.
 6. Airplane mode: an error line with `Retry`; the draft is untouched.
 7. Seconds from tap to result for Translate (Opus) and Read clipboard (Sonnet), two tries each.
 8. The panel is exactly the height of the keys (nothing jumps).
@@ -3743,6 +3758,8 @@ Install, then Claude prints this checklist and waits:
     again." and the field is untouched.
 12. The protly key (bottom row) shows the protly glyph; tap it on a draft: same as the bar's action. iOS's own
     bottom-left key opens Emoji (keyboards: Protly and Emoji only).
+13. Long-press a top-row key with alternatives (`e`, `u`): the whole bubble shows over the predictive bar, not
+    cut at the top.
 
 Record under `## Sprint 5: actions` in the notes and commit:
 
@@ -3758,8 +3775,8 @@ Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
 MSG
 ```
 
-**Sprint 5 done when:** items 1-4, 6, 8-12 pass. Item 5 failing (field read truncated) adds "Select all, then tap
-again" handling in Sprint 6's re-plan; item 7 over 10 s puts streaming into Sprint 6.
+**Sprint 5 done when:** items 1-4, 6, 8-13 pass. Item 5 ending in "Select all, then tap again" puts a better
+whole-field read into Sprint 6's re-plan; item 7 over 10 s puts streaming into Sprint 6.
 
 ---
 
