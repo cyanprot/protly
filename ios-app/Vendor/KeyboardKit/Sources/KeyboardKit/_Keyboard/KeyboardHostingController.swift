@@ -20,6 +20,7 @@ class KeyboardHostingController<Content: View>: UIHostingController<Content> {
         controller.view.addSubview(view)
         didMove(toParent: controller)
         view.backgroundColor = .clear
+        updateSafeAreaRegions()  // protly patch
         view.translatesAutoresizingMaskIntoConstraints = false
         view.leadingAnchor.constraint(equalTo: controller.view.leadingAnchor).isActive = true
         view.trailingAnchor.constraint(equalTo: controller.view.trailingAnchor).isActive = true
@@ -38,7 +39,21 @@ class KeyboardHostingController<Content: View>: UIHostingController<Content> {
     
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
+        updateSafeAreaRegions()  // protly patch
         updateViewConstraints()
+    }
+
+    /// protly patch: no safe-area insets in portrait. After an app switch iOS gave the keyboard a 17 pt top inset
+    /// and the view grew by it above the keys (ios-app/CI simulator runs, docs/ios-keyboard-notes.md).
+    /// Landscape keeps them: the side insets may keep keys clear of the sensor housing.
+    private func updateSafeAreaRegions() {
+        #if os(iOS)
+        if #available(iOS 16.4, *) {
+            let screen = UIScreen.main.bounds.size
+            let regions: SafeAreaRegions = screen.width < screen.height ? [] : .all
+            if safeAreaRegions != regions { safeAreaRegions = regions }
+        }
+        #endif
     }
 }
 #endif

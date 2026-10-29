@@ -22,6 +22,10 @@ Files changed beyond the preview guards:
 - `Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift`: a long-press bubble that is taller than the room above
   its key shrinks to fit (padding to 2 pt, then item height), and `positionY` follows the real item height. Row 1's
   bubbles were cut at the top edge (Sprint 5 phone check).
+- `Sources/KeyboardKit/_Keyboard/KeyboardHostingController.swift`: the hosting controller ignores safe areas in
+  portrait (`safeAreaRegions = []`, iOS 16.4+; landscape keeps them). After an app switch iOS gave the keyboard a 17 pt
+  top inset and the view grew by it above the keys (ios-app/CI simulator runs; docs/ios-keyboard-notes.md,
+  "Simulator verification").
 - `= nil` on optional `@Entry` values: `_Keyboard/KeyboardViewStyle.swift`, `_Keyboard/Models/Keyboard+DockEdge.swift`,
   `_Keyboard/Models/Keyboard+InputToolbar.swift`, `_Keyboard/Models/Keyboard+SpaceLongPressBehavior.swift`,
   `_Keyboard/Models/Keyboard+SpaceMenuType.swift` (2), `_Keyboard/Views/Keyboard+ButtonStyle.swift`.
