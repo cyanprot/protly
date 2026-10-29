@@ -9,6 +9,8 @@ that types Korean and English on one QWERTY grid and offers Translate / Polish /
 - Keyboard visual verification (cloud): `docs/plans/2026-10-29-keyboard-visual.md`.
 - Security review and test hardening (cloud): `docs/plans/2026-10-29-security-review.md`.
 - Phone and simulator findings: `docs/ios-keyboard-notes.md`.
+- English style for Translate and Polish: `docs/style-guide.md` (derived from `cyanprot/humanizer`). Code copies its
+  prompt blocks verbatim and this file wins over the Sprint 7a draft.
 
 ## Layout
 
