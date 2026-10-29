@@ -117,3 +117,13 @@ test('a hostile retry_after never makes an instant retry or an unbounded wait', 
     assert.ok(Number.isFinite(sleeps[0]) && sleeps[0] >= 1000 && sleeps[0] <= 30000, `${JSON.stringify(ra)} -> ${sleeps[0]}`);
   }
 });
+
+test('a refused or malformed message reads as a sentence and gets a page toast', async () => {
+  const { errorText, GLOBAL_KINDS } = await import('../src/ui/errors.js');
+  for (const kind of ['forbidden', 'bad_message']) {
+    const t = errorText({ kind, message: 'outgoing: bad lang' });
+    assert.doesNotMatch(t, /bad lang/);
+    assert.match(t, /^protly /);
+    assert.ok(GLOBAL_KINDS.has(kind));
+  }
+});
