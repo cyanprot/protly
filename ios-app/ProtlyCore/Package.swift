@@ -11,7 +11,10 @@ let package = Package(
     targets: [
         .target(
             name: "ProtlyCore",
-            resources: [.copy("Resources/en_50k.txt"), .copy("Resources/ko_50k.txt")]
+            resources: [
+                .copy("Resources/en_50k.txt"), .copy("Resources/ko_50k.txt"),
+                .copy("Resources/keyboard-prompt.txt"),  // synced from ios/ by scripts/sync-ios-app.mjs
+            ]
         ),
         .executableTarget(name: "protly-eval", dependencies: ["ProtlyCore"]),
         .testTarget(name: "ProtlyCoreTests", dependencies: ["ProtlyCore"]),
