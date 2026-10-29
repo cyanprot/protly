@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "sprint_id": "005",
+  "campaign_id": "2026-10-28-ios-keyboard",
+  "feature": "Clipboard read",
+  "deliverables": [
+    "clipboard change detection and Korean translation in the panel, with skip rules; fallback per Sprint 2"
+  ],
+  "success_criteria": [
+    "copy an English message in Instagram, return to the composer, translation shows (no tap, or one tap in fallback)"
+  ],
+  "testable_behaviors": [
+    "Korean, URLs, field text and repeats are not sent"
+  ],
+  "scope_boundaries": [
+    "no notification or Translate-menu routes"
+  ],
+  "evaluation_method": "live"
+}

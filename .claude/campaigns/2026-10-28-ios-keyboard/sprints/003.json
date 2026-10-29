@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "sprint_id": "003",
+  "campaign_id": "2026-10-28-ios-keyboard",
+  "feature": "Full key layout and automatic language switching",
+  "deliverables": [
+    "Apple-identical English and Dubeolsik keycap sets, number/symbol pages, shift rules, composition display, space flick flip, persisted last language"
+  ],
+  "success_criteria": [
+    "user types a mixed Korean/English Instagram DM with no language key",
+    "height matches Apple's keyboard in screenshot comparison"
+  ],
+  "testable_behaviors": [
+    "keycaps show one language at a time and switch per word"
+  ],
+  "scope_boundaries": [
+    "no API actions",
+    "no autocomplete"
+  ],
+  "evaluation_method": "live"
+}

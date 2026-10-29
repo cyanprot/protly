@@ -2,6 +2,10 @@
 
 Date: 2026-10-28. Status: approved by the user in chat; spec review issues fixed.
 
+> Amended 2026-10-28 by the "Design amendments" section of `docs/plans/2026-10-28-ios-keyboard.md` (no App Group on
+> free Apple ID teams, so no settings sharing; Swift 6.4.1 toolchain; measured detector rules). The plan wins where
+> they differ.
+
 ## Goal
 
 Beat Grammarly's iOS keyboard on the user's own iPhone. protly becomes a custom keyboard that looks and behaves

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "sprint_id": "001",
+  "campaign_id": "2026-10-28-ios-keyboard",
+  "feature": "ProtlyCore on Linux: Dubeolsik composer, key encoder, word lists, language detector, corpus accuracy report",
+  "deliverables": [
+    "Swift 6.4.1 via swiftly, Fedora swift-lang removed",
+    "ios-app/ProtlyCore package (Keys, Hangul, KeyEncoder, WordList, LanguageDetector, protly-eval)",
+    "FrequencyWords en/ko 50k lists + ATTRIBUTION.md",
+    "Corpus (Tatoeba samples + chat.txt) and scripts/make-corpus.sh",
+    "docs/ios-keyboard-notes.md Sprint 1 section"
+  ],
+  "success_criteria": [
+    "swift --version prints 6.4.1 from ~/.local/share/swiftly",
+    "swift test --package-path ios-app/ProtlyCore: 16 tests, 0 failures",
+    "protly-eval at priorBonus 2.0: tatoeba-kor >= 99.5%, tatoeba-eng >= 99.3%, chat korean >= 98% accuracy",
+    "npm test still fail 0 and Python OK",
+    "numbers recorded in docs/ios-keyboard-notes.md"
+  ],
+  "testable_behaviors": [
+    "dkssud composes to 안녕",
+    "backspace drops one jamo (각 -> 가)",
+    "auto-capitalized sentence start never yields a double consonant",
+    "ㅋㅋ ㅇㅇ ㅠㅠ detected as Korean"
+  ],
+  "scope_boundaries": [
+    "no iOS code",
+    "no UIKit",
+    "no completion/autocorrect",
+    "no learned words"
+  ],
+  "evaluation_method": "unit"
+}

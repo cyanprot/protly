@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "sprint_id": "004",
+  "campaign_id": "2026-10-28-ios-keyboard",
+  "feature": "Translate/Polish and the panel",
+  "deliverables": [
+    "ios/keyboard-prompt.txt + sync script + drift test",
+    "request builder/parser in ProtlyCore with tests",
+    "predictive bar action + same-height panel, Insert/Cancel/Undo, error strings"
+  ],
+  "success_criteria": [
+    "Korean draft -> Translate -> Insert replaces the draft in Instagram; Undo restores it",
+    "English draft -> Polish works",
+    "errors leave the field untouched"
+  ],
+  "testable_behaviors": [
+    "back translation shown in the panel"
+  ],
+  "scope_boundaries": [
+    "no clipboard read",
+    "no completion"
+  ],
+  "evaluation_method": "live"
+}
