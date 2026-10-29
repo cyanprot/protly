@@ -1,0 +1,37 @@
+STATUS measured
+source 0db92c8f8fa6126c8dc6e14b62ad44b8dab01a2c
+xcode Xcode 26.6 Build version 17F113 
+runtime iOS 26.5 (com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+device iPhone-13-Pro (A3C2F05E-4200-4877-A7BF-ACF3EB3BE9D6), 390 pt wide
+build ok
+AppleKeyboards ("com.northprot.protly.cihost.keyboard","emoji@sw=Emoji","en_US@sw=QWERTY;hw=Automatic")
+appearance dark
+screen 1170x2532 px, 390 pt wide, scale 3.00
+01-apple: top 509.00 row1 561.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 65.00(85) 194.83(14) 325.00(41)
+02-first-open: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+03-after-emoji: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+04-after-background: top 495.00 row1 564.00 band 69.00 pitch 54.00 key 43.00 bar-text-centers none
+05-after-second-emoji: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+06-word-typed: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 67.50(71) 195.33(43)
+07-empty-left-slot: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 195.33(43)
+CHECK top-edge FAIL range 495.00..512.00 (17.00 pt)
+CHECK band-02-first-open PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-03-after-emoji PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-04-after-background FAIL 69.00 vs apple 52.00 (+17.00)
+CHECK band-05-after-second-emoji PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-06-word-typed PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-07-empty-left-slot PASS 52.00 vs apple 52.00 (+0.00)
+CHECK pitch-02-first-open PASS 54.00 vs 54.00
+CHECK key-02-first-open PASS 43.00 vs 43.00
+CHECK pitch-03-after-emoji PASS 54.00 vs 54.00
+CHECK key-03-after-emoji PASS 43.00 vs 43.00
+CHECK pitch-04-after-background PASS 54.00 vs 54.00
+CHECK key-04-after-background PASS 43.00 vs 43.00
+CHECK pitch-05-after-second-emoji PASS 54.00 vs 54.00
+CHECK key-05-after-second-emoji PASS 43.00 vs 43.00
+CHECK pitch-06-word-typed PASS 54.00 vs 54.00
+CHECK key-06-word-typed PASS 43.00 vs 43.00
+CHECK pitch-07-empty-left-slot PASS 54.00 vs 54.00
+CHECK key-07-empty-left-slot PASS 43.00 vs 43.00
+CHECK bar-center-07 PASS text center 195.33 vs 195.00 (+0.33), words 1
+RESULT FAIL
