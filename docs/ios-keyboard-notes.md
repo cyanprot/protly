@@ -171,3 +171,19 @@ Consequences for the re-plan (Sprint 3):
 
 Task 2.3 checklist items 1-3 passed (334ce92) and KeyboardKit loads and types (2.4 Step 7.1). Free Apple ID +
 xtool + vendored KeyboardKit 9.9.1 is the toolchain for Sprints 3-6. Next: re-run plan-flow for Sprints 3-6.
+
+## Sprint 3: detector after the shorthand rules
+
+Measured 2026-10-29 with the same command as Sprint 1 (priorBonus 2.0):
+
+```
+chat.txt korean: 67 words, accuracy 98.51%, words that flip while typing 20.9% | top errors: 걔x1
+chat.txt english: 14 words, accuracy 100.00%, words that flip while typing 35.7% | top errors: 
+tatoeba-eng.txt english: 16544 words, accuracy 99.55%, words that flip while typing 0.8% | top errors: Zirix44 Rimax16 clarifiesx1 Ddax1 Tizix1 glaivex1 SAFx1 Tatarx1
+tatoeba-kor.txt korean: 8626 words, accuracy 99.83%, words that flip while typing 0.5% | top errors: 꽤x6 걔x4 새x4 뜰x1
+tatoeba-kor.txt english: 5 words, accuracy 100.00%, words that flip while typing 40.0% | top errors: 
+```
+
+The six gap words from the Sprint 1 review are fixed except 걔 (keys `rO` = "ro", a short-syllable clash
+that the prior cannot beat). 아+ㅋㅋ typed in one go composes as 앜ㅋ, like Apple's keyboard.
+Mixed tokens (nice하더라) stay a known loss: a word is one language; the bar flip fixes a wrong word.
