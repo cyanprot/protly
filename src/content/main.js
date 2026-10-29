@@ -194,9 +194,9 @@ async function translate(msgs, mode, updateLang) {
   const batches = incomingBatches(msgs);
   if (!batches.length) return;
   if (batches.length > 1) { // a long thread after a re-render: one request per batch, in order; the newest sets the language
-    const threadId = current.threadId;
+    const cur0 = current; // the object, not the id: A -> B -> A must stop this loop too
     for (const [i, b] of batches.entries()) {
-      if (current?.threadId !== threadId) return; // switched threads: these rows are not the new thread's
+      if (current !== cur0) return; // switched threads: these rows are not the new thread's
       await translate(b.todo, mode, updateLang && i === batches.length - 1);
     }
     return;
@@ -230,8 +230,8 @@ async function hoverSent(msgs) {
   const batches = sentBatches(msgs);
   if (!batches.length || !current) return;
   if (batches.length > 1) {
-    const threadId = current.threadId;
-    for (const b of batches) { if (current?.threadId !== threadId) return; await hoverSent(b); }
+    const cur0 = current;
+    for (const b of batches) { if (current !== cur0) return; await hoverSent(b); }
     return;
   }
   const [mine] = batches;

@@ -274,6 +274,7 @@ test('Instagram: an Enter the user did not press never sends Hangul or an unconf
   assert.equal(hold(key(c)), true); // Hangul in the composer
   c.textContent = 'hello';
   assert.equal(hold(key(c)), false); // plain English, idle: nothing protly guards
+  assert.equal(hold(key(c), { polish: true }), true); // Polish on: the user's own Enter would polish first
   assert.equal(hold(key(c), { mode: 'translating' }), true);
   assert.equal(hold(key(c), { mode: 'preview' }), true); // only the user confirms a preview
   assert.equal(hold(key(c), { writing: true }), true);

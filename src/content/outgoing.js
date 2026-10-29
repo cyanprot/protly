@@ -20,12 +20,14 @@ const block = (e) => { e.preventDefault(); e.stopImmediatePropagation(); };
 
 // An Enter the user did not make (isTrusted false) never starts a translation. It is held whenever the user's own
 // Enter would not simply send: Hangul in the box (or in any editable box when the composer selector is broken),
-// a translation or write in progress, or a preview only the user may confirm.
-export function holdUntrustedEnter(e, { composer: c, writing, mode }) {
+// English with Polish on, a translation or write in progress, or a preview only the user may confirm.
+export function holdUntrustedEnter(e, { composer: c, writing, mode, polish = false }) {
   if (!isEnter(e) || e.shiftKey) return false;
   const box = c ? (c.contains(e.target) ? c : null) : (e.target?.isContentEditable || e.target?.getAttribute?.('contenteditable') === 'true' ? e.target : null);
   if (!box) return false;
-  return writing || mode !== 'idle' || hasHangul(box.innerText || box.textContent || '');
+  const text = box.innerText || box.textContent || '';
+  // With Polish on, the user's own Enter on English polishes first; a synthetic one must not skip that.
+  return writing || mode !== 'idle' || hasHangul(text) || (polish && !!c && /\p{L}/u.test(text));
 }
 
 export function mountOutgoing(cur) {
@@ -203,7 +205,7 @@ export function mountOutgoing(cur) {
     if (!cur2?.thread.enabled) return;
     const c = composer();
     if (!trusted(e)) { // a page script or another extension: never a billed translation, never an unconfirmed send
-      if (holdUntrustedEnter(e, { composer: c, writing, mode: state.mode })) block(e);
+      if (holdUntrustedEnter(e, { composer: c, writing, mode: state.mode, polish: flags.polish })) block(e);
       return;
     }
 

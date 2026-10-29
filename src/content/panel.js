@@ -72,7 +72,8 @@ export function mountPanel(cur) {
     $('suggest').disabled = true;
     try {
       const memo = await ask({ type: 'suggestMemo', threadId: c.threadId, context: contextFor(c.root) });
-      $('memo').value = String(memo).slice(0, LIMITS.memo); // .value ignores maxLength; Save would be refused
+      // .value ignores maxLength (Save would be refused); never leave half an emoji at the cut
+      $('memo').value = String(memo).slice(0, LIMITS.memo).replace(/[\uD800-\uDBFF]$/, '');
     } catch (e) {
       showToast(`Memo suggestion failed: ${errorText(e)}`, { transient: true, error: true });
     } finally {
