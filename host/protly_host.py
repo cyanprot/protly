@@ -100,7 +100,7 @@ def ping(home):
     return {'ok': True, 'key_present': key_present, 'workspace_header': workspace}
 
 
-def handle(req, home, urlopen=urllib.request.urlopen):
+def handle(req, home, urlopen=None):
     req_id = req.get('id')
     if req.get('ping'):
         return {'id': req_id, 'ping': ping(home)}
@@ -112,7 +112,7 @@ def handle(req, home, urlopen=urllib.request.urlopen):
     request = urllib.request.Request(API_URL, data=json.dumps(req['body']).encode('utf-8'),
                                      headers=headers, method='POST')
     try:
-        with urlopen(request, timeout=TIMEOUT_S) as resp:
+        with (urlopen or urllib.request.urlopen)(request, timeout=TIMEOUT_S) as resp:  # looked up per call: tests patch it
             return {'id': req_id, 'status': resp.status,
                     'retry_after': resp.headers.get('retry-after'), 'body': json.loads(resp.read())}
     except urllib.error.HTTPError as e:

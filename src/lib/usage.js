@@ -56,7 +56,8 @@ function prune(usage, now) {
 export function createUsageRecorder({ get, set, now = Date.now }) {
   let chain = Promise.resolve();
   function record(body) {
-    // The id keys a plain object: anything that is not a model id shape ('__proto__', 'constructor') is 'unknown'.
+    // The id keys a plain object: an odd shape ('__proto__', spaces) is 'unknown'; inherited names such as
+    // 'constructor' are safe through the own-key lookup below.
     const model = typeof body?.model === 'string' && MODEL_ID.test(body.model) ? body.model : 'unknown';
     const tokens = tokensOf(body);
     chain = chain.then(async () => {

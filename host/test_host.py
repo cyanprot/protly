@@ -16,8 +16,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import protly_host as h  # noqa: E402
 
 
+TEMP_DIRS = []
+
+
+def tearDownModule():
+    for d in TEMP_DIRS:
+        shutil.rmtree(d, True)
+
+
 def make_home(key='sk-ant-test-123', ws='wrkspc_test'):
     d = tempfile.mkdtemp()
+    TEMP_DIRS.append(d)
     base = os.path.join(d, '.config', 'anthropic')
     os.makedirs(os.path.join(base, 'configs'))
     if key is not None:
@@ -29,8 +38,8 @@ def make_home(key='sk-ant-test-123', ws='wrkspc_test'):
 
 
 def offline(urlopen):
-    """safe_handle calls handle() with its default urlopen, bound at definition: swap that default."""
-    return mock.patch.object(h.handle, '__defaults__', (urlopen,))
+    """safe_handle calls handle() without urlopen, which then uses urllib.request.urlopen: replace that."""
+    return mock.patch.object(h.urllib.request, 'urlopen', urlopen)
 
 
 class FakeResp:
@@ -287,6 +296,7 @@ class Install(unittest.TestCase):
 
     def run_install(self, dirname, ext_id='a' * 32):
         tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
         src = os.path.join(tmp, dirname)
         os.makedirs(src)
         here = os.path.dirname(os.path.abspath(__file__))
