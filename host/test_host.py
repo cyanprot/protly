@@ -2,6 +2,8 @@ import http.client
 import io
 import json
 import os
+import shutil
+import subprocess
 import struct
 import sys
 import tempfile
@@ -253,6 +255,36 @@ class HostileInput(unittest.TestCase):
             r = h.safe_handle({'id': 6, 'body': {'model': 'x'}}, home)
         self.assertEqual(r['status'], 0)
         self.assertNotIn('sk-ant-test', json.dumps(r))
+
+
+class Install(unittest.TestCase):
+    """install.sh writes a valid manifest whatever the checkout path holds, and only for a real extension id."""
+
+    def run_install(self, dirname, ext_id='a' * 32):
+        tmp = tempfile.mkdtemp()
+        src = os.path.join(tmp, dirname)
+        os.makedirs(src)
+        here = os.path.dirname(os.path.abspath(__file__))
+        for f in ('install.sh', 'protly_host.py'):
+            shutil.copy(os.path.join(here, f), os.path.join(src, f))
+        env = {'HOME': tmp, 'PATH': os.environ.get('PATH', '/usr/bin:/bin')}
+        p = subprocess.run(['bash', os.path.join(src, 'install.sh'), ext_id], env=env, capture_output=True, text=True)
+        manifest = os.path.join(tmp, '.config', 'google-chrome', 'NativeMessagingHosts', 'com.northprot.protly.json')
+        return p, manifest, src
+
+    def test_quotes_and_backslashes_in_the_path_stay_inside_the_path(self):
+        p, manifest, src = self.run_install('pro"tly\\x", "allowed_origins": ["evil"], "y": "')
+        self.assertEqual(p.returncode, 0, p.stderr)
+        with open(manifest) as f:
+            m = json.load(f)
+        self.assertEqual(m['path'], os.path.join(src, 'protly_host.py'))
+        self.assertEqual(m['allowed_origins'], ['chrome-extension://' + 'a' * 32 + '/'])
+        self.assertEqual(sorted(m), ['allowed_origins', 'description', 'name', 'path', 'type'])
+
+    def test_rejects_a_bad_extension_id(self):
+        p, manifest, _ = self.run_install('protly', ext_id='a' * 31 + '"')
+        self.assertNotEqual(p.returncode, 0)
+        self.assertFalse(os.path.exists(manifest))
 
 
 if __name__ == '__main__':

@@ -9,13 +9,16 @@ host="$here/protly_host.py"
 dir="$HOME/.config/google-chrome/NativeMessagingHosts"
 mkdir -p "$dir"
 chmod +x "$host"
-cat > "$dir/com.northprot.protly.json" <<EOF
-{
-  "name": "com.northprot.protly",
-  "description": "protly Claude API bridge",
-  "path": "$host",
-  "type": "stdio",
-  "allowed_origins": ["chrome-extension://$id/"]
-}
-EOF
+# json.dumps, not a heredoc: a quote or backslash in the checkout path must stay inside "path".
+python3 -I - "$host" "$id" > "$dir/com.northprot.protly.json" <<'PY'
+import json, sys
+host, ext = sys.argv[1], sys.argv[2]
+print(json.dumps({
+    'name': 'com.northprot.protly',
+    'description': 'protly Claude API bridge',
+    'path': host,
+    'type': 'stdio',
+    'allowed_origins': [f'chrome-extension://{ext}/'],
+}, indent=2))
+PY
 echo "installed $dir/com.northprot.protly.json"
