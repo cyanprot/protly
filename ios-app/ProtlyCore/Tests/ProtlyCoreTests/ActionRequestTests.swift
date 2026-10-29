@@ -138,8 +138,9 @@ extension ActionRequestTests {
                 XCTAssertEqual(messages.count, 1)
                 XCTAssertEqual(messages[0]["role"] as? String, "user")
                 let label = mode == .in ? "TEXT" : "DRAFT"
+                let target = mode == .out ? "\nTARGET: English" : ""  // no text here starts with a language prefix
                 let content = try XCTUnwrap(messages[0]["content"] as? String)
-                XCTAssertEqual(Array(content.unicodeScalars), Array("MODE: \(mode.rawValue)\n\n\(label):\n\(text)".unicodeScalars))
+                XCTAssertEqual(Array(content.unicodeScalars), Array("MODE: \(mode.rawValue)\(target)\n\n\(label):\n\(text)".unicodeScalars))
             }
         }
     }

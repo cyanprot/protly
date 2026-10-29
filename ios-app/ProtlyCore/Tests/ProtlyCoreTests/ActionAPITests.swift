@@ -24,7 +24,8 @@ final class ActionAPITests: XCTestCase {
             XCTAssertEqual(b["model"] as? String, "claude-opus-5-5")
             XCTAssertEqual((b["thinking"] as? [String: String])?["type"], "adaptive")
             let msg = (b["messages"] as! [[String: Any]])[0]
-            XCTAssertEqual(msg["content"] as? String, "MODE: \(mode.rawValue)\n\nDRAFT:\nx")
+            let target = mode == .out ? "\nTARGET: English" : ""
+            XCTAssertEqual(msg["content"] as? String, "MODE: \(mode.rawValue)\(target)\n\nDRAFT:\nx")
         }
     }
 
@@ -86,5 +87,28 @@ final class ActionPromptTests: XCTestCase {
         XCTAssertEqual(ActionAPI.mode(forDraft: "ok 내일 봐"), .out)
         XCTAssertEqual(ActionAPI.mode(forDraft: "ㅋㅋ"), .out)
         XCTAssertEqual(ActionAPI.mode(forDraft: "see you tomorrow"), .fix)
+    }
+
+    func testOutNamesItsTargetAndAPrefixPicksIt() {
+        XCTAssertEqual(ActionAPI.userMessage(mode: .out, text: "내일 봐"), "MODE: out\nTARGET: English\n\nDRAFT:\n내일 봐")
+        XCTAssertEqual(ActionAPI.userMessage(mode: .out, text: "ru: 노트 고마워"), "MODE: out\nTARGET: Russian\n\nDRAFT:\n노트 고마워")
+        XCTAssertEqual(ActionAPI.userMessage(mode: .out, text: "en: 내일 봐"), "MODE: out\nTARGET: English\n\nDRAFT:\n내일 봐")
+        XCTAssertEqual(ActionAPI.userMessage(mode: .out, text: "ok: 내일 봐"), "MODE: out\nTARGET: English\n\nDRAFT:\nok: 내일 봐")
+        XCTAssertEqual(ActionAPI.userMessage(mode: .in, text: "ru: привет"), "MODE: in\n\nTEXT:\nru: привет")
+        XCTAssertEqual(ActionAPI.userMessage(mode: .fix, text: "no: see you"), "MODE: fix\n\nDRAFT:\nno: see you")
+    }
+
+    func testAKoPrefixPolishesAKoreanDraft() {
+        XCTAssertEqual(ActionAPI.mode(forDraft: "ko: 낼 봐"), .fix)
+        XCTAssertEqual(ActionAPI.mode(forDraft: " KO:낼 봐"), .fix)
+        XCTAssertEqual(ActionAPI.userMessage(mode: .fix, text: "ko: 낼 봐 ㅋㅋ"), "MODE: fix\n\nDRAFT:\n낼 봐 ㅋㅋ")
+        XCTAssertTrue(ActionAPI.isKoreanPolish("ko: 낼 봐"))
+        // Nothing Korean after it: a draft as today, prefix kept.
+        XCTAssertFalse(ActionAPI.isKoreanPolish("ko: see you"))
+        XCTAssertEqual(ActionAPI.userMessage(mode: .fix, text: "ko: see you"), "MODE: fix\n\nDRAFT:\nko: see you")
+        XCTAssertEqual(ActionAPI.mode(forDraft: "ko:"), .fix)
+        // Any other prefix, or ko: later in the draft, still translates.
+        XCTAssertEqual(ActionAPI.mode(forDraft: "ru: 낼 봐"), .out)
+        XCTAssertEqual(ActionAPI.mode(forDraft: "낼 봐 ko: 응"), .out)
     }
 }

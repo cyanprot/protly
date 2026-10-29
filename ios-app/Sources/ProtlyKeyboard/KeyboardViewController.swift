@@ -232,8 +232,8 @@ final class KeyboardViewController: KeyboardInputViewController {
                 if requested == nil { readClipboard() }
                 return
             }
-            // The bar's mode came from the whole field; a selection gets its own.
-            let action = requested == nil || field.isSelection ? ActionAPI.mode(forDraft: field.text) : requested!
+            // The action comes from the text read here (the whole field or the selection), not from the bar's view of it.
+            let action = ActionAPI.mode(forDraft: field.text)
             // Text left after the cursor = only a prefix was read: Insert would glue the result to the rest.
             if !field.isSelection, !(textDocumentProxy.documentContextAfterInput ?? "").isEmpty {
                 mode.panel = .failed("Could not read the whole text. Select all, then tap again.", retry: action)

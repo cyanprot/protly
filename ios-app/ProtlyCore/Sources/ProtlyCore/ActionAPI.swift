@@ -9,8 +9,8 @@ import FoundationNetworking  // URLRequest on Linux
 
 public enum ActionMode: String, Sendable, CaseIterable {
     case `in`   // someone else's text -> Korean
-    case out    // the user's Korean draft -> English
-    case fix    // the user's English draft, polished
+    case out    // the user's Korean draft -> English, or the language its prefix names ("ru: ...")
+    case fix    // the user's English draft, polished; any other language in its own, Korean after "ko:"
 }
 
 public struct ActionResult: Sendable, Equatable {
@@ -59,11 +59,23 @@ public enum ActionAPI {
         return try String(contentsOf: url, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// The action for the user's own draft: Korean anywhere -> translate out, else polish.
+    /// The action for the user's own draft: a Korean draft after "ko:" -> polish, else Korean anywhere ->
+    /// translate out, else polish.
     public static func mode(forDraft text: String) -> ActionMode {
+        isKoreanPolish(text) ? .fix : hasHangul(text) ? .out : .fix
+    }
+
+    /// "ko: 낼 봐": the writer asks for his Korean draft polished in Korean. Without Korean after the prefix the
+    /// draft is handled as before, prefix and all.
+    public static func isKoreanPolish(_ text: String) -> Bool {
+        let p = Languages.prefix(of: text)
+        return p.code == "ko" && hasHangul(p.text)
+    }
+
+    static func hasHangul(_ text: String) -> Bool {
         text.unicodeScalars.contains { s in
             !hangulFillers.contains(s.value) && hangulScalars.contains { $0.contains(s.value) }
-        } ? .out : .fix
+        }
     }
 
     /// Invisible Hangul fillers (pasted as blank names and spacers on Instagram): not Korean text.
@@ -139,16 +151,30 @@ public enum ActionAPI {
     /// Same shape as the extension and the Shortcut: thinking off on Sonnet is "between_tools", Opus is
     /// "adaptive"; effort low; JSON schema output; no temperature.
     public static func body(mode: ActionMode, text: String, system: String) throws -> Data {
-        let label = mode == .in ? "TEXT" : "DRAFT"
         let body: [String: Any] = [
             "model": model(for: mode),
             "max_tokens": 16000,
             "thinking": ["type": mode == .in ? "between_tools" : "adaptive"],
             "output_config": ["effort": "low", "format": ["type": "json_schema", "schema": schema]],
             "system": system,
-            "messages": [["role": "user", "content": "MODE: \(mode.rawValue)\n\n\(label):\n\(text)"]],
+            "messages": [["role": "user", "content": userMessage(mode: mode, text: text)]],
         ]
         return try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
+    }
+
+    /// MODE out names its TARGET: the language of the draft's prefix ("ru: 안녕", the prefix dropped), else
+    /// English. MODE fix drops a "ko:" prefix (isKoreanPolish). The system prompt stays the same for every call.
+    static func userMessage(mode: ActionMode, text: String) -> String {
+        let p = Languages.prefix(of: text)
+        switch mode {
+        case .in:
+            return "MODE: in\n\nTEXT:\n\(text)"
+        case .out:
+            let target = p.code == "ko" ? nil : p.code.flatMap(Languages.name(of:))
+            return "MODE: out\nTARGET: \(target ?? "English")\n\nDRAFT:\n\(target == nil ? text : p.text)"
+        case .fix:
+            return "MODE: fix\n\nDRAFT:\n\(isKoreanPolish(text) ? p.text : text)"
+        }
     }
 
     /// The reply's bytes, or nil once they pass `limit`: a huge or endless body never takes the keyboard's
