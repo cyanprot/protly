@@ -294,6 +294,7 @@ final class Driver {
         pause(1.5)  // let the keyboard's animation settle
         let now = current()
         if now != board { XCTFail("\(name): expected \(board.rawValue), found \(now.rawValue)") }
+        dumpOnce(name)  // the inputView frame tells the keyboard's height from iOS's side
         let s = XCUIScreen.main.screenshot()
         let attachment = XCTAttachment(screenshot: s)
         attachment.name = name
