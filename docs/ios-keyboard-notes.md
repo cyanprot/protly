@@ -359,28 +359,32 @@ ko_50k), and a manual shift on a doubled-jamo key inside a word is Korean unless
 
 ## Sprint 7: style eval
 
-Live run of `scripts/eval-polish.mjs` on 2026-10-29 at 64b10f7: `0 failure(s) of 15`. The extension cases use
-`claude-sonnet-5-5`, the keyboard cases `claude-opus-5-5` at low effort. `in` and `out` are the API's own
-`input_tokens` and `output_tokens`, which replace the character estimates of the Sprint 7 size table.
+Live run of `scripts/eval-polish.mjs` on 2026-10-29 at c65af65 (7a, its review follow-up and the merge of main):
+`0 failure(s) of 16`. The extension cases use `claude-sonnet-5-5`, the keyboard cases `claude-opus-5-5` at low
+effort. `in` and `out` are the API's own `input_tokens` and `output_tokens`, which replace the character estimates
+of the Sprint 7 size table.
 
 | Case | Result | in | out |
 |---|---|---|---|
-| polish chat, typos | PASS | 1,126 | 137 |
-| polish chat, CyanStyle rules | PASS | 1,132 | 149 |
-| polish email, greeting and paragraphs kept | PASS | 1,211 | 298 |
-| out, female friend in Russian (runs 1-3) | PASS x3 | 710 each | 59, 59, 62 |
-| out, English style: Canadian spelling, no dash or semicolon | PASS | 1,193 | 72 |
-| out, English style: adds no exclamation mark or emoji | PASS | 1,188 | 71 |
-| email, English style: no banned service phrases | PASS | 1,194 | 80 |
-| keyboard out, the style keeps a warm draft warm | PASS | 1,580 | 44 |
-| keyboard out, style without a note | PASS | 1,587 | 49 |
-| keyboard fix, CyanStyle rules | PASS | 1,591 | 146 |
-| keyboard out, about-me note spells the school, adds nothing | PASS | 1,659 | 49 |
-| keyboard fix, about-me note never leaks into the polish | PASS | 1,650 | 72 |
-| out, never Korean | PASS | 1,177 | 34 |
+| polish chat, typos | PASS | 1,132 | 140 |
+| polish chat, CyanStyle rules | PASS | 1,138 | 147 |
+| polish email, greeting and paragraphs kept | PASS | 1,217 | 285 |
+| out, female friend in Russian (runs 1-3) | PASS x3 | 751 each | 59, 60, 60 |
+| out, English style: Canadian spelling, no dash or semicolon | PASS | 1,240 | 69 |
+| out, English style: adds no exclamation mark or emoji | PASS | 1,235 | 68 |
+| email, English style: no banned service phrases | PASS | 1,241 | 79 |
+| keyboard out, the style keeps a warm draft warm | PASS | 1,618 | 31 |
+| keyboard out, ㅋㅋ becomes English laughter | PASS | 1,627 | 47 |
+| keyboard out, style without a note | PASS | 1,625 | 49 |
+| keyboard fix, CyanStyle rules | PASS | 1,629 | 126 |
+| keyboard out, about-me note spells the school, adds nothing | PASS | 1,697 | 51 |
+| keyboard fix, about-me note never leaks into the polish | PASS | 1,688 | 84 |
+| out, never Korean | PASS | 1,224 | 34 |
 
-- Real input sizes: the keyboard prompt is about 1,580 tokens per call without a note and about 1,655 with the
-  eval's 101-character note (the user message is a few tokens of that). Extension English outgoing is about 1,190,
-  the unchanged Russian prompt 710, Polish about 1,130.
-- Totals: 18,418 input and 1,381 output tokens. Cost about $0.10 [estimate from list prices, not billed figures].
-- The warm case passed on `ㅠㅠ` kept as is ("I miss you ㅠㅠ"), not on an intensifier.
+- Real input sizes: the keyboard prompt is about 1,620 tokens per call without a note and about 1,690 with the
+  eval's 101-character note (the user message is a few tokens of that). Extension English outgoing is about 1,240,
+  the Russian outgoing prompt 751 (it gained the Korean chat marks line), Polish about 1,140.
+- Totals: 20,564 input and 1,389 output tokens. Cost about $0.11 [estimate from list prices, not billed figures].
+  The first run, before the review follow-up (15 cases at 64b10f7), cost about $0.10.
+- Korean chat marks: the warm draft now reads "I miss you :(", `ㅋㅋㅋ` became "lol", and `ㅋㅋ 진짜?` became
+  "haha really?". In the first run the keyboard had kept `ㅠㅠ` as is ("I miss you ㅠㅠ").
