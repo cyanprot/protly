@@ -56,8 +56,8 @@ public enum Dubeolsik {
         })
     }
 
-    /// English reading: any shift capitalizes.
+    /// English reading: any shift capitalizes. Joined as strings: some letters uppercase to two ("ß" -> "SS").
     public static func latin(_ keys: [KeyEvent]) -> String {
-        String(keys.map { $0.shift == .none ? $0.letter : Character($0.letter.uppercased()) })
+        keys.map { $0.shift == .none ? String($0.letter) : $0.letter.uppercased() }.joined()
     }
 }
