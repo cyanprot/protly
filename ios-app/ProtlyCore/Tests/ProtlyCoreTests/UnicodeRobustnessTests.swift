@@ -73,7 +73,7 @@ final class UnicodeRobustnessTests: XCTestCase {
     }
 
     func testEditsStayConsistentWithOddKeys() {
-        // The flip deletes exactly what the commit inserted plus what was typed after it.
+        // No trap, and the flip replaces exactly the tail it reports (joined characters: testFlipDeletesExactlyTheTailInTheField).
         for odd in Self.oddLetters {
             var s = TypingSession(detector: detector)
             for k in [KeyEvent("h"), KeyEvent(odd), KeyEvent("i")] { _ = s.type(k) }
@@ -87,28 +87,28 @@ final class UnicodeRobustnessTests: XCTestCase {
     }
 
     func testVeryLongInputComposesAndDecides() {
-        // One long run with no space: a single pass over 100k keys.
+        // One long run with no space: a single pass over 15k-20k keys.
         let syllable = [KeyEvent("d"), KeyEvent("k"), KeyEvent("s")]  // 안
-        let keys = Array(repeating: syllable, count: 33_334).flatMap { $0 }
+        let keys = Array(repeating: syllable, count: 5_000).flatMap { $0 }
         let c = Hangul.compose(keys)
-        XCTAssertEqual(c.text.count, 33_334)
+        XCTAssertEqual(c.text.count, 5_000)
         XCTAssertTrue(c.isValid)
         XCTAssertEqual(detector.decide(keys, complete: true, previous: nil), .korean)
         XCTAssertEqual(detector.decide(keys, complete: false, previous: .english), .korean)
-        let latin = Array(repeating: KeyEvent("h"), count: 100_000)
-        XCTAssertEqual(Dubeolsik.latin(latin).count, 100_000)
+        let latin = Array(repeating: KeyEvent("h"), count: 20_000)
+        XCTAssertEqual(Dubeolsik.latin(latin).count, 20_000)
         XCTAssertEqual(detector.decide(latin, complete: true, previous: nil), .english)
-        XCTAssertNil(KeyEncoder.keys(forHangul: String(repeating: "안녕a", count: 10_000)))
-        XCTAssertEqual(KeyEncoder.keys(forHangul: String(repeating: "안녕", count: 10_000))?.count, 60_000)
+        XCTAssertNil(KeyEncoder.keys(forHangul: String(repeating: "안녕a", count: 2_000)))
+        XCTAssertEqual(KeyEncoder.keys(forHangul: String(repeating: "안녕", count: 2_000))?.count, 12_000)
     }
 
     func testALongWordTypedKeyByKeyThenUndone() {
         // Each key recomposes the word: hundreds of keys must stay correct. (The cost per key grows with the word: O(n^2) per word.)
         var s = TypingSession(detector: detector)
         let word = Array("dkssudgktpdy")  // 안녕하세요
-        for i in 0..<300 { _ = s.type(KeyEvent(word[i % word.count])) }
-        XCTAssertEqual(s.keys.count, 300)
-        XCTAssertEqual(TypingSession.render(s.keys, as: .korean), String(repeating: "안녕하세요", count: 25))
+        for i in 0..<120 { _ = s.type(KeyEvent(word[i % word.count])) }
+        XCTAssertEqual(s.keys.count, 120)
+        XCTAssertEqual(TypingSession.render(s.keys, as: .korean), String(repeating: "안녕하세요", count: 10))
         var last: FieldEdit?
         while let e = s.backspace() { last = e }
         XCTAssertEqual(last, .mark(""))

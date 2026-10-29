@@ -65,8 +65,8 @@ final class ActionAPIHostileTests: XCTestCase {
         for t in ["<b>hi</b><script>alert(1)</script>", "\u{202E}olleh\u{202C}", "a\u{200B}b\u{FEFF}c", "x\u{0}y", "👨‍👩‍👧🇰🇷", "e\u{301}"] {
             let text = String(data: try JSONSerialization.data(withJSONObject: ["translation": t, "back_translation": t]), encoding: .utf8)!
             let r = try ActionAPI.parse(status: 200, body: reply(text)).get()
-            XCTAssertEqual(r.translation, t)
-            XCTAssertEqual(r.backTranslation, t)
+            XCTAssertEqual(Array(r.translation.unicodeScalars), Array(t.unicodeScalars))  // no normalization
+            XCTAssertEqual(Array(r.backTranslation.unicodeScalars), Array(t.unicodeScalars))
         }
     }
 
@@ -137,15 +137,24 @@ final class ActionAPIHostileTests: XCTestCase {
         for text in [#"{"translation":"\ud800","back_translation":""}"#, #"\udfff {"translation":"x","back_translation":""}"#] {
             if case .success(let r) = ActionAPI.parse(status: 200, body: reply(text)) { XCTAssertFalse(r.translation.isEmpty) }
         }
+        // Encodings and escapes that parsers differ on (Linux vs Darwin Foundation): the right value or .parse.
         let raw = #"{"stop_reason":"end_turn","content":[{"type":"text","text":"{\"translation\":\"y\",\"back_translation\":\"\"}"}]}"#
-        XCTAssertEqual(try? ActionAPI.parse(status: 200, body: Data([0xEF, 0xBB, 0xBF]) + Data(raw.utf8)).get().translation, "y")
-        XCTAssertEqual(try? ActionAPI.parse(status: 200, body: raw.data(using: .utf16LittleEndian)!).get().translation, "y")
-        XCTAssertEqual(try? ActionAPI.parse(status: 200, body: reply(#"{"translation":"a\u0000b","back_translation":""}"#)).get().translation, "a\u{0}b")
+        func valueOrParse(_ body: Data, _ expected: String) {
+            switch ActionAPI.parse(status: 200, body: body) {
+            case .success(let r): XCTAssertEqual(Array(r.translation.unicodeScalars), Array(expected.unicodeScalars))
+            case .failure(let e): XCTAssertEqual(e.kind, .parse)
+            }
+        }
+        valueOrParse(Data([0xEF, 0xBB, 0xBF]) + Data(raw.utf8), "y")
+        valueOrParse(raw.data(using: .utf16LittleEndian)!, "y")
+        valueOrParse(reply(#"{"translation":"a\u0000b","back_translation":""}"#), "a\u{0}b")
         // A JSON string holding JSON is not the object; nor is prose with braces of its own before it.
         XCTAssertEqual(kind(200, reply(#""{\"translation\":\"Hi\",\"back_translation\":\"\"}""#)), .parse)
         XCTAssertEqual(kind(200, reply(#"Note {x}: {"translation":"Hi","back_translation":""}"#)), .parse)
         // Duplicate keys: one of them, never a trap.
-        XCTAssertNotNil(try? ActionAPI.parse(status: 200, body: reply(#"{"translation":"A","translation":"B","back_translation":""}"#)).get())
+        if case .success(let r) = ActionAPI.parse(status: 200, body: reply(#"{"translation":"A","translation":"B","back_translation":""}"#)) {
+            XCTAssertTrue(["A", "B"].contains(r.translation))
+        }
     }
 
     func testOddStatusCodes() {

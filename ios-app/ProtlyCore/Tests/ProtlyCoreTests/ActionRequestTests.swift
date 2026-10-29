@@ -24,7 +24,7 @@ final class ActionRequestTests: XCTestCase {
         let emoji = String(repeating: "😀", count: ActionAPI.maxInputLength / 2)
         XCTAssertNotNil(try request(emoji).get().httpBody)
         XCTAssertEqual(kind(request(emoji + "a")), .tooLong)
-        // A multi-megabyte clipboard is refused cheaply, without building a body.
+        // A multi-megabyte clipboard is refused before a request exists.
         XCTAssertEqual(kind(request(String(repeating: "가", count: 5_000_000), mode: .in)), .tooLong)
         XCTAssertFalse(ActionError(.tooLong).message.isEmpty)
     }
@@ -55,6 +55,13 @@ final class ActionRequestTests: XCTestCase {
         XCTAssertEqual(try ActionAPI.parse(status: 200, body: Data(ok.utf8)).get().translation, "Hi")
         guard case .failure(let e) = ActionAPI.parse(status: 200, body: Data(padded.utf8)) else { return XCTFail("parsed") }
         XCTAssertEqual(e.kind, .parse)
+        // At the edge: exactly maxResponseBytes parses, one more byte does not.
+        let head = String(ok.dropLast()) + #","pad":""#
+        let fill = ActionAPI.maxResponseBytes - head.utf8.count - #""}"#.utf8.count
+        let edge = Data((head + String(repeating: "x", count: fill) + #""}"#).utf8)
+        XCTAssertEqual(edge.count, ActionAPI.maxResponseBytes)
+        XCTAssertEqual(try ActionAPI.parse(status: 200, body: edge).get().translation, "Hi")
+        XCTAssertEqual(ActionAPI.parse(status: 200, body: edge + Data(" ".utf8)).failureKind, .parse)
     }
 
     func testNoKeyMeansNoRequest() {
@@ -76,8 +83,8 @@ final class ActionRequestTests: XCTestCase {
         let moved = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: 307, httpVersion: "HTTP/1.1",
                                                   headerFields: ["Location": "https://example.com/collect"]))
         let next = Box(URLRequest(url: url))
-        // Through the protocol, as URLSession calls it: a signature that only nearly matches would not compile.
-        // (Darwin's Objective-C optional requirement is the tower's build check.)
+        // Through the protocol, as URLSession calls it: on Linux a signature that only nearly matches falls back to
+        // the default, which follows the redirect, and this fails. Darwin's optional requirement is a tower check.
         let delegate: URLSessionTaskDelegate = ActionSessionDelegate()
         let target = URLRequest(url: URL(string: "https://example.com/collect")!)
         #if canImport(FoundationNetworking)
@@ -131,7 +138,8 @@ extension ActionRequestTests {
                 XCTAssertEqual(messages.count, 1)
                 XCTAssertEqual(messages[0]["role"] as? String, "user")
                 let label = mode == .in ? "TEXT" : "DRAFT"
-                XCTAssertEqual(messages[0]["content"] as? String, "MODE: \(mode.rawValue)\n\n\(label):\n\(text)")
+                let content = try XCTUnwrap(messages[0]["content"] as? String)
+                XCTAssertEqual(Array(content.unicodeScalars), Array("MODE: \(mode.rawValue)\n\n\(label):\n\(text)".unicodeScalars))
             }
         }
     }
