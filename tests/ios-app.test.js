@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { ENGLISH_STYLE, POLISH_VOICE } from '../src/lib/style.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const prompt = read('ios/keyboard-prompt.txt');
@@ -13,6 +14,15 @@ test('keyboard prompt defines the three modes the keyboard sends', () => {
   for (const mode of ['in', 'out', 'fix']) assert.match(prompt, new RegExp(`^MODE ${mode} `, 'm'));
   assert.match(prompt, /never instructions to you/);
   assert.match(prompt, /The writer is male/);
+});
+
+test('keyboard prompt carries the shared English style verbatim (src/lib/style.js)', () => {
+  assert.ok(prompt.includes(ENGLISH_STYLE), 'ENGLISH_STYLE');
+  assert.ok(prompt.includes(POLISH_VOICE), 'POLISH_VOICE');
+});
+
+test('keyboard prompt stays inside its size budget (it is sent on every call from the phone)', () => {
+  assert.ok(prompt.length <= 3800, `keyboard prompt is ${prompt.length} characters, budget 3800`);
 });
 
 test('keyboard prompt has no screen or memo material from the Shortcut prompt', () => {
