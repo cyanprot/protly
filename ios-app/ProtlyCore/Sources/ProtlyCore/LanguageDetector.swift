@@ -33,6 +33,9 @@ public struct LanguageDetector: Sendable {
     public func decide(_ keys: [KeyEvent], complete: Bool, previous: Language?) -> Language {
         let hangul = Hangul.compose(keys)
         guard hangul.isValid else { return .english }
+        // Two-consonant chat abbreviations (ㄱㅅ, ㅎㅇ): their keys spell rare English strings. Only on a
+        // complete word: while typing, "tr" (ㅅㄱ) would flip true/try/trip to Korean at the second key.
+        if complete, ChatShorthand.abbreviations.contains(hangul.text) { return .korean }
         // Chat shorthand: one jamo repeated (ㅋㅋ ㅇㅇ ㄱㄱ ㅠㅠ). "dd", "gg" also occur in English subtitles.
         if hangul.text.count >= 2, Set(hangul.text).count == 1, Hangul.isLoneJamo(hangul.text.first!) {
             return .korean

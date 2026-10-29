@@ -4,9 +4,8 @@
 
 public struct Composition: Sendable, Equatable {
     public let text: String
-    /// True when every lone jamo sits in one run at the end ("좋아ㅋㅋ", "ㅇㅇ", or a lead consonant
-    /// still waiting for its vowel) and that run's lone vowels are chat faces (ㅠ ㅜ ㅡ).
-    /// A lone jamo before a syllable means the keys were not Korean.
+    /// True when the trailing run of lone jamo holds only consonants and face vowels (ㅠ ㅜ ㅡ), and every
+    /// earlier run of lone jamo is chat shorthand (ChatShorthand.isGlueRun).
     public let isValid: Bool
 }
 
@@ -46,13 +45,24 @@ public enum Hangul {
         var c = Composer()
         for j in jamos { c.feed(j) }
         let text = c.finish()
-        // Valid when, after dropping the trailing run of lone jamo, no lone jamo is left.
+        // Valid when the trailing run of lone jamo holds only consonants and face vowels, and every
+        // run of lone jamo before it is chat shorthand glued to the word (ㅋㅋ진짜, ㅇㅋ알겠어).
         let tail = text.reversed().prefix(while: isLoneJamo)
-        let head = text.reversed().drop(while: isLoneJamo)
         let faceVowels: Set<Character> = ["ㅠ", "ㅜ", "ㅡ"]
         let tailOK = tail.allSatisfy { !isVowel($0) || faceVowels.contains($0) }
         let typable = jamos.allSatisfy { choseong.contains($0) || isVowel($0) }
-        return Composition(text: text, isValid: typable && tailOK && !head.contains(where: isLoneJamo))
+        return Composition(text: text, isValid: typable && tailOK && headRunsAreGlue(text.dropLast(tail.count)))
+    }
+
+    /// Every run of lone jamo in `head` (the word minus its trailing run) is chat shorthand.
+    static func headRunsAreGlue(_ head: Substring) -> Bool {
+        var run = ""
+        for ch in head {
+            if isLoneJamo(ch) { run.append(ch); continue }
+            if !run.isEmpty, !ChatShorthand.isGlueRun(run) { return false }
+            run = ""
+        }
+        return true  // head never ends in a lone jamo: that run is the tail
     }
 }
 
