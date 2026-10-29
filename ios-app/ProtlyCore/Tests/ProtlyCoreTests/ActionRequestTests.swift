@@ -60,6 +60,11 @@ final class ActionRequestTests: XCTestCase {
     func testNoKeyMeansNoRequest() {
         // The CI and cloud stand-in key is empty: the user's text must not leave the phone without a key.
         XCTAssertEqual(kind(request("hi", key: "")), .noKey)
+        // A key that cannot be a header value would be dropped from the request, which then goes out keyless.
+        for bad in [" ", "\t", "k\r\nX-Evil: 1", "k\n", "k\u{0}", "sk ant", "ключ", "sk-ant-é"] {
+            XCTAssertEqual(kind(request("hi", key: bad)), .noKey, bad.debugDescription)
+        }
+        XCTAssertNotNil(try? request("hi", key: "sk-ant-api03-abc_DEF-123").get())
         XCTAssertNotEqual(ActionError(.noKey).message, ActionError(.auth).message)
         XCTAssertNotEqual(ActionError(.setup).message, ActionError(.badRequest).message)
     }

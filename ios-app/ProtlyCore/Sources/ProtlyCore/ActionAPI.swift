@@ -85,7 +85,10 @@ public enum ActionAPI {
 
     /// The request for one action, or the error to show without sending anything.
     public static func request(mode: ActionMode, text: String, system: String, apiKey: String) -> Result<URLRequest, ActionError> {
-        guard !apiKey.isEmpty else { return .failure(ActionError(.noKey)) }
+        // Printable ASCII, no space: anything else is not a key and could not travel as a header value.
+        guard !apiKey.isEmpty, apiKey.unicodeScalars.allSatisfy({ (0x21...0x7E).contains($0.value) }) else {
+            return .failure(ActionError(.noKey))
+        }
         guard text.utf16.count <= maxInputLength else { return .failure(ActionError(.tooLong)) }
         guard let url = URL(string: url), let body = try? body(mode: mode, text: text, system: system) else {
             return .failure(ActionError(.setup))
