@@ -125,3 +125,49 @@ Consequences for the re-plan:
 - Clipboard read prompts on every access: read only on an explicit tap, never on keyboard appear (Sprint 5).
 - API latency about 1.5 s for a tiny reply: Translate/Polish needs a visible in-progress state and streaming (Sprint 4).
 - Until the real layout lands, keep an Apple keyboard installed while testing; the spike cannot type letters.
+
+## Sprint 2: KeyboardKit
+
+Tested 2026-10-28 23:25 on the iPhone 13 Pro, build 6fd4eea (KeyboardKit 9.9.1 vendored, review follow-up d0e788b),
+Instagram DM, portrait, dark mode. Spec review PASS, quality review APPROVED_WITH_NITS.
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Loads; keys type, callouts, backspace repeat, space long-press cursor | Works. Space-drag cursor stutters (steps), Apple's glides continuously |
+| 2 | Screenshot comparison vs Apple's English keyboard | Measured below |
+| 3 | Crash or fallback to Apple's keyboard | None reported |
+
+Screenshot measurements (1170x2532 px, 3 px per pt, 390 pt wide screen):
+
+| | Apple | Protly (KeyboardKit) | Delta |
+|---|---|---|---|
+| Container top (from screen top) | 517 pt | 481 pt | Protly 36 pt taller |
+| Toolbar / predictive bar band | 51 pt | 69 pt | +18 pt |
+| Letter key height | 43 pt | 47 pt | +4 pt |
+| Row pitch | 54 pt | 56 pt | +2 pt (rows +8 pt total) |
+| Last row bottom to screen bottom (globe/mic band) | 71 pt | 79 pt | +8 pt |
+| Key width / gap | about 25 / 5 pt | about 26 / 5 pt | close |
+
+Visual differences besides size:
+- Keycaps show UPPERCASE with shift active on an empty Instagram field; Apple shows lowercase with shift off
+  (Instagram DM evidently sets no auto-capitalization). KeyboardKit is not honoring the field's
+  `autocapitalizationType`, or caps at sentence start regardless.
+- Active shift key: KeyboardKit draws a black glyph on a gray key; Apple draws a white key with a black glyph.
+- Bottom row: Apple has `123 | emoji | space | return`; KeyboardKit has no emoji key (free 9.9.1 emoji keyboard is a
+  placeholder). Space: Apple shows no label (small language mark), KeyboardKit shows "space".
+- Glass container, corner radius, key color, globe and dictation glyphs: match by eye.
+- Haptics: KeyboardKit vibrates on key press although the user has keyboard haptics off. A keyboard extension
+  cannot read that system setting, so default haptics OFF and offer a toggle in the container app.
+
+Consequences for the re-plan (Sprint 3):
+- Height: shrink the toolbar to Apple's 51 pt band and keys to 43 pt at 54 pt pitch; target container height
+  equal to Apple's within 2 pt on the 390 pt screen. Re-measure on screenshots as the success check.
+- Replace space drag with continuous cursor movement (accumulate fractional offset, move per ~8 pt with no step
+  threshold delay), or tune KeyboardKit's space-drag sensitivity, and compare by feel.
+- Auto-capitalization must follow `textDocumentProxy.autocapitalizationType`; shift-active key colors fixed in KKColor.
+- Emoji key in the bottom row that calls `advanceToNextInputMode` toward Emoji (Sprint 2 Next-key finding).
+
+## Task 2.5 gate: PASS (2026-10-28)
+
+Task 2.3 checklist items 1-3 passed (334ce92) and KeyboardKit loads and types (2.4 Step 7.1). Free Apple ID +
+xtool + vendored KeyboardKit 9.9.1 is the toolchain for Sprints 3-6. Next: re-run plan-flow for Sprints 3-6.
