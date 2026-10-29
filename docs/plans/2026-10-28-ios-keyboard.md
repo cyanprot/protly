@@ -2101,8 +2101,13 @@ enum ProtlyGeometry {
     static let keyHeight: CGFloat = 43
     /// Band above the first row is host padding + this + the first row's top inset. Tuned from screenshots.
     static let toolbarHeight: CGFloat = 29
-    /// KeyboardKit's standard is -2. Tuned from screenshots.
-    static let bottomInset: CGFloat = -11
+    /// The last row's frame is this much shorter than the pitch (its key keeps keyHeight): Apple's band
+    /// below the last row is 71 pt, KeyboardKit's was 80.33 (Sprint 4 screenshots). The system draws the
+    /// globe/mic band under it, so this is the only lever.
+    static let lastRowTrim: CGFloat = 28.0 / 3
+    /// Apple: 7.33 pt between keys and at both edges. Half goes around the keyboard (padding), half
+    /// around each key (KeyboardKit's standard is 0 and 4).
+    static let sideInset: CGFloat = 11.0 / 3
 }
 
 final class ProtlyLayoutService: KeyboardLayout.iPhoneLayoutService {
@@ -2110,7 +2115,7 @@ final class ProtlyLayoutService: KeyboardLayout.iPhoneLayoutService {
         guard context.interfaceOrientation.isPortrait else {
             return super.itemSizeHeight(for: action, row: row, index: index, context: context)
         }
-        return ProtlyGeometry.rowPitch
+        return row == 3 ? ProtlyGeometry.rowPitch - ProtlyGeometry.lastRowTrim : ProtlyGeometry.rowPitch
     }
 
     override func itemInsets(for action: KeyboardAction, row: Int, index: Int, context: KeyboardContext) -> EdgeInsets {
@@ -2120,7 +2125,8 @@ final class ProtlyLayoutService: KeyboardLayout.iPhoneLayoutService {
         case .characterMargin, .none: return base
         default:
             let v = (ProtlyGeometry.rowPitch - ProtlyGeometry.keyHeight) / 2
-            return EdgeInsets(top: v, leading: base.leading, bottom: v, trailing: base.trailing)
+            let bottom = row == 3 ? v - ProtlyGeometry.lastRowTrim : v
+            return EdgeInsets(top: v, leading: ProtlyGeometry.sideInset, bottom: bottom, trailing: ProtlyGeometry.sideInset)
         }
     }
 }
@@ -2281,6 +2287,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         state.feedbackContext.settings.isHapticFeedbackEnabled = false
         state.feedbackContext.hapticConfiguration = .disabled
         (services.calloutService as? Callouts.StandardCalloutService)?.feedbackService = nil
+        // Autocap off: the user keeps it off, and a keyboard cannot read the system switch either.
+        state.keyboardContext.settings.isAutocapitalizationEnabled = false
 
         session = TypingSession(previous: Self.loadPrevious())
         refreshMode()
@@ -2512,14 +2520,16 @@ struct ProtlyRoot: View {
             emojiKeyboard: { _ in EmptyView() },  // not KeyboardKit's placeholder: keeps the emoji key
             toolbar: { _ in ProtlyBar(mode: mode, flip: { [unowned host] in host.flipWord() }) }
         )
+        // Outside the view: KeyboardKit sizes keys from the width it is given, and its own edgeInsets
+        // only pad inside a fixed frame, which moves nothing.
+        .padding(.horizontal, ProtlyGeometry.sideInset)
         .autocompleteToolbarStyle(.init(height: ProtlyGeometry.toolbarHeight))
-        .keyboardViewStyle(.init(edgeInsets: EdgeInsets(top: 0, leading: 0, bottom: ProtlyGeometry.bottomInset, trailing: 0)))
-        .keyboardButtonStyle(builder: { [context, mode] params in
+        .keyboardButtonStyle(builder: { [context] params in
             var style = params.standardStyle(for: context)
-            let shown = context.keyboardCase == .capsLocked || (context.keyboardCase == .uppercased && (!mode.korean || mode.manualShift))
-            if case .shift = params.action, shown {  // Korean auto-capital is invisible, so the key stays plain
-                style.backgroundColor = .white  // Apple: white key, black glyph
-                style.foregroundColor = .black
+            if case .shift = params.action {
+                // Apple iOS 26: an active shift is the same gray key with the letters' arrow color.
+                // KeyboardKit draws it black, for its older white key.
+                style.foregroundColor = KeyboardAction.character("a").standardButtonForegroundColor(for: context)
             }
             return style
         })
@@ -2611,7 +2621,7 @@ checklist passes. Keyboard setup (USER), so items 8 and 15 test the code and not
 20. English words are underlined while typed too. Acceptable, or distracting?
 
 **Step 3:** Claude measures the screenshots the way Sprint 2 did (rows, pitch, bands). If the band above row 1
-or below the last row is off by more than 2 pt, change `ProtlyGeometry.toolbarHeight` / `bottomInset` by the
+or below the last row is off by more than 2 pt, change `ProtlyGeometry.toolbarHeight` / `lastRowTrim` by the
 difference, rebuild, reinstall, and ask for one more screenshot pair (at most two rounds).
 
 **Step 4:** Append `## Sprint 4: keyboard on the phone` to `docs/ios-keyboard-notes.md`: the checklist table with
@@ -3294,6 +3304,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         state.feedbackContext.settings.isHapticFeedbackEnabled = false
         state.feedbackContext.hapticConfiguration = .disabled
         (services.calloutService as? Callouts.StandardCalloutService)?.feedbackService = nil
+        // Autocap off: the user keeps it off, and a keyboard cannot read the system switch either.
+        state.keyboardContext.settings.isAutocapitalizationEnabled = false
 
         session = TypingSession(previous: Self.loadPrevious())
         refreshMode()
@@ -3675,14 +3687,16 @@ struct ProtlyRoot: View {
                 .frame(height: layoutHeight)
             }
         }
+        // Outside the view: KeyboardKit sizes keys from the width it is given, and its own edgeInsets
+        // only pad inside a fixed frame, which moves nothing.
+        .padding(.horizontal, ProtlyGeometry.sideInset)
         .autocompleteToolbarStyle(.init(height: ProtlyGeometry.toolbarHeight))
-        .keyboardViewStyle(.init(edgeInsets: EdgeInsets(top: 0, leading: 0, bottom: ProtlyGeometry.bottomInset, trailing: 0)))
-        .keyboardButtonStyle(builder: { [context, mode] params in
+        .keyboardButtonStyle(builder: { [context] params in
             var style = params.standardStyle(for: context)
-            let shown = context.keyboardCase == .capsLocked || (context.keyboardCase == .uppercased && (!mode.korean || mode.manualShift))
-            if case .shift = params.action, shown {  // Korean auto-capital is invisible, so the key stays plain
-                style.backgroundColor = .white  // Apple: white key, black glyph
-                style.foregroundColor = .black
+            if case .shift = params.action {
+                // Apple iOS 26: an active shift is the same gray key with the letters' arrow color.
+                // KeyboardKit draws it black, for its older white key.
+                style.foregroundColor = KeyboardAction.character("a").standardButtonForegroundColor(for: context)
             }
             return style
         })

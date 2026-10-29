@@ -45,6 +45,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         state.feedbackContext.settings.isHapticFeedbackEnabled = false
         state.feedbackContext.hapticConfiguration = .disabled
         (services.calloutService as? Callouts.StandardCalloutService)?.feedbackService = nil
+        // Autocap off: the user keeps it off, and a keyboard cannot read the system switch either.
+        state.keyboardContext.settings.isAutocapitalizationEnabled = false
 
         session = TypingSession(previous: Self.loadPrevious())
         refreshMode()
@@ -276,14 +278,16 @@ struct ProtlyRoot: View {
             emojiKeyboard: { _ in EmptyView() },  // not KeyboardKit's placeholder: keeps the emoji key
             toolbar: { _ in ProtlyBar(mode: mode, flip: { [unowned host] in host.flipWord() }) }
         )
+        // Outside the view: KeyboardKit sizes keys from the width it is given, and its own edgeInsets
+        // only pad inside a fixed frame, which moves nothing.
+        .padding(.horizontal, ProtlyGeometry.sideInset)
         .autocompleteToolbarStyle(.init(height: ProtlyGeometry.toolbarHeight))
-        .keyboardViewStyle(.init(edgeInsets: EdgeInsets(top: 0, leading: 0, bottom: ProtlyGeometry.bottomInset, trailing: 0)))
-        .keyboardButtonStyle(builder: { [context, mode] params in
+        .keyboardButtonStyle(builder: { [context] params in
             var style = params.standardStyle(for: context)
-            let shown = context.keyboardCase == .capsLocked || (context.keyboardCase == .uppercased && (!mode.korean || mode.manualShift))
-            if case .shift = params.action, shown {  // Korean auto-capital is invisible, so the key stays plain
-                style.backgroundColor = .white  // Apple: white key, black glyph
-                style.foregroundColor = .black
+            if case .shift = params.action {
+                // Apple iOS 26: an active shift is the same gray key with the letters' arrow color.
+                // KeyboardKit draws it black, for its older white key.
+                style.foregroundColor = KeyboardAction.character("a").standardButtonForegroundColor(for: context)
             }
             return style
         })
