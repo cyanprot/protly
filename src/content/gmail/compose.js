@@ -4,6 +4,7 @@ import { readThread } from './thread.js';
 import { hasHangul, parseLangPrefix } from '../../lib/lang.js';
 import { createCard } from '../../ui/card.js';
 import { ERRORS, errorText } from '../../ui/errors.js';
+import { trusted } from '../../ui/trust.js';
 
 const MOUNT_GRACE_MS = 3000; // Gmail can render a body before its toolbar
 const HINTS = 'Esc undo';
@@ -69,7 +70,7 @@ export function mountCompose(body) {
   btn.className = 'pl-g-btn';
   btn.textContent = 'Translate';
   btn.title = 'Translate the Korean draft, or polish an English one (Alt+T)';
-  btn.addEventListener('click', () => translate(body));
+  btn.addEventListener('click', (e) => { if (trusted(e)) translate(body); }); // a page script's click is not the user's
   td.appendChild(btn);
   sendCell.after(td);
   s.btn = btn;

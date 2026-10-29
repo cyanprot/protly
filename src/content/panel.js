@@ -9,7 +9,7 @@ import { errorText } from '../ui/errors.js';
 export function mountPanel(cur) {
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;right:16px;bottom:96px;z-index:99998';
-  const shadow = host.attachShadow({ mode: 'open' });
+  const shadow = host.attachShadow({ mode: 'closed' }); // page scripts can neither read the memo nor click Save
   shadow.innerHTML = `
     <style>${TOKENS}${BASE}${PANEL_CSS}</style>
     <div class="pl-root">

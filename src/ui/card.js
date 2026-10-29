@@ -6,13 +6,19 @@ import { LANG_NAMES, langName } from '../lib/lang.js';
 export const modelLabel = (m) => (m && m.includes('opus') ? 'Opus' : 'Sonnet');
 
 const GAP = 6; // px between the anchor rect and a floating card
+const shadows = new WeakMap(); // card host -> its closed shadow root
+
+// The card's shadow root is closed, so page scripts cannot read its text or click its buttons; protly code (and
+// tests) reach it through this module's own handle.
+export const shadowOf = (host) => shadows.get(host) ?? null;
 
 // place: { before: Element } | { after: Element } | { float: () => DOMRect }. See the plan's shared contracts.
 export function createCard({ doc = document, place }) {
   const win = doc.defaultView;
   const host = doc.createElement('div');
   host.className = 'pl-card';
-  const shadow = host.attachShadow({ mode: 'open' });
+  const shadow = host.attachShadow({ mode: 'closed' });
+  shadows.set(host, shadow);
   const style = doc.createElement('style');
   style.textContent = TOKENS + BASE + CARD_CSS;
   const root = doc.createElement('div');
@@ -93,6 +99,7 @@ export function createCard({ doc = document, place }) {
 
   const api = {
     host,
+    shadow,
     // text without trailing dots: the card animates them.
     working(text, { onCancel } = {}) {
       render([el('span', 'msg dots', text.replace(/(\.\.\.|…)$/, '')), ...(onCancel ? [button({ label: 'Cancel', onClick: onCancel })] : [])]);
