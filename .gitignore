@@ -3,6 +3,6 @@ __pycache__/
 dist/
 .build/
 ios-app/xtool/
-ios-app/.swiftpm/
+.swiftpm/
 ios-app/Sources/ProtlyKeyboard/Secrets.swift
 ios-app/.bsp/
