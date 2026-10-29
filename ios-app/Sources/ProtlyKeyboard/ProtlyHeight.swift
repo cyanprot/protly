@@ -13,10 +13,10 @@ import UIKit
 /// takes that margin out of the keyboard's own height, so the glass starts at the view's top. When the host app
 /// comes back from the background with the keyboard up, it keeps the full height and draws the margin above the
 /// view: an empty band 17 pt too tall (simulator runs 1-4). That path attaches a new controller to the kept
-/// presentation and sends it NSExtensionHostDidBecomeActive before its first layout at the pinned height. Then the
-/// pin drops by the margin, and ProtlyRoot keeps the content at the bottom, so only the empty top of the bar's band
-/// goes under iOS's margin. A controller already shown at its height (Control Center, an alert, Face ID over a
-/// live keyboard) ignores the notification: iOS kept the fresh-presentation geometry there.
+/// presentation and sends it NSExtensionHostDidBecomeActive about 0.23 s after it loads, sometimes after its first
+/// layout (runs 5 and 6). Then the pin drops by the margin, and ProtlyRoot keeps the content at the bottom, so only
+/// the empty top of the bar's band goes under iOS's margin. A controller older than `freshWindow` ignores the
+/// notification (Control Center, an alert, Face ID over a live keyboard): iOS kept the fresh-presentation geometry.
 ///
 /// Logs the view's height at debug level (subsystem com.northprot.protly, category height): Console on a Mac
 /// shows it for the phone, `log show --debug` for the simulator.
@@ -28,6 +28,8 @@ final class ProtlyHeight: NSObject {
     /// Glass above the keyboard's height that iOS 26 adds for a third-party keyboard. Measured in the iOS 26.5
     /// simulator; confirm on the phone with this log (the view settles this far below the glass after an app switch).
     static let hostTopMargin: CGFloat = 17
+    /// How soon after loading a controller still counts as attached by the host's return (seen: 0.22-0.24 s).
+    static let freshWindow: TimeInterval = 2
 
     private static let log = Logger(subsystem: "com.northprot.protly", category: "height")
     private static var key: UInt8 = 0
@@ -36,8 +38,7 @@ final class ProtlyHeight: NSObject {
     private let constraint: NSLayoutConstraint
     private var orientation: AnyCancellable?
     private var bounds: NSKeyValueObservation?
-    /// The view has been laid out at the pinned height in a window: this presentation's geometry is settled.
-    private var shown = false
+    private let loaded = ProcessInfo.processInfo.systemUptime
 
     /// Call once from viewDidLoad. The pin lives as long as the controller.
     static func pin(_ controller: KeyboardInputViewController) {
@@ -61,7 +62,7 @@ final class ProtlyHeight: NSObject {
         }
         bounds = view.layer.observe(\.bounds, options: [.old, .new]) { [weak self] _, change in
             guard change.oldValue?.height != change.newValue?.height else { return }
-            MainActor.assumeIsolated { self?.boundsChanged() }
+            MainActor.assumeIsolated { self?.report("bounds") }
         }
         // Selector observers go away with this object.
         NotificationCenter.default.addObserver(
@@ -70,13 +71,11 @@ final class ProtlyHeight: NSObject {
         report("pinned")
     }
 
-    private func boundsChanged() {
-        if let view, view.window != nil, constraint.isActive, view.bounds.height == constraint.constant { shown = true }
-        report("bounds")
-    }
-
     @objc private func hostBecameActive(_ note: Notification) {
-        guard !shown else { return report("host became active, already shown") }
+        let age = ProcessInfo.processInfo.systemUptime - loaded
+        guard age < Self.freshWindow, constraint.isActive else {
+            return report("host became active after \(age) s, kept")
+        }
         constraint.constant = Self.portrait - Self.hostTopMargin
         report("host became active")
     }
