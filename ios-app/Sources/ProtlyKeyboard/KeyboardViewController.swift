@@ -17,12 +17,15 @@ final class ProtlyMode: ObservableObject {
     @Published var canUndo = false
     /// The clipboard holds text copied since protly last looked (checked without reading it).
     @Published var clipboardIsNew = false
+    /// The bar's right slot: a fix or a completion for the word being typed. Only a tap puts it in.
+    @Published var suggestion: String?
 }
 
 @objc(KeyboardViewController)
 final class KeyboardViewController: KeyboardInputViewController {
     let mode = ProtlyMode()
-    private(set) var session = TypingSession()
+    /// Not private(set): Words.swift fills its suggester.
+    var session = TypingSession()
     /// Marked text currently in the field, mirrored here because the proxy's context excludes it.
     private var marked = ""
     /// The text before the word being typed, taken at its first key. The proxy's context excludes the mark,
@@ -61,6 +64,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         state.keyboardContext.settings.isAutocapitalizationEnabled = false
 
         session = TypingSession(previous: Self.loadPrevious())
+        setUpWords()
         refreshMode()
         // The word lists take about 136 ms to load: once per process, off the main thread, Hangul rule until then.
         Task { [weak self] in
@@ -133,6 +137,15 @@ final class KeyboardViewController: KeyboardInputViewController {
         apply(edit)
         savePrevious()
         refreshMode()
+    }
+
+    /// The bar's right slot: the word becomes the suggestion, then a space typed like any other.
+    func pickSuggestion() {
+        noticeFieldMoved()
+        guard let edit = session.accept() else { return }
+        apply(edit)
+        savePrevious()
+        insertText(" ")
     }
 
     /// The host changed the field under protly (a chat app sent the message and cleared the field with the
@@ -318,6 +331,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         let korean = session.keycapLanguage == .korean
         if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
+        refreshWords()
         refreshField()
     }
 
@@ -436,7 +450,8 @@ struct ProtlyRoot: View {
                     mode: mode,
                     flip: { [unowned host] in host.flipWord() },
                     act: { [unowned host] in host.act($0) },
-                    undo: { [unowned host] in host.undoInsert() }
+                    undo: { [unowned host] in host.undoInsert() },
+                    pick: { [unowned host] in host.pickSuggestion() }
                 )
             }
         )

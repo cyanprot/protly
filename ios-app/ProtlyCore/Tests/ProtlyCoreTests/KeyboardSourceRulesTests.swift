@@ -3,7 +3,7 @@ import XCTest
 
 // The keyboard target needs the iOS SDK, so its rules are checked on its source text here:
 // nothing is logged, the clipboard string is read only in readClipboard (a tap), the key goes only
-// into ActionAPI.request, and UserDefaults keeps no text. Secrets.swift is never opened.
+// into ActionAPI.request, and UserDefaults keeps no text but the capped learned words. Secrets.swift is never opened.
 final class KeyboardSourceRulesTests: XCTestCase {
     private func sources() throws -> [(name: String, text: String)] {
         let iosApp = URL(fileURLWithPath: #filePath)
@@ -115,7 +115,11 @@ final class KeyboardSourceRulesTests: XCTestCase {
             for receiver in receivers {
                 for r in matches(receiver + #"\.(set|setValue)\("#, in: text) {
                     let line = lineText(ns, r)
-                    XCTAssertTrue(line.contains("changeCount") || line.contains("previousKey"), "\(name): \(line)")
+                    // The one store of typed text: Words.swift saves the learned words, which stay bounded
+                    // (LearnedWords: at most 1,000 per language, keys of at most 32 characters).
+                    let learned = name == "Words.swift" && line.contains("forKey: Self.learnedKey")
+                    XCTAssertTrue(line.contains("changeCount") || line.contains("previousKey") || learned,
+                                  "\(name): \(line)")
                 }
             }
             XCTAssertEqual(matches(#"@AppStorage"#, in: text).count, 0, name)
