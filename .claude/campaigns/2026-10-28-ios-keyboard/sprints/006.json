@@ -1,18 +1,23 @@
 {
   "schema_version": 1,
-  "sprint_id": "006",
   "campaign_id": "2026-10-28-ios-keyboard",
-  "feature": "Completion, autocorrect, learning",
+  "sprint_id": "006",
+  "feature": "Completion, autocorrect, learning (contract; detailed after Sprint 5)",
   "deliverables": [
-    "English completion + autocorrect, Korean prefix completion, UILexicon replacements, learned words, detector re-measure"
+    "English completion and autocorrect on space",
+    "Korean whole-word completion",
+    "UILexicon text replacements",
+    "learned words in the keyboard container, used by the detector",
+    "memory measured on device"
   ],
   "success_criteria": [
-    "predictive bar suggests in both languages",
-    "corpus accuracy not below Sprint 1",
-    "loaded data under 15 MB on device"
+    "corpus accuracy not below Sprint 3",
+    "memory under 40 MB after 30 keyboard appearances",
+    "suggestions in both languages shown in the bar"
   ],
   "testable_behaviors": [
-    "autocorrect undone by backspace"
+    "autocorrect undone by backspace",
+    "learned word ranks first"
   ],
   "scope_boundaries": [
     "no next-word prediction",

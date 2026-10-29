@@ -1,19 +1,29 @@
 {
   "schema_version": 1,
-  "sprint_id": "005",
   "campaign_id": "2026-10-28-ios-keyboard",
-  "feature": "Clipboard read",
+  "sprint_id": "005",
+  "feature": "Translate, Polish and Read clipboard in the bar and panel",
   "deliverables": [
-    "clipboard change detection and Korean translation in the panel, with skip rules; fallback per Sprint 2"
+    "ios/keyboard-prompt.txt, scripts/sync-ios-app.mjs, tests/ios-app.test.js",
+    "ProtlyCore ActionAPI (body, headers, prompt, parse, error kinds)",
+    "ActionClient, FieldText, PanelView, bar v2, controller actions with Undo",
+    "Sprint 5 phone results in the notes"
   ],
   "success_criteria": [
-    "copy an English message in Instagram, return to the composer, translation shows (no tap, or one tap in fallback)"
+    "swift test: 46 tests, 0 failures; npm test # fail 0",
+    "Task 5.4 items 1-4, 6, 8, 9 pass on the iPhone",
+    "no Allow Paste prompt until the user taps Read clipboard"
   ],
   "testable_behaviors": [
-    "Korean, URLs, field text and repeats are not sent"
+    "Korean draft -> Translate -> Insert -> English replaces it, Undo restores",
+    "English draft -> Polish",
+    "selection-only action",
+    "clipboard read on tap"
   ],
   "scope_boundaries": [
-    "no notification or Translate-menu routes"
+    "no streaming",
+    "no memos or chat-header context",
+    "no container-app settings (no App Group)"
   ],
   "evaluation_method": "live"
 }

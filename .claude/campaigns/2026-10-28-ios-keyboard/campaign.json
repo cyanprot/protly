@@ -4,7 +4,7 @@
   "project": "protly",
   "campaign_id": "2026-10-28-ios-keyboard",
   "started": "2026-10-28T21:46:10-07:00",
-  "updated": "2026-10-28T23:40:00-07:00",
+  "updated": "2026-10-29T00:20:00-07:00",
   "current_phase": "plan",
   "current_sprint": 3,
   "total_sprints": 6,
@@ -26,9 +26,10 @@
     "2026-10-28 Task 2.2 landed (1683208): xtool dev build OK, KeyboardViewController survives link via -u flag, -ObjC not needed. Spike review fixes f9c3327: IsASCIICapable true, height priority 999, make-secrets.sh key regex + rm before write. ios-app/.bsp/ gitignored (2062a2e)",
     "2026-10-28 Sprint 1 COMPLETE: review fixes cac2b30 (crash guards, hasPrefix: 1-key decide 58us -> ~1.3us), 274b2e4 (.swiftpm/ anywhere), 7ec201b (chat gap lines: chat korean 98.33% -> 91.04% by design; tatoeba unchanged; Sprint 3 carry-overs in notes). 22 tests. Task 2.3: app installed on iPhone via xtool dev run (signing OK, no zsign LoadCommands error); checklist sent to user",
     "2026-10-28 Task 2.3 PASS: all 9 phone checks passed (334ce92). Marked text OK in Instagram/KakaoTalk/Messages, full documentContext, Allow Paste prompt every read (read only on tap), API 1.4-1.7 s (needs progress UI + streaming). Task 2.4 dispatched",
-    "2026-10-28 Task 2.4 landed 6fd4eea (KeyboardKit 9.9.1 vendored; 3 logged compile fixes), spec PASS, quality APPROVED_WITH_NITS, patch record d0e788b. Step 7: loads and types; Protly 36 pt taller than Apple (toolbar +18, keys 47 vs 43 pt, bottom band +8); space-drag stutters; haptics ignore user's off setting; caps/shift and emoji-key differences. Task 2.5 gate PASS, Sprint 2 COMPLETE"
+    "2026-10-28 Task 2.4 landed 6fd4eea (KeyboardKit 9.9.1 vendored; 3 logged compile fixes), spec PASS, quality APPROVED_WITH_NITS, patch record d0e788b. Step 7: loads and types; Protly 36 pt taller than Apple (toolbar +18, keys 47 vs 43 pt, bottom band +8); space-drag stutters; haptics ignore user's off setting; caps/shift and emoji-key differences. Task 2.5 gate PASS, Sprint 2 COMPLETE",
+    "2026-10-28 Sprints 3-5 re-planned in full (plan section 'Sprints 3-6', code compiled in scratch: 46 swift tests, xtool builds of Sprint 4 and 5 stages with 0 warnings). Decisions: flip by tapping the bar not a space flick; clipboard read on tap folded into Sprint 5 (hasStrings/changeCount no prompt); marked-text commit = setMarkedText('') + insertText; haptics off with no toggle; no streaming v1; keyboard target Swift 5 mode; prompt in ProtlyCore; mixed tokens accepted. Sprint 6 stays a contract until Sprint 5 phone check"
   ],
-  "continuation_prompt": "Sprints 1-2 complete, gate PASS. Re-run plan-flow for Sprints 3-6 using docs/ios-keyboard-notes.md (Sprint 3 carry-overs, Sprint 2 bare spike, Sprint 2 KeyboardKit sections), replacing the contracts-only Sprints 3-6 in docs/plans/2026-10-28-ios-keyboard.md.",
+  "continuation_prompt": "Sprints 1-2 complete. Sprints 3-5 planned in full in docs/plans/2026-10-28-ios-keyboard.md (section 'Sprints 3-6'). Next: independent plan review, then execute-flow from Task 3.1.",
   "artifacts": {
     "plan": "docs/plans/2026-10-28-ios-keyboard.md",
     "design": "docs/plans/2026-10-28-ios-keyboard-design.md",
