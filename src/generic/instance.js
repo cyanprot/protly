@@ -28,7 +28,7 @@ export async function defaultAsk(msg) {
   return r.data;
 }
 
-// One per isolated world (run.js keeps it on globalThis.__protly): one card, one set of listeners per document.
+// One per isolated world (run.js keeps it on globalThis[Symbol.for('protly')]): one card, one set of listeners per document.
 export function createInstance({ doc: top = document, fonts = null, ask = defaultAsk, hostname } = {}) {
   const host = () => hostname || top.defaultView?.location?.hostname || '';
   // box: { t, d, card, mode: 'idle'|'working'|'preview', original, shown, lang, hard, reqId, last }

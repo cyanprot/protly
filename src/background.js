@@ -208,11 +208,11 @@ function route(tab, frameId, args) {
     sendToTab: (tabId, msg, f) => chrome.tabs.sendMessage(tabId, msg, { frameId: f }),
     injectFile: (tabId, f) => chrome.scripting.executeScript({ target: inFrame(tabId, f), files: [GENERIC] }),
     runGeneric: (tabId, f, a) => chrome.scripting.executeScript({
-      target: inFrame(tabId, f), func: (x) => globalThis.__protly.run(x), args: [a],
+      target: inFrame(tabId, f), func: (x) => globalThis[Symbol.for('protly')].run(x), args: [a],
     }),
     setBadge: (tabId, text, reason) => setTabBadge(tabId, text, reason),
     toastInMain: (tabId, text) => chrome.scripting.executeScript({
-      target: inFrame(tabId, 0), func: (t) => globalThis.__protly.toast(t), args: [text],
+      target: inFrame(tabId, 0), func: (t) => globalThis[Symbol.for('protly')].toast(t), args: [text],
     }),
   }).catch((e) => console.warn('[protly] routing failed', e));
 }
