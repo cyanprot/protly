@@ -16,6 +16,10 @@ cyanprot/protly`). The iPhone side is in `docs/security-review-ios.md`.
 - The any-site box, polish and selection paths already refuse text over 8000 characters with a "Too long"
   toast before any request (`src/generic/instance.js` `MAX_CHARS`, tests in `tests/generic-instance.test.js`
   and `tests/hostile-page.test.js`), below `LIMITS.text`, so no change was needed there.
+- The Diagnostics `chmod 600` hint is tested on the options page (`tests/options.test.js`): shown as an error for
+  `key_shared: true`, absent for `false` and for an older host that sends no `key_shared`.
+- One key file mode rule on both sides: any group or other bit (`mode & 0o077`) is too open. The host already
+  used it; `make-secrets.sh` checked only `g+r`/`o+r` and missed modes like 620, 602, 610 and 601.
 
 ## Tower decisions
 

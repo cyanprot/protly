@@ -203,9 +203,10 @@ class KeyMode(unittest.TestCase):
     def shared(self, home):
         return h.handle({'id': 20, 'ping': True}, home, urlopen=mock.Mock())['ping']['key_shared']
 
-    def test_group_or_world_readable_key_is_flagged(self):
-        for mode, flagged in [(0o600, False), (0o400, False), (0o640, True), (0o604, True), (0o644, True),
-                              (0o620, True), (0o602, True)]:
+    def test_any_group_or_other_bit_is_flagged(self):
+        # Same rule as ios-app/scripts/make-secrets.sh: mode & 0o077, execute and write bits included.
+        for mode, flagged in [(0o600, False), (0o400, False), (0o700, False), (0o640, True), (0o604, True),
+                              (0o644, True), (0o620, True), (0o602, True), (0o610, True), (0o601, True)]:
             home = make_home()
             os.chmod(self.key_path(home), mode)
             self.assertEqual(self.shared(home), flagged, oct(mode))

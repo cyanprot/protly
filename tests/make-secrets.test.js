@@ -66,13 +66,24 @@ test('make-secrets: writes Secrets.swift with mode 600 and the key in the litera
   assert.match(readFileSync(s.out, 'utf8'), new RegExp(`static let apiKey = "${FAKE_KEY}"`));
 });
 
-test('make-secrets: warns on a key file readable by group or others, through a symlink too', { skip: !hasTools }, (t) => {
-  for (const [keyMode, keyVia] of [[0o644, 'file'], [0o640, 'file'], [0o604, 'file'], [0o644, 'symlink']]) {
+// Same rule as the host's key_shared: any group or other bit (mode & 0o077) is too open, not only the read bits.
+test('make-secrets: warns on a key file with any group or other bit, through a symlink too', { skip: !hasTools }, (t) => {
+  for (const [keyMode, keyVia] of [[0o644, 'file'], [0o640, 'file'], [0o604, 'file'], [0o620, 'file'], [0o602, 'file'],
+    [0o610, 'file'], [0o601, 'file'], [0o644, 'symlink'], [0o620, 'symlink']]) {
     const s = sandbox(t, { keyMode, keyVia });
     const r = s.run();
     const what = `${keyMode.toString(8)} ${keyVia}`;
     assert.equal(r.status, 0, what);
-    assert.match(r.stderr, /warning: .*phone-api-key is readable by others; chmod 600 it/, what);
+    assert.match(r.stderr, /warning: .*phone-api-key is open to group or others; chmod 600 it/, what);
     assert.equal(statSync(s.out).mode & 0o777, 0o600, what);
+  }
+});
+
+test('make-secrets: owner-only key file modes draw no warning', { skip: !hasTools }, (t) => {
+  for (const keyMode of [0o600, 0o400, 0o700]) {
+    const s = sandbox(t, { keyMode });
+    const r = s.run();
+    assert.equal(r.status, 0, keyMode.toString(8));
+    assert.equal(r.stderr, '', keyMode.toString(8));
   }
 });

@@ -6,8 +6,10 @@ src="$HOME/.config/protly/phone-api-key"
 [ -s "$src" ] || { echo "missing $src (one line: the phone's sk-ant- key, chmod 600)" >&2; exit 1; }
 key="$(tr -d '[:space:]' < "$src")"
 [[ $key =~ ^sk-ant-[A-Za-z0-9_-]+$ ]] || { echo "$src does not look like an Anthropic key" >&2; exit 1; }
-# The key file (or its target) should be readable by its owner only (POSIX find, GNU and BSD).
-[ -z "$(find -L "$src" \( -perm -g=r -o -perm -o=r \) -print)" ] || echo "warning: $src is readable by others; chmod 600 it" >&2
+# The key file (or its target) should carry no group or other bit at all, the host's key_shared rule
+# (mode & 0o077). POSIX find, GNU and BSD.
+open="$(find -L "$src" \( -perm -g=r -o -perm -g=w -o -perm -g=x -o -perm -o=r -o -perm -o=w -o -perm -o=x \) -print)"
+[ -z "$open" ] || echo "warning: $src is open to group or others; chmod 600 it" >&2
 out=Sources/ProtlyKeyboard/Secrets.swift
 # Check before writing: the key never lands in a file git would pick up, not even for a moment.
 git check-ignore -q "$out" || { echo "Secrets.swift is not gitignored; refusing" >&2; exit 1; }
