@@ -17,4 +17,16 @@ final class KeyEncoderTests: XCTestCase {
         XCTAssertEqual(n.map(\.shift), [.manual, .manual, .manual])
         XCTAssertNil(KeyEncoder.keys(forLatin: "don't", sentenceStart: false))
     }
+
+    /// Every word of the bundled Korean list must survive keys -> compose unchanged.
+    func testKoreanListRoundTrip() throws {
+        let text = try WordList.bundled("ko_50k")
+        var checked = 0
+        for (word, _) in WordList.parse(text) {
+            guard let k = KeyEncoder.keys(forHangul: word) else { continue }
+            XCTAssertEqual(Hangul.compose(k).text, word)
+            checked += 1
+        }
+        XCTAssertGreaterThan(checked, 45_000)
+    }
 }
