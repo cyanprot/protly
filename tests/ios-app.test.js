@@ -22,7 +22,7 @@ test('keyboard prompt carries the shared English style verbatim (src/lib/style.j
 });
 
 test('keyboard prompt stays inside its size budget (it is sent on every call from the phone)', () => {
-  assert.ok(prompt.length <= 3800, `keyboard prompt is ${prompt.length} characters, budget 3800`);
+  assert.ok(prompt.length <= 3900, `keyboard prompt is ${prompt.length} characters, budget 3900`);
 });
 
 test('keyboard prompt has no screen or memo material from the Shortcut prompt', () => {

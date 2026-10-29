@@ -29,7 +29,7 @@ const transport = async (body) => {
 };
 
 const MODEL = 'claude-sonnet-5-5';
-const HANGUL = /[가-힣]/;
+const HANGUL = /[ㄱ-ㅣ가-힣]/;
 const NO_PUNCT = (t) => !/[—–;/]/.test(t);
 const paragraphs = (t) => t.trim().split(/\n\s*\n/).length;
 const MEMO = 'Mira Volkova: female classmate, Russian-speaking. Jokey, casual.';
@@ -96,7 +96,12 @@ const CASES = [
   {
     name: 'keyboard out, the style keeps a warm draft warm',
     body: kb('out', '보고싶어 ㅠㅠ'),
-    check: (r) => /miss/i.test(r.translation) && /so much|really|so bad|:\(|ㅠ/i.test(r.translation),
+    check: (r) => /miss/i.test(r.translation) && /so much|really|so bad|:\(/i.test(r.translation) && !/[ㄱ-ㅣ]/.test(r.translation),
+  },
+  {
+    name: 'keyboard out, ㅋㅋ becomes English laughter',
+    body: kb('out', '그거 진짜 웃기다 ㅋㅋㅋ'),
+    check: (r) => !/[ㄱ-ㅣ]/.test(r.translation) && r.translation.trim().length > 0,
   },
   {
     name: 'keyboard out, style without a note',
@@ -121,7 +126,7 @@ const CASES = [
   {
     name: 'out, never Korean',
     body: out('ㅋㅋ 진짜?', 'en'),
-    check: (r) => !HANGUL.test(r.translation.replace(/ㅋ/g, '')) && r.translation.trim().length > 0,
+    check: (r) => !HANGUL.test(r.translation) && r.translation.trim().length > 0,
   },
 ];
 

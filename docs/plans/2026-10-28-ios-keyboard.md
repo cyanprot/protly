@@ -5491,11 +5491,13 @@ Run every command from the repo root after `. ~/.local/share/swiftly/env.sh`. Th
    dash, no semicolon; a test checks), and the two semicolons in the keyboard prompt's MODE out lines become
    periods.
 7. **Size budget.** The keyboard prompt is sent on every call straight from the phone. Budget: the bundled keyboard
-   prompt at or under 3,800 characters (a test enforces it; the draft before the plancheck had 3,500, but the
+   prompt at or under 3,900 characters (a test enforces it; raised from 3,800 by the tower in the 7a review for the
+   Korean chat marks rule; the draft before the plancheck had 3,500, but the
    Academia phrases of Decision 2 cost 276 characters, more than the 150 estimated), and the note at or under
    1,000. Measured after the re-anchoring, with the security Q2 line of Decision 15: 3,751 characters, 3,752 with
    the final newline, which is what the test measures. The headroom is 48 characters (1.3%; it was 147 before the
    Q2 line), so the next line added to the keyboard prompt needs a cut elsewhere or a tower decision on the budget.
+   After the 7a review follow-up and the 3,900 budget: 3,822 characters, headroom 78.
    The whole keyboard system prompt with a full note is about 4,900 characters (about 1,225 tokens, estimated).
    Prompt caching does not pay at this size (below the minimum cacheable length [UNVERIFIED for the 5.5 models]),
    so none is added.
@@ -5829,7 +5831,7 @@ test('keyboard prompt carries the shared English style verbatim (src/lib/style.j
 });
 
 test('keyboard prompt stays inside its size budget (it is sent on every call from the phone)', () => {
-  assert.ok(prompt.length <= 3800, `keyboard prompt is ${prompt.length} characters, budget 3800`);
+  assert.ok(prompt.length <= 3900, `keyboard prompt is ${prompt.length} characters, budget 3900`);
 });
 
 test('keyboard prompt has no screen or memo material from the Shortcut prompt', () => {
@@ -5881,7 +5883,8 @@ and Never use lines with `POLISH_VOICE`; the shared lines follow under "English 
 
 Run: `node scripts/sync-ios-app.mjs` -> `synced ios-app/ProtlyCore/Sources/ProtlyCore/Resources/keyboard-prompt.txt`;
 `wc -c ios/keyboard-prompt.txt` -> `3752` (3,751 characters plus the final newline; ASCII only, so bytes equal
-characters; the budget test reads the whole file, so it measures 3,752 against 3,800).
+characters; the budget test reads the whole file, so it measures 3,752 against 3,900; after the 7a review follow-up it is 3,822
+characters and 3,830 bytes, since the ㅋㅋ and ㅠㅠ of the Korean chat marks rule are not ASCII).
 
 **Step 4:** `npm test 2>&1 | grep -E '^# (tests|fail)|^OK'` -> `# tests 351`, `# fail 0`, `OK`. Swift test line ->
 `Executed 96 tests, with 0 failures` (`ActionPromptTests` checks the prefix "You translate and polish chat
@@ -6614,8 +6617,9 @@ Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
 MSG
 ```
 
-**Sprint 7a done when:** `npm test` passes with +6 over its base, the bundled keyboard prompt is at most 3,800
-characters, and the live eval prints `0 failure(s) of 15`.
+**Sprint 7a done when:** `npm test` passes with +8 over its base (+6, then +2 in the review follow-up), the bundled keyboard
+prompt is at most 3,900
+characters, and the live eval prints `0 failure(s) of 16` (15 before the 7a review added the ㅋㅋ case).
 
 **Sprint 7b done when:** items 1, 2, 3 and 5 pass; item 4 is not clearly slower than Sprint 5; item 6 is recorded;
 `npm test` (+2 over 7a) and ProtlyCore (+8, so 104 + S6) pass; `xtool dev build` has no warning from protly's files.
