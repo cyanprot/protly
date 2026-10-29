@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ENGLISH_STYLE, POLISH_VOICE } from '../src/lib/style.js';
+import { ENGLISH_STYLE, POLISH_VOICE, TRANSLATE_TONE, EMAIL_SHAPE } from '../src/lib/style.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const prompt = read('ios/keyboard-prompt.txt');
@@ -19,6 +19,8 @@ test('keyboard prompt defines the three modes the keyboard sends', () => {
 test('keyboard prompt carries the shared English style verbatim (src/lib/style.js)', () => {
   assert.ok(prompt.includes(ENGLISH_STYLE), 'ENGLISH_STYLE');
   assert.ok(prompt.includes(POLISH_VOICE), 'POLISH_VOICE');
+  assert.ok(prompt.includes(TRANSLATE_TONE), 'TRANSLATE_TONE');
+  assert.equal(prompt.includes(EMAIL_SHAPE), false, 'EMAIL_SHAPE: the keyboard has no email mode');
 });
 
 test('keyboard prompt stays inside its size budget (it is sent on every call from the phone)', () => {

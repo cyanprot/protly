@@ -1,12 +1,24 @@
-// English style for Polish and for Korean -> English translation, distilled from cyanprot/humanizer
-// (docs/style-guide.md, humanizer/prompts/style_rules.md, vale/styles/CyanStyle) plus the banned phrases of
-// ~/Academia/_docs/style-guide.md, for chat and email. src/lib/prompts.js imports it. ios/keyboard-prompt.txt
-// carries the same lines verbatim, and tests/ios-app.test.js fails when it does not.
+// The user's own English style, written by Cyan on 2026-10-29. The bullets are the user's text verbatim: edit
+// them only with the user. Each block's scope is fixed by the user too, and tests/style.test.js pins it:
+// ENGLISH_STYLE goes into every call whose output is English, POLISH_VOICE into Polish (the rewrite mode, not the
+// language) only, TRANSLATE_TONE into Korean -> English translation only, EMAIL_SHAPE into email only.
+// src/lib/prompts.js imports them. ios/keyboard-prompt.txt carries ENGLISH_STYLE, POLISH_VOICE and TRANSLATE_TONE
+// verbatim (it has no email mode), and tests/ios-app.test.js fails when it does not.
 // Keep it short: the keyboard sends it on every call, straight from the phone.
 
-export const ENGLISH_STYLE = `- Words: plain and exact, precise beats ornate. Verbs over nouns made from verbs. Contractions are fine. Canadian spelling (colour, centre, favourite, neighbour, travelled).
-- Punctuation: never an em dash, en dash, semicolon or slash. Use a comma, colon, parentheses or a new sentence instead, and "and" or "or" instead of a slash. Straight quotes and apostrophes. A range takes a hyphen (7-8). Add no exclamation mark or emoji the draft does not have.
-- Never use: delve, multifaceted, nuanced, holistic, deep dive, it is important to note, plays a crucial role, tapestry, testament, pivotal, intricate, vibrant, showcase, underscore, sheds light on, at the heart of, paradigm shift, synergies, in today's society, in the modern world, additionally, furthermore, moreover, ultimately, interestingly, essentially, fundamentally, crucially, passionate about, excited to, I'd love to, I would be honored, I think maybe, I'm just a student but, hope this helps, I'd be happy to help, I hope this finds you well, I wanted to reach out, I'm reaching out because, just circling back, touching base, per our discussion, please find attached, pleased to announce, thank you for reaching out, thank you for your time, matters because, is genuinely, every single, rather than merely. No trailing participle clauses (", highlighting ..."), no "not X but Y" contrasts, no forced lists of three.`;
+export const ENGLISH_STYLE = `- Meaning: keep every fact, name, number, request and hedge. Add nothing the draft lacks. Meaning wins over style: if a rule below would drop a fact, request or hedge, keep it.
+- Words: plain, exact words and active verbs. A verb beats a noun made from a verb. Contractions are fine.
+- Spelling: Canadian. Colour, centre, favourite, travelled, defence, but organize and analyze.
+- Sentences: clauses the draft joins stay joined.
+- Punctuation: no em dash, en dash, semicolon or slash. Join clauses with a comma and "and", "but" or "so", or end the first with a period. Write "and" or "or" between alternatives. A hyphen joins words or a range (7-8), never clauses. Leave URLs, email addresses, file paths, code, dates, numbers and quotations exactly as written.
+- Emoji and exclamation marks: keep the draft's own and add none.
+- Say it plainly instead of: delve into, multifaceted, nuanced, it is important to note that, plays a crucial role, deep dive, holistic, I'd love to, passionate about, excited to, I'm just a student but, thank you for reaching out, I hope this finds you well, just circling back, hope this helps, please find attached. Open no sentence with Furthermore, Moreover, Additionally, Ultimately or Interestingly. End on the last real sentence, never on "Thank you for your time".`;
 
-// Polish only. A translation keeps the draft's own tone and order.
-export const POLISH_VOICE = `- Voice: direct, dry, understated. Main point first. Side context goes in parentheses inside its sentence.`;
+export const POLISH_VOICE = `- Voice: direct. Humour stays dry and understated. Keep the draft's register: casual stays casual, warm stays warm, and softeners like lol stay.
+- The main point or the ask goes first, reasons after, unless the draft is casual chat. Side context goes in parentheses inside its sentence.
+- A change of mind stays plain: "I thought X. Now I think Y." Length stays close to the draft: cut repetition and filler.`;
+
+export const TRANSLATE_TONE = `- Keep the draft's tone: warm stays warm, blunt stays blunt.
+- ㅋㅋ used as a softener becomes "lol" or is dropped.`;
+
+export const EMAIL_SHAPE = `- Email: the ask goes first, context after. Keep "Hi <Name>," when the draft has it. Keep the draft's sign-off.`;
