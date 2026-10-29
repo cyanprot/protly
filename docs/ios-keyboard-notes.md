@@ -92,3 +92,28 @@ Verified findings from the Sprint 1 review, left open on purpose:
 - **Measured:** both lists add about 11 MB RSS. `decide(complete: false)` took about 58 us on a 1-key prefix
   and about 3 us on a longer one while it scanned up to 5,000 prefix matches; with `WordList.hasPrefix` (one
   binary search) it is about 1.1-1.5 us on a 1-key prefix and 3-5 us on 4-5 keys (release, laptop, 2026-10-28).
+
+## Sprint 2: bare spike
+
+Tested 2026-10-28 on the iPhone 13 Pro (iOS system language English), build 274b2e4 installed with
+`xtool dev run` (free Apple ID team HAFRPRP47A). Signing worked first time: no zsign "free space of LoadCommands"
+error, `-Xlinker -ObjC` not needed, the `-u _OBJC_CLASS_$_KeyboardViewController` flag keeps the principal class.
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Protly listed under Add New Keyboard, Allow Full Access | Yes |
+| 2 | `안녕` button inserts 안녕 (ProtlyCore runs in the extension) | Yes |
+| 3 | `API` round trip from the keyboard | HTTP 200, 1400-1700 ms (claude-sonnet-5-5, max_tokens 20) |
+| 4 | `Marked` in Instagram DM, KakaoTalk, Messages | Underline visible while composing; 안녕 stays after unmark |
+| 5 | `Context` before-count vs real draft length (3 paragraphs) | Same: full context, no truncation seen |
+| 6 | `Clipboard` | Allow Paste prompt appears, count correct, prompt appears EVERY time |
+| 7 | `Next` with only Protly + Emoji | Goes to Emoji; Emoji's ABC returns to Protly |
+| 8 | Remove both Apple keyboards, keep Protly + Emoji | Possible (user removed them; then no way to type with the spike) |
+| 9 | Crash or fallback to Apple's keyboard | None |
+
+Consequences for the re-plan:
+- Marked text works in all three target apps, so composing Hangul can use `setMarkedText` like Apple's keyboard.
+- Full `documentContextBeforeInput` is available: Polish/Translate can read the whole draft.
+- Clipboard read prompts on every access: read only on an explicit tap, never on keyboard appear (Sprint 5).
+- API latency about 1.5 s for a tiny reply: Translate/Polish needs a visible in-progress state and streaming (Sprint 4).
+- Until the real layout lands, keep an Apple keyboard installed while testing; the spike cannot type letters.
