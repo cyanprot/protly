@@ -21,6 +21,8 @@ let package = Package(
                 .product(name: "ProtlyCore", package: "ProtlyCore"),
                 .product(name: "KeyboardKit", package: "KeyboardKit"),
             ],
+            // KeyboardKit 9.9.1 is Swift 5 code without concurrency annotations; match it.
+            swiftSettings: [.swiftLanguageMode(.v5)],
             // xtool issues #313/#379: keep the principal class from being dead-stripped.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-u", "-Xlinker", "_OBJC_CLASS_$_KeyboardViewController"])]
         ),
