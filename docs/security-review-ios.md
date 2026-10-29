@@ -86,6 +86,8 @@ Scope: `ios-app/ProtlyCore/**`, `ios-app/Sources/Protly/**`, `ios-app/scripts/**
   (for example 20,000) would also limit the bill per tap. Which number?
 - **Q4, billing:** a client timeout (30 s idle) on a non-streaming request is still billed, and Retry bills
   again. Should a timeout say so, or should the request stream?
+  **Tower:** known and accepted: a request that timed out on the phone may still be billed, because the API
+  finishes it anyway, and the keyboard stays non-streaming.
 - **Q5, flip reach:** `TypingSession.noteInserted` keeps growing `last.after` (spaces, punctuation, emoji, a
   newline) until the next letter, so the bar's flip can reach back over a long insert. Should it reach over
   whitespace only?
