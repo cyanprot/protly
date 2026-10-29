@@ -5096,6 +5096,7 @@ existing files get anchored edits. Every old text below occurs exactly once on m
 - Create: `ios-app/Sources/ProtlyKeyboard/Words.swift`
 - Modify: `ios-app/Sources/ProtlyKeyboard/KeyboardViewController.swift` (6 edits)
 - Modify: `ios-app/Sources/ProtlyKeyboard/ProtlyBar.swift` (4 edits)
+- Modify: `ios-app/ProtlyCore/Tests/ProtlyCoreTests/KeyboardSourceRulesTests.swift` (allow the learned-words write)
 
 How the pieces fit:
 - `refreshMode()` runs after every event, so one call there (`refreshWords()`) sets the slot's suggestion and
@@ -5352,6 +5353,15 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
 MSG
 ```
+
+**Applied (2026-10-29, `sprint6` on main + security PRs #2 #3 + visual PR #1, S = 47).** Every anchor matched
+once. `swift test`: 117 before 6.3, then 120, 122, 129 (= 73, 75, 82 + S); 6.7 adds none. `npm test`: `# pass 345`,
+`# fail 0`, `OK`. The 6.4 eval lines are as stated above, unchanged after 6.5 and 6.6; before 6.3 the same tree gave
+chat korean 98.51%, tatoeba-kor 99.83%, tatoeba-eng 99.55%. `xtool dev build`: `Build complete!`, no warning from
+`ios-app/Sources/`, `OBJC_CLASS_$_KeyboardViewController` count 1. One change beyond the plan text: security #3's
+`KeyboardSourceRulesTests.testUserDefaultsHoldsOnlyTheChangeCountAndTheLanguage` allowed only `changeCount` and
+`previousKey` writes, so it now also allows the one `forKey: Self.learnedKey` write in `Words.swift` (the learned
+words are capped: 1,000 per language, 32-character keys). The other source rules pass unchanged.
 
 ### Task 6.8: Install and check on the phone (USER) (order step 6)
 
