@@ -1,0 +1,70 @@
+# Simulator screenshots of the Protly keyboard, measured against Apple's keyboard (ios-app/CI/README.md).
+# Runs only for a head commit whose message contains [shots]: macOS minutes are scarce.
+# Every outcome is published to the orphan branch ci-shots under runs/<sha7>-<run_number>/.
+name: keyboard-shots
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main, ci-shots]
+    paths:
+      - "ios-app/**"
+      - ".github/workflows/keyboard-shots.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keyboard-shots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shots:
+    if: contains(github.event.head_commit.message, '[shots]') || github.event_name == 'workflow_dispatch'
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: measure.py tests
+        run: |
+          python -m pip install --quiet "pillow>=11,<13"
+          python -m unittest discover -s ios-app/CI -p 'test_*.py'
+
+      - name: Install XcodeGen
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+        run: brew install xcodegen
+
+      - name: Cache SwiftPM and DerivedData
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            ios-app/CI/build/DerivedData
+          key: shots-dd-${{ hashFiles('ios-app/CI/project.yml', 'ios-app/**/Package.swift', 'ios-app/Sources/**', 'ios-app/Vendor/KeyboardKit/Sources/**') }}
+          restore-keys: shots-dd-
+
+      - name: Build, run scenarios, measure
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: bash ios-app/CI/run-shots.sh "$RUNNER_TEMP/shots"
+
+      - name: Publish to ci-shots
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/shots"
+          bash ios-app/CI/publish-shots.sh "$RUNNER_TEMP/shots" "runs/${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}"
+
+      - name: Require RESULT PASS
+        if: ${{ !cancelled() }}
+        run: |
+          head -n 1 "$RUNNER_TEMP/shots/report.txt"
+          grep -qx 'RESULT PASS' "$RUNNER_TEMP/shots/report.txt"

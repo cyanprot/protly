@@ -1,0 +1,72 @@
+# CI-only Xcode project for .github/workflows/keyboard-shots.yml (XcodeGen: `xcodegen generate` in this folder).
+# It mirrors the dependencies of the ProtlyKeyboard target in ios-app/Package.swift (ProtlyCore, vendored
+# KeyboardKit, Swift 5 language mode): change both together. The phone build never reads this file.
+name: ProtlyCI
+options:
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+packages:
+  ProtlyCore:
+    path: ../ProtlyCore
+  KeyboardKit:
+    path: ../Vendor/KeyboardKit
+targets:
+  ProtlyCIHost:
+    type: application
+    platform: iOS
+    sources:
+      - path: Host
+        excludes: [Info.plist]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.northprot.protly.cihost
+        INFOPLIST_FILE: Host/Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: ProtlyCIKeyboard
+        embed: true
+  ProtlyCIKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ../Sources/ProtlyKeyboard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.northprot.protly.cihost.keyboard
+        # The phone's Info.plist; Xcode merges in the bundle keys that xtool adds on the phone build.
+        INFOPLIST_FILE: ../Support/ProtlyKeyboard-Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - package: ProtlyCore
+      - package: KeyboardKit
+  ProtlyCIUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.northprot.protly.cihost.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: ProtlyCIHost
+    dependencies:
+      - target: ProtlyCIHost
+schemes:
+  ProtlyCI:
+    build:
+      targets:
+        ProtlyCIHost: all
+        ProtlyCIUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - ProtlyCIUITests
