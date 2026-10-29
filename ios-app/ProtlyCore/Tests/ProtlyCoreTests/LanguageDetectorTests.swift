@@ -27,6 +27,20 @@ final class LanguageDetectorTests: XCTestCase {
         XCTAssertEqual(detector.decide(keys("zz"), complete: true, previous: nil), .korean)        // ㅋㅋ
     }
 
+    func testRepeatedJamoIsKoreanEvenWhenEnglishKnowsIt() {
+        // English subtitles contain "dd", "bb", "zz": the repeated-jamo rule must win anyway.
+        let d = LanguageDetector(
+            english: WordList(entries: [("dd", 900), ("bb", 900), ("zz", 900), ("rr", 900)]),
+            korean: WordList(entries: [("dkssud", 50)]),
+            priorBonus: 2.0
+        )
+        for w in ["zz", "dd", "bb", "rr", "zzz"] {  // ㅋㅋ ㅇㅇ ㅠㅠ ㄱㄱ ㅋㅋㅋ
+            for prev in [nil, Language.english, .korean] {
+                XCTAssertEqual(d.decide(keys(w), complete: true, previous: prev), .korean, "\(w) prev \(String(describing: prev))")
+            }
+        }
+    }
+
     func testPriorBreaksCloseCalls() {
         // go: 500/1600 in English vs 500/550 in Korean. Korean wins alone; the English prior flips it.
         XCTAssertEqual(detector.decide(keys("go"), complete: true, previous: nil), .korean)
