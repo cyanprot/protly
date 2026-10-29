@@ -1,0 +1,18 @@
+screen 390.0x844.0 pt, shots in /Users/runner/work/_temp/shots
+02-first-open: protly
+globe tapped
+emoji after a globe tap
+picked Protly, Korean from the globe list: protly
+03-after-emoji: protly
+04-after-background: protly
+globe tapped
+a globe tap gave english, not emoji
+picked Emoji from the globe list: emoji
+picked Protly, Korean from the globe list: protly
+05-after-second-emoji: protly
+typing: keyboard top 512.00, row 1 564.00
+typed hello 
+06-word-typed: protly
+07-empty-left-slot: protly
+picked English (US) from the globe list: english
+01-apple: english
