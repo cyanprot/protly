@@ -40,6 +40,14 @@ public enum Dubeolsik {
         return plain[key.letter]
     }
 
+    /// The a-z key behind a keycap: an English letter (either case) or a Dubeolsik jamo (plain or shifted).
+    /// nil for anything else (digits, symbols, accented callout letters).
+    public static func letter(forKeycap cap: String) -> Character? {
+        guard cap.count == 1, let c = cap.first else { return nil }
+        if c.isASCII, c.isLetter { return Character(c.lowercased()) }
+        return plain.first { $0.value == c }?.key ?? shifted.first { $0.value == c }?.key
+    }
+
     /// Key string of the Korean reading: lowercase letters, uppercase only where the shifted jamo is used.
     /// This is the lookup key of the Korean word list.
     public static func koreanKeyString(_ keys: [KeyEvent]) -> String {
