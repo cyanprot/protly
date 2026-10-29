@@ -7,6 +7,7 @@ import { flags } from '../lib/flags.js';
 import { createCard } from '../ui/card.js';
 import { showToast } from '../ui/toast.js';
 import { errorText } from '../ui/errors.js';
+import { trusted } from '../ui/trust.js';
 import { commandListener } from '../lib/command.js';
 
 const HINTS = 'Enter send · Esc undo · Alt+Enter Opus';
@@ -187,6 +188,7 @@ export function mountOutgoing(cur) {
   }
 
   function onKeyDown(e) {
+    if (!trusted(e)) return; // a page script's Enter must not start a billed translation
     if (!live()) return; // main.js guards Hangul Enter until the new thread's handler is mounted
     const cur2 = getCurrent();
     if (!cur2?.thread.enabled) return;

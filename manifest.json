@@ -88,6 +88,7 @@
         "src/ui/toast.css.js",
         "src/ui/toast.js",
         "src/ui/tokens.css.js",
+        "src/ui/trust.js",
         "src/ui/fonts/protly-mono-400.woff2",
         "src/ui/fonts/protly-mono-500.woff2"
       ],

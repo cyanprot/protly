@@ -225,3 +225,18 @@ test('Gmail: truncating a long email never leaves half a surrogate pair', async 
   assert.equal(m.text.isWellFormed(), true);
   assert.match(m.text, /\[\.\.\.\]$/);
 });
+
+test('Instagram: a page script clicking Retry starts no request; the user\'s click does', async () => {
+  const { renderRetry } = await import('../src/content/dom.js');
+  const { _trustSyntheticEvents } = await import('../src/ui/trust.js');
+  const doc = new JSDOM('<body><div><div dir="auto">hi</div></div></body>').window.document;
+  const textEl = doc.querySelector('[dir="auto"]');
+  let retries = 0;
+  renderRetry({ textEl, text: 'hi' }, () => { retries++; });
+  const btn = textEl.nextElementSibling;
+  btn.click();
+  assert.equal(retries, 0);
+  _trustSyntheticEvents(true);
+  try { btn.click(); } finally { _trustSyntheticEvents(false); }
+  assert.equal(retries, 1);
+});
