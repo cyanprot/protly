@@ -59,7 +59,7 @@ test('mode comes from the launch input, and the write shortcut passes it', () =>
   assert.match(src, /const writeFlag = matchText\('\^write\$', "\{ShortcutInput\}"\)/);
   // The clipboard is read only inside the write branch.
   assert.ok(src.indexOf('getClipboard()') > src.indexOf('if writeFlag {'));
-  assert.match(write, /@flag = "write"\nrun\("Protly", @flag\)/);
+  assert.match(write, /@flag = "write"\nrun\("Protly read", @flag\)/);
 });
 
 test('drafts swap in Opus with adaptive thinking, reading the screen stays on Sonnet', () => {

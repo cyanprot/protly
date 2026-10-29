@@ -1,6 +1,6 @@
-// Protly Write: Back Tap triple tap. Runs Protly in write mode (translate or polish the clipboard).
+// Protly write: Back Tap triple tap. Runs Protly read in write mode (translate or polish the clipboard).
 // Kept separate because Back Tap cannot pass input to a shortcut. Holds no key and no memos.
 #include 'actions/shortcuts'
 
 @flag = "write"
-run("Protly", @flag)
+run("Protly read", @flag)

@@ -1,7 +1,7 @@
 # iOS Shortcut: Protly
 
-Renamed from IG Translate on 2026-10-28. A phone that still has the old `IG Translate` and `IG Translate Write`
-shortcuts keeps working with them until the shortcut is rebuilt from these sources (iOS work is on hold).
+Renamed from IG Translate on 2026-10-28; the phone names are `Protly read` and `Protly write` (the phone is canonical). A phone whose
+write wrapper still runs `IG Translate` must re-pick its Run Shortcut target after the read shortcut is renamed.
 
 Translates chats in any iPhone app (built for Instagram DMs; KakaoTalk, iMessage, WhatsApp, Discord and the rest work the same way), plus any other screen with text: a post, a web page, an email. It only sends a screenshot, so it does not care which app is open. Double-tap the back of the phone:
 
@@ -16,9 +16,9 @@ A phone-friendly copy of this guide with copy buttons is published as a private 
 
 ## Quick install (signed file)
 
-`ios/protly.cherri` is the same shortcut as code. `scripts/build-ios-shortcut.sh` compiles it with Cherri v2.3.0 (`~/.local/opt/cherri-2.3.0/cherri`), signs it through HubSign (no Mac here; the file holds no key and no memos) and copies `Protly.shortcut` to `~/GoogleDrive/`.
+`ios/protly.cherri` is the same shortcut as code. `scripts/build-ios-shortcut.sh` compiles it with Cherri v2.3.0 (`~/.local/opt/cherri-2.3.0/cherri`), signs it through HubSign (no Mac here; the file holds no key and no memos) and copies `Protly read.shortcut` and `Protly write.shortcut` to `~/GoogleDrive/`.
 
-On the iPhone: Google Drive app > `Protly.shortcut` > Share > Shortcuts > Add Shortcut. Edit the shortcut: paste the API key over `PASTE_API_KEY_HERE` in the first Text action (an alert says so if it is missing). Then edit the long Text action that starts with `(none) Replace this line` to hold your memos, and set up Back Tap (section 2). Section 0 still applies for the key.
+On the iPhone: Google Drive app > `Protly read.shortcut` > Share > Shortcuts > Add Shortcut. Edit the shortcut: paste the API key over `PASTE_API_KEY_HERE` in the first Text action (an alert says so if it is missing). Then edit the long Text action that starts with `(none) Replace this line` to hold your memos, and set up Back Tap (section 2). Section 0 still applies for the key.
 
 Cherri v2.3.0 quirks found while writing it: a `rawAction` whose result is assigned loses its identifier (custom `action` definitions are used instead); an import question is bound only to action 0 (and on the phone the key from the import question never reached the request, so the key is now a placeholder Text action with a `sk-ant-` guard); multi-line default blocks in user `action` definitions fail to parse; a string cannot end in a backslash; conditions need a text constant on the left.
 
@@ -35,7 +35,7 @@ Never share this shortcut: the key travels with it. With iCloud sync on, the sho
 
 ## 1. Build the shortcut
 
-New shortcut, name `Protly`. Add these actions in order. "Regex ON" means the Regular Expression switch in Replace Text (tap Show More).
+New shortcut, name `Protly read`. Add these actions in order. "Regex ON" means the Regular Expression switch in Replace Text (tap Show More).
 
 | # | Action | Settings |
 |---|---|---|
@@ -94,7 +94,7 @@ Run it once from the Shortcuts app and pick Always Allow for `api.anthropic.com`
 
 ## Daily use
 
-- Mode comes from the tap, never from the clipboard (a leftover copy used to send every run to write mode): double tap = read the screen, triple tap = write (`Protly Write` runs `Protly` with the input `write`). Install both files; Back Tap > Double Tap = Protly, Triple Tap = Protly Write. Keep the main shortcut named exactly `Protly`.
+- Mode comes from the tap, never from the clipboard (a leftover copy used to send every run to write mode): double tap = read the screen, triple tap = write (`Protly write` runs `Protly read` with the input `write`). Install both files; Back Tap > Double Tap = Protly read, Triple Tap = Protly write. Keep the main shortcut named exactly `Protly read`: the Run Shortcut action in `Protly write` targets it by name, so after a rename re-pick the target there.
 - Read: open the chat, double-tap the back.
 - Group chats and apps that left-align everyone (Discord, Slack): add a memo line `Me: your name (handle)` so the shortcut knows which messages are yours. Without it, only two-sided chats (mine on the right) are reliable.
 - Not a chat (a post, article, email): the main text on screen is translated, menus and ads are skipped.

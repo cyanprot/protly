@@ -1,7 +1,7 @@
 // Protly: iOS Shortcut source. Compile: cherri ios/protly.cherri (see docs/ios-shortcut.md).
 // Double-tap the back of the phone in any chat app (Instagram first), or on any screen with text to translate.
 // Double tap: translate the friend's latest messages (or the main text) on screen to Korean.
-// Triple tap (via Protly Write): clipboard Korean is my draft, translate it; clipboard English is polished. Results are copied
+// Triple tap (via Protly write): clipboard Korean is my draft, translate it; clipboard English is polished. Results are copied
 // and expire from the clipboard after 3 minutes.
 // The API key and the memos are pasted into Text actions on the phone, so neither is in the compiled file.
 
@@ -33,7 +33,7 @@ if !keyCheck {
 
 // Mode comes from how the shortcut was started, never from what happens to sit on the clipboard.
 // Back Tap double tap runs this shortcut with no input: always "in" (translate the screen).
-// Back Tap triple tap runs "Protly Write", which runs this one with the input "write": translate or polish the clipboard.
+// Back Tap triple tap runs "Protly write", which runs this one with the input "write": translate or polish the clipboard.
 @tail = "MODE: in"
 @mode = "in"
 const writeFlag = matchText('^write$', "{ShortcutInput}")
