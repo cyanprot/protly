@@ -7,6 +7,7 @@ export const PRICES = {
 export const KEEP_DAYS = 62;
 const FIELDS = ['input', 'output', 'cache_read', 'cache_5m', 'cache_1h'];
 const DAY_MS = 24 * 60 * 60 * 1000;
+const MODEL_ID = /^[a-z0-9][a-z0-9.:-]{0,99}$/i;
 const count = (v) => (Number.isFinite(v) && v > 0 ? v : 0);
 
 export function tokensOf(body) {
@@ -27,7 +28,7 @@ export function tokensOf(body) {
 // Exact id, or a dated variant of a known id ("claude-opus-5-5-20261001").
 function priceFor(model) {
   if (typeof model !== 'string') return null;
-  if (PRICES[model]) return PRICES[model];
+  if (Object.hasOwn(PRICES, model)) return PRICES[model];
   const base = Object.keys(PRICES).find((k) => model.startsWith(`${k}-`));
   return base ? PRICES[base] : null;
 }
@@ -55,13 +56,15 @@ function prune(usage, now) {
 export function createUsageRecorder({ get, set, now = Date.now }) {
   let chain = Promise.resolve();
   function record(body) {
-    const model = typeof body?.model === 'string' && body.model ? body.model : 'unknown';
+    // The id keys a plain object: anything that is not a model id shape ('__proto__', 'constructor') is 'unknown'.
+    const model = typeof body?.model === 'string' && MODEL_ID.test(body.model) ? body.model : 'unknown';
     const tokens = tokensOf(body);
     chain = chain.then(async () => {
       const usage = (await get()) || {};
       const t = now();
       const day = (usage[localDate(t)] ??= {});
-      const e = (day[model] ??= { calls: 0, input: 0, output: 0, cache_read: 0, cache_5m: 0, cache_1h: 0 });
+      if (!Object.hasOwn(day, model)) day[model] = { calls: 0, input: 0, output: 0, cache_read: 0, cache_5m: 0, cache_1h: 0 };
+      const e = day[model]; // own key only: 'constructor' must not resolve to Object
       e.calls += 1;
       for (const f of FIELDS) e[f] = count(e[f]) + tokens[f];
       prune(usage, t);
