@@ -55,4 +55,31 @@ final class HangulTests: XCTestCase {
         XCTAssertFalse(Hangul.compose(keys("ok")).isValid)          // ㅐㅏ
         XCTAssertTrue(Hangul.compose(keys("whgdkbb")).isValid)      // 좋아ㅠㅠ
     }
+
+    func testNonLetterKeyIsInvalidNotACrash() {
+        let digit = Hangul.compose([KeyEvent("d"), KeyEvent("k"), KeyEvent("1")])
+        XCTAssertFalse(digit.isValid)
+        XCTAssertEqual(digit.text, "아1")
+        XCTAssertNil(Dubeolsik.jamo(for: KeyEvent("1")))
+    }
+
+    func testUppercaseLetterIsManualShift() {
+        // Caps lock can hand over "R": stored as "r" + manual shift, so it composes like shift+r.
+        let k = KeyEvent("R")
+        XCTAssertEqual(k.letter, "r")
+        XCTAssertEqual(k.shift, .manual)
+        XCTAssertEqual(KeyEvent("Q", .automatic).shift, .automatic)
+        XCTAssertEqual(Hangul.compose([KeyEvent("R"), KeyEvent("K")]).text, "까")
+        XCTAssertEqual(Dubeolsik.latin([KeyEvent("O"), KeyEvent("K")]), "OK")
+    }
+
+    func testJamoThatCannotLeadASyllableIsInvalidNotACrash() {
+        let compound = Hangul.compose(jamos: ["ㄳ", "ㅏ"])
+        XCTAssertEqual(compound.text, "ㄳㅏ")
+        XCTAssertFalse(compound.isValid)
+        let latin = Hangul.compose(jamos: ["a", "ㅏ"])
+        XCTAssertEqual(latin.text, "aㅏ")
+        XCTAssertFalse(latin.isValid)
+        XCTAssertFalse(Hangul.compose(jamos: ["ㄱ", "ㅏ", "a"]).isValid)
+    }
 }

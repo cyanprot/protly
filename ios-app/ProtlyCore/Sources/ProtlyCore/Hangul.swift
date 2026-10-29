@@ -36,10 +36,13 @@ public enum Hangul {
     }
 
     public static func compose(_ keys: [KeyEvent]) -> Composition {
-        compose(jamos: keys.map(Dubeolsik.jamo(for:)))
+        // A key with no jamo (not a-z) passes through as itself and makes the word invalid Hangul.
+        compose(jamos: keys.map { Dubeolsik.jamo(for: $0) ?? $0.letter })
     }
 
-    public static func compose(jamos: [Character]) -> Composition {
+    /// Anything that is not a key-typable lead consonant or vowel (ㄳ, "a") is appended as-is
+    /// and makes the result invalid.
+    static func compose(jamos: [Character]) -> Composition {
         var c = Composer()
         for j in jamos { c.feed(j) }
         let text = c.finish()
@@ -48,7 +51,8 @@ public enum Hangul {
         let head = text.reversed().drop(while: isLoneJamo)
         let faceVowels: Set<Character> = ["ㅠ", "ㅜ", "ㅡ"]
         let tailOK = tail.allSatisfy { !isVowel($0) || faceVowels.contains($0) }
-        return Composition(text: text, isValid: tailOK && !head.contains(where: isLoneJamo))
+        let typable = jamos.allSatisfy { choseong.contains($0) || isVowel($0) }
+        return Composition(text: text, isValid: typable && tailOK && !head.contains(where: isLoneJamo))
     }
 }
 
@@ -68,6 +72,7 @@ private struct Composer {
             if jong.count == 1, Hangul.finalPairs[String([jong[0], c])] != nil { jong.append(c); return }
         }
         flush()
+        guard Hangul.choseong.contains(c) else { out.append(c); return }  // cannot lead a syllable
         cho = c
     }
 

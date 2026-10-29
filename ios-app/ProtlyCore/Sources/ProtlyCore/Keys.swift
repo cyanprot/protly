@@ -8,12 +8,18 @@ public enum Shift: Sendable, Equatable {
 }
 
 public struct KeyEvent: Sendable, Equatable {
-    public let letter: Character  // always lowercase a-z
+    public let letter: Character  // lowercase a-z for letter keys; anything else reads as non-Korean
     public let shift: Shift
 
+    /// An uppercase letter (caps lock) is stored as its lowercase key with manual shift.
     public init(_ letter: Character, _ shift: Shift = .none) {
-        self.letter = letter
-        self.shift = shift
+        if letter.isASCII, letter.isUppercase {
+            self.letter = Character(letter.lowercased())
+            self.shift = shift == .none ? .manual : shift
+        } else {
+            self.letter = letter
+            self.shift = shift
+        }
     }
 }
 
@@ -28,10 +34,10 @@ public enum Dubeolsik {
     ]
 
     /// Korean jamo for a key. Only MANUAL shift selects the shifted jamo: an auto-capitalized
-    /// sentence start must never turn ㅂ into ㅃ.
-    public static func jamo(for key: KeyEvent) -> Character {
+    /// sentence start must never turn ㅂ into ㅃ. nil for a key that is not a-z (digits, symbols).
+    public static func jamo(for key: KeyEvent) -> Character? {
         if key.shift == .manual, let s = shifted[key.letter] { return s }
-        return plain[key.letter]!
+        return plain[key.letter]
     }
 
     /// Key string of the Korean reading: lowercase letters, uppercase only where the shifted jamo is used.

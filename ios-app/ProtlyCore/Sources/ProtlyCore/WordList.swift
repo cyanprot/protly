@@ -64,13 +64,19 @@ public struct WordList: Sendable {
         return i < keys.count && keys[i] == key ? counts[i] : 0
     }
 
-    /// Highest count among words starting with `prefix` (0 when none). Scans at most `limit` entries.
-    public func bestFrequency(prefix: String, limit: Int = 5000) -> Int {
-        var i = lowerBound(prefix), best = 0, seen = 0
-        while i < keys.count, seen < limit, keys[i].hasPrefix(prefix) {
+    /// True when some word starts with `prefix`. One binary search, cheap enough per keystroke.
+    public func hasPrefix(_ prefix: String) -> Bool {
+        let i = lowerBound(prefix)
+        return i < keys.count && keys[i].hasPrefix(prefix)
+    }
+
+    /// Highest count among words starting with `prefix` (0 when none). Scans every match, so a short
+    /// prefix walks a large part of the list; use `hasPrefix` when only presence matters.
+    public func bestFrequency(prefix: String) -> Int {
+        var i = lowerBound(prefix), best = 0
+        while i < keys.count, keys[i].hasPrefix(prefix) {
             best = max(best, counts[i])
             i += 1
-            seen += 1
         }
         return best
     }

@@ -61,4 +61,19 @@ final class LanguageDetectorTests: XCTestCase {
         XCTAssertEqual(detector.render(k, as: .english), "The")
         XCTAssertEqual(detector.render(k, as: .korean), "솓")
     }
+
+    func testNonLetterKeyIsEnglish() {
+        let k = [KeyEvent("d"), KeyEvent("k"), KeyEvent("1")]
+        XCTAssertEqual(detector.decide(k, complete: false, previous: .korean), .english)
+        XCTAssertEqual(detector.decide(k, complete: true, previous: .korean), .english)
+    }
+
+    func testHasPrefix() {
+        let list = WordList(entries: [("go", 1), ("the", 1)])
+        XCTAssertTrue(list.hasPrefix("th"))
+        XCTAssertTrue(list.hasPrefix("go"))
+        XCTAssertFalse(list.hasPrefix("goo"))
+        XCTAssertFalse(list.hasPrefix("x"))
+        XCTAssertFalse(list.hasPrefix("zzz"))  // past the end
+    }
 }

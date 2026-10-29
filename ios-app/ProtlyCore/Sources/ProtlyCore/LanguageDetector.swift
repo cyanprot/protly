@@ -5,7 +5,7 @@ import Foundation
 // 2. Otherwise compare relative frequency in each language (count / list total, because the Korean
 //    list is much smaller), plus `priorBonus` for the language of the previous word.
 // 3. Unknown in both lists but valid Hangul: Korean (inflected Korean words are mostly not listed).
-// While typing (`complete == false`) the best word with that key prefix stands in for the word.
+// While typing (`complete == false`) a word with that key prefix stands in for the word.
 
 public enum Language: Sendable, Equatable {
     case korean, english
@@ -39,13 +39,18 @@ public struct LanguageDetector: Sendable {
         }
         let enKey = Dubeolsik.latin(keys).lowercased()
         let koKey = Dubeolsik.koreanKeyString(keys)
-        let en = complete ? english.frequency(of: enKey) : english.bestFrequency(prefix: enKey)
-        let ko = complete ? korean.frequency(of: koKey) : korean.bestFrequency(prefix: koKey)
+        if !complete {
+            // While typing only "does any word start with these keys" matters.
+            if !english.hasPrefix(enKey) { return .korean }  // no English word fits, valid Hangul
+            if !korean.hasPrefix(koKey) { return .english }
+            // Both languages still fit: keep the previous word's language (no flicker).
+            // At the start of a message, Korean (the user's main language).
+            return previous ?? .korean
+        }
+        let en = english.frequency(of: enKey)
+        let ko = korean.frequency(of: koKey)
         if en == 0 { return .korean }  // unknown English, valid Hangul
         if ko == 0 { return .english }
-        // While typing, both languages still fit: keep the previous word's language (no flicker).
-        // At the start of a message, Korean (the user's main language).
-        if !complete { return previous ?? .korean }
         var enScore = log(Double(en) / english.total)
         var koScore = log(Double(ko) / korean.total)
         if previous == .english { enScore += priorBonus }
