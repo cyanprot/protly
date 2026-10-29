@@ -256,8 +256,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         let p = textDocumentProxy
         let unchanged = isSelection
             ? p.selectedText == original
-            : (p.documentContextAfterInput ?? "").isEmpty
-                && (p.documentContextBeforeInput ?? "").hasSuffix(String(original.suffix(40)))
+            : FieldGuard.canReplace(
+                original, before: p.documentContextBeforeInput ?? "", after: p.documentContextAfterInput ?? "")
         guard unchanged else {
             mode.panel = .failed("The text changed. Try again.", retry: action)
             return
@@ -271,8 +271,8 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     func undoInsert() {
         guard let l = lastInsert else { return }
-        guard (textDocumentProxy.documentContextBeforeInput ?? "").hasSuffix(String(l.inserted.suffix(40))) else {
-            endUndo()  // the cursor moved since Insert
+        guard FieldGuard.canUndo(l.inserted, before: textDocumentProxy.documentContextBeforeInput ?? "") else {
+            endUndo()  // the cursor moved or the text changed since Insert
             return
         }
         for _ in l.inserted { textDocumentProxy.deleteBackward() }
