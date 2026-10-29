@@ -195,7 +195,7 @@ const handlers = {
   badge: async ({ text, reason }, sender) => { await setTabBadge(sender.tab?.id, text, reason); return true; },
 };
 
-chrome.runtime.onMessage.addListener(createRouter({ handlers }));
+chrome.runtime.onMessage.addListener(createRouter({ handlers, extensionId: chrome.runtime.id }));
 
 const GENERIC = 'dist/generic.js';
 const inFrame = (tabId, frameId) => ({ tabId, frameIds: [frameId] });

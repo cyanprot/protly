@@ -1,4 +1,5 @@
 // kind: auth | host | host_bug | timeout | spend_limit | rate | overloaded | server | bad_request | network | refused | parse | truncated
+// | forbidden (a sender may not call that command) | bad_message (a malformed message to the background)
 // timeout and truncated are not retried: the API may still be generating (and billing) the first attempt.
 export class ApiError extends Error {
   constructor(kind, message, status) {
