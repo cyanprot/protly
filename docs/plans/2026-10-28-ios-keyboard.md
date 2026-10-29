@@ -2101,10 +2101,10 @@ enum ProtlyGeometry {
     static let keyHeight: CGFloat = 43
     /// Band above the first row is host padding + this + the first row's top inset. Tuned from screenshots.
     static let toolbarHeight: CGFloat = 29
-    /// The last row's frame is this much shorter than the pitch (its key keeps keyHeight): Apple's band
-    /// below the last row is 71 pt, KeyboardKit's was 80.33 (Sprint 4 screenshots). The system draws the
-    /// globe/mic band under it, so this is the only lever.
-    static let lastRowTrim: CGFloat = 28.0 / 3
+    /// The last row's frame is this much shorter than the pitch (its key keeps keyHeight), so the key sits on
+    /// the view's bottom edge. Apple's band below the last row is 71 pt; ours can only reach 74.83: iOS clips
+    /// a third-party keyboard to its view and draws the globe/mic band under it (Sprint 4 screenshots).
+    static let lastRowTrim: CGFloat = (rowPitch - keyHeight) / 2
     /// Apple: 7.33 pt between keys and at both edges. Half goes around the keyboard (padding), half
     /// around each key (KeyboardKit's standard is 0 and 4).
     static let sideInset: CGFloat = 11.0 / 3
@@ -3034,11 +3034,13 @@ MSG
 ### Task 5.3: Bar actions, panel, field read and replace, clipboard
 
 Behaviour (design "Predictive bar" and "Panel", amended above):
-- Bar, Apple's three slots after the protly icon. Left slot: the other reading while a word is typed or right
+- Bar, exactly Apple's three equal slots. Left slot: the other reading while a word is typed or right
   after one (tap flips). Center slot, in priority order: `Undo` right after an Insert; `Translate` (field has
   Hangul) or `Polish`; `Read clipboard` when text was copied since protly last looked (checked with
-  `changeCount`/`hasStrings`, no prompt). Right slot: empty until Sprint 6. The icon commits the word, reads the
-  field and runs the action that fits it; on an empty field it reads the clipboard.
+  `changeCount`/`hasStrings`, no prompt). Right slot: empty until Sprint 6.
+- The protly key sits where Apple's emoji key is (the user's call, Sprint 4: with only Emoji as the other
+  keyboard, iOS puts its own emoji key bottom left, so the in-row one was a duplicate). It commits the word,
+  reads the field and runs the action that fits it; on an empty field it reads the clipboard.
 - Draft action: read the field (selection if any; else move the cursor to the end, polling up to 1 s because hosts
   apply moves asynchronously, then take `documentContextBeforeInput`), call the API, show the panel in place of
   the keys at the key area's height, `Insert` replaces the field or selection, `Undo` puts the original back.
@@ -3197,23 +3199,18 @@ struct PanelView: View {
 import ProtlyCore
 import SwiftUI
 
-/// The predictive bar: the protly icon, then Apple's three equal slots.
+/// The predictive bar: Apple's three equal slots (the protly key is in the bottom row).
 /// Left: the other reading of the word being typed or just typed (tap flips). Center: Undo after an Insert,
 /// else the action that fits the field (Translate / Polish), else "Read clipboard" when new text was copied.
 /// Right: empty until Sprint 6 (completion).
 struct ProtlyBar: View {
     @ObservedObject var mode: ProtlyMode
     let flip: () -> Void
-    let act: (ActionMode?) -> Void   // nil = the protly icon: whatever fits the field
+    let act: (ActionMode?) -> Void   // nil = the protly key: whatever fits the field
     let undo: () -> Void
 
     var body: some View {
         HStack(spacing: 0) {
-            Button { act(nil) } label: {
-                Image(systemName: "character.bubble").font(.system(size: 19))
-            }
-            .frame(width: 44)
-            .foregroundStyle(.secondary)
             left.frame(maxWidth: .infinity)
             center.frame(maxWidth: .infinity)
             Color.clear.frame(maxWidth: .infinity)
@@ -3435,7 +3432,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     // MARK: Actions (Translate / Polish / Read clipboard)
 
-    /// requested nil = the protly icon: the action that fits the field, or the clipboard when it is empty.
+    /// requested nil = the protly key: the action that fits the field, or the clipboard when it is empty.
     func act(_ requested: ActionMode?) {
         commitWord()
         session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
@@ -3613,8 +3610,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func setKeyboardType(_ type: Keyboard.KeyboardType) {
         if case .emojis = type {
-            commitWord()
-            advanceToNextInputMode()  // Apple's Emoji keyboard is next in the list; its ABC key returns here
+            act(nil)  // the protly key; iOS's own bottom-left key opens Emoji
             return
         }
         super.setKeyboardType(type)
@@ -3659,6 +3655,8 @@ struct ProtlyRoot: View {
             buttonContent: { params in
                 if params.item.action == .space {
                     Color.clear  // Apple's space bar has no label
+                } else if params.item.action == .keyboardType(.emojis) {
+                    Image(systemName: "character.bubble").font(.system(size: 21))  // the protly key
                 } else {
                     params.view
                 }
@@ -3731,7 +3729,8 @@ Install, then Claude prints this checklist and waits:
 1. Instagram DM, Korean draft: bar center says `Translate`. Tap: panel with spinner, then English plus a Korean
    back translation. `Insert` replaces the draft; the bar says `Undo`; `Undo` restores the Korean.
 2. English draft: `Polish` -> result -> `Insert`.
-3. Select part of a draft (Instagram's own Select), tap the protly icon: only the selection changes.
+3. Select part of a draft (Instagram's own Select), tap the protly key (bottom row, where Apple's emoji key is):
+   only the selection changes.
 4. Copy a friend's English message, come back to an empty composer: bar shows `Read clipboard` and NO Allow
    Paste prompt appears yet. Tap it: Allow Paste prompt, then the Korean translation; `Done` returns to keys.
 5. A three-paragraph draft: tap at the start of the first paragraph, then tap `Translate`: it gets all of it
@@ -3744,6 +3743,8 @@ Install, then Claude prints this checklist and waits:
     `Translate` at the same time; after Insert, the left slot is empty.
 11. While the panel shows a result, move the cursor with a tap in the text, tap `Insert`: "The text changed. Try
     again." and the field is untouched.
+12. The protly key (bottom row) shows the protly glyph; tap it on a draft: same as the bar's action. iOS's own
+    bottom-left key opens Emoji (keyboards: Protly and Emoji only).
 
 Record under `## Sprint 5: actions` in the notes and commit:
 
@@ -3759,7 +3760,7 @@ Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
 MSG
 ```
 
-**Sprint 5 done when:** items 1-4, 6, 8-11 pass. Item 5 failing (field read truncated) adds "Select all, then tap
+**Sprint 5 done when:** items 1-4, 6, 8-12 pass. Item 5 failing (field read truncated) adds "Select all, then tap
 again" handling in Sprint 6's re-plan; item 7 over 10 s puts streaming into Sprint 6.
 
 ---

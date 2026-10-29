@@ -6,12 +6,12 @@
   "deliverables": [
     "ios/keyboard-prompt.txt, scripts/sync-ios-app.mjs, tests/ios-app.test.js",
     "ProtlyCore ActionAPI (body, headers, prompt, parse, error kinds)",
-    "ActionClient, FieldText, PanelView, bar v2 (icon plus three slots: flip left, action center), controller actions with Undo",
+    "ActionClient, FieldText, PanelView, bar v2 (Apple's three slots: flip left, action center), protly key in the emoji key's place, controller actions with Undo",
     "Sprint 5 phone results in the notes"
   ],
   "success_criteria": [
-    "swift test: 46 tests, 0 failures; npm test # fail 0",
-    "Task 5.4 items 1-4, 6, 8-11 pass on the iPhone",
+    "swift test: 49 tests, 0 failures; npm test # fail 0",
+    "Task 5.4 items 1-4, 6, 8-12 pass on the iPhone",
     "no Allow Paste prompt until the user taps Read clipboard"
   ],
   "testable_behaviors": [

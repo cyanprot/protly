@@ -8,10 +8,10 @@ enum ProtlyGeometry {
     static let keyHeight: CGFloat = 43
     /// Band above the first row is host padding + this + the first row's top inset. Tuned from screenshots.
     static let toolbarHeight: CGFloat = 29
-    /// The last row's frame is this much shorter than the pitch (its key keeps keyHeight): Apple's band
-    /// below the last row is 71 pt, KeyboardKit's was 80.33 (Sprint 4 screenshots). The system draws the
-    /// globe/mic band under it, so this is the only lever.
-    static let lastRowTrim: CGFloat = 28.0 / 3
+    /// The last row's frame is this much shorter than the pitch (its key keeps keyHeight), so the key sits on
+    /// the view's bottom edge. Apple's band below the last row is 71 pt; ours can only reach 74.83: iOS clips
+    /// a third-party keyboard to its view and draws the globe/mic band under it (Sprint 4 screenshots).
+    static let lastRowTrim: CGFloat = (rowPitch - keyHeight) / 2
     /// Apple: 7.33 pt between keys and at both edges. Half goes around the keyboard (padding), half
     /// around each key (KeyboardKit's standard is 0 and 4).
     static let sideInset: CGFloat = 11.0 / 3
