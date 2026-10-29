@@ -53,7 +53,7 @@ def local_error(req_id, kind, message):
 def write_message(stream, obj):
     try:
         data = encode_message(obj)
-    except ValueError:
+    except (ValueError, RecursionError):  # NaN, or an API body nested too deep to encode: reply, never hang
         data = encode_message(local_error(obj.get('id'), 'host_error', 'reply is not valid JSON'))
     if len(data) - 4 > MAX_REPLY:
         data = encode_message(local_error(obj.get('id'), 'host_error', 'reply larger than 1 MB'))

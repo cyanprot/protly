@@ -233,6 +233,31 @@ class HostileInput(unittest.TestCase):
         self.assertEqual(reply['status'], 0)
         self.assertEqual(reply['body']['error']['type'], 'host_error')
 
+    def test_deeply_nested_api_body_gets_a_reply_not_a_hang(self):
+        deep = '[' * 20000 + ']' * 20000
+
+        class Resp(FakeResp):
+            def read(self):
+                return ('{"content": ' + deep + '}').encode()
+        try:
+            r = h.handle({'id': 8, 'body': {}}, make_home(), urlopen=mock.Mock(return_value=Resp(200, {})))
+        except RecursionError:
+            r = h.local_error(8, 'host_error', 'RecursionError')  # json.loads itself gave up: safe_handle's path
+        out = io.BytesIO()
+        h.write_message(out, r)
+        out.seek(0)
+        reply = h.read_message(out)
+        self.assertEqual(reply['id'], 8)
+
+    def test_write_message_survives_an_unencodable_reply(self):
+        out = io.BytesIO()
+        real = h.encode_message
+        with mock.patch.object(h, 'encode_message', side_effect=[RecursionError(), real(h.local_error(9, 'host_error', 'x'))]):
+            h.write_message(out, {'id': 9, 'status': 200, 'body': {}})
+        out.seek(0)
+        r = h.read_message(out)
+        self.assertEqual((r['id'], r['status'], r['body']['error']['type']), (9, 0, 'host_error'))
+
     def test_non_json_2xx_body_is_a_host_error_without_the_key(self):
         class Resp(FakeResp):
             def read(self):
