@@ -1,0 +1,929 @@
+--- a/Package.swift	2026-10-28 23:09:07.937547957 -0700
++++ b/Package.swift	2026-10-28 23:10:08.458608629 -0700
+@@ -23,10 +23,7 @@
+         .target(
+             name: "KeyboardKit",
+             resources: [.process("Resources")]
+-        ),
+-        .testTarget(
+-            name: "KeyboardKitTests",
+-            dependencies: ["KeyboardKit"]
+         )
++        // protly patch: test target removed, Tests/ is not vendored.
+     ]
+ )
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+ToolbarItem.swift b/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+ToolbarItem.swift
+--- a/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+ToolbarItem.swift	2026-10-28 23:09:07.950869928 -0700
++++ b/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+ToolbarItem.swift	2026-10-28 23:12:58.916119546 -0700
+@@ -204,6 +204,7 @@
+ }
+ 
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct Preview: View {
+@@ -240,3 +241,4 @@
+     .background(Color.keyboardBackground)
+     .truncationMode(.middle)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+ToolbarSeparator.swift b/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+ToolbarSeparator.swift
+--- a/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+ToolbarSeparator.swift	2026-10-28 23:09:07.950869928 -0700
++++ b/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+ToolbarSeparator.swift	2026-10-28 23:12:58.916274717 -0700
+@@ -90,6 +90,7 @@
+         .ToolbarSeparatorStyle.standard
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     HStack {
+@@ -107,3 +108,4 @@
+     .padding()
+     .background(Color.keyboardBackground)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+Toolbar.swift b/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+Toolbar.swift
+--- a/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+Toolbar.swift	2026-10-28 23:09:07.950795580 -0700
++++ b/Sources/KeyboardKit/Autocomplete/Views/Autocomplete+Toolbar.swift	2026-10-28 23:12:58.915760001 -0700
+@@ -254,6 +254,7 @@
+         .ToolbarStyle.standard
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     let additional = [
+@@ -343,3 +344,4 @@
+     }
+     .padding(5)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Callouts/Callouts+ActionCalloutButtonArea.swift b/Sources/KeyboardKit/Callouts/Callouts+ActionCalloutButtonArea.swift
+--- a/Sources/KeyboardKit/Callouts/Callouts+ActionCalloutButtonArea.swift	2026-10-28 23:09:07.950962854 -0700
++++ b/Sources/KeyboardKit/Callouts/Callouts+ActionCalloutButtonArea.swift	2026-10-28 23:12:58.916820936 -0700
+@@ -120,6 +120,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     VStack(alignment: .leading, spacing: 0) {
+@@ -144,3 +145,4 @@
+     .keyboardCalloutStyle(.standard)
+     .padding()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift b/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift
+--- a/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift	2026-10-28 23:09:07.950962854 -0700
++++ b/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift	2026-10-28 23:12:58.916562397 -0700
+@@ -224,6 +224,7 @@
+ }
+ 
+ #if !os(tvOS)
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct PreviewGroup: View {
+@@ -322,3 +323,4 @@
+         }
+ }
+ #endif
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Callouts/Callouts+InputCalloutButtonArea.swift b/Sources/KeyboardKit/Callouts/Callouts+InputCalloutButtonArea.swift
+--- a/Sources/KeyboardKit/Callouts/Callouts+InputCalloutButtonArea.swift	2026-10-28 23:09:07.950962854 -0700
++++ b/Sources/KeyboardKit/Callouts/Callouts+InputCalloutButtonArea.swift	2026-10-28 23:12:58.917287359 -0700
+@@ -88,6 +88,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     VStack(spacing: 0) {
+@@ -111,3 +112,4 @@
+     .keyboardCalloutStyle(.standard)
+     .padding()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Callouts/Callouts+InputCallout.swift b/Sources/KeyboardKit/Callouts/Callouts+InputCallout.swift
+--- a/Sources/KeyboardKit/Callouts/Callouts+InputCallout.swift	2026-10-28 23:09:07.950962854 -0700
++++ b/Sources/KeyboardKit/Callouts/Callouts+InputCallout.swift	2026-10-28 23:12:58.917129483 -0700
+@@ -139,6 +139,7 @@
+ // MARK: - Previews
+ 
+ #if os(iOS) || os(macOS) || os(watchOS)
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct Preview: View {
+@@ -195,3 +196,4 @@
+         ))
+ }
+ #endif
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Callouts/Internals/CustomRoundedRectangle.swift b/Sources/KeyboardKit/Callouts/Internals/CustomRoundedRectangle.swift
+--- a/Sources/KeyboardKit/Callouts/Internals/CustomRoundedRectangle.swift	2026-10-28 23:09:07.950962854 -0700
++++ b/Sources/KeyboardKit/Callouts/Internals/CustomRoundedRectangle.swift	2026-10-28 23:12:58.917448472 -0700
+@@ -73,6 +73,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     CustomRoundedRectangle(
+@@ -86,3 +87,4 @@
+     .background(Color.red)
+     .frame(width: 200, height: 200)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+All.swift b/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+All.swift
+--- a/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+All.swift	2026-10-28 23:09:07.966802340 -0700
++++ b/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+All.swift	2026-10-28 23:12:58.920752277 -0700
+@@ -33,6 +33,7 @@
+ }
+ 
+ #if os(iOS) || os(macOS)
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     struct Preview: View {
+@@ -70,6 +71,7 @@
+     
+     return Preview()
+ }
++#endif
+ 
+ private extension View {
+     
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/EmojiKit/EmojiCategory.swift b/Sources/KeyboardKit/_Dependencies/EmojiKit/EmojiCategory.swift
+--- a/Sources/KeyboardKit/_Dependencies/EmojiKit/EmojiCategory.swift	2026-10-28 23:09:07.966823407 -0700
++++ b/Sources/KeyboardKit/_Dependencies/EmojiKit/EmojiCategory.swift	2026-10-28 23:12:58.921723898 -0700
+@@ -308,6 +308,7 @@
+     }()
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     func categories() -> [EmojiCategory] {
+@@ -343,3 +344,4 @@
+         .navigationTitle("Emoji Categories")
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+Localization.swift b/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+Localization.swift
+--- a/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+Localization.swift	2026-10-28 23:09:07.966823407 -0700
++++ b/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+Localization.swift	2026-10-28 23:12:58.920834088 -0700
+@@ -18,6 +18,7 @@
+ }
+ 
+ #if os(iOS)
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct Preview: View {
+@@ -68,3 +69,4 @@
+     return Preview()
+ }
+ #endif
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+SkinTone.swift b/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+SkinTone.swift
+--- a/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+SkinTone.swift	2026-10-28 23:09:07.966823407 -0700
++++ b/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji+SkinTone.swift	2026-10-28 23:12:58.921162756 -0700
+@@ -303,6 +303,7 @@
+ }
+ 
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct Preview: View {
+@@ -325,3 +326,4 @@
+ 
+     return Preview()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji.swift b/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji.swift
+--- a/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji.swift	2026-10-28 23:09:07.966823407 -0700
++++ b/Sources/KeyboardKit/_Dependencies/EmojiKit/Emoji.swift	2026-10-28 23:12:58.921358746 -0700
+@@ -57,6 +57,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     List {
+@@ -75,3 +76,4 @@
+         }
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/EmojiKit/EmojiVersion.swift b/Sources/KeyboardKit/_Dependencies/EmojiKit/EmojiVersion.swift
+--- a/Sources/KeyboardKit/_Dependencies/EmojiKit/EmojiVersion.swift	2026-10-28 23:09:07.966823407 -0700
++++ b/Sources/KeyboardKit/_Dependencies/EmojiKit/EmojiVersion.swift	2026-10-28 23:12:58.922003546 -0700
+@@ -320,6 +320,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     /// This preview limits each line to 5 emojis to make it
+@@ -344,3 +345,4 @@
+         .navigationTitle("Emoji Versions")
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/GestureButton/GestureButtonScrollState.swift b/Sources/KeyboardKit/_Dependencies/GestureButton/GestureButtonScrollState.swift
+--- a/Sources/KeyboardKit/_Dependencies/GestureButton/GestureButtonScrollState.swift	2026-10-28 23:09:07.967213977 -0700
++++ b/Sources/KeyboardKit/_Dependencies/GestureButton/GestureButtonScrollState.swift	2026-10-28 23:12:58.922622262 -0700
+@@ -61,8 +61,10 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     Text("Hello")
+         .scrollGestureState(.init())
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/GestureButton/GestureButton.swift b/Sources/KeyboardKit/_Dependencies/GestureButton/GestureButton.swift
+--- a/Sources/KeyboardKit/_Dependencies/GestureButton/GestureButton.swift	2026-10-28 23:09:07.967167691 -0700
++++ b/Sources/KeyboardKit/_Dependencies/GestureButton/GestureButton.swift	2026-10-28 23:12:58.922404501 -0700
+@@ -340,6 +340,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     struct Preview: View {
+@@ -374,3 +375,4 @@
+     return Preview()
+ }
+ #endif
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Dependencies/GestureButton/ScrollViewGestureButton.swift b/Sources/KeyboardKit/_Dependencies/GestureButton/ScrollViewGestureButton.swift
+--- a/Sources/KeyboardKit/_Dependencies/GestureButton/ScrollViewGestureButton.swift	2026-10-28 23:09:07.967213977 -0700
++++ b/Sources/KeyboardKit/_Dependencies/GestureButton/ScrollViewGestureButton.swift	2026-10-28 23:12:58.922926887 -0700
+@@ -264,6 +264,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct Preview: View {
+@@ -428,3 +429,4 @@
+     return Preview()
+ }
+ #endif
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' "a/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+BaseLayoutService.swift" "b/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+BaseLayoutService.swift"
+--- "a/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+BaseLayoutService.swift"	2026-10-28 23:09:07.967419745 -0700
++++ "b/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+BaseLayoutService.swift"	2026-10-28 23:12:58.923532238 -0700
+@@ -250,6 +250,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     func preview(for type: Keyboard.KeyboardType) -> some View {
+@@ -273,3 +274,4 @@
+         preview(for: .symbolic)
+     }.background(Color.keyboardBackground)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' "a/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+iPadLayoutService.swift" "b/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+iPadLayoutService.swift"
+--- "a/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+iPadLayoutService.swift"	2026-10-28 23:09:07.967593753 -0700
++++ "b/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+iPadLayoutService.swift"	2026-10-28 23:12:58.923734680 -0700
+@@ -165,6 +165,7 @@
+ }
+ 
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     func layout() -> KeyboardLayout {
+@@ -191,3 +192,4 @@
+     )
+     .background(Color.keyboardBackground)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' "a/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+iPhoneLayoutService.swift" "b/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+iPhoneLayoutService.swift"
+--- "a/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+iPhoneLayoutService.swift"	2026-10-28 23:09:07.967593753 -0700
++++ "b/Sources/KeyboardKit/_Deprecated/Layout Services/KeyboardLayout+iPhoneLayoutService.swift"	2026-10-28 23:12:58.923922452 -0700
+@@ -241,6 +241,7 @@
+ }
+ 
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     func preview(for type: Keyboard.KeyboardType) -> some View {
+@@ -264,3 +265,4 @@
+         preview(for: .symbolic)
+     }.background(Color.keyboardBackground)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/KeyboardViewItem.swift b/Sources/KeyboardKit/_Keyboard/KeyboardViewItem.swift
+--- a/Sources/KeyboardKit/_Keyboard/KeyboardViewItem.swift	2026-10-28 23:09:07.967707617 -0700
++++ b/Sources/KeyboardKit/_Keyboard/KeyboardViewItem.swift	2026-10-28 23:12:58.924983886 -0700
+@@ -178,6 +178,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     struct Preview: View {
+@@ -226,3 +227,4 @@
+     return Preview()
+         // .keyboardSpaceTrailingAction(.localeContextMenu)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/KeyboardViewStyle.swift b/Sources/KeyboardKit/_Keyboard/KeyboardViewStyle.swift
+--- a/Sources/KeyboardKit/_Keyboard/KeyboardViewStyle.swift	2026-10-28 23:09:07.967707617 -0700
++++ b/Sources/KeyboardKit/_Keyboard/KeyboardViewStyle.swift	2026-10-28 23:10:35.546871285 -0700
+@@ -65,7 +65,7 @@
+     ///
+     /// > Note: The builder returns `nil` by default to make
+     /// it possible to check if there is an injected style.
+-    @Entry var keyboardViewStyle: KeyboardViewStyle?
++    @Entry var keyboardViewStyle: KeyboardViewStyle? = nil
+ }
+ 
+ public extension View {
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/KeyboardView.swift b/Sources/KeyboardKit/_Keyboard/KeyboardView.swift
+--- a/Sources/KeyboardKit/_Keyboard/KeyboardView.swift	2026-10-28 23:09:07.967707617 -0700
++++ b/Sources/KeyboardKit/_Keyboard/KeyboardView.swift	2026-10-28 23:12:58.924754168 -0700
+@@ -477,6 +477,7 @@
+ }
+ 
+ #if os(iOS) || os(tvOS) || os(visionOS)
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     class PreviewLayoutService: KeyboardLayout.StandardLayoutService {
+@@ -551,3 +552,4 @@
+     return Preview()
+ }
+ #endif
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Models/Keyboard+DockEdge.swift b/Sources/KeyboardKit/_Keyboard/Models/Keyboard+DockEdge.swift
+--- a/Sources/KeyboardKit/_Keyboard/Models/Keyboard+DockEdge.swift	2026-10-28 23:09:07.968037348 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Models/Keyboard+DockEdge.swift	2026-10-28 23:10:35.547931697 -0700
+@@ -59,5 +59,5 @@
+ public extension EnvironmentValues {
+ 
+     /// Apply a ``Keyboard/DockEdge`` value.
+-    @Entry var keyboardDockEdge: Keyboard.DockEdge?
++    @Entry var keyboardDockEdge: Keyboard.DockEdge? = nil
+ }
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Models/Keyboard+InputToolbar.swift b/Sources/KeyboardKit/_Keyboard/Models/Keyboard+InputToolbar.swift
+--- a/Sources/KeyboardKit/_Keyboard/Models/Keyboard+InputToolbar.swift	2026-10-28 23:09:07.968037348 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Models/Keyboard+InputToolbar.swift	2026-10-28 23:10:35.550190090 -0700
+@@ -59,5 +59,5 @@
+     /// ``KeyboardView`` will use this value, if any, or the
+     /// ``KeyboardSettings/inputToolbarDisplayMode``.
+     @Entry var keyboardInputToolbarDisplayMode: Keyboard
+-        .InputToolbarDisplayMode?
++        .InputToolbarDisplayMode? = nil
+ }
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Models/Keyboard+SpaceLongPressBehavior.swift b/Sources/KeyboardKit/_Keyboard/Models/Keyboard+SpaceLongPressBehavior.swift
+--- a/Sources/KeyboardKit/_Keyboard/Models/Keyboard+SpaceLongPressBehavior.swift	2026-10-28 23:09:07.968037348 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Models/Keyboard+SpaceLongPressBehavior.swift	2026-10-28 23:10:35.548096642 -0700
+@@ -69,5 +69,5 @@
+     /// custom way. ``KeyboardView`` will not use this value,
+     /// since ``KeyboardSettings/spaceLongPressBehavior`` is
+     /// not only used by the views, but by the entire system.
+-    @Entry var keyboardSpaceLongPressBehavior: Keyboard.SpaceLongPressBehavior?
++    @Entry var keyboardSpaceLongPressBehavior: Keyboard.SpaceLongPressBehavior? = nil
+ }
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Models/Keyboard+SpaceMenuType.swift b/Sources/KeyboardKit/_Keyboard/Models/Keyboard+SpaceMenuType.swift
+--- a/Sources/KeyboardKit/_Keyboard/Models/Keyboard+SpaceMenuType.swift	2026-10-28 23:09:07.968037348 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Models/Keyboard+SpaceMenuType.swift	2026-10-28 23:10:35.548247321 -0700
+@@ -77,8 +77,8 @@
+ public extension EnvironmentValues {
+     
+     /// Apply a leading ``Keyboard/SpaceMenuType``.
+-    @Entry var keyboardSpaceContextMenuLeading: Keyboard.SpaceMenuType?
++    @Entry var keyboardSpaceContextMenuLeading: Keyboard.SpaceMenuType? = nil
+     
+     /// Apply a trailing ``Keyboard/SpaceMenuType``.
+-    @Entry var keyboardSpaceContextMenuTrailing: Keyboard.SpaceMenuType?
++    @Entry var keyboardSpaceContextMenuTrailing: Keyboard.SpaceMenuType? = nil
+ }
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Background.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Background.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Background.swift	2026-10-28 23:09:07.968037348 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Background.swift	2026-10-28 23:12:58.925467883 -0700
+@@ -205,6 +205,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     VStack {
+@@ -217,3 +218,4 @@
+     }
+     .padding()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonContent.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonContent.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonContent.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonContent.swift	2026-10-28 23:12:58.925821629 -0700
+@@ -107,6 +107,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     let multiLocaleContext: KeyboardContext = {
+@@ -153,3 +154,4 @@
+         return style
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonKey.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonKey.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonKey.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonKey.swift	2026-10-28 23:12:58.925990878 -0700
+@@ -44,6 +44,7 @@
+     var cornerRadius: CGFloat { style.cornerRadius ?? 0 }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     VStack {
+@@ -56,3 +57,4 @@
+     }
+     .padding()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonModifier.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonModifier.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonModifier.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonModifier.swift	2026-10-28 23:12:58.926208952 -0700
+@@ -193,6 +193,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct Preview: View {
+@@ -272,3 +273,4 @@
+ 
+     return Preview()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonShadow.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonShadow.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonShadow.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonShadow.swift	2026-10-28 23:12:58.926357934 -0700
+@@ -67,6 +67,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     VStack {
+@@ -83,3 +84,4 @@
+     }
+     .padding()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonStyle.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonStyle.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonStyle.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonStyle.swift	2026-10-28 23:10:35.548417983 -0700
+@@ -373,7 +373,7 @@
+     ///
+     /// > Note: The builder returns `nil` by default to make
+     /// it possible to check if there is an injected builder.
+-    @Entry var keyboardButtonStyleBuilder: Keyboard.ButtonStyleBuilder?
++    @Entry var keyboardButtonStyleBuilder: Keyboard.ButtonStyleBuilder? = nil
+ }
+ 
+ public extension View {
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Button.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Button.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Button.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Button.swift	2026-10-28 23:12:58.925676550 -0700
+@@ -153,6 +153,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     struct Preview: View {
+@@ -213,3 +214,4 @@
+     
+     return Preview()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonTitle.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonTitle.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonTitle.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+ButtonTitle.swift	2026-10-28 23:12:58.926548901 -0700
+@@ -48,6 +48,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     HStack {
+@@ -57,3 +58,4 @@
+         Keyboard.ButtonTitle(text: "non-input", action: .backspace)
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+CollapsedView.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+CollapsedView.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+CollapsedView.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+CollapsedView.swift	2026-10-28 23:12:58.926639946 -0700
+@@ -52,6 +52,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     List {
+         ForEach(0..<100, id: \.self) { _ in
+@@ -69,3 +70,4 @@
+         .background(Color.keyboardBackground)
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+NextKeyboardButton.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+NextKeyboardButton.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+NextKeyboardButton.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+NextKeyboardButton.swift	2026-10-28 23:12:58.926726071 -0700
+@@ -34,12 +34,14 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     Keyboard.NextKeyboardButton {
+         Image.keyboardGlobe.font(.title)
+     }
+ }
++#endif
+ 
+ /// This overlay sets up a `next keyboard` controller action
+ /// on a blank `UIKit` button. This can hopefully be removed
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+NumberPad.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+NumberPad.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+NumberPad.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+NumberPad.swift	2026-10-28 23:12:58.926819773 -0700
+@@ -65,6 +65,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     VStack {
+         Spacer()
+@@ -78,3 +79,4 @@
+         .background(Color.keyboardBackground)
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+PlainButtonStyle.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+PlainButtonStyle.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+PlainButtonStyle.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+PlainButtonStyle.swift	2026-10-28 23:12:58.926898386 -0700
+@@ -58,9 +58,11 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     VStack {
+         previewButton.buttonStyle(.plainKeyboard)
+         previewButton.buttonStyle(.plainKeyboard(pressedOpacity: 0.1))
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+SpaceContent.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+SpaceContent.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+SpaceContent.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+SpaceContent.swift	2026-10-28 23:12:58.927013805 -0700
+@@ -100,6 +100,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     VStack {
+@@ -121,3 +122,4 @@
+     .padding()
+     .background(Color.keyboardBackground)
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Toolbar.swift b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Toolbar.swift
+--- a/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Toolbar.swift	2026-10-28 23:09:07.968226400 -0700
++++ b/Sources/KeyboardKit/_Keyboard/Views/Keyboard+Toolbar.swift	2026-10-28 23:12:58.927112768 -0700
+@@ -101,6 +101,7 @@
+ }
+ 
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     VStack(spacing: 0) {
+@@ -117,3 +118,4 @@
+         height: 350
+     ))
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Localization/KKL10n.swift b/Sources/KeyboardKit/Localization/KKL10n.swift
+--- a/Sources/KeyboardKit/Localization/KKL10n.swift	2026-10-28 23:09:07.962301329 -0700
++++ b/Sources/KeyboardKit/Localization/KKL10n.swift	2026-10-28 23:12:58.918551804 -0700
+@@ -64,6 +64,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     NavigationView {
+@@ -80,3 +81,4 @@
+         }.navigationTitle("Translations")
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Localization/Locale+KeyboardKit.swift b/Sources/KeyboardKit/Localization/Locale+KeyboardKit.swift
+--- a/Sources/KeyboardKit/Localization/Locale+KeyboardKit.swift	2026-10-28 23:09:07.962439175 -0700
++++ b/Sources/KeyboardKit/Localization/Locale+KeyboardKit.swift	2026-10-28 23:12:58.918790988 -0700
+@@ -229,9 +229,11 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     let locale = Locale(identifier: "cv")
+     
+     Text(locale.localizedName(in: .english) ?? "-")
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Localization/Views/Locale+ContextMenu.swift b/Sources/KeyboardKit/Localization/Views/Locale+ContextMenu.swift
+--- a/Sources/KeyboardKit/Localization/Views/Locale+ContextMenu.swift	2026-10-28 23:09:07.962439175 -0700
++++ b/Sources/KeyboardKit/Localization/Views/Locale+ContextMenu.swift	2026-10-28 23:12:58.919027436 -0700
+@@ -181,6 +181,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct Preview: View {
+@@ -226,3 +227,4 @@
+ 
+     return Preview()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Localization/Views/Locale+ListItem.swift b/Sources/KeyboardKit/Localization/Views/Locale+ListItem.swift
+--- a/Sources/KeyboardKit/Localization/Views/Locale+ListItem.swift	2026-10-28 23:09:07.962577207 -0700
++++ b/Sources/KeyboardKit/Localization/Views/Locale+ListItem.swift	2026-10-28 23:12:58.919147770 -0700
+@@ -73,6 +73,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+     
+     List {
+@@ -99,3 +100,4 @@
+         )
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Status/Views/KeyboardStatus+Label.swift b/Sources/KeyboardKit/Status/Views/KeyboardStatus+Label.swift
+--- a/Sources/KeyboardKit/Status/Views/KeyboardStatus+Label.swift	2026-10-28 23:09:07.965363745 -0700
++++ b/Sources/KeyboardKit/Status/Views/KeyboardStatus+Label.swift	2026-10-28 23:12:58.919654019 -0700
+@@ -90,6 +90,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     List {
+@@ -119,3 +120,4 @@
+         )
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Styling/Color+Keyboard.swift b/Sources/KeyboardKit/Styling/Color+Keyboard.swift
+--- a/Sources/KeyboardKit/Styling/Color+Keyboard.swift	2026-10-28 23:09:07.966609840 -0700
++++ b/Sources/KeyboardKit/Styling/Color+Keyboard.swift	2026-10-28 23:12:58.919853233 -0700
+@@ -17,46 +17,46 @@
+     }
+ 
+     /// The standard keyboard background color.
+-    static let keyboardBackground = Color(.keyboardBackground)
++    static let keyboardBackground = KKColor.keyboardBackground
+ 
+     /// The standard keyboard background color for dark appearance.
+-    static let keyboardBackgroundForDarkAppearance = Color(.keyboardBackgroundForDarkAppearance)
++    static let keyboardBackgroundForDarkAppearance = KKColor.keyboardBackgroundForDarkAppearance
+ 
+     /// The standard keyboard button background color.
+-    static let keyboardButtonBackground = Color(.keyboardButtonBackground)
++    static let keyboardButtonBackground = KKColor.keyboardButtonBackground
+ 
+     /// The standard keyboard button background color, adjusted for the iOS color scheme bug.
+-    static let keyboardButtonBackgroundForColorSchemeBug = Color(.keyboardButtonBackgroundForColorSchemeBug)
++    static let keyboardButtonBackgroundForColorSchemeBug = KKColor.keyboardButtonBackgroundForColorSchemeBug
+ 
+     /// The standard keyboard button background color for dark appearance.
+-    static let keyboardButtonBackgroundForDarkAppearance = Color(.keyboardButtonBackgroundForDarkAppearance)
++    static let keyboardButtonBackgroundForDarkAppearance = KKColor.keyboardButtonBackgroundForDarkAppearance
+ 
+     /// The standard keyboard button foreground color.
+-    static let keyboardButtonForeground = Color(.keyboardButtonForeground)
++    static let keyboardButtonForeground = KKColor.keyboardButtonForeground
+ 
+     /// The standard keyboard button foreground color for dark appearance.
+-    static let keyboardButtonForegroundForDarkAppearance = Color(.keyboardButtonForegroundForDarkAppearance)
++    static let keyboardButtonForegroundForDarkAppearance = KKColor.keyboardButtonForegroundForDarkAppearance
+ 
+     /// The standard keyboard button shadow color.
+-    static let keyboardButtonShadow = Color(.keyboardButtonShadow)
++    static let keyboardButtonShadow = KKColor.keyboardButtonShadow
+ 
+     /// The standard dark keyboard button background color.
+-    static let keyboardDarkButtonBackground = Color(.keyboardDarkButtonBackground)
++    static let keyboardDarkButtonBackground = KKColor.keyboardDarkButtonBackground
+ 
+     /// The standard dark keyboard button background color for the iOS color scheme bug.
+-    static let keyboardDarkButtonBackgroundForColorSchemeBug = Color(.keyboardDarkButtonBackgroundForColorSchemeBug)
++    static let keyboardDarkButtonBackgroundForColorSchemeBug = KKColor.keyboardDarkButtonBackgroundForColorSchemeBug
+ 
+     /// The standard dark keyboard button background color for dark apperance.
+-    static let keyboardDarkButtonBackgroundForDarkAppearance = Color(.keyboardDarkButtonBackgroundForDarkAppearance)
++    static let keyboardDarkButtonBackgroundForDarkAppearance = KKColor.keyboardDarkButtonBackgroundForDarkAppearance
+ 
+     /// The standard dark keyboard button foreground color.
+     static var keyboardDarkButtonForeground: Self {
+-        Color(.keyboardButtonForeground)
++        KKColor.keyboardButtonForeground
+     }
+     
+     /// The standard dark keyboard button foreground color for dark apperance.
+     static var keyboardDarkButtonForegroundForDarkAppearance: Self {
+-        Color(.keyboardButtonForegroundForDarkAppearance)
++        KKColor.keyboardButtonForegroundForDarkAppearance
+     }
+ }
+ 
+@@ -133,6 +133,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     return ScrollView(.vertical) {
+@@ -174,6 +175,7 @@
+         .shadow(radius: 1, y: 1)
+     }
+ }
++#endif
+ 
+ struct StylePreviewHeader: View {
+ 
+@@ -201,3 +203,32 @@
+         [.init(.adaptive(minimum: 100, maximum: 120), spacing: 20)]
+     }
+ }
++
++// protly patch: the 9.9.1 asset catalog colors, defined in code (xtool cannot compile .xcassets).
++#if canImport(UIKit)
++import UIKit
++
++enum KKColor {
++    private static func dynamic(_ light: UIColor, _ dark: UIColor) -> Color {
++        Color(UIColor { $0.userInterfaceStyle == .dark ? dark : light })
++    }
++    private static func hex(_ v: UInt32, _ a: CGFloat = 1) -> UIColor {
++        UIColor(red: CGFloat((v >> 16) & 0xFF) / 255, green: CGFloat((v >> 8) & 0xFF) / 255,
++                blue: CGFloat(v & 0xFF) / 255, alpha: a)
++    }
++    private static func gray(_ w: CGFloat, _ a: CGFloat = 1) -> UIColor { UIColor(white: w, alpha: a) }
++
++    static let keyboardBackground = dynamic(UIColor(red: 0.835, green: 0.839, blue: 0.867, alpha: 1), gray(0.173))
++    static let keyboardBackgroundForDarkAppearance = dynamic(gray(0.416), gray(0.173))
++    static let keyboardButtonBackground = dynamic(hex(0xFFFFFF), hex(0x6B6B6B))
++    static let keyboardButtonBackgroundForColorSchemeBug = dynamic(gray(1), gray(1, 0.3))
++    static let keyboardButtonBackgroundForDarkAppearance = dynamic(hex(0x979797), hex(0x979797))
++    static let keyboardButtonForeground = Color(UIColor.label)
++    static let keyboardButtonForegroundForDarkAppearance = dynamic(hex(0xFFFFFF), .label)
++    static let keyboardButtonShadow = dynamic(gray(0, 0.3), gray(0, 0.7))
++    static let keyboardDarkButtonBackground = dynamic(hex(0xABB1BA), hex(0x474747))
++    static let keyboardDarkButtonBackgroundForColorSchemeBug =
++        dynamic(UIColor(red: 0.702, green: 0.718, blue: 0.753, alpha: 1), gray(1, 0.1))
++    static let keyboardDarkButtonBackgroundForDarkAppearance = dynamic(hex(0x757575), hex(0x757575))
++}
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Styling/Color+Random.swift b/Sources/KeyboardKit/Styling/Color+Random.swift
+--- a/Sources/KeyboardKit/Styling/Color+Random.swift	2026-10-28 23:09:07.966609840 -0700
++++ b/Sources/KeyboardKit/Styling/Color+Random.swift	2026-10-28 23:12:58.919985054 -0700
+@@ -28,6 +28,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     func preview(for color: Color) -> some View {
+@@ -42,3 +43,4 @@
+     }
+     .padding()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Styling/Image+Keyboard.swift b/Sources/KeyboardKit/Styling/Image+Keyboard.swift
+--- a/Sources/KeyboardKit/Styling/Image+Keyboard.swift	2026-10-28 23:09:07.966609840 -0700
++++ b/Sources/KeyboardKit/Styling/Image+Keyboard.swift	2026-10-28 23:12:58.920155376 -0700
+@@ -10,8 +10,8 @@
+ 
+ public extension Image {
+     
+-    static let keyboardEmoji = Image(.keyboardEmoji)
+-    static let keyboardKit = Image(.keyboardKitIcon)
++    static let keyboardEmoji = symbol("face.smiling")
++    static let keyboardKit = symbol("keyboard")
+ 
+     static let keyboard = symbol("keyboard")
+     static let keyboardArrowUp = symbol("arrow.up")
+@@ -129,6 +129,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     let locale = Locale.english
+@@ -198,6 +199,7 @@
+         .font(.title.weight(.regular))
+     }
+ }
++#endif
+ 
+ private extension Array where Element == GridItem {
+ 
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Styling/KeyboardAction+ButtonStyle.swift b/Sources/KeyboardKit/Styling/KeyboardAction+ButtonStyle.swift
+--- a/Sources/KeyboardKit/Styling/KeyboardAction+ButtonStyle.swift	2026-10-28 23:09:07.966609840 -0700
++++ b/Sources/KeyboardKit/Styling/KeyboardAction+ButtonStyle.swift	2026-10-28 23:12:58.920357168 -0700
+@@ -105,6 +105,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     func preview(
+@@ -127,3 +128,4 @@
+         Color.keyboardBackground
+     }
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Styling/KeyboardReturnKeyType+ButtonImage.swift b/Sources/KeyboardKit/Styling/KeyboardReturnKeyType+ButtonImage.swift
+--- a/Sources/KeyboardKit/Styling/KeyboardReturnKeyType+ButtonImage.swift	2026-10-28 23:09:07.966609840 -0700
++++ b/Sources/KeyboardKit/Styling/KeyboardReturnKeyType+ButtonImage.swift	2026-10-28 23:12:58.920541589 -0700
+@@ -42,6 +42,7 @@
+     }
+ }
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     struct Preview: View {
+@@ -68,3 +69,4 @@
+ 
+     return Preview()
+ }
++#endif
+diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Styling/KeyboardView+StylePreview.swift b/Sources/KeyboardKit/Styling/KeyboardView+StylePreview.swift
+--- a/Sources/KeyboardKit/Styling/KeyboardView+StylePreview.swift	2026-10-28 23:09:07.966609840 -0700
++++ b/Sources/KeyboardKit/Styling/KeyboardView+StylePreview.swift	2026-10-28 23:12:58.920657018 -0700
+@@ -8,6 +8,7 @@
+ 
+ import SwiftUI
+ 
++#if KEYBOARDKIT_PREVIEWS // protly patch: xtool cannot expand #Preview reliably
+ #Preview {
+ 
+     func preview(
+@@ -48,3 +49,4 @@
+         preview(.done)
+     }
+ }
++#endif

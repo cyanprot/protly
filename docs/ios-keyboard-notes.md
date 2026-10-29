@@ -89,6 +89,14 @@ Verified findings from the Sprint 1 review, left open on purpose:
   fallback until it is ready, or ship pre-encoded, pre-sorted lists.
 - **Medium: mixed tokens (nice하더라, playlist에) cannot come out of a per-word decision.** Decide in the re-plan
   whether to support a mid-word switch or accept the loss.
+- **Medium (Task 2.4 review): KeyboardKit overrides Info.plist `PrimaryLanguage` ko-KR.**
+  `KeyboardInputViewController+Setup.swift:54` sets `primaryLanguage` from `keyboardContext.locale`, which defaults to
+  `Locale.current` (en_US on this phone). 9.9.1 ships no `ko.lproj`, so with a Korean locale `KKL10n` returns ""
+  and the space, return and 123 keys lose their labels. Fix: set `state.keyboardContext.locale` explicitly and
+  add a `ko.lproj/Localizable.strings` patch (listed in VENDORED.md) or supply our own key labels.
+- **Minor (Task 2.4 review): the spike `SpikeBar` captures the text proxy at view build time and inserts outside
+  KeyboardKit's action handler**, so KeyboardKit context (auto-capitalization) does not see the insert. The AI bar
+  must insert through `controller.services.actionHandler.handle(...)` or read `controller.textDocumentProxy` at tap time.
 - **Measured:** both lists add about 11 MB RSS. `decide(complete: false)` took about 58 us on a 1-key prefix
   and about 3 us on a longer one while it scanned up to 5,000 prefix matches; with `WordList.hasPrefix` (one
   binary search) it is about 1.1-1.5 us on a 1-key prefix and 3-5 us on 4-5 keys (release, laptop, 2026-10-28).
