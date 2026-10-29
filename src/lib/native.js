@@ -18,7 +18,14 @@ export function createNativeTransport(connect, lastError = () => undefined, time
       if (!p) return;
       c.pending.delete(msg.id);
       clearTimeout(p.timer);
-      p.resolve(msg.ping ? { ping: msg.ping } : { status: msg.status, retry_after: msg.retry_after ?? null, body: msg.body });
+      if (p.ping) { p.resolve(msg.ping ? { ping: msg.ping } : {}); return; }
+      // An API reply carries an HTTP status (0 for the host's own errors). Anything else is a host bug: a string
+      // '200' must not pass as success, and a missing status must not read as the API rejecting the model id.
+      if (!Number.isInteger(msg.status) || msg.status < 0 || msg.status > 599) {
+        p.reject(new ApiError('host_bug', 'the native host sent a malformed reply'));
+        return;
+      }
+      p.resolve({ status: msg.status, retry_after: msg.retry_after ?? null, body: msg.body });
     });
     port.onDisconnect.addListener(() => {
       const reason = lastError() || 'native host disconnected';
@@ -42,7 +49,7 @@ export function createNativeTransport(connect, lastError = () => undefined, time
       const timer = setTimeout(() => {
         if (c.pending.delete(id)) reject(new ApiError('timeout', 'native host timed out'));
       }, ms);
-      c.pending.set(id, { resolve, reject, timer });
+      c.pending.set(id, { resolve, reject, timer, ping: !!payload.ping });
       try {
         c.port.postMessage({ id, ...payload });
       } catch (e) {
