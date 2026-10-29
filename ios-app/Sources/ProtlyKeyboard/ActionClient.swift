@@ -8,7 +8,10 @@ enum ActionClient {
         configuration: ActionAPI.sessionConfiguration(), delegate: ActionSessionDelegate(), delegateQueue: nil)
 
     static func run(_ mode: ActionMode, text: String) async -> Result<ActionResult, ActionError> {
-        guard let system = try? ActionAPI.bundledPrompt() else { return .failure(ActionError(.setup)) }
+        guard let base = try? ActionAPI.bundledPrompt() else { return .failure(ActionError(.setup)) }
+        // The about-me note joins Translate (out) and Polish (fix) only. AboutMe.system leaves Read clipboard (in) as is.
+        let note = UserDefaults.standard.string(forKey: AboutMe.defaultsKey) ?? ""
+        let system = AboutMe.system(base: base, note: note, mode: mode)
         let req: URLRequest
         switch ActionAPI.request(mode: mode, text: text, system: system, apiKey: Secrets.apiKey) {
         case .success(let r): req = r

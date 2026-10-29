@@ -253,7 +253,16 @@ final class KeyboardViewController: KeyboardInputViewController {
             mode.panel = .failed(message, retry: .in)
             return
         }
-        run(.in, text: text, original: "", isSelection: false)
+        // The container app's "about me" note arrives this way (no App Group). Any app can copy the marker, so the
+        // note is only shown here; Save on the panel (insertResult) keeps it.
+        switch AboutMe.parse(clipboard: text) {
+        case .notAboutMe:
+            run(.in, text: text, original: "", isSelection: false)
+        case .note(let note):
+            mode.panel = .confirmNote(note)
+        case .tooLong(let count):
+            mode.panel = .notice("About me is \(count) characters. Shorten it to \(AboutMe.cap) in the Protly app.")
+        }
     }
 
     private func run(_ action: ActionMode, text: String, original: String, isSelection: Bool) {
@@ -272,6 +281,12 @@ final class KeyboardViewController: KeyboardInputViewController {
     }
 
     func insertResult() {
+        // Save on the About me confirm panel: the only way a clipboard note is kept.
+        if case let .confirmNote(note) = mode.panel {
+            UserDefaults.standard.set(note, forKey: AboutMe.defaultsKey)
+            mode.panel = .notice(AboutMe.savedText(for: note))
+            return
+        }
         guard case let .result(action, r, original, isSelection) = mode.panel else { return }
         // The user may have moved the cursor or edited while the request ran: never delete the wrong text.
         let p = textDocumentProxy

@@ -3,7 +3,8 @@ import XCTest
 
 // The keyboard target needs the iOS SDK, so its rules are checked on its source text here:
 // nothing is logged, the clipboard string is read only in readClipboard (a tap), the key goes only
-// into ActionAPI.request, and UserDefaults keeps no text but the capped learned words. Secrets.swift is never opened.
+// into ActionAPI.request, and UserDefaults keeps no text but the capped learned words and the about-me note that
+// Save on its confirm panel stores (Sprint 7b). Secrets.swift is never opened.
 final class KeyboardSourceRulesTests: XCTestCase {
     private func sources() throws -> [(name: String, text: String)] {
         let iosApp = URL(fileURLWithPath: #filePath)
@@ -107,7 +108,8 @@ final class KeyboardSourceRulesTests: XCTestCase {
         }
     }
 
-    func testUserDefaultsHoldsOnlyTheChangeCountAndTheLanguage() throws {
+    func testUserDefaultsHoldsOnlyTheChangeCountTheLanguageTheLearnedWordsAndTheNote() throws {
+        var noteSaves: [String] = []
         for (name, text) in try sources() {
             let ns = text as NSString
             let receivers = [#"UserDefaults\.standard"#, #"UserDefaults\([^)]*\)"#]
@@ -115,6 +117,15 @@ final class KeyboardSourceRulesTests: XCTestCase {
             for receiver in receivers {
                 for r in matches(receiver + #"\.(set|setValue)\("#, in: text) {
                     let line = lineText(ns, r)
+                    // The about-me note (at most AboutMe.cap characters), saved only by Save on its confirm
+                    // panel, because any app can put the marker on the clipboard.
+                    if line.contains("forKey: AboutMe.defaultsKey)") {
+                        let above = ns.substring(to: ns.lineRange(for: r).location)
+                            .components(separatedBy: "\n").dropLast().last ?? ""
+                        XCTAssertTrue(above.contains("case let .confirmNote("), "\(name): note saved off the confirm panel: \(line)")
+                        noteSaves.append("\(name): \(line)")
+                        continue
+                    }
                     // The one store of typed text: Words.swift saves the learned words, which stay bounded
                     // (LearnedWords: at most 1,000 per language, keys of at most 32 characters).
                     let learned = name == "Words.swift" && line.contains("forKey: Self.learnedKey")
@@ -122,8 +133,14 @@ final class KeyboardSourceRulesTests: XCTestCase {
                                   "\(name): \(line)")
                 }
             }
-            XCTAssertEqual(matches(#"@AppStorage"#, in: text).count, 0, name)
+            // The container app keeps the note the user types there, under that key and no other.
+            for r in matches(#"@AppStorage"#, in: text) {
+                XCTAssertTrue(name == "ProtlyApp.swift" && lineText(ns, r).contains("@AppStorage(AboutMeLink.defaultsKey)"),
+                              "\(name): \(lineText(ns, r))")
+            }
         }
+        XCTAssertEqual(noteSaves.count, 1, noteSaves.joined(separator: "\n"))
+        XCTAssertTrue(noteSaves.first?.hasPrefix("KeyboardViewController.swift:") == true, noteSaves.joined())
     }
 
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {

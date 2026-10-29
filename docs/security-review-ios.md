@@ -36,7 +36,10 @@ Scope: `ios-app/ProtlyCore/**`, `ios-app/Sources/Protly/**`, `ios-app/scripts/**
 - **Clipboard:** the pasteboard string is read only in `readClipboard`, and only taps reach it (the bar's
   Read clipboard, the protly key on an empty field, Retry). `refreshField` uses only `changeCount` and
   `hasStrings`, which never show the Allow Paste prompt. `UserDefaults` holds only the change count and the
-  last word's language.
+  last word's language, the learned words (Sprint 6, bounded by `LearnedWords`), and, since Sprint 7, the
+  about-me note: Read clipboard keeps text only when its first line is `protly about me v1` and the user taps
+  Save on a panel that shows it. Any app can write that marker, so the tap is the guard. All other clipboard
+  text is still never kept.
 - **Field read:** `FieldText.read` always ends (at most 10 jumps × 50 polls × 20 ms) and stops on cancel. A
   read that stops before the end of the field is refused ("Could not read the whole text").
 - **Reply parsing:** `JSONSerialization` refuses invalid bytes and deep nesting (the limit of 512 was seen on

@@ -6,6 +6,10 @@ enum PanelState: Equatable {
     case loading(ActionMode)
     case result(ActionMode, ActionResult, original: String, isSelection: Bool)
     case failed(String, retry: ActionMode)
+    /// A clipboard note waiting for Save (insert) or Cancel (close).
+    case confirmNote(String)
+    /// A message with no action, such as the about-me note being saved.
+    case notice(String)
 }
 
 struct PanelView: View {
@@ -38,6 +42,17 @@ struct PanelView: View {
                 Text(message).foregroundStyle(.secondary).frame(maxWidth: .infinity)
                 Spacer()
                 buttons(primary: ("Retry", { retry(mode) }), closeLabel: "Cancel")
+            case .confirmNote(let note):
+                ScrollView {
+                    Text(AboutMe.confirmText(for: note)).font(.system(size: 15))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                buttons(primary: ("Save", insert), closeLabel: "Cancel")
+            case .notice(let message):
+                Spacer()
+                Text(message).foregroundStyle(.secondary).frame(maxWidth: .infinity)
+                Spacer()
+                buttons(primary: nil, closeLabel: "Done")
             }
         }
         .padding(12)
