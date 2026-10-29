@@ -19,6 +19,9 @@ Files changed beyond the preview guards:
 - `Sources/KeyboardKit/Styling/Image+Keyboard.swift`: two asset images replaced with SF Symbols.
 - `Sources/KeyboardKit/Callouts/Callouts+InputCallout.swift`: input callouts (key pop-ups) off. iOS clips a third-party
   keyboard at its top edge, so row 1's pop-ups were cut off (Sprint 4 phone check, the user asked to remove them).
+- `Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift`: a long-press bubble that is taller than the room above
+  its key shrinks to fit (padding to 2 pt, then item height), and `positionY` follows the real item height. Row 1's
+  bubbles were cut at the top edge (Sprint 5 phone check).
 - `= nil` on optional `@Entry` values: `_Keyboard/KeyboardViewStyle.swift`, `_Keyboard/Models/Keyboard+DockEdge.swift`,
   `_Keyboard/Models/Keyboard+InputToolbar.swift`, `_Keyboard/Models/Keyboard+SpaceLongPressBehavior.swift`,
   `_Keyboard/Models/Keyboard+SpaceMenuType.swift` (2), `_Keyboard/Views/Keyboard+ButtonStyle.swift`.

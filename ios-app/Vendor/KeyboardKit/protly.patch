@@ -76,10 +76,55 @@ diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Callouts/Callouts+Act
      .padding()
  }
 +#endif
-diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift b/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift
---- a/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift	2026-10-28 23:09:07.950962854 -0700
-+++ b/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift	2026-10-28 23:12:58.916562397 -0700
-@@ -224,6 +224,7 @@
+--- a/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift
++++ b/Sources/KeyboardKit/Callouts/Callouts+ActionCallout.swift
+@@ -64,7 +64,7 @@
+                     .foregroundColor(isSelected($0.offset) ? style.selectedForegroundColor : style.foregroundColor)
+                     .cornerRadius(style.cornerRadius)
+                     .padding(.horizontal, style.actionItemPadding.width)
+-                    .padding(.vertical, style.actionItemPadding.height)
++                    .padding(.vertical, itemPaddingHeight)
+             }
+         }
+         .padding(.horizontal, style.curveSize.width)
+@@ -176,9 +176,25 @@
+         var size = CGSize(width: width * itemSizeWidthScale, height: height)
+         if isTextCallout {
+             size.width = max(size.width, 60)    // TEMP
++            size.height = min(size.height, max(0, roomAbove - 2 * itemPaddingHeight))  // protly: fit the top edge
+             return size
+         }
+-        return size.limited(to: style.actionItemMaxSize)
++        size = size.limited(to: style.actionItemMaxSize)
++        size.height = min(size.height, max(0, roomAbove - 2 * itemPaddingHeight))  // protly: fit the top edge
++        return size
++    }
++
++    // protly: iOS clips a third-party keyboard at its top edge, and a row 1 bubble (55 pt) is taller
++    // than the room above the key (toolbar plus inset, 34.5 pt). Such a bubble shrinks to fit:
++    // vertical padding first (down to 2), then item height. Lower rows have room and keep upstream sizes.
++    var roomAbove: CGFloat {
++        buttonFrame.minY
++    }
++
++    var itemPaddingHeight: CGFloat {
++        let normal = style.actionItemPadding.height
++        let unclamped = min(buttonSize.height, style.actionItemMaxSize.height)
++        return min(normal, max(2, (roomAbove - unclamped) / 2))
+     }
+     
+     var itemSizeWidthScale: Double {
+@@ -204,7 +220,8 @@
+     }
+ 
+     var positionY: CGFloat {
+-        buttonFrame.origin.y - style.actionItemPadding.height
++        // protly: upstream is `origin.y - padding`, which assumes item height == button height.
++        buttonFrame.origin.y + (buttonSize.height - itemSize.height) / 2 - itemPaddingHeight
+     }
+     
+     var useCompressedButtonSize: Bool {
+@@ -224,6 +241,7 @@
  }
  
  #if !os(tvOS)
@@ -87,7 +132,7 @@ diff -ru -x '*.xcassets' -x '*.docc' a/Sources/KeyboardKit/Callouts/Callouts+Act
  #Preview {
  
      struct PreviewGroup: View {
-@@ -322,3 +323,4 @@
+@@ -322,3 +340,4 @@
          }
  }
  #endif
