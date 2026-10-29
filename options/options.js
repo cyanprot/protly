@@ -53,7 +53,9 @@ $('check').onclick = async () => {
       p.key_present ? 'API key found' : 'API key MISSING',
       p.workspace_header ? 'workspace header on' : 'no workspace header',
     ];
-    show('host-result', parts.join(' · '), !p.key_present);
+    // The host checks the key file's mode only. Older hosts send no key_shared: no warning.
+    if (p.key_shared === true) parts.push('key file open to group or others: chmod 600 ~/.config/anthropic/api-key');
+    show('host-result', parts.join(' · '), !p.key_present || p.key_shared === true);
   } catch (e) {
     const text = e.kind === 'host' ? `Host not reachable: ${e.message}`
       : e.kind === 'timeout' ? 'Host did not answer within 5 s.' : errorText(e);

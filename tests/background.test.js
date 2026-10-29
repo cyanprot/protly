@@ -211,3 +211,38 @@ test('a stored language from before the language check never blocks a re-run', a
   const again = await send({ type: 'outgoing', threadId: '9', context: [], korean: '안녕', profile: 'hard', lang: r.data.lang }, senders.instagram);
   assert.equal(again.ok, true, JSON.stringify(again));
 });
+
+const until = async (f, ms = 1000) => {
+  for (const t0 = Date.now(); !f();) {
+    if (Date.now() - t0 > ms) throw new Error('timed out');
+    await new Promise((r) => setTimeout(r, 5));
+  }
+};
+
+// The background reaches the generic bundle's instance through executeScript funcs. They run in the frame's isolated
+// world, so here they run against this realm's globalThis.
+test('Alt+T and the context menu call the instance under Symbol.for("protly"), never a page-named global', async () => {
+  const calls = [];
+  const real = fake.chrome.scripting.executeScript;
+  fake.chrome.scripting.executeScript = async (o) => {
+    calls.push(o);
+    if (o.files && o.target.frameIds[0] === 7) throw new Error('cannot access frame'); // a refused cross-origin frame
+    return [];
+  };
+  const KEY = Symbol.for('protly');
+  const log = [];
+  globalThis[KEY] = { run: (a) => log.push(['run', a]), toast: (t) => log.push(['toast', t]) };
+  globalThis.__protly = { run: () => assert.fail('page-named run'), toast: () => assert.fail('page-named toast') };
+  try {
+    fake.chrome.commands.onCommand.fns.forEach((f) => f('run', { id: 5 }));
+    await until(() => calls.some((c) => c.func));
+    fake.chrome.contextMenus.onClicked.fns.forEach((f) => f({ menuItemId: 'protly-box', frameId: 7 }, { id: 5 }));
+    await until(() => calls.filter((c) => c.func).length === 2);
+    for (const c of calls.filter((x) => x.func)) c.func(...c.args);
+    assert.deepEqual(log, [['run', { source: 'command' }], ['toast', 'protly cannot reach this frame.']]);
+  } finally {
+    fake.chrome.scripting.executeScript = real;
+    delete globalThis[KEY];
+    delete globalThis.__protly;
+  }
+});

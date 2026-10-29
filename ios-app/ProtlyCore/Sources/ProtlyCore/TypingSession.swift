@@ -18,6 +18,8 @@ public struct TypingSession: Sendable {
     public private(set) var previous: Language?
     /// The word lists load in the background; until then a Hangul-only rule decides.
     public var detector: LanguageDetector?
+    /// Learned words and the system lexicon, for the bar's suggestion. Flips teach it.
+    public var suggester = Suggester()
 
     private var forced: Language?  // the user flipped the word being typed
     private var last: (keys: [KeyEvent], text: String, language: Language, after: String)?
@@ -42,6 +44,14 @@ public struct TypingSession: Sendable {
     /// The committed word plus what was typed after it, while it can still be flipped. The keyboard checks
     /// that the field still ends with it before a flip deletes anything.
     public var lastTail: String? { last.map { $0.text + $0.after } }
+
+    /// For the bar's right slot while a word is typed: a fix (typo, contraction, text replacement) ahead of a
+    /// completion. Only a tap puts it in (`accept`). A flipped word gets no fix: the user chose its reading.
+    public var suggestion: String? {
+        guard isComposing else { return nil }
+        if forced == nil, let r = suggester.fix(keys, as: language, lists: detector) { return r }
+        return suggester.completion(keys, as: language, lists: detector)
+    }
 
     public mutating func type(_ key: KeyEvent) -> FieldEdit {
         keys.append(key)
@@ -69,14 +79,29 @@ public struct TypingSession: Sendable {
     /// End the word (space, punctuation, return, cursor move). nil when no word is being typed.
     public mutating func commit() -> FieldEdit? {
         guard !keys.isEmpty else { return nil }
-        let lang = forced ?? decide(complete: true)
+        let decided = decide(complete: true)
+        let lang = forced ?? decided
         let text = Self.render(keys, as: lang)
+        if lang != decided { suggester.learned.learn(text, as: lang) }  // flipped while typing: teach the reading
         last = (keys, text, lang, "")
         previous = lang
         language = lang
         keys = []
         forced = nil
         return .commit(text)
+    }
+
+    /// The bar's suggestion was tapped: the word becomes it. The keyboard then types a space. A pick alone teaches
+    /// nothing (a pick of 해 for `g` would teach Korean "go"); after a flip while typing, the picked word is taught
+    /// in the language the user flipped to, as `commit` would teach the flip.
+    public mutating func accept() -> FieldEdit? {
+        guard let s = suggestion else { return nil }
+        if let forced, forced != decide(complete: true) { suggester.learned.learn(s, as: forced) }
+        previous = language
+        keys = []
+        forced = nil
+        last = nil
+        return .commit(s)
     }
 
     /// The keyboard inserted text right after a commit (the space). Flipping still reaches the word.
@@ -97,7 +122,10 @@ public struct TypingSession: Sendable {
         language = previous ?? .korean
     }
 
-    /// Flip the word being typed, or the word just committed, to the other language.
+    /// Flip the word being typed, or the word just committed, to the other language. Flipping a committed word
+    /// teaches its new reading and takes one count off its old one (a no-op when that was never learned), so a
+    /// word flipped there and back, or learned in the other language on an earlier day, is not left learned in
+    /// both. A word flipped while typing is taught when it is committed or its suggestion is picked.
     public mutating func flip() -> FieldEdit? {
         if isComposing {
             forced = language.other
@@ -106,6 +134,8 @@ public struct TypingSession: Sendable {
         }
         guard let l = last else { return nil }
         let text = Self.render(l.keys, as: l.language.other)
+        suggester.learned.unlearn(l.text, as: l.language)
+        suggester.learned.learn(text, as: l.language.other)
         last = (l.keys, text, l.language.other, l.after)
         previous = l.language.other
         language = l.language.other
@@ -114,7 +144,9 @@ public struct TypingSession: Sendable {
     }
 
     private func decide(complete: Bool) -> Language {
-        if let detector { return detector.decide(keys, complete: complete, previous: previous) }
+        if let detector {
+            return detector.decide(keys, complete: complete, previous: previous, learned: suggester.learned)
+        }
         // Valid Hangul commits as Korean; while typing it keeps the previous language to avoid flicker.
         guard Hangul.compose(keys).isValid else { return .english }
         return complete ? .korean : (previous ?? .korean)

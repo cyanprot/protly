@@ -17,12 +17,15 @@ final class ProtlyMode: ObservableObject {
     @Published var canUndo = false
     /// The clipboard holds text copied since protly last looked (checked without reading it).
     @Published var clipboardIsNew = false
+    /// The bar's right slot: a fix or a completion for the word being typed. Only a tap puts it in.
+    @Published var suggestion: String?
 }
 
 @objc(KeyboardViewController)
 final class KeyboardViewController: KeyboardInputViewController {
     let mode = ProtlyMode()
-    private(set) var session = TypingSession()
+    /// Not private(set): Words.swift fills its suggester.
+    var session = TypingSession()
     /// Marked text currently in the field, mirrored here because the proxy's context excludes it.
     private var marked = ""
     /// The text before the word being typed, taken at its first key. The proxy's context excludes the mark,
@@ -38,6 +41,8 @@ final class KeyboardViewController: KeyboardInputViewController {
     private var actionTask: Task<Void, Never>?
     /// Text protly inserted and what it replaced, for Undo.
     private var lastInsert: (inserted: String, original: String, isSelection: Bool)?
+    /// LearnedWords.changes at the last save (Words.swift). Per controller: each one loads its own copy.
+    var savedChanges = 0
 
     override var primaryLanguage: String? {
         get { "ko-KR" }  // KeyboardKit would report its English locale; protly is mainly Korean
@@ -61,6 +66,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         state.keyboardContext.settings.isAutocapitalizationEnabled = false
 
         session = TypingSession(previous: Self.loadPrevious())
+        setUpWords()
         refreshMode()
         // The word lists take about 136 ms to load: once per process, off the main thread, Hangul rule until then.
         Task { [weak self] in
@@ -74,6 +80,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     private func setDetector(_ detector: LanguageDetector?) {
         session.detector = detector
+        refreshMode()  // the word being typed may change language and suggestion
     }
 
     override func viewWillSetupKeyboardView() {
@@ -133,6 +140,17 @@ final class KeyboardViewController: KeyboardInputViewController {
         apply(edit)
         savePrevious()
         refreshMode()
+    }
+
+    /// The bar's right slot: the word becomes the suggestion, then a space typed like any other.
+    func pickSuggestion() {
+        let shown = mode.suggestion  // what the user tapped, before noticeFieldMoved can refresh the bar
+        noticeFieldMoved()
+        // If the suggestion changed since the bar showed it, do nothing.
+        guard session.suggestion == shown, let edit = session.accept() else { return }
+        apply(edit)
+        savePrevious()
+        insertText(" ")
     }
 
     /// The host changed the field under protly (a chat app sent the message and cleared the field with the
@@ -314,10 +332,12 @@ final class KeyboardViewController: KeyboardInputViewController {
         if mode.clipboardIsNew != isNew { mode.clipboardIsNew = isNew }
     }
 
-    private func refreshMode() {
+    /// Not private: Words.swift calls it when the system lexicon arrives.
+    func refreshMode() {
         let korean = session.keycapLanguage == .korean
         if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
+        refreshWords()
         refreshField()
     }
 
@@ -436,7 +456,8 @@ struct ProtlyRoot: View {
                     mode: mode,
                     flip: { [unowned host] in host.flipWord() },
                     act: { [unowned host] in host.act($0) },
-                    undo: { [unowned host] in host.undoInsert() }
+                    undo: { [unowned host] in host.undoInsert() },
+                    pick: { [unowned host] in host.pickSuggestion() }
                 )
             }
         )
