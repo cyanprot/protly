@@ -191,6 +191,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         commitWord()
         session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
         refreshMode()
+        // Every path below shows its own panel: a request still running must not replace it later.
+        actionTask?.cancel()
         guard hasFullAccess else {
             mode.panel = .failed("Turn on Full Access in Settings to use protly actions", retry: requested ?? .in)
             return
@@ -199,7 +201,6 @@ final class KeyboardViewController: KeyboardInputViewController {
             readClipboard()
             return
         }
-        actionTask?.cancel()
         // The panel shows at once: a second tap during the field read cannot start a second request.
         mode.panel = .loading(requested ?? mode.draftMode ?? .in)
         actionTask = Task { [weak self] in
@@ -256,8 +257,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         let p = textDocumentProxy
         let unchanged = isSelection
             ? p.selectedText == original
-            : (p.documentContextAfterInput ?? "").isEmpty
-                && (p.documentContextBeforeInput ?? "").hasSuffix(String(original.suffix(40)))
+            : FieldGuard.canReplace(
+                original, before: p.documentContextBeforeInput ?? "", after: p.documentContextAfterInput ?? "")
         guard unchanged else {
             mode.panel = .failed("The text changed. Try again.", retry: action)
             return
@@ -271,8 +272,8 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     func undoInsert() {
         guard let l = lastInsert else { return }
-        guard (textDocumentProxy.documentContextBeforeInput ?? "").hasSuffix(String(l.inserted.suffix(40))) else {
-            endUndo()  // the cursor moved since Insert
+        guard FieldGuard.canUndo(l.inserted, before: textDocumentProxy.documentContextBeforeInput ?? "") else {
+            endUndo()  // the cursor moved or the text changed since Insert
             return
         }
         for _ in l.inserted { textDocumentProxy.deleteBackward() }

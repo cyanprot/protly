@@ -1,7 +1,10 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking  // URLRequest on Linux
+#endif
 
-// Translate/Polish over the Anthropic Messages API: request body and headers in, result or error out.
-// No networking here (FoundationNetworking differs on Linux): the keyboard sends the bytes.
+// Translate/Polish over the Anthropic Messages API: the request in, result or error out.
+// No networking here (FoundationNetworking differs on Linux): the keyboard sends the request.
 
 public enum ActionMode: String, Sendable, CaseIterable {
     case `in`   // someone else's text -> Korean
@@ -17,6 +20,7 @@ public struct ActionResult: Sendable, Equatable {
 public struct ActionError: Error, Sendable, Equatable {
     public enum Kind: String, Sendable {
         case auth, spendLimit, rate, overloaded, server, badRequest, network, timeout, refused, truncated, parse
+        case tooLong, noKey, setup
     }
     public let kind: Kind
     /// Short English line for the bar.
@@ -33,6 +37,9 @@ public struct ActionError: Error, Sendable, Equatable {
         case .refused: return "The model declined this text."
         case .truncated: return "The reply was cut off. Try a shorter text."
         case .parse: return "The reply was not readable. Try again."
+        case .tooLong: return "The text is too long. Try a shorter text."
+        case .noKey: return "protly was built without an API key. Run make-secrets.sh and rebuild."
+        case .setup: return "protly could not build the request. Rebuild protly."
         }
     }
     public init(_ kind: Kind) { self.kind = kind }
@@ -53,11 +60,63 @@ public enum ActionAPI {
 
     /// The action for the user's own draft: Korean anywhere -> translate out, else polish.
     public static func mode(forDraft text: String) -> ActionMode {
-        text.unicodeScalars.contains { (0xAC00...0xD7A3).contains($0.value) || (0x3131...0x318E).contains($0.value) } ? .out : .fix
+        text.unicodeScalars.contains { s in
+            !hangulFillers.contains(s.value) && hangulScalars.contains { $0.contains(s.value) }
+        } ? .out : .fix
     }
+
+    /// Invisible Hangul fillers (pasted as blank names and spacers on Instagram): not Korean text.
+    static let hangulFillers: Set<UInt32> = [0x115F, 0x1160, 0x3164, 0xFFA0]
+
+    /// Syllables, compatibility jamo, and the forms they take elsewhere: conjoining jamo (decomposed text,
+    /// as in Mac file names), the jamo extensions, halfwidth jamo.
+    static let hangulScalars: [ClosedRange<UInt32>] = [
+        0xAC00...0xD7A3, 0x3131...0x318E, 0x1100...0x11FF, 0xA960...0xA97F, 0xD7B0...0xD7FF, 0xFFA0...0xFFDC,
+    ]
 
     public static func model(for mode: ActionMode) -> String {
         mode == .in ? "claude-sonnet-5-5" : "claude-opus-5-5"
+    }
+
+    /// Longest text sent, in UTF-16 units. A longer text cannot fit the 16000-token reply anyway, and a
+    /// multi-megabyte clipboard would cost the keyboard its memory and the account its money.
+    public static let maxInputLength = 50_000
+    /// Largest reply read. 16000 tokens of output are about 100 KB; anything this big is not a reply.
+    public static let maxResponseBytes = 2_000_000
+    /// Seconds without a byte (the API sends the reply whole, so this is also the wait for it), and the
+    /// cap on the whole request, so a reply dribbled byte by byte still ends.
+    public static let idleTimeout: TimeInterval = 30
+    public static let totalTimeout: TimeInterval = 90
+
+    /// The request for one action, or the error to show without sending anything.
+    public static func request(mode: ActionMode, text: String, system: String, apiKey: String) -> Result<URLRequest, ActionError> {
+        // Printable ASCII, no space: anything else is not a key and could not travel as a header value.
+        guard !apiKey.isEmpty, apiKey.unicodeScalars.allSatisfy({ (0x21...0x7E).contains($0.value) }) else {
+            return .failure(ActionError(.noKey))
+        }
+        guard text.utf16.count <= maxInputLength else { return .failure(ActionError(.tooLong)) }
+        guard let url = URL(string: url), let body = try? body(mode: mode, text: text, system: system) else {
+            return .failure(ActionError(.setup))
+        }
+        var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: idleTimeout)
+        req.httpMethod = "POST"
+        req.httpShouldHandleCookies = false
+        for (name, value) in headers(apiKey: apiKey) { req.setValue(value, forHTTPHeaderField: name) }
+        req.httpBody = body
+        return .success(req)
+    }
+
+    /// The session for action requests: the text and the reply stay in memory, never in a cache or cookie store.
+    public static func sessionConfiguration() -> URLSessionConfiguration {
+        let c = URLSessionConfiguration.ephemeral
+        c.urlCache = nil
+        c.httpCookieStorage = nil
+        c.httpShouldSetCookies = false
+        c.urlCredentialStorage = nil
+        c.requestCachePolicy = .reloadIgnoringLocalCacheData
+        c.timeoutIntervalForRequest = idleTimeout
+        c.timeoutIntervalForResource = totalTimeout
+        return c
     }
 
     public static func headers(apiKey: String) -> [String: String] {
@@ -91,8 +150,22 @@ public enum ActionAPI {
         return try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
     }
 
+    /// The reply's bytes, or nil once they pass `limit`: a huge or endless body never takes the keyboard's
+    /// memory. Stops with CancellationError when the task is cancelled (Cancel, the keyboard hiding).
+    public static func collect<S: AsyncSequence>(_ bytes: S, limit: Int = maxResponseBytes) async throws -> Data?
+    where S.Element == UInt8 {
+        var data = Data()
+        for try await byte in bytes {
+            guard data.count < limit else { return nil }
+            if data.count % 4096 == 0 { try Task.checkCancellation() }
+            data.append(byte)
+        }
+        return data
+    }
+
     /// HTTP status and body -> result. Thinking blocks are skipped; the answer is the joined text blocks.
     public static func parse(status: Int, body: Data) -> Result<ActionResult, ActionError> {
+        guard body.count <= maxResponseBytes else { return .failure(ActionError(.parse)) }
         guard status == 200 else { return .failure(ActionError(kind(status: status, body: body))) }
         guard let resp = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else {
             return .failure(ActionError(.parse))
@@ -134,5 +207,14 @@ public enum ActionAPI {
               let d = String(text[start...end]).data(using: .utf8)
         else { return nil }
         return try? JSONSerialization.jsonObject(with: d) as? [String: Any]
+    }
+}
+
+/// The action session's delegate: redirects are refused, because URLSession would replay every header,
+/// the key included, to the new URL. The 3xx then reads as a rejected request.
+public final class ActionSessionDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    public func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                           newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
+        completionHandler(nil)
     }
 }

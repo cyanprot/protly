@@ -3,18 +3,22 @@ import ProtlyCore
 
 /// One Translate/Polish call. Bytes from ProtlyCore, URLSession here.
 enum ActionClient {
+    /// One session for the process: ephemeral, no cache, no cookies, no redirects (ActionAPI).
+    private static let session = URLSession(
+        configuration: ActionAPI.sessionConfiguration(), delegate: ActionSessionDelegate(), delegateQueue: nil)
+
     static func run(_ mode: ActionMode, text: String) async -> Result<ActionResult, ActionError> {
-        guard let system = try? ActionAPI.bundledPrompt(),
-              let body = try? ActionAPI.body(mode: mode, text: text, system: system),
-              let url = URL(string: ActionAPI.url)
-        else { return .failure(ActionError(.badRequest)) }
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.timeoutInterval = 30
-        for (name, value) in ActionAPI.headers(apiKey: Secrets.apiKey) { req.setValue(value, forHTTPHeaderField: name) }
-        req.httpBody = body
+        guard let system = try? ActionAPI.bundledPrompt() else { return .failure(ActionError(.setup)) }
+        let req: URLRequest
+        switch ActionAPI.request(mode: mode, text: text, system: system, apiKey: Secrets.apiKey) {
+        case .success(let r): req = r
+        case .failure(let e): return .failure(e)
+        }
         do {
-            let (data, resp) = try await URLSession.shared.data(for: req)
+            let (bytes, resp) = try await session.bytes(for: req)
+            defer { bytes.task.cancel() }  // on every way out: stop the download now, not when it is released
+            // Read at most maxResponseBytes: a huge body must not take the keyboard's memory.
+            guard let data = try await ActionAPI.collect(bytes) else { return .failure(ActionError(.parse)) }
             return ActionAPI.parse(status: (resp as? HTTPURLResponse)?.statusCode ?? 0, body: data)
         } catch let error as URLError where error.code == .timedOut {
             return .failure(ActionError(.timeout))

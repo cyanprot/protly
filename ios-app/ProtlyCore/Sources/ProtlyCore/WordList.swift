@@ -8,19 +8,26 @@ public struct WordList: Sendable {
     private let counts: [Int]
     public let total: Double
 
+    /// Counts above this saturate: no sum of them can overflow. Real counts are below 1e9.
+    static let maxCount = 1 << 40
+
+    /// Entries with a count below 1 are dropped.
     public init(entries: [(key: String, count: Int)]) {
         var merged: [String: Int] = [:]
-        for e in entries { merged[e.key, default: 0] += e.count }
+        for e in entries where e.count > 0 {
+            merged[e.key] = min(merged[e.key, default: 0] + min(e.count, Self.maxCount), Self.maxCount)
+        }
         let sorted = merged.sorted { $0.key < $1.key }
         keys = sorted.map(\.key)
         counts = sorted.map(\.value)
-        total = Double(max(1, counts.reduce(0, +)))
+        total = max(1, counts.reduce(0.0) { $0 + Double($1) })
     }
 
-    /// FrequencyWords format: "word count" per line.
+    /// FrequencyWords format: "word count" per line. Any line break ("\r\n" is one Character) and any
+    /// whitespace between the two fields.
     static func parse(_ text: String) -> [(word: String, count: Int)] {
-        text.split(separator: "\n").compactMap { line in
-            let parts = line.split(separator: " ")
+        text.split(whereSeparator: \.isNewline).compactMap { line in
+            let parts = line.split(whereSeparator: \.isWhitespace)
             guard parts.count == 2, let n = Int(parts[1]) else { return nil }
             return (String(parts[0]), n)
         }
