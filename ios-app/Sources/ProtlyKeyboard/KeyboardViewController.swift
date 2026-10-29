@@ -46,6 +46,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        ProtlyHeight.pin(self)
         setup(for: KeyboardApp(name: "Protly"))
 
         let handler = ProtlyActionHandler(controller: self)
@@ -453,6 +454,7 @@ struct ProtlyRoot: View {
         // Outside the view: KeyboardKit sizes keys from the width it is given, and its own edgeInsets
         // only pad inside a fixed frame, which moves nothing.
         .padding(.horizontal, ProtlyGeometry.sideInset)
+        .frame(maxHeight: .infinity, alignment: .bottom)  // ProtlyHeight may drop the pin below the content's height
         .autocompleteToolbarStyle(.init(height: ProtlyGeometry.toolbarHeight))
         .keyboardButtonStyle(builder: { [context] params in
             var style = params.standardStyle(for: context)
