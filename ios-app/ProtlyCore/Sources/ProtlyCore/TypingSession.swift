@@ -50,9 +50,12 @@ public struct TypingSession: Sendable {
         return .mark(Self.render(keys, as: language))
     }
 
-    /// nil when no word is being typed: the keyboard deletes normally.
+    /// nil when no word is being typed: the keyboard deletes normally, so the last word can no longer be flipped.
     public mutating func backspace() -> FieldEdit? {
-        guard !keys.isEmpty else { return nil }
+        guard !keys.isEmpty else {
+            last = nil
+            return nil
+        }
         keys.removeLast()
         if keys.isEmpty {
             forced = nil
@@ -106,7 +109,8 @@ public struct TypingSession: Sendable {
         last = (l.keys, text, l.language.other, l.after)
         previous = l.language.other
         language = l.language.other
-        return .replace(deleting: l.text.count + l.after.count, inserting: text + l.after)
+        // Counted together: in the field the word and what follows can join into one character (e + U+0301).
+        return .replace(deleting: (l.text + l.after).count, inserting: text + l.after)
     }
 
     private func decide(complete: Bool) -> Language {

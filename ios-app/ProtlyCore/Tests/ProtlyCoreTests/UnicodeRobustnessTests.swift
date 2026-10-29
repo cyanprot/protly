@@ -125,4 +125,42 @@ final class UnicodeRobustnessTests: XCTestCase {
         XCTAssertFalse(WordList(entries: []).hasPrefix(""))
         XCTAssertEqual(WordList(entries: []).frequency(of: "x"), 0)
     }
+
+    func testFlipDeletesExactlyTheTailInTheField() {
+        // In the field the word and what follows it sit together, and can join into one character
+        // (a combining mark, a final jamo, the second half of a flag): the flip deletes the joined count.
+        let cases: [(String, String)] = [("gi", "\u{301}"), ("rk", "\u{11A8}"), ("gi", "\u{FE0F}"), ("gi", " "), ("gi", " 😀")]
+        for (word, after) in cases {
+            var s = TypingSession()
+            for c in word { _ = s.type(KeyEvent(c)) }
+            _ = s.commit()
+            s.noteInserted(after)
+            let tail = s.lastTail!
+            guard case let .replace(count, inserted)? = s.flip() else { return XCTFail(word + after) }
+            XCTAssertEqual(count, tail.count, word + after)
+            // Field round trip: what is left before the tail never changes.
+            var field = "prefix " + tail
+            field = String(field.dropLast(count)) + inserted
+            XCTAssertTrue(field.hasPrefix("prefix "), word + after)
+            XCTAssertEqual(field, "prefix " + inserted)
+        }
+        var s = TypingSession()
+        _ = s.type(KeyEvent("🇰"))
+        _ = s.commit()
+        s.noteInserted("🇷")  // 🇰🇷 is one character
+        XCTAssertEqual(s.lastTail?.count, 1)
+        guard case let .replace(count, _)? = s.flip() else { return XCTFail("flag") }
+        XCTAssertEqual(count, 1)
+    }
+
+    func testBackspaceWithNothingComposingEndsTheFlip() {
+        // The keyboard deletes normally after a nil backspace: the committed word is no longer at the cursor.
+        var s = TypingSession()
+        for c in "gi" { _ = s.type(KeyEvent(c)) }
+        _ = s.commit()
+        s.noteInserted(" ")
+        XCTAssertNil(s.backspace())
+        XCTAssertNil(s.lastTail)
+        XCTAssertNil(s.flip())
+    }
 }
