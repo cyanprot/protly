@@ -196,3 +196,51 @@ Quality review fixes (2026-10-29), eval unchanged on every line:
 - An abandoned word (keyboard hidden, message sent, cursor moved) sets the previous language, so the next
   message starts in the language just used.
 - 40 tests (3 added: glue after a final, abandon after a flip, typing after a commit ends the flip).
+
+## Sprint 4: keyboard on the phone
+
+Checked 2026-10-29 on the iPhone 13 Pro (iOS 26, dark mode), Instagram DM unless noted. Builds 628e865,
+dd4b394, 5b9aa7c and the input-callout patch.
+
+| # | Item | Result |
+|---|------|--------|
+| 1 | `안녕 내일 봐` from an empty field | PASS (so `!p.hasText` in `noticeFieldMoved` stays) |
+| 2 | ` see you tomorrow` | PASS by replay: the field showed `ㄴㄴㄷ`, which is `sse` typed as Korean; TypingSession turns `see` into ㄴ -> se -> see |
+| 3 | `오늘 meeting 몇시야 ㅋㅋ진짜` | PASS |
+| 4 | `각` + backspaces | PASS: 가, then normal per-character deletes after the space |
+| 5 | Bar flip while typing and after the space | PASS (Ekdhavyfh -> 단어가, Tmvpdltm flips after the space) |
+| 6 | Shift, caps lock, ㅃㅉㄸㄲㅆ | PASS |
+| 7 | Empty-field case | Capital at a start, like Apple. The user keeps autocap off: protly now disables it |
+| 8 | Emoji key | FAIL as designed: `advanceToNextInputMode` goes to whatever iOS puts next (English (Canada)), and reordering in Settings does not change it. With Protly + Emoji only, iOS puts its own emoji key bottom left. The user's call: the in-row key becomes the protly key in Sprint 5 |
+| 9 | Space label, haptics, shift look | PASS after fix: Apple iOS 26 shift is the same gray key with a white filled arrow (protly had a white key, then a black arrow) |
+| 10 | Space drag | Worse than Apple: steps stall between characters, no vertical movement. A keyboard can only move the cursor by character offsets; Sprint 6 |
+| 11 | Double space period | PASS |
+| 12 | Half word survives hide/reopen | PASS |
+| 13 | KakaoTalk and Messages | PASS |
+| 14 | Crash / fallback | none |
+| 15 | Screenshots | measured below |
+| 16-19 | Send with no space, cursor tap, `안녕 ` backspace, apostrophes | PASS |
+| 20 | English underline | acceptable |
+
+Also seen: `걍` (keys `rid`) commits as English "rid": 걍 is rare in the word lists. Carry into the Sprint 6
+detector work with 걔. Key pop-ups (input callouts) on row 1 were cut off at the keyboard's top edge; the user asked
+to remove them, done as a KeyboardKit patch (VENDORED.md).
+
+Geometry (pt, from 1170x2532 screenshots, Apple's English (Canada) keyboard vs protly):
+
+| | Apple | protly round 1 | protly final |
+|---|---|---|---|
+| Band above row 1 | 52.0 | 51.67 | 51.67 |
+| Row pitch / key height | 54 / 43 | 54 / 43 | 54 / 43 |
+| Band below the last row | 71.0 | 80.33 | 74.83 |
+| Key pitch across / edge margin | 38.3 / 7.33 | 39 / 4 | 38.26 / 7.33 |
+
+- `bottomInset` never moved anything: KeyboardKit applies `keyboardViewStyle.edgeInsets` as padding inside a
+  fixed-height frame, and sizes keys from the full width. Side margins are now padding outside `KeyboardView`;
+  the last row's frame is trimmed so its key rests on the view's bottom edge.
+- 74.83 is the floor: iOS clips a third-party keyboard to its view and draws the globe/mic band (taller than
+  Apple's own) under it. Trimming the full 9.33 pt clipped the bottom row. So all rows sit 3.8 pt higher than
+  Apple's; the alternative is a 3.8 pt shorter bottom row. The user accepted the current look.
+
+Sprint 4 gate: items 1, 2, 4, 5, 9, 12, 13, 14, 16, 17, 18 pass; item 8 is replaced by the protly key in Sprint 5
+(the system key opens Emoji); band below is 3.8 pt off for the platform reason above, accepted by the user.

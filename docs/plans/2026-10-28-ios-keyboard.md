@@ -2362,8 +2362,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     /// The host changed the field under protly (a chat app sent the message and cleared the field with the
     /// keyboard still up; the user tapped elsewhere in the text): drop the word being typed without editing the
     /// field, and stop a flip from deleting at a moved cursor.
-    /// [UNVERIFIED] What `hasText` reports while only marked text is in the field. If Task 4.4 item 1 splits the
-    /// first word of an empty field (each key starts a new word), drop the `!p.hasText` clause first.
+    /// `!p.hasText` holds with only marked text in the field: Sprint 4 item 1 typed a first word whole.
     private func noticeFieldMoved() {
         let p = textDocumentProxy
         let before = p.documentContextBeforeInput ?? ""
@@ -3381,8 +3380,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     /// The host changed the field under protly (a chat app sent the message and cleared the field with the
     /// keyboard still up; the user tapped elsewhere in the text): drop the word being typed without editing the
     /// field, and stop a flip from deleting at a moved cursor.
-    /// [UNVERIFIED] What `hasText` reports while only marked text is in the field. If Task 4.4 item 1 splits the
-    /// first word of an empty field (each key starts a new word), drop the `!p.hasText` clause first.
+    /// `!p.hasText` holds with only marked text in the field: Sprint 4 item 1 typed a first word whole.
     private func noticeFieldMoved() {
         let p = textDocumentProxy
         let before = p.documentContextBeforeInput ?? ""

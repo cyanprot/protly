@@ -17,6 +17,8 @@ Files changed beyond the preview guards:
 - `Package.swift`: KeyboardKitTests target removed.
 - `Sources/KeyboardKit/Styling/Color+Keyboard.swift`: `KKColor` replaces the 11 colorsets (values checked against upstream).
 - `Sources/KeyboardKit/Styling/Image+Keyboard.swift`: two asset images replaced with SF Symbols.
+- `Sources/KeyboardKit/Callouts/Callouts+InputCallout.swift`: input callouts (key pop-ups) off. iOS clips a third-party
+  keyboard at its top edge, so row 1's pop-ups were cut off (Sprint 4 phone check, the user asked to remove them).
 - `= nil` on optional `@Entry` values: `_Keyboard/KeyboardViewStyle.swift`, `_Keyboard/Models/Keyboard+DockEdge.swift`,
   `_Keyboard/Models/Keyboard+InputToolbar.swift`, `_Keyboard/Models/Keyboard+SpaceLongPressBehavior.swift`,
   `_Keyboard/Models/Keyboard+SpaceMenuType.swift` (2), `_Keyboard/Views/Keyboard+ButtonStyle.swift`.

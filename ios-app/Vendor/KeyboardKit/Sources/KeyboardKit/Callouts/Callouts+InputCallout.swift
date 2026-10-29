@@ -79,7 +79,7 @@ private extension Callouts.InputCallout {
     }
 
     var isEnabled: Bool {
-        keyboardContext.deviceTypeForKeyboard == .phone
+        false  // protly: no key pop-ups; a third-party keyboard is clipped at its top, so row 1's were cut off
     }
 
     var shouldEnforceSmallSize: Bool {
