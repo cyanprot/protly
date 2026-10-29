@@ -104,9 +104,10 @@ public struct TypingSession: Sendable {
         return .commit(s)
     }
 
-    /// The keyboard inserted text right after a commit (the space). Flipping still reaches the word.
+    /// The keyboard inserted text after a commit. Flipping still reaches the word over spaces (U+0020) only;
+    /// anything else (punctuation, emoji, a newline, NBSP, a longer insert) ends the flip (Q5).
     public mutating func noteInserted(_ text: String) {
-        last?.after += text
+        if text.allSatisfy({ $0 == " " }) { last?.after += text } else { last = nil }
     }
 
     /// Something else happened (delete, cursor move, field change): the committed word can no longer be flipped.

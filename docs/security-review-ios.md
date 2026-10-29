@@ -91,6 +91,16 @@ Scope: `ios-app/ProtlyCore/**`, `ios-app/Sources/Protly/**`, `ios-app/scripts/**
 - **Q5, flip reach:** `TypingSession.noteInserted` keeps growing `last.after` (spaces, punctuation, emoji, a
   newline) until the next letter, so the bar's flip can reach back over a long insert. Should it reach over
   whitespace only?
+  - **Answered yes 2026-10-29, changed:** `noteInserted` now keeps the word flippable only while every insert
+    after it is plain spaces (U+0020, any number). Anything else ends the flip at once, the same as
+    `forgetLast`: punctuation, emoji, a newline (Return can send, and hosts cut the text before the cursor at a
+    line break, F23), NBSP, a tab, U+3000, a joining mark, or any insert holding a non-space. No key types NBSP
+    or a tab, so they only arrive as pasted or inserted text. Learning is unchanged where the flip is still
+    reachable (teach on flip, unlearn on flip back); after punctuation nothing can be flipped, so nothing is
+    taught. The F17 joined-character count stays in `flip`, but a joining insert now ends the flip before it
+    can matter. The suggestion slot is untouched (`accept` already drops the committed word). Tests:
+    `testFlipReachesOverSpacesOnly`, `testAnythingButASpaceEndsTheFlip`; `testFlipDeletesExactlyTheTailInTheField`
+    now expects joining inserts to end the flip.
 - **Q6, script test:** `make-secrets.sh` was checked by hand in a scratch clone. An offline node test needs a
   file in `tests/**`, which belongs to Sprint 001: a temp git repo, a fake key, not-ignored refused,
   mode 600, the warning, and the key never in the output. Add it there?

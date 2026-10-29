@@ -61,6 +61,46 @@ final class TypingSessionTests: XCTestCase {
         XCTAssertEqual(s.flip(), .replace(deleting: 7, inserting: "안녕 "))  // and back
     }
 
+    func testFlipReachesOverSpacesOnly() {
+        // Q5: any number of spaces keeps the committed word flippable, one insert at a time or together.
+        var s = TypingSession(detector: detector)
+        _ = type("dkssud", into: &s)
+        _ = s.commit()
+        s.noteInserted(" ")
+        s.noteInserted("  ")
+        XCTAssertEqual(s.lastTail, "안녕   ")
+        XCTAssertEqual(s.flip(), .replace(deleting: 5, inserting: "dkssud   "))
+        XCTAssertEqual(s.suggester.learned.count(of: "dkssud", in: .english), 1)  // a flip after commit still teaches
+        XCTAssertEqual(s.flip(), .replace(deleting: 9, inserting: "안녕   "))  // and back, unlearned
+        XCTAssertEqual(s.suggester.learned.count(of: "dkssud", in: .english), 0)
+    }
+
+    func testAnythingButASpaceEndsTheFlip() {
+        // Q5: punctuation, emoji, a newline, NBSP, a tab, a joining mark or a longer insert ends the reach,
+        // whether it comes right after the word or after its space. Nothing is flipped, so nothing is taught.
+        let enders = [".", ",", "?", "😀", "\n", "\r\n", "\u{00A0}", "\t", "\u{3000}", "\u{301}", "\u{FE0F}",
+                      " x", "x ", " .", "pasted text", ""]
+        for x in enders {
+            for space in ["", " "] {
+                var s = TypingSession(detector: detector)
+                _ = type("dkssud", into: &s)
+                _ = s.commit()
+                if !space.isEmpty { s.noteInserted(space) }
+                s.noteInserted(x)
+                if x.isEmpty {  // inserting nothing changes nothing
+                    XCTAssertEqual(s.lastTail, "안녕" + space)
+                    continue
+                }
+                XCTAssertNil(s.lastTail, space + x.debugDescription)
+                XCTAssertNil(s.alternative, space + x.debugDescription)
+                XCTAssertNil(s.flip(), space + x.debugDescription)
+                XCTAssertEqual(s.suggester.learned.changes, 0, space + x.debugDescription)
+                s.noteInserted(" ")  // a space after the ender does not bring the word back
+                XCTAssertNil(s.lastTail, space + x.debugDescription)
+            }
+        }
+    }
+
     func testTypingOrForgettingEndsTheFlip() {
         var s = TypingSession(detector: detector)
         _ = type("dkssud", into: &s)

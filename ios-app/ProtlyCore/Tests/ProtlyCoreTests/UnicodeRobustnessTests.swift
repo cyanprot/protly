@@ -133,8 +133,18 @@ final class UnicodeRobustnessTests: XCTestCase {
     func testFlipDeletesExactlyTheTailInTheField() {
         // In the field the word and what follows it sit together, and can join into one character
         // (a combining mark, a final jamo, the second half of a flag): the flip deletes the joined count.
+        // Since Q5 only spaces follow a flippable word; a joining insert ends the flip instead.
         let cases: [(String, String)] = [("gi", "\u{301}"), ("rk", "\u{11A8}"), ("gi", "\u{FE0F}"), ("gi", " "), ("gi", " 😀")]
         for (word, after) in cases {
+            guard after.allSatisfy({ $0 == " " }) else {
+                var s = TypingSession()
+                for c in word { _ = s.type(KeyEvent(c)) }
+                _ = s.commit()
+                s.noteInserted(after)
+                XCTAssertNil(s.lastTail, word + after)
+                XCTAssertNil(s.flip(), word + after)
+                continue
+            }
             var s = TypingSession()
             for c in word { _ = s.type(KeyEvent(c)) }
             _ = s.commit()
@@ -151,10 +161,9 @@ final class UnicodeRobustnessTests: XCTestCase {
         var s = TypingSession()
         _ = s.type(KeyEvent("🇰"))
         _ = s.commit()
-        s.noteInserted("🇷")  // 🇰🇷 is one character
-        XCTAssertEqual(s.lastTail?.count, 1)
-        guard case let .replace(count, _)? = s.flip() else { return XCTFail("flag") }
-        XCTAssertEqual(count, 1)
+        s.noteInserted("🇷")  // 🇰🇷 is one character: the flip ends rather than split it
+        XCTAssertNil(s.lastTail)
+        XCTAssertNil(s.flip())
     }
 
     func testBackspaceWithNothingComposingEndsTheFlip() {
