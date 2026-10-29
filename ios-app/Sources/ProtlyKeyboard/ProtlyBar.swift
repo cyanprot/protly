@@ -1,21 +1,42 @@
+import ProtlyCore
 import SwiftUI
 
-/// The predictive bar. Sprint 4: the other reading of the current or last word, centered; tap flips it.
+/// The predictive bar: Apple's three equal slots (the protly key is in the bottom row).
+/// Left: the other reading of the word being typed or just typed (tap flips). Center: Undo after an Insert,
+/// else the action that fits the field (Translate / Polish), else "Read clipboard" when new text was copied.
+/// Right: empty until Sprint 6 (completion).
 struct ProtlyBar: View {
     @ObservedObject var mode: ProtlyMode
     let flip: () -> Void
+    let act: (ActionMode?) -> Void   // nil = the protly key: whatever fits the field
+    let undo: () -> Void
 
     var body: some View {
-        HStack {
-            Spacer()
-            if let alt = mode.alternative, !alt.isEmpty {
-                Button(action: flip) {
-                    Text("\u{201C}\(alt)\u{201D}").lineLimit(1)
-                }
-                .foregroundStyle(.primary)
-            }
-            Spacer()
+        HStack(spacing: 0) {
+            left.frame(maxWidth: .infinity)
+            center.frame(maxWidth: .infinity)
+            Color.clear.frame(maxWidth: .infinity)
         }
+        .lineLimit(1)
         .frame(height: ProtlyGeometry.toolbarHeight)
+    }
+
+    @ViewBuilder
+    private var left: some View {
+        if let alt = mode.alternative, !alt.isEmpty {
+            Button(action: flip) { Text("\u{201C}\(alt)\u{201D}") }
+                .foregroundStyle(.primary)
+        }
+    }
+
+    @ViewBuilder
+    private var center: some View {
+        if mode.canUndo {
+            Button("Undo", action: undo).foregroundStyle(.primary)
+        } else if let draft = mode.draftMode {
+            Button(draft == .out ? "Translate" : "Polish") { act(draft) }.foregroundStyle(.primary)
+        } else if mode.clipboardIsNew {
+            Button("Read clipboard") { act(.in) }.foregroundStyle(.primary)
+        }
     }
 }

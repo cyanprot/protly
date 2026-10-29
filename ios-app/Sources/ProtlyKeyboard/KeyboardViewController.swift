@@ -10,6 +10,13 @@ final class ProtlyMode: ObservableObject {
     /// Shift is on because the user pressed it (not auto-capitalization).
     @Published var manualShift = false
     @Published var alternative: String?
+    /// The panel in place of the keys, nil = keys.
+    @Published var panel: PanelState?
+    /// The action that fits the field now (nil while typing or when the field is empty).
+    @Published var draftMode: ActionMode?
+    @Published var canUndo = false
+    /// The clipboard holds text copied since protly last looked (checked without reading it).
+    @Published var clipboardIsNew = false
 }
 
 @objc(KeyboardViewController)
@@ -27,6 +34,10 @@ final class KeyboardViewController: KeyboardInputViewController {
     let koreanPlain = ProtlyLayoutService(alphabeticInputSet: .dubeolsikPlain, numericInputSet: .numeric, symbolicInputSet: .symbolic)
 
     private static let previousKey = "protly.previousLanguage"
+    private static let clipboardKey = "protly.clipboardChangeCount"
+    private var actionTask: Task<Void, Never>?
+    /// Text protly inserted and what it replaced, for Undo.
+    private var lastInsert: (inserted: String, original: String, isSelection: Bool)?
 
     override var primaryLanguage: String? {
         get { "ko-KR" }  // KeyboardKit would report its English locale; protly is mainly Korean
@@ -73,6 +84,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setKeyboardCase(state.keyboardContext.preferredKeyboardCase)
+        refreshField()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -81,12 +93,16 @@ final class KeyboardViewController: KeyboardInputViewController {
         session.abandon()
         savePrevious()  // the abandoned word's language carries to the next message
         marked = ""
+        actionTask?.cancel()
+        mode.panel = nil
+        endUndo()
         refreshMode()
     }
 
     // MARK: Typing
 
     func typeLetter(_ letter: Character) {
+        endUndo()
         noticeFieldMoved()
         if !session.isComposing { wordStartBefore = textDocumentProxy.documentContextBeforeInput ?? "" }
         let kc = state.keyboardContext.keyboardCase
@@ -168,10 +184,128 @@ final class KeyboardViewController: KeyboardInputViewController {
         }
     }
 
+    // MARK: Actions (Translate / Polish / Read clipboard)
+
+    /// requested nil = the protly key: the action that fits the field, or the clipboard when it is empty.
+    func act(_ requested: ActionMode?) {
+        commitWord()
+        session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
+        refreshMode()
+        guard hasFullAccess else {
+            mode.panel = .failed("Turn on Full Access in Settings to use protly actions", retry: requested ?? .in)
+            return
+        }
+        if requested == .in {
+            readClipboard()
+            return
+        }
+        actionTask?.cancel()
+        // The panel shows at once: a second tap during the field read cannot start a second request.
+        mode.panel = .loading(requested ?? .fix)
+        actionTask = Task { [weak self] in
+            guard let self else { return }
+            let field = await FieldText.read(textDocumentProxy)
+            guard !Task.isCancelled else { return }
+            guard let field else {
+                mode.panel = nil
+                if requested == nil { readClipboard() }
+                return
+            }
+            let action = requested ?? ActionAPI.mode(forDraft: field.text)
+            run(action, text: field.text, original: field.text, isSelection: field.isSelection)
+        }
+    }
+
+    /// Reading the string shows the Allow Paste prompt: only ever on a tap.
+    private func readClipboard() {
+        let pb = UIPasteboard.general
+        UserDefaults.standard.set(pb.changeCount, forKey: Self.clipboardKey)
+        mode.clipboardIsNew = false
+        guard let text = pb.string, !text.isEmpty else {
+            let message = pb.hasStrings ? "Paste was not allowed." : "Copy a message first."
+            mode.panel = .failed(message, retry: .in)
+            return
+        }
+        run(.in, text: text, original: "", isSelection: false)
+    }
+
+    private func run(_ action: ActionMode, text: String, original: String, isSelection: Bool) {
+        mode.panel = .loading(action)
+        actionTask?.cancel()
+        actionTask = Task { [weak self] in
+            let result = await ActionClient.run(action, text: text)
+            guard let self, !Task.isCancelled else { return }
+            switch result {
+            case .success(let r):
+                mode.panel = .result(action, r, original: original, isSelection: isSelection)
+            case .failure(let e):
+                mode.panel = .failed(e.message, retry: action)
+            }
+        }
+    }
+
+    func insertResult() {
+        guard case let .result(action, r, original, isSelection) = mode.panel else { return }
+        // The user may have moved the cursor or edited while the request ran: never delete the wrong text.
+        let p = textDocumentProxy
+        let unchanged = isSelection
+            ? p.selectedText == original
+            : (p.documentContextBeforeInput ?? "").hasSuffix(String(original.suffix(40)))
+        guard unchanged else {
+            mode.panel = .failed("The text changed. Try again.", retry: action)
+            return
+        }
+        FieldText.replace(original, isSelection: isSelection, with: r.translation, p)
+        lastInsert = (r.translation, original, isSelection)
+        mode.canUndo = true
+        mode.panel = nil
+        refreshField()
+    }
+
+    func undoInsert() {
+        guard let l = lastInsert else { return }
+        guard (textDocumentProxy.documentContextBeforeInput ?? "").hasSuffix(String(l.inserted.suffix(40))) else {
+            endUndo()  // the cursor moved since Insert
+            return
+        }
+        for _ in l.inserted { textDocumentProxy.deleteBackward() }
+        textDocumentProxy.insertText(l.original)
+        endUndo()
+        refreshField()
+    }
+
+    func closePanel() {
+        actionTask?.cancel()
+        mode.panel = nil
+    }
+
+    private func endUndo() {
+        lastInsert = nil
+        if mode.canUndo { mode.canUndo = false }
+    }
+
+    /// Which action the bar offers for the field text around the cursor, and whether new text was copied.
+    private func refreshField() {
+        let p = textDocumentProxy
+        let text = (p.documentContextBeforeInput ?? "") + (p.documentContextAfterInput ?? "")
+        let next: ActionMode? = session.isComposing || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? nil : ActionAPI.mode(forDraft: text)
+        if mode.draftMode != next { mode.draftMode = next }
+
+        // changeCount and hasStrings never show the Allow Paste prompt; reading the string does.
+        // changeCount is cheap, so it goes first; hasStrings only runs after a change.
+        let pb = UIPasteboard.general
+        let d = UserDefaults.standard
+        if d.object(forKey: Self.clipboardKey) == nil { d.set(pb.changeCount, forKey: Self.clipboardKey) }  // first run: old clipboard is not new
+        let isNew = pb.changeCount != d.integer(forKey: Self.clipboardKey) && pb.hasStrings
+        if mode.clipboardIsNew != isNew { mode.clipboardIsNew = isNew }
+    }
+
     private func refreshMode() {
         let korean = session.keycapLanguage == .korean
         if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
+        refreshField()
     }
 
     private static func loadPrevious() -> Language? {
@@ -193,12 +327,14 @@ final class KeyboardViewController: KeyboardInputViewController {
         commitWord()
         super.insertText(text)
         session.noteInserted(text)
+        endUndo()
         refreshMode()
     }
 
     override func deleteBackward() {
         commitWord()
         session.forgetLast()
+        endUndo()
         super.deleteBackward()
         refreshMode()
     }
@@ -206,6 +342,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     override func deleteBackward(times: Int) {
         commitWord()
         session.forgetLast()
+        endUndo()
         super.deleteBackward(times: times)
         refreshMode()
     }
@@ -213,6 +350,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     override func adjustTextPosition(by offset: Int) {
         commitWord()
         session.forgetLast()
+        endUndo()
         super.adjustTextPosition(by: offset)
         refreshMode()
     }
@@ -226,8 +364,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func setKeyboardType(_ type: Keyboard.KeyboardType) {
         if case .emojis = type {
-            commitWord()
-            advanceToNextInputMode()  // Apple's Emoji keyboard is next in the list; its ABC key returns here
+            act(nil)  // the protly key; iOS's own bottom-left key opens Emoji
             return
         }
         super.setKeyboardType(type)
@@ -238,11 +375,13 @@ final class KeyboardViewController: KeyboardInputViewController {
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
         noticeFieldMoved()
+        refreshField()
     }
 
     override func selectionDidChange(_ textInput: UITextInput?) {
         super.selectionDidChange(textInput)
         noticeFieldMoved()
+        refreshField()
     }
 
     override func textDidChangeAsync(_ textInput: UITextInput?) {
@@ -261,13 +400,17 @@ struct ProtlyRoot: View {
         // A late host callback can lower the case while manualShift is still set: trust the case too.
         let doubled = context.keyboardCase == .capsLocked || (mode.manualShift && context.keyboardCase == .uppercased)
         let service = mode.korean ? (doubled ? host.korean : host.koreanPlain) : host.english
+        let layout = service.keyboardLayout(for: context)
+        let layoutHeight = layout.totalHeight
         KeyboardView(
-            layout: service.keyboardLayout(for: context),
+            layout: layout,
             state: host.state,
             services: host.services,
             buttonContent: { params in
                 if params.item.action == .space {
                     Color.clear  // Apple's space bar has no label
+                } else if params.item.action == .keyboardType(.emojis) {
+                    Image(systemName: "character.bubble").font(.system(size: 21))  // the protly key
                 } else {
                     params.view
                 }
@@ -275,8 +418,27 @@ struct ProtlyRoot: View {
             buttonView: { $0.view },
             collapsedView: { $0.view },
             emojiKeyboard: { _ in EmptyView() },  // not KeyboardKit's placeholder: keeps the emoji key
-            toolbar: { _ in ProtlyBar(mode: mode, flip: { [unowned host] in host.flipWord() }) }
+            toolbar: { _ in
+                ProtlyBar(
+                    mode: mode,
+                    flip: { [unowned host] in host.flipWord() },
+                    act: { [unowned host] in host.act($0) },
+                    undo: { [unowned host] in host.undoInsert() }
+                )
+            }
         )
+        .overlay(alignment: .bottom) {
+            if let panel = mode.panel {
+                // Same height as the key area: the keyboard never grows.
+                PanelView(
+                    state: panel,
+                    insert: { [unowned host] in host.insertResult() },
+                    close: { [unowned host] in host.closePanel() },
+                    retry: { [unowned host] in host.act($0) }
+                )
+                .frame(height: layoutHeight)
+            }
+        }
         // Outside the view: KeyboardKit sizes keys from the width it is given, and its own edgeInsets
         // only pad inside a fixed frame, which moves nothing.
         .padding(.horizontal, ProtlyGeometry.sideInset)
