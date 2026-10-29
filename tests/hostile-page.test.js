@@ -28,3 +28,11 @@ test('page scripts cannot read or drive the thread panel: its shadow root is clo
   assert.equal(win.document.body.textContent.includes('private memo'), false);
   cur.onTeardown.forEach((f) => f());
 });
+
+test('a sent message that reads like an Object method gets no inherited hover title', async () => {
+  const { sentOriginal } = await import('../src/content/main.js');
+  const map = JSON.parse('{"hi":"안녕","__proto__":"원문"}'); // as structured clone delivers it: own keys
+  assert.equal(sentOriginal(map, 'hi'), '안녕');
+  assert.equal(sentOriginal(map, '__proto__'), '원문');
+  for (const t of ['constructor', 'toString', 'hasOwnProperty', 'nope']) assert.equal(sentOriginal(map, t), null, t);
+});

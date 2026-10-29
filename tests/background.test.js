@@ -180,3 +180,14 @@ test('a hostile src_lang from the model never becomes the stored partner languag
   assert.equal(r.data['0'].src_lang, 'und');
   assert.equal(local.dump()['t:7']?.partnerLang ?? null, null);
 });
+
+test('lookupSent: message texts are plain keys, whatever they say', async () => {
+  for (const text of ['__proto__', 'hi']) {
+    assert.equal((await send({ type: 'sent', threadId: '1', text, korean: `원문 ${text}` }, senders.instagram)).ok, true);
+  }
+  const r = await send({ type: 'lookupSent', threadId: '1', texts: ['__proto__', 'constructor', 'hi'] }, senders.instagram);
+  assert.equal(r.ok, true);
+  assert.equal(Object.getPrototypeOf(r.data), Object.prototype);
+  assert.deepEqual(Object.keys(r.data).sort(), ['__proto__', 'hi']);
+  assert.equal(r.data.__proto__ === Object.prototype, false);
+});

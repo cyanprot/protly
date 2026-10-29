@@ -157,9 +157,8 @@ async function sent({ threadId, text, korean }) {
 async function lookupSent({ threadId, texts }) {
   const keys = await Promise.all(texts.map((t) => sentKey(threadId, t)));
   const got = await store.get(keys);
-  const out = {};
-  texts.forEach((t, i) => { if (got[keys[i]]) out[t] = got[keys[i]].korean; });
-  return out;
+  // fromEntries: a message that reads '__proto__' is a key like any other
+  return Object.fromEntries(texts.flatMap((t, i) => (got[keys[i]] ? [[t, got[keys[i]].korean]] : [])));
 }
 
 // text '' clears the reason too: SPA navigation may never fire a 'loading' update.

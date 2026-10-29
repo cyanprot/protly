@@ -193,6 +193,9 @@ async function translate(msgs, mode, updateLang) {
   }
 }
 
+// The Korean original recorded for a sent text, by own key: a message reading 'constructor' has none.
+export const sentOriginal = (map, text) => (Object.hasOwn(map, text) && typeof map[text] === 'string' ? map[text] : null);
+
 async function hoverSent(msgs) {
   const mine = msgs.filter((m) => m.from === 'me');
   if (!mine.length || !current) return;
@@ -200,7 +203,10 @@ async function hoverSent(msgs) {
   try {
     const map = await ask({ type: 'lookupSent', threadId, texts: mine.map((m) => m.text) });
     if (current?.threadId !== threadId) return;
-    for (const m of mine) if (map[m.text] && stillShows(m)) setHoverOriginal(m, map[m.text]);
+    for (const m of mine) {
+      const korean = sentOriginal(map, m.text);
+      if (korean && stillShows(m)) setHoverOriginal(m, korean);
+    }
   } catch {}
 }
 
