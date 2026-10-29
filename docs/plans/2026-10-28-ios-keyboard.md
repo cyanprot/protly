@@ -5595,6 +5595,32 @@ Run every command from the repo root after `. ~/.local/share/swiftly/env.sh`. Th
     This is smaller than replacing the app's `@AppStorage` with an explicit read and write, which would still need
     its own allowlist entry. The key rule (`testTheKeyGoesOnlyIntoTheRequest`) is untouched: the note joins the
     system prompt before the one `ActionAPI.request(... apiKey: Secrets.apiKey)` line.
+17. **2026-10-29: the user's own style replaces Decisions 1, 2 and the style half of 5.** Cyan wrote four blocks
+    himself, and their bullets are in `src/lib/style.js` verbatim (edit them only with the user). Each block's
+    scope is the user's, and `tests/style.test.js` pins it:
+    - `ENGLISH_STYLE` on every English output: extension Polish, outgoing and box with `lang` en, email (under
+      "When you write English"), keyboard MODE out and MODE fix. The long "Never use" list, straight quotes,
+      `neighbour`, the trailing-participle, "not X but Y" and lists-of-three tells are gone with the old block,
+      and a test keeps them out. Canadian spelling now ends "but organize and analyze".
+    - `POLISH_VOICE` on Polish only (the rewrite mode, not the language): extension Polish and keyboard MODE fix.
+    - `TRANSLATE_TONE` (new) on Korean -> English translation only: extension outgoing and box with `lang` en, and
+      keyboard MODE out, where it replaces the old "Keep the DRAFT's tone" line. A Russian or Japanese target keeps
+      its prompt without it, because its `ㅋㅋ` line names an English word.
+    - `EMAIL_SHAPE` (new) in `EMAIL_SYSTEM` only. The keyboard has no email mode. The extension Polish also
+      handles emails and does not get it, since it already keeps the greeting and the sign-off.
+    - Korean chat marks (Decision 5 and the 7a review): the never-Korean rule stays. `ㅋㅋ` now becomes "lol" or is
+      dropped, never "haha", and `ㅠㅠ` becomes ":(" or words. The outgoing and email prompts say both in their
+      never-Korean line, and the keyboard's MODE out line keeps the `ㅠㅠ` half because `TRANSLATE_TONE` has the
+      `ㅋㅋ` half. The prompt-injection line of Decision 15 stays, and back_translation stays Korean.
+    - Budget (Decision 7): with the user's text the keyboard prompt was 4,089 characters, 189 over 3,900. No user
+      text was cut and the budget was not raised. Two older keyboard lines were removed because the user's Meaning
+      line ("keep every fact, name, number, request and hedge. Add nothing the draft lacks.") now covers them for
+      both modes: MODE out "Do not add content, greetings, sign-offs or explanations that are not in the DRAFT."
+      and MODE fix "Keep the meaning and every fact, number, name and hedge. Add no claim, greeting or sign-off. A
+      chat message stays a chat message." Result: 3,871 characters, headroom 29. The extension prompts keep
+      their copies of those lines (they have no budget).
+    - The live eval passed 16 of 16 (`docs/ios-keyboard-notes.md`, "style eval with the user's own style"). Its
+      two `ㅋㅋ` cases now also fail on "haha".
 
 **Not in this sprint:**
 - Short-term conversation memory: rejected by the user (the keyboard cannot know who is who).

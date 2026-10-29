@@ -388,3 +388,41 @@ of the Sprint 7 size table.
   The first run, before the review follow-up (15 cases at 64b10f7), cost about $0.10.
 - Korean chat marks: the warm draft now reads "I miss you :(", `ㅋㅋㅋ` became "lol", and `ㅋㅋ 진짜?` became
   "haha really?". In the first run the keyboard had kept `ㅠㅠ` as is ("I miss you ㅠㅠ").
+
+## Sprint 7: style eval with the user's own style (2026-10-29)
+
+Live run of `scripts/eval-polish.mjs` on 2026-10-29 at 18fbbee (rebased on main 9443d17, so with the 7b about_writer tags), after Cyan's own four style blocks (ENGLISH_STYLE,
+POLISH_VOICE, TRANSLATE_TONE, EMAIL_SHAPE) replaced the 7a blocks: `0 failure(s) of 16`. Same models and effort as
+above. Two checks are stricter than in the first table: `ㅋㅋ` must not become "haha" (the user's tone line says
+"lol" or dropped), in the keyboard case and in the extension's `out, never Korean` case.
+
+| Case | Result | in | out |
+|---|---|---|---|
+| polish chat, typos | PASS | 1,211 | 118 |
+| polish chat, CyanStyle rules | PASS | 1,217 | 157 |
+| polish email, greeting and paragraphs kept | PASS | 1,296 | 252 |
+| out, female friend in Russian (runs 1-3) | PASS x3 | 776 each | 64, 58, 58 |
+| out, English style: Canadian spelling, no dash or semicolon | PASS | 1,299 | 73 |
+| out, English style: adds no exclamation mark or emoji | PASS | 1,294 | 70 |
+| email, English style: no banned service phrases | PASS | 1,285 | 79 |
+| keyboard out, the style keeps a warm draft warm | PASS | 1,646 | 31 |
+| keyboard out, ㅋㅋ becomes lol or is dropped | PASS | 1,655 | 47 |
+| keyboard out, style without a note | PASS | 1,653 | 49 |
+| keyboard fix, CyanStyle rules | PASS | 1,657 | 126 |
+| keyboard out, about-me note spells the school, adds nothing | PASS | 1,749 | 51 |
+| keyboard fix, about-me note never leaks into the polish | PASS | 1,740 | 76 |
+| out, never Korean, ㅋㅋ never haha | PASS | 1,283 | 34 |
+
+- Prompt sizes (system text, characters): keyboard 3,871 with the final newline (was 3,822, budget 3,900),
+  extension Polish 2,682, outgoing and box with `lang` en 2,773, Russian outgoing 1,336, email 2,691. The keyboard
+  costs about 30 more input tokens per call than before, the extension Polish and English outgoing about 60-80.
+- Totals: 21,313 input and 1,343 output tokens. Cost about $0.11 [estimate from list prices, not billed figures].
+- Korean chat marks: `ㅋㅋㅋ` became "lol", `ㅋㅋ 진짜?` became "lol really?" (it was "haha really?" before), and
+  the warm draft reads "I miss you :(".
+- The new POLISH_VOICE "ask goes first" shows in the email case: "i wanted to ask if its possible to submit ... on
+  monday" became "Could I submit the lab report on Monday instead of Friday?", with the paragraphs, greeting and
+  sign-off kept.
+- Watch, not failed by any check: the note-free fix of "im running late, see you at 3" came back as two sentences
+  ("I'm running late. See you at 3."), although ENGLISH_STYLE says "clauses the draft joins stay joined". A run
+  before the rebase kept the comma. The Russian runs added an emoji the draft lacks (that prompt has no
+  ENGLISH_STYLE, as before).

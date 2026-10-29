@@ -31,6 +31,8 @@ const transport = async (body) => {
 const MODEL = 'claude-sonnet-5-5';
 const HANGUL = /[ㄱ-ㅣ가-힣]/;
 const NO_PUNCT = (t) => !/[—–;/]/.test(t);
+// The user's tone line (2026-10-29): ㅋㅋ becomes lol or is dropped, never haha.
+const NO_HAHA = (t) => !/\bha(ha)+\b/i.test(t);
 const paragraphs = (t) => t.trim().split(/\n\s*\n/).length;
 const MEMO = 'Mira Volkova: female classmate, Russian-speaking. Jokey, casual.';
 const EMAIL = 'Hi Prof. Allen,\n\ni wanted to ask if its possible to submit the lab report on monday instead of friday, '
@@ -99,9 +101,9 @@ const CASES = [
     check: (r) => /miss/i.test(r.translation) && /so much|really|so bad|:\(/i.test(r.translation) && !/[ㄱ-ㅣ]/.test(r.translation),
   },
   {
-    name: 'keyboard out, ㅋㅋ becomes English laughter',
+    name: 'keyboard out, ㅋㅋ becomes lol or is dropped',
     body: kb('out', '그거 진짜 웃기다 ㅋㅋㅋ'),
-    check: (r) => !/[ㄱ-ㅣ]/.test(r.translation) && r.translation.trim().length > 0,
+    check: (r) => !/[ㄱ-ㅣ]/.test(r.translation) && NO_HAHA(r.translation) && r.translation.trim().length > 0,
   },
   {
     name: 'keyboard out, style without a note',
@@ -124,9 +126,9 @@ const CASES = [
     check: (r) => !/Langara|Vancouver|biology|\bMin\b/i.test(r.translation) && /3/.test(r.translation),
   },
   {
-    name: 'out, never Korean',
+    name: 'out, never Korean, ㅋㅋ never haha',
     body: out('ㅋㅋ 진짜?', 'en'),
-    check: (r) => !HANGUL.test(r.translation) && r.translation.trim().length > 0,
+    check: (r) => !HANGUL.test(r.translation) && NO_HAHA(r.translation) && r.translation.trim().length > 0,
   },
 ];
 
