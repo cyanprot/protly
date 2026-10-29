@@ -120,6 +120,9 @@ xcrun simctl ui "$udid" appearance dark
 note "AppleKeyboards $(xcrun simctl spawn "$udid" defaults read -g AppleKeyboards 2>&1 | tr -d ' \n')"
 note "appearance $(xcrun simctl ui "$udid" appearance 2>&1)"
 
+# Keep the keyboard's debug log (ProtlyHeight.swift); debug messages are not stored by default.
+xcrun simctl spawn "$udid" log config --subsystem com.northprot.protly --mode "level:debug,persist:debug" > /dev/null 2>&1
+
 # Scenarios.
 rm -rf "$work/Tests.xcresult"
 TEST_RUNNER_SHOTS_DIR="$out" xcodebuild test-without-building \
@@ -148,6 +151,9 @@ for test in manifest:
                 shutil.copy(os.path.join(src, a["exportedFileName"]), os.path.join(dst, scenario + ".png"))
 EOF
 fi
+# The keyboard's own height log (ProtlyHeight.swift), for what iOS did between the screenshots.
+xcrun simctl spawn "$udid" log show --last 30m --debug --info --style compact \
+  --predicate 'subsystem == "com.northprot.protly"' > "$out/keyboard-log.txt" 2>&1
 xcrun simctl shutdown "$udid" > /dev/null 2>&1
 
 if [ $test_code -ne 0 ]; then
