@@ -1,3 +1,7 @@
 node_modules/
 __pycache__/
 dist/
+.build/
+ios-app/xtool/
+ios-app/.swiftpm/
+ios-app/Sources/ProtlyKeyboard/Secrets.swift
