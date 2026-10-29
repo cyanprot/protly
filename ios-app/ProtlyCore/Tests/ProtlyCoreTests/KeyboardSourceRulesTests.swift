@@ -53,7 +53,24 @@ final class KeyboardSourceRulesTests: XCTestCase {
     func testNothingIsLogged() throws {
         for (name, text) in try sources() {
             for call in [#"\bprint\("#, #"\bdebugPrint\("#, #"\bdump\("#, #"\bNSLog\b"#, #"\bos_log\b"#, #"\bLogger\("#] {
-                XCTAssertEqual(matches(call, in: text).count, 0, "\(name): \(call)")
+                // ProtlyHeight logs layout numbers for the phone and CI height checks; see the test below.
+                let allowed = name == "ProtlyHeight.swift" && call == #"\bLogger\("# ? 1 : 0
+                XCTAssertEqual(matches(call, in: text).count, allowed, "\(name): \(call)")
+            }
+        }
+    }
+
+    func testTheHeightLogCarriesOnlyLayoutValues() throws {
+        guard let text = try sources().first(where: { $0.name == "ProtlyHeight.swift" })?.text else { return }
+        let ns = text as NSString
+        let calls = matches(#"\blog\.(debug|info|notice|error|fault|log)\("#, in: text)
+        XCTAssertFalse(calls.isEmpty)
+        let values = Set(["reason", "height", "window", "pin", "active"])
+        for range in calls {
+            let line = lineText(ns, range)
+            for m in matches(#"\\\(([A-Za-z_][A-Za-z0-9_.]*)"#, in: line) {
+                let name = (line as NSString).substring(with: NSRange(location: m.location + 2, length: m.length - 2))
+                XCTAssertTrue(values.contains(name), "ProtlyHeight logs \(name): \(line)")
             }
         }
     }
