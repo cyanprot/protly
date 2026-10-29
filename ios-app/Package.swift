@@ -11,12 +11,16 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "ProtlyCore"),
+        .package(path: "Vendor/KeyboardKit"),
     ],
     targets: [
         .target(name: "Protly"),
         .target(
             name: "ProtlyKeyboard",
-            dependencies: [.product(name: "ProtlyCore", package: "ProtlyCore")],
+            dependencies: [
+                .product(name: "ProtlyCore", package: "ProtlyCore"),
+                .product(name: "KeyboardKit", package: "KeyboardKit"),
+            ],
             // xtool issues #313/#379: keep the principal class from being dead-stripped.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-u", "-Xlinker", "_OBJC_CLASS_$_KeyboardViewController"])]
         ),
