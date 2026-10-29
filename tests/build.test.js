@@ -15,24 +15,30 @@ test('the generic bundle loads nothing from a page context', () => {
   assert.equal(/\bimport\s*\(/.test(src), false); // no dynamic imports: one self-contained IIFE
 });
 
+// The instance lives under a registered symbol: no element id or name can reach it through window's named access.
+const KEY = Symbol.for('protly');
+
 test('injecting the bundle twice keeps one instance', () => {
   const src = readFileSync(url, 'utf8');
   const dom = new JSDOM('<body></body>', { runScripts: 'outside-only' });
   dom.window.eval(src);
-  const first = dom.window.__protly;
-  assert.equal(typeof first.run, 'function');
+  const first = dom.window[KEY];
+  assert.equal(typeof first?.run, 'function');
   assert.equal(typeof first.toast, 'function');
   dom.window.eval(src);
-  assert.equal(dom.window.__protly, first);
+  assert.equal(dom.window[KEY], first);
 });
 
 test('a page element named __protly cannot stand in for the instance', () => {
   const src = readFileSync(url, 'utf8');
-  for (const html of ['<div id="__protly"></div>', '<form name="__protly"></form>', '<img name="__protly">']) {
+  for (const html of ['<div id="__protly"></div>', '<form name="__protly"></form>', '<img name="__protly">',
+    '<form id="__protly"><object name="run"></object><object name="toast"></object></form>']) {
     const dom = new JSDOM(`<body>${html}</body>`, { runScripts: 'outside-only' });
-    assert.ok(dom.window.__protly, 'named access holds the element first');
+    const named = dom.window.__protly;
+    assert.ok(named, 'named access holds the element first');
     dom.window.eval(src);
-    assert.equal(typeof dom.window.__protly.run, 'function', html);
-    assert.equal(typeof dom.window.__protly.toast, 'function', html);
+    assert.equal(typeof dom.window[KEY]?.run, 'function', html);
+    assert.equal(typeof dom.window[KEY].toast, 'function', html);
+    assert.equal(dom.window.__protly, named, html); // the old string key is left to the page
   }
 });

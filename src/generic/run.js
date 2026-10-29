@@ -4,7 +4,9 @@ import regular from '../ui/fonts/protly-mono-400.woff2';
 import medium from '../ui/fonts/protly-mono-500.woff2';
 import { createInstance } from './instance.js';
 
-// Only a real instance counts: an element with id or name "__protly" shows through window's named access.
-if (typeof globalThis.__protly?.run !== 'function') {
-  globalThis.__protly = createInstance({ doc: document, fonts: { regular, medium } });
+// The key is a registered symbol, which window's named access (an element with an id or name) can never produce.
+// background.js reads the same key in its executeScript funcs. The function check stays as a second guard.
+const KEY = Symbol.for('protly');
+if (typeof globalThis[KEY]?.run !== 'function') {
+  globalThis[KEY] = createInstance({ doc: document, fonts: { regular, medium } });
 }

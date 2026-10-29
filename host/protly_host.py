@@ -4,11 +4,12 @@
 Chrome sends {id, body} messages on stdin. Each body is sent to the Anthropic Messages API
 and the reply {id, status, retry_after, body} is written to stdout. Messages in both
 directions are UTF-8 JSON preceded by a 32-bit length in native byte order.
-A {id, ping: true} message is answered locally with {id, ping: {ok, key_present, workspace_header}}.
+A {id, ping: true} message is answered locally with {id, ping: {ok, key_present, key_shared, workspace_header}}.
 The API key never leaves this process; nothing here logs it.
 """
 import json
 import os
+import stat
 import struct
 import sys
 import threading
@@ -82,9 +83,19 @@ def build_headers(home):
     return headers
 
 
+def key_shared(path):
+    """True when the group or others may read or write the key file (through a symlink too). Mode only: no read."""
+    try:
+        mode = os.stat(path).st_mode
+    except OSError:
+        return False
+    return bool(mode & (stat.S_IRWXG | stat.S_IRWXO))
+
+
 def ping(home):
     """Local health check for the options page. Reports whether the key and workspace exist, never their values."""
     base = os.path.join(home, '.config', 'anthropic')
+    shared = key_shared(os.path.join(base, 'api-key'))
     key_present = False
     try:
         with open(os.path.join(base, 'api-key')) as f:
@@ -97,7 +108,7 @@ def ping(home):
             workspace = bool(json.load(f).get('workspace_id'))
     except (OSError, ValueError, AttributeError):
         pass
-    return {'ok': True, 'key_present': key_present, 'workspace_header': workspace}
+    return {'ok': True, 'key_present': key_present, 'key_shared': shared, 'workspace_header': workspace}
 
 
 def handle(req, home, urlopen=None):

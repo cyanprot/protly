@@ -32,6 +32,7 @@ def make_home(key='sk-ant-test-123', ws='wrkspc_test'):
     if key is not None:
         with open(os.path.join(base, 'api-key'), 'w') as f:
             f.write(key + '\n')
+        os.chmod(os.path.join(base, 'api-key'), 0o600)  # as a real setup keeps it; KeyMode tests loosen it
     with open(os.path.join(base, 'configs', 'default.json'), 'w') as f:
         json.dump({'workspace_id': ws}, f)
     return d
@@ -173,12 +174,12 @@ class Ping(unittest.TestCase):
     def test_reports_key_and_workspace_without_calling_the_api(self):
         op = mock.Mock()
         r = h.handle({'id': 11, 'ping': True}, make_home(), urlopen=op)
-        self.assertEqual(r, {'id': 11, 'ping': {'ok': True, 'key_present': True, 'workspace_header': True}})
+        self.assertEqual(r, {'id': 11, 'ping': {'ok': True, 'key_present': True, 'key_shared': False, 'workspace_header': True}})
         op.assert_not_called()
 
     def test_missing_key(self):
         r = h.handle({'id': 12, 'ping': True}, make_home(key=None), urlopen=mock.Mock())
-        self.assertEqual(r['ping'], {'ok': True, 'key_present': False, 'workspace_header': True})
+        self.assertEqual(r['ping'], {'ok': True, 'key_present': False, 'key_shared': False, 'workspace_header': True})
 
     def test_empty_key_counts_as_missing(self):
         r = h.handle({'id': 13, 'ping': True}, make_home(key='  '), urlopen=mock.Mock())
@@ -186,10 +187,48 @@ class Ping(unittest.TestCase):
 
     def test_missing_workspace(self):
         r = h.handle({'id': 14, 'ping': True}, make_home(ws=None), urlopen=mock.Mock())
-        self.assertEqual(r['ping'], {'ok': True, 'key_present': True, 'workspace_header': False})
+        self.assertEqual(r['ping'], {'ok': True, 'key_present': True, 'key_shared': False, 'workspace_header': False})
 
     def test_reply_never_contains_the_key(self):
         r = h.safe_handle({'id': 15, 'ping': True}, make_home())
+        self.assertNotIn('sk-ant-test-123', json.dumps(r))
+
+
+class KeyMode(unittest.TestCase):
+    """ping warns when the key file can be read by the group or others. Only its mode is checked."""
+
+    def key_path(self, home):
+        return os.path.join(home, '.config', 'anthropic', 'api-key')
+
+    def shared(self, home):
+        return h.handle({'id': 20, 'ping': True}, home, urlopen=mock.Mock())['ping']['key_shared']
+
+    def test_group_or_world_readable_key_is_flagged(self):
+        for mode, flagged in [(0o600, False), (0o400, False), (0o640, True), (0o604, True), (0o644, True),
+                              (0o620, True), (0o602, True)]:
+            home = make_home()
+            os.chmod(self.key_path(home), mode)
+            self.assertEqual(self.shared(home), flagged, oct(mode))
+
+    def test_mode_is_read_through_a_symlink(self):
+        home = make_home(key=None)
+        target = os.path.join(home, 'real-key')
+        with open(target, 'w') as f:
+            f.write('sk-ant-test-123\n')
+        os.chmod(target, 0o644)
+        os.symlink(target, self.key_path(home))
+        self.assertTrue(self.shared(home))
+
+    def test_missing_key_is_not_flagged(self):
+        self.assertFalse(self.shared(make_home(key=None)))
+
+    def test_the_check_never_reads_the_key(self):
+        home = make_home()
+        os.chmod(self.key_path(home), 0o644)
+        with mock.patch.object(h, 'open', side_effect=OSError('no reads'), create=True):
+            r = h.ping(home)
+        self.assertTrue(r['key_shared'])  # from the mode alone
+        self.assertFalse(r['key_present'])
         self.assertNotIn('sk-ant-test-123', json.dumps(r))
 
 

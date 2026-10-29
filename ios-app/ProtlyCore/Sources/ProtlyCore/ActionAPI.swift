@@ -4,7 +4,8 @@ import FoundationNetworking  // URLRequest on Linux
 #endif
 
 // Translate/Polish over the Anthropic Messages API: the request in, result or error out.
-// No networking here (FoundationNetworking differs on Linux): the keyboard sends the request.
+// This file builds the URLRequest, the session configuration and the redirect-refusing delegate, and reads and
+// parses the reply bytes, but it never sends: the keyboard's ActionClient owns the URLSession and runs the request.
 
 public enum ActionMode: String, Sendable, CaseIterable {
     case `in`   // someone else's text -> Korean

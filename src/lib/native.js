@@ -5,7 +5,7 @@ export const HOST_NAME = 'com.northprot.protly';
 // connect() returns a Port-like object: { postMessage, onMessage.addListener, onDisconnect.addListener }.
 // lastError() returns why a port closed (chrome.runtime.lastError?.message), read inside onDisconnect.
 // The returned transport(body) resolves { status, retry_after, body }; transport.ping() resolves
-// { ok, key_present, workspace_header } from the host without calling the API.
+// { ok, key_present, key_shared, workspace_header } from the host without calling the API.
 export function createNativeTransport(connect, lastError = () => undefined, timeoutMs = 270000, pingTimeoutMs = 5000) {
   let conn = null; // { port, pending: Map<id, {resolve, reject, timer}> }
   let nextId = 1;
