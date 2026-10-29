@@ -279,7 +279,7 @@ shut-down simulator's global preferences: the Settings fallback was never needed
 globe's long-press list ("Protly, Korean", "Emoji", "English (US)"): a plain globe tap's order changes after an
 app switch, and iOS 26's Emoji keyboard has no ABC key.
 
-### Final measurements (run 5, `runs/7a84a02-5`, RESULT PASS)
+### Final measurements (run 7, `runs/18a85b4-7`, RESULT PASS; run 5 measured the same)
 
 Points; top = keyboard glass top edge from the screen top; band = top edge to the top of row 1's keys.
 
@@ -305,23 +305,32 @@ Sprint 4): accepted by the user. The empty left slot keeps its third: Polish is 
 | 3 | 06c3c10 | Round 2: vendored hosting controller ignores safe areas | No change: not a safe-area inset. Reverted in round 3 |
 | 4 | 4d93222 | Round 3: `allowsSelfSizing`, pin re-asserted when the host returns, debug log | No change. The log shows the view at 257 pt in every presentation with no system constraint against the pin |
 | 5 | 7a84a02 | Round 4: after `NSExtensionHostDidBecomeActive` the pin drops by 17 pt; `ProtlyRoot` keeps the content at the bottom | PASS |
+| 6 | cf3e979 | Review fix: drop only before the view's first layout at the pinned height (the notification also arrives over a live keyboard). Workflow: requires `STATUS measured`, checkout keeps no token | FAIL: the app-switch controller was laid out at 257 pt 27 ms before the notification, so 04 kept the 17 pt band |
+| 7 | 18a85b4 | Review fix: drop only within 2 s of the controller loading (the notification came 0.22-0.24 s after loading in runs 5-6) and while the portrait pin is active | PASS |
 
 What the trees and the log showed: iOS draws its glass 17 pt above the height of its own `inputView` placeholder
 for a third-party keyboard. On a fresh presentation (first open, Emoji round-trip, relaunch) the placeholder is the
 keyboard's height minus those 17 pt, so the glass starts at the view's top. When the host app returns from the
 background with the keyboard up, iOS attaches a new keyboard controller to the kept presentation, the placeholder is
-the full 257 pt, and the 17 pt margin becomes empty band above the view. `NSExtensionHostDidBecomeActive` arrives
-only on that path; there the pin is 240 pt and the bar band's empty top 17 pt sits under iOS's margin. Before
+the full 257 pt, and the 17 pt margin becomes empty band above the view. In the scenarios
+`NSExtensionHostDidBecomeActive` arrives only on that path, 0.22-0.24 s after the new controller loads; there the
+pin is 240 pt and the bar band's empty top 17 pt sits under iOS's margin. On the phone the notification also comes
+over a live keyboard (Control Center, alerts, Face ID), so a controller older than 2 s ignores it. Before
 62a4d02 the view was 239.5 pt with no pin, which is why the phone showed 52 or 35 pt depending on the path.
 
 ### What the simulator cannot show
 
-- The phone: other hosts (Instagram, KakaoTalk, Messages), iOS 26 builds other than 26.5, and whether
-  `NSExtensionHostDidBecomeActive` also arrives in other cases (Control Center, a notification, a call banner, a
-  cold launch that opens the keyboard at once). If it arrived before a fresh presentation, the band would be 35 pt
-  (240 - 17). The relaunch scenario (07) did not receive it. ProtlyHeight's log (Console, subsystem
-  `com.northprot.protly`) shows each presentation's heights on the phone.
-- After an app switch the view's top 17 pt are under iOS's margin, so a row 1 long-press bubble there has up to
-  17 pt less room than after a first open: check on the phone.
+- The phone: other hosts (Instagram, KakaoTalk, Messages), iOS 26 builds other than 26.5, and the 17 pt margin
+  itself (the phone links the iOS 27.1 SDK; Sprint 5 saw 17.5 pt). ProtlyHeight's log (Console, subsystem
+  `com.northprot.protly`, category `height`) shows each presentation: after an app switch it must read
+  `host became active` and then `bounds: height 240`; over Control Center or an alert, `host became active after
+  N s, kept`. If a fresh presentation (a cold launch that opens the keyboard at once) gets the notification within
+  2 s, the band would be 35 pt (240 - 17); the relaunch scenario (07) did not receive it.
+- Run 6's order (first layout at 257 pt before the notification) has not run with the age guard: in run 7 the
+  notification came first. Runs 5 and 7 are partial evidence that a late drop works: after the drop iOS laid the
+  view out at 257 pt once more, then settled at 240.
+- After an app switch the view's top 17 pt (the empty top of the bar's band) are under iOS's margin. The vendored
+  long-press bubble counts 34.5 pt of room above row 1 (bar and inset, not the band), which stays visible; check a
+  row 1 bubble after an app switch on the phone.
 - Landscape (the pin is portrait only), the row 1 long-press bubble in general and Hangul keycap rendering on the
   device are checked by the tower on the phone.
