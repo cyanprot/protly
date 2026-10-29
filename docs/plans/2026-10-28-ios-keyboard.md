@@ -1577,7 +1577,6 @@ final class ShorthandDetectorTests: XCTestCase {
         for w in ["rt", "gd"] {  // ㄱㅅ ㅎㅇ
             for prev in [nil, Language.english, .korean] {
                 XCTAssertEqual(d.decide(keys(w), complete: true, previous: prev), .korean, w)
-                XCTAssertEqual(d.decide(keys(w), complete: false, previous: prev), .korean, w)
             }
         }
     }
@@ -1658,8 +1657,9 @@ closing brace of the function) with:
 In `LanguageDetector.decide`, right after `guard hangul.isValid else { return .english }`, add:
 
 ```swift
-        // Two-consonant chat abbreviations (ㄱㅅ, ㅎㅇ): their keys spell rare English strings.
-        if ChatShorthand.abbreviations.contains(hangul.text) { return .korean }
+        // Two-consonant chat abbreviations (ㄱㅅ, ㅎㅇ): their keys spell rare English strings. Only on a
+        // complete word: while typing, "tr" (ㅅㄱ) would flip true/try/trip to Korean at the second key.
+        if complete, ChatShorthand.abbreviations.contains(hangul.text) { return .korean }
 ```
 
 **Step 4: Run all tests**
@@ -1862,6 +1862,7 @@ final class TypingSessionTests: XCTestCase {
         _ = type("dkssud", into: &s)
         _ = s.commit()
         s.noteInserted(" ")
+        XCTAssertEqual(s.lastTail, "안녕 ")
         XCTAssertEqual(s.alternative, "dkssud")
         XCTAssertEqual(s.flip(), .replace(deleting: 3, inserting: "dkssud "))
         XCTAssertEqual(s.previous, .english)
@@ -1873,6 +1874,7 @@ final class TypingSessionTests: XCTestCase {
         _ = type("dkssud", into: &s)
         _ = s.commit()
         s.forgetLast()
+        XCTAssertNil(s.lastTail)
         XCTAssertNil(s.flip())
     }
 
@@ -1947,6 +1949,10 @@ public struct TypingSession: Sendable {
         if isComposing { return Self.render(keys, as: language.other) }
         return last.map { Self.render($0.keys, as: $0.language.other) }
     }
+
+    /// The committed word plus what was typed after it, while it can still be flipped. The keyboard checks
+    /// that the field still ends with it before a flip deletes anything.
+    public var lastTail: String? { last.map { $0.text + $0.after } }
 
     public mutating func type(_ key: KeyEvent) -> FieldEdit {
         keys.append(key)
@@ -2159,8 +2165,13 @@ final class ProtlyActionHandler: KeyboardAction.StandardActionHandler {
             if !handleInWord(gesture, on: action) {
                 super.handle(gesture, on: action, replaced: replaced)
             }
-            if case .shift = action, let host {
+            guard let host else { return }
+            if case .shift = action {
                 host.mode.manualShift = keyboardContext.keyboardCase.isUppercasedOrCapslocked
+            } else if gesture == .release || (gesture == .press && action == .backspace) {
+                // Shift then space/backspace/123: the manual shift is spent, or the next auto-capital
+                // sentence start would show ㅃㅉㄸ.
+                host.mode.manualShift = false
             }
         }
     }
@@ -2170,7 +2181,8 @@ final class ProtlyActionHandler: KeyboardAction.StandardActionHandler {
     private func handleInWord(_ gesture: Keyboard.Gesture, on action: KeyboardAction) -> Bool {
         guard let host else { return false }
         switch (gesture, action) {
-        case (.release, .character(let cap)):
+        // The invisible edge keys beside ㅁ/ㅣ and ㅋ/ㅡ (iPhoneLayoutService adds them) type the same letter.
+        case (.release, .character(let cap)), (.release, .characterMargin(let cap)):
             guard let letter = Dubeolsik.letter(forKeycap: cap) else { return false }
             host.typeLetter(letter)
             return true
@@ -2198,8 +2210,10 @@ How the pieces fit (all from the KeyboardKit research, file:line in `ios-app/Ven
 - `textDidChangeAsync` re-runs autocap from `documentContextBeforeInput`, which excludes marked text, so it is
   skipped while a word is being typed; `viewWillAppear` re-applies `preferredKeyboardCase`, which reads the
   field's `autocapitalizationType` (Sprint 2 saw caps in an empty Instagram DM).
-- During a space drag `textDidChange` and `selectionDidChange` return early: each cursor step otherwise triggers a
-  context sync, autocomplete reset and re-render (a guess at the Sprint 2 stutter; the phone check decides).
+- `textDidChange` and `selectionDidChange` check whether the host changed the field under the word (message
+  sent, cursor tapped elsewhere): the word is dropped without touching the field, and a flip of the last word is
+  disabled once the field no longer ends with it. The space-drag stutter is measured first (item 10); if it
+  stays, try `SpaceDragGestureHandler.sensitivity` (`Gestures+SpaceDragGestureHandler.swift:55,85`).
 - The emoji key only appears when the `emojiKeyboard:` builder is not KeyboardKit's placeholder
   (`_Keyboard/KeyboardView.swift:223-227`); `setKeyboardType(.emojis)` becomes `advanceToNextInputMode()`.
 - Haptics: the settings flag alone is not enough, two paths bypass it (space long-press, callout selection).
@@ -2230,6 +2244,9 @@ final class KeyboardViewController: KeyboardInputViewController {
     private(set) var session = TypingSession()
     /// Marked text currently in the field, mirrored here because the proxy's context excludes it.
     private var marked = ""
+    /// The text before the word being typed, taken at its first key. The proxy's context excludes the mark,
+    /// so it stays equal while the word is in the field; a change means the host moved or cleared the field.
+    private var wordStartBefore = ""
 
     let english = ProtlyLayoutService(alphabeticInputSet: .qwerty, numericInputSet: .numeric, symbolicInputSet: .symbolic)
     let korean = ProtlyLayoutService(alphabeticInputSet: .dubeolsik, numericInputSet: .numeric, symbolicInputSet: .symbolic)
@@ -2257,12 +2274,15 @@ final class KeyboardViewController: KeyboardInputViewController {
 
         session = TypingSession(previous: Self.loadPrevious())
         refreshMode()
-        // The word lists take about 136 ms to load: off the main thread, Hangul rule until then.
-        Task.detached(priority: .userInitiated) { [weak self] in
-            let detector = try? LanguageDetector.bundled()
-            await self?.setDetector(detector)
+        // The word lists take about 136 ms to load: once per process, off the main thread, Hangul rule until then.
+        Task { [weak self] in
+            let detector = await Self.detectorTask.value
+            self?.setDetector(detector)
         }
     }
+
+    /// viewDidLoad runs again for every host app; the extension process (and this load) usually survives.
+    private static let detectorTask = Task.detached(priority: .userInitiated) { try? LanguageDetector.bundled() }
 
     private func setDetector(_ detector: LanguageDetector?) {
         session.detector = detector
@@ -2290,6 +2310,8 @@ final class KeyboardViewController: KeyboardInputViewController {
     // MARK: Typing
 
     func typeLetter(_ letter: Character) {
+        noticeFieldMoved()
+        if !session.isComposing { wordStartBefore = textDocumentProxy.documentContextBeforeInput ?? "" }
         let kc = state.keyboardContext.keyboardCase
         let shift: Shift = kc.isUppercasedOrCapslocked ? (mode.manualShift || kc == .capsLocked ? .manual : .automatic) : .none
         apply(session.type(KeyEvent(letter, shift)))
@@ -2312,6 +2334,26 @@ final class KeyboardViewController: KeyboardInputViewController {
         guard let edit = session.flip() else { return }
         apply(edit)
         savePrevious()
+        refreshMode()
+    }
+
+    /// The host changed the field under protly (a chat app sent the message and cleared the field with the
+    /// keyboard still up; the user tapped elsewhere in the text): drop the word being typed without editing the
+    /// field, and stop a flip from deleting at a moved cursor.
+    /// [UNVERIFIED] What `hasText` reports while only marked text is in the field. If Task 4.4 item 1 splits the
+    /// first word of an empty field (each key starts a new word), drop the `!p.hasText` clause first.
+    private func noticeFieldMoved() {
+        let p = textDocumentProxy
+        let before = p.documentContextBeforeInput ?? ""
+        if session.isComposing {
+            guard !p.hasText || before != wordStartBefore else { return }
+            session.abandon()
+            marked = ""
+        } else if let tail = session.lastTail, !before.hasSuffix(tail) {
+            session.forgetLast()
+        } else {
+            return
+        }
         refreshMode()
     }
 
@@ -2414,14 +2456,13 @@ final class KeyboardViewController: KeyboardInputViewController {
     // MARK: Host callbacks
 
     override func textDidChange(_ textInput: UITextInput?) {
-        // Space drag moves the cursor many times a second: skip the per-move sync and re-render.
-        if state.keyboardContext.isSpaceDragGestureActive { return }
         super.textDidChange(textInput)
+        noticeFieldMoved()
     }
 
     override func selectionDidChange(_ textInput: UITextInput?) {
-        if state.keyboardContext.isSpaceDragGestureActive { return }
         super.selectionDidChange(textInput)
+        noticeFieldMoved()
     }
 
     override func textDidChangeAsync(_ textInput: UITextInput?) {
@@ -2437,7 +2478,8 @@ struct ProtlyRoot: View {
     @ObservedObject var context: KeyboardContext
 
     var body: some View {
-        let service = mode.korean ? (mode.manualShift ? host.korean : host.koreanPlain) : host.english
+        let doubled = mode.manualShift || context.keyboardCase == .capsLocked
+        let service = mode.korean ? (doubled ? host.korean : host.koreanPlain) : host.english
         KeyboardView(
             layout: service.keyboardLayout(for: context),
             state: host.state,
@@ -2519,11 +2561,15 @@ MSG
 ### Task 4.4: Install and check on the phone (USER)
 
 **Step 1:** Install (see "Build and install" above). The user keeps Apple's Korean keyboard installed until this
-checklist passes.
+checklist passes. Keyboard setup (USER), so items 8 and 15 test the code and not the setup:
+- Settings > General > Keyboard > Keyboards > Edit: drag Protly first, Emoji second.
+- If English (US) is missing there: Add New Keyboard... > English (US) (needed for item 15).
+- Dark mode for the screenshots: Settings > Display & Brightness > Dark.
 
 **Step 2 (USER):** Claude prints this checklist and waits. Every iPhone label is the English UI string.
 
-1. Instagram DM, no globe key: type `안녕 내일 봐`. Keycaps show jamo, text is right, underline while composing.
+1. Instagram DM, without touching the globe key: type `안녕 내일 봐`. Keycaps show jamo, text is right, underline
+   while composing.
 2. Then ` see you tomorrow`. Keycaps switch to English within 1-3 keys; text is right.
 3. `오늘 meeting 몇시야 ㅋㅋ진짜` in one go: note any word in the wrong language.
 4. Type `각`, backspace three times: 가, ㄱ, nothing. A fourth backspace deletes the character before, on the
@@ -2541,18 +2587,36 @@ checklist passes.
 13. Same mixed sentence in KakaoTalk and Messages: sent text is exactly what was typed.
 14. Any crash or fallback to Apple's keyboard.
 15. Screenshots of the same Instagram DM with Apple's English keyboard and with protly, portrait, dark mode.
+16. KakaoTalk: type `ㅋㅋ`, tap Send with no space, type `안녕`: the new message is only `안녕`.
+17. Type half a word, tap earlier in the text, type a letter: no duplicated word, the letter lands at the cursor.
+18. Type `안녕 `, press backspace once: the space goes on the first press.
+19. Type `don't I'm it's `: all three come out right.
+20. English words are underlined while typed too. Acceptable, or distracting?
 
 **Step 3:** Claude measures the screenshots the way Sprint 2 did (rows, pitch, bands). If the band above row 1
 or below the last row is off by more than 2 pt, change `ProtlyGeometry.toolbarHeight` / `bottomInset` by the
 difference, rebuild, reinstall, and ask for one more screenshot pair (at most two rounds).
 
 **Step 4:** Append `## Sprint 4: keyboard on the phone` to `docs/ios-keyboard-notes.md`: the checklist table with
-results, the measured geometry table (Apple vs protly), every failure with what was seen. Commit
-`docs: Sprint 4 phone check` (notes plus any geometry change).
+results, the measured geometry table (Apple vs protly), every failure with what was seen. Commit (add
+`ProtlyLayout.swift` only if Step 3 changed it):
 
-**Sprint 4 done when:** items 1, 2, 4, 5, 8, 9, 12, 13, 14 pass and the bands are within 2 pt of Apple. A failing
-marked-text item (1, 4, 12, 13) in a host stops the sprint: record what the host did and talk to the user
-before any workaround.
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+swift test --package-path ios-app/ProtlyCore 2>&1 | grep Executed | tail -1
+git add docs/ios-keyboard-notes.md ios-app/Sources/ProtlyKeyboard/ProtlyLayout.swift
+git commit -F - <<'MSG'
+docs: Sprint 4 phone check
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+**Sprint 4 done when:** items 1, 2, 4, 5, 8, 9, 12, 13, 14, 16, 17, 18 pass and the bands are within 2 pt of
+Apple. A failing marked-text item (1, 4, 12, 13, 16, 17, 18) in a host stops the sprint: record what the host
+did and talk to the user before any workaround. If item 1 splits the first word of an empty field, drop the
+`!p.hasText` clause in `noticeFieldMoved` (see its [UNVERIFIED] note), reinstall and re-run 1, 12, 16.
 
 ---
 
@@ -2569,6 +2633,7 @@ targets English.
 - Create: `scripts/sync-ios-app.mjs`
 - Create: `tests/ios-app.test.js`
 - Create (by the script): `ios-app/ProtlyCore/Sources/ProtlyCore/Resources/keyboard-prompt.txt`
+- Modify: `ios-app/ProtlyCore/Package.swift` (resources; SwiftPM warns about an undeclared file otherwise)
 
 **Step 1: Write the failing test** `tests/ios-app.test.js`:
 
@@ -2645,13 +2710,24 @@ for (const [from, to] of pairs) {
 
 Run: `node scripts/sync-ios-app.mjs` -> `synced ios-app/ProtlyCore/Sources/ProtlyCore/Resources/keyboard-prompt.txt`
 
-**Step 4:** `npm test 2>&1 | grep -E '^# fail|^OK'` -> `# fail 0` and `OK`.
+**Step 4:** In `ios-app/ProtlyCore/Package.swift`, change the target's resources to:
 
-**Step 5: Commit**
+```swift
+            resources: [
+                .copy("Resources/en_50k.txt"), .copy("Resources/ko_50k.txt"),
+                .copy("Resources/keyboard-prompt.txt"),  // synced from ios/ by scripts/sync-ios-app.mjs
+            ]
+```
+
+**Step 5:** `npm test 2>&1 | grep -E '^# fail|^OK'` -> `# fail 0` and `OK`;
+`swift test --package-path ios-app/ProtlyCore 2>&1 | grep -E "warning|Executed" | tail -2` -> no warning,
+`Executed 37 tests, with 0 failures`.
+
+**Step 6: Commit**
 
 ```bash
 git add ios/keyboard-prompt.txt scripts/sync-ios-app.mjs tests/ios-app.test.js \
-  ios-app/ProtlyCore/Sources/ProtlyCore/Resources/keyboard-prompt.txt
+  ios-app/ProtlyCore/Package.swift ios-app/ProtlyCore/Sources/ProtlyCore/Resources/keyboard-prompt.txt
 git commit -F - <<'MSG'
 feat(ios): keyboard prompt with sync script and drift test
 
@@ -2668,7 +2744,6 @@ follow `src/lib/api.js:24-30`; `[String: Any]` constants are computed properties
 concurrency-safe in Swift 6.
 
 **Files:**
-- Modify: `ios-app/ProtlyCore/Package.swift` (resources)
 - Create: `ios-app/ProtlyCore/Sources/ProtlyCore/ActionAPI.swift`
 - Test: `ios-app/ProtlyCore/Tests/ProtlyCoreTests/ActionAPITests.swift`
 
@@ -2769,16 +2844,8 @@ final class ActionPromptTests: XCTestCase {
 
 **Step 2:** Run -> Expected: `error: cannot find 'ActionAPI' in scope`.
 
-**Step 3: Implement.** In `ios-app/ProtlyCore/Package.swift`, change the target's resources to:
-
-```swift
-            resources: [
-                .copy("Resources/en_50k.txt"), .copy("Resources/ko_50k.txt"),
-                .copy("Resources/keyboard-prompt.txt"),  // synced from ios/ by scripts/sync-ios-app.mjs
-            ]
-```
-
-`ios-app/ProtlyCore/Sources/ProtlyCore/ActionAPI.swift`:
+**Step 3: Implement** `ios-app/ProtlyCore/Sources/ProtlyCore/ActionAPI.swift` (the prompt resource is declared
+since Task 5.1):
 
 ```swift
 import Foundation
@@ -2927,7 +2994,7 @@ public enum ActionAPI {
 
 ```bash
 npm test 2>&1 | grep -E '^# fail|^OK'
-git add ios-app/ProtlyCore/Package.swift ios-app/ProtlyCore/Sources/ProtlyCore/ActionAPI.swift \
+git add ios-app/ProtlyCore/Sources/ProtlyCore/ActionAPI.swift \
   ios-app/ProtlyCore/Tests/ProtlyCoreTests/ActionAPITests.swift
 git commit -F - <<'MSG'
 feat(ios): ActionAPI request builder and response parser
@@ -2940,10 +3007,11 @@ MSG
 ### Task 5.3: Bar actions, panel, field read and replace, clipboard
 
 Behaviour (design "Predictive bar" and "Panel", amended above):
-- Bar center, in priority order: the other reading while a word is typed or right after one (tap flips);
-  `Undo` right after an Insert; `Translate` (field has Hangul) or `Polish`; `Read clipboard` when text was copied
-  since protly last looked (checked with `hasStrings`/`changeCount`, no prompt). Left: the protly icon runs
-  whatever fits now (draft action, else clipboard).
+- Bar, Apple's three slots after the protly icon. Left slot: the other reading while a word is typed or right
+  after one (tap flips). Center slot, in priority order: `Undo` right after an Insert; `Translate` (field has
+  Hangul) or `Polish`; `Read clipboard` when text was copied since protly last looked (checked with
+  `changeCount`/`hasStrings`, no prompt). Right slot: empty until Sprint 6. The icon commits the word, reads the
+  field and runs the action that fits it; on an empty field it reads the clipboard.
 - Draft action: read the field (selection if any; else move the cursor to the end, polling up to 1 s because hosts
   apply moves asynchronously, then take `documentContextBeforeInput`), call the API, show the panel in place of
   the keys at the key area's height, `Insert` replaces the field or selection, `Undo` puts the original back.
@@ -2978,8 +3046,6 @@ enum ActionClient {
             return ActionAPI.parse(status: (resp as? HTTPURLResponse)?.statusCode ?? 0, body: data)
         } catch let error as URLError where error.code == .timedOut {
             return .failure(ActionError(.timeout))
-        } catch is CancellationError {
-            return .failure(ActionError(.network))
         } catch {
             return .failure(ActionError(.network))
         }
@@ -2999,12 +3065,14 @@ enum FieldText {
     /// The field text, or the selection when there is one. nil when the field is empty.
     static func read(_ proxy: UITextDocumentProxy) async -> (text: String, isSelection: Bool)? {
         if let sel = proxy.selectedText, !sel.isEmpty { return (sel, true) }
-        if let after = proxy.documentContextAfterInput, !after.isEmpty {
+        // The after-context often stops at a paragraph break, so one jump can land mid-text: repeat.
+        for _ in 0..<10 {
+            guard let after = proxy.documentContextAfterInput, !after.isEmpty else { break }
             proxy.adjustTextPosition(byCharacterOffset: after.utf16.count)  // UTF-16 units
-            // Hosts apply the move asynchronously: poll until nothing is left after the cursor (max 1 s).
+            // Hosts apply the move asynchronously: poll until the after-context changes (max 1 s).
             for _ in 0..<50 {
                 try? await Task.sleep(nanoseconds: 20_000_000)
-                if (proxy.documentContextAfterInput ?? "").isEmpty { break }
+                if proxy.documentContextAfterInput != after { break }
             }
         }
         guard let before = proxy.documentContextBeforeInput, !before.isEmpty else { return nil }
@@ -3049,28 +3117,29 @@ struct PanelView: View {
                 Spacer()
                 HStack { Spacer(); ProgressView(); Text(title(mode)).foregroundStyle(.secondary); Spacer() }
                 Spacer()
-                buttons(primary: nil)
+                buttons(primary: nil, closeLabel: "Cancel")
             case let .result(mode, result, _, _):
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(result.translation).font(.system(size: 17)).textSelection(.enabled)
+                        Text(result.translation).font(.system(size: 17))
                         if !result.backTranslation.isEmpty {
                             Text(result.backTranslation).font(.system(size: 15)).foregroundStyle(.secondary)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                buttons(primary: mode == .in ? nil : ("Insert", insert))
+                buttons(primary: mode == .in ? nil : ("Insert", insert), closeLabel: mode == .in ? "Done" : "Cancel")
             case let .failed(message, mode):
                 Spacer()
                 Text(message).foregroundStyle(.secondary).frame(maxWidth: .infinity)
                 Spacer()
-                buttons(primary: ("Retry", { retry(mode) }))
+                buttons(primary: ("Retry", { retry(mode) }), closeLabel: "Cancel")
             }
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 12).fill(Color(.secondarySystemBackground)))
         .padding(.horizontal, 6)
+        .contentShape(Rectangle())  // the side strips must not pass taps to the keys underneath
     }
 
     private func title(_ mode: ActionMode) -> String {
@@ -3082,9 +3151,9 @@ struct PanelView: View {
     }
 
     @ViewBuilder
-    private func buttons(primary: (String, () -> Void)?) -> some View {
+    private func buttons(primary: (String, () -> Void)?, closeLabel: String) -> some View {
         HStack {
-            Button(primary == nil ? "Done" : "Cancel", action: close)
+            Button(closeLabel, action: close)
             Spacer()
             if let (label, action) = primary {
                 Button(label, action: action).fontWeight(.semibold)
@@ -3101,36 +3170,42 @@ struct PanelView: View {
 import ProtlyCore
 import SwiftUI
 
-/// The predictive bar: protly icon on the left, one centered slot.
-/// Center: the other reading while typing (tap flips), else Undo after an Insert, else the action
-/// that fits the field (Translate / Polish), else "Read clipboard" when new text was copied.
+/// The predictive bar: the protly icon, then Apple's three equal slots.
+/// Left: the other reading of the word being typed or just typed (tap flips). Center: Undo after an Insert,
+/// else the action that fits the field (Translate / Polish), else "Read clipboard" when new text was copied.
+/// Right: empty until Sprint 6 (completion).
 struct ProtlyBar: View {
     @ObservedObject var mode: ProtlyMode
     let flip: () -> Void
-    let act: (ActionMode?) -> Void   // nil = the protly icon: whatever fits now
+    let act: (ActionMode?) -> Void   // nil = the protly icon: whatever fits the field
     let undo: () -> Void
 
     var body: some View {
-        ZStack {
-            center
-            HStack {
-                Button { act(nil) } label: {
-                    Image(systemName: "character.bubble").font(.system(size: 19))
-                }
-                .frame(width: 44)
-                .foregroundStyle(.secondary)
-                Spacer()
+        HStack(spacing: 0) {
+            Button { act(nil) } label: {
+                Image(systemName: "character.bubble").font(.system(size: 19))
             }
+            .frame(width: 44)
+            .foregroundStyle(.secondary)
+            left.frame(maxWidth: .infinity)
+            center.frame(maxWidth: .infinity)
+            Color.clear.frame(maxWidth: .infinity)
         }
+        .lineLimit(1)
         .frame(height: ProtlyGeometry.toolbarHeight)
     }
 
     @ViewBuilder
-    private var center: some View {
+    private var left: some View {
         if let alt = mode.alternative, !alt.isEmpty {
-            Button(action: flip) { Text("\u{201C}\(alt)\u{201D}").lineLimit(1) }
+            Button(action: flip) { Text("\u{201C}\(alt)\u{201D}") }
                 .foregroundStyle(.primary)
-        } else if mode.canUndo {
+        }
+    }
+
+    @ViewBuilder
+    private var center: some View {
+        if mode.canUndo {
             Button("Undo", action: undo).foregroundStyle(.primary)
         } else if let draft = mode.draftMode {
             Button(draft == .out ? "Translate" : "Polish") { act(draft) }.foregroundStyle(.primary)
@@ -3171,6 +3246,9 @@ final class KeyboardViewController: KeyboardInputViewController {
     private(set) var session = TypingSession()
     /// Marked text currently in the field, mirrored here because the proxy's context excludes it.
     private var marked = ""
+    /// The text before the word being typed, taken at its first key. The proxy's context excludes the mark,
+    /// so it stays equal while the word is in the field; a change means the host moved or cleared the field.
+    private var wordStartBefore = ""
 
     let english = ProtlyLayoutService(alphabeticInputSet: .qwerty, numericInputSet: .numeric, symbolicInputSet: .symbolic)
     let korean = ProtlyLayoutService(alphabeticInputSet: .dubeolsik, numericInputSet: .numeric, symbolicInputSet: .symbolic)
@@ -3202,12 +3280,15 @@ final class KeyboardViewController: KeyboardInputViewController {
 
         session = TypingSession(previous: Self.loadPrevious())
         refreshMode()
-        // The word lists take about 136 ms to load: off the main thread, Hangul rule until then.
-        Task.detached(priority: .userInitiated) { [weak self] in
-            let detector = try? LanguageDetector.bundled()
-            await self?.setDetector(detector)
+        // The word lists take about 136 ms to load: once per process, off the main thread, Hangul rule until then.
+        Task { [weak self] in
+            let detector = await Self.detectorTask.value
+            self?.setDetector(detector)
         }
     }
+
+    /// viewDidLoad runs again for every host app; the extension process (and this load) usually survives.
+    private static let detectorTask = Task.detached(priority: .userInitiated) { try? LanguageDetector.bundled() }
 
     private func setDetector(_ detector: LanguageDetector?) {
         session.detector = detector
@@ -3223,9 +3304,6 @@ final class KeyboardViewController: KeyboardInputViewController {
         super.viewWillAppear(animated)
         setKeyboardCase(state.keyboardContext.preferredKeyboardCase)
         refreshField()
-        // changeCount and hasStrings never show the Allow Paste prompt; reading the string does.
-        let pb = UIPasteboard.general
-        mode.clipboardIsNew = pb.hasStrings && pb.changeCount != UserDefaults.standard.integer(forKey: Self.clipboardKey)
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -3243,6 +3321,8 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     func typeLetter(_ letter: Character) {
         endUndo()
+        noticeFieldMoved()
+        if !session.isComposing { wordStartBefore = textDocumentProxy.documentContextBeforeInput ?? "" }
         let kc = state.keyboardContext.keyboardCase
         let shift: Shift = kc.isUppercasedOrCapslocked ? (mode.manualShift || kc == .capsLocked ? .manual : .automatic) : .none
         apply(session.type(KeyEvent(letter, shift)))
@@ -3265,6 +3345,26 @@ final class KeyboardViewController: KeyboardInputViewController {
         guard let edit = session.flip() else { return }
         apply(edit)
         savePrevious()
+        refreshMode()
+    }
+
+    /// The host changed the field under protly (a chat app sent the message and cleared the field with the
+    /// keyboard still up; the user tapped elsewhere in the text): drop the word being typed without editing the
+    /// field, and stop a flip from deleting at a moved cursor.
+    /// [UNVERIFIED] What `hasText` reports while only marked text is in the field. If Task 4.4 item 1 splits the
+    /// first word of an empty field (each key starts a new word), drop the `!p.hasText` clause first.
+    private func noticeFieldMoved() {
+        let p = textDocumentProxy
+        let before = p.documentContextBeforeInput ?? ""
+        if session.isComposing {
+            guard !p.hasText || before != wordStartBefore else { return }
+            session.abandon()
+            marked = ""
+        } else if let tail = session.lastTail, !before.hasSuffix(tail) {
+            session.forgetLast()
+        } else {
+            return
+        }
         refreshMode()
     }
 
@@ -3301,28 +3401,47 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     // MARK: Actions (Translate / Polish / Read clipboard)
 
-    /// mode nil = the protly icon: the action that fits now.
+    /// requested nil = the protly icon: the action that fits the field, or the clipboard when it is empty.
     func act(_ requested: ActionMode?) {
         commitWord()
+        session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
+        refreshMode()
         guard hasFullAccess else {
             mode.panel = .failed("Turn on Full Access in Settings to use protly actions", retry: requested ?? .in)
             return
         }
-        let target = requested ?? mode.draftMode ?? .in
-        if target == .in {
-            // Reading the string shows the Allow Paste prompt: only ever on a tap.
-            let pb = UIPasteboard.general
-            UserDefaults.standard.set(pb.changeCount, forKey: Self.clipboardKey)
-            mode.clipboardIsNew = false
-            guard let text = pb.string, !text.isEmpty else { return }
-            run(.in, text: text, original: "", isSelection: false)
+        if requested == .in {
+            readClipboard()
             return
         }
+        actionTask?.cancel()
+        // The panel shows at once: a second tap during the field read cannot start a second request.
+        mode.panel = .loading(requested ?? .fix)
         actionTask = Task { [weak self] in
             guard let self else { return }
-            guard let field = await FieldText.read(textDocumentProxy) else { return }
-            run(target, text: field.text, original: field.text, isSelection: field.isSelection)
+            let field = await FieldText.read(textDocumentProxy)
+            guard !Task.isCancelled else { return }
+            guard let field else {
+                mode.panel = nil
+                if requested == nil { readClipboard() }
+                return
+            }
+            let action = requested ?? ActionAPI.mode(forDraft: field.text)
+            run(action, text: field.text, original: field.text, isSelection: field.isSelection)
         }
+    }
+
+    /// Reading the string shows the Allow Paste prompt: only ever on a tap.
+    private func readClipboard() {
+        let pb = UIPasteboard.general
+        UserDefaults.standard.set(pb.changeCount, forKey: Self.clipboardKey)
+        mode.clipboardIsNew = false
+        guard let text = pb.string, !text.isEmpty else {
+            let message = pb.hasStrings ? "Paste was not allowed." : "Copy a message first."
+            mode.panel = .failed(message, retry: .in)
+            return
+        }
+        run(.in, text: text, original: "", isSelection: false)
     }
 
     private func run(_ action: ActionMode, text: String, original: String, isSelection: Bool) {
@@ -3341,8 +3460,17 @@ final class KeyboardViewController: KeyboardInputViewController {
     }
 
     func insertResult() {
-        guard case let .result(_, r, original, isSelection) = mode.panel else { return }
-        FieldText.replace(original, isSelection: isSelection, with: r.translation, textDocumentProxy)
+        guard case let .result(action, r, original, isSelection) = mode.panel else { return }
+        // The user may have moved the cursor or edited while the request ran: never delete the wrong text.
+        let p = textDocumentProxy
+        let unchanged = isSelection
+            ? p.selectedText == original
+            : (p.documentContextBeforeInput ?? "").hasSuffix(String(original.suffix(40)))
+        guard unchanged else {
+            mode.panel = .failed("The text changed. Try again.", retry: action)
+            return
+        }
+        FieldText.replace(original, isSelection: isSelection, with: r.translation, p)
         lastInsert = (r.translation, original, isSelection)
         mode.canUndo = true
         mode.panel = nil
@@ -3351,6 +3479,10 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     func undoInsert() {
         guard let l = lastInsert else { return }
+        guard (textDocumentProxy.documentContextBeforeInput ?? "").hasSuffix(String(l.inserted.suffix(40))) else {
+            endUndo()  // the cursor moved since Insert
+            return
+        }
         for _ in l.inserted { textDocumentProxy.deleteBackward() }
         textDocumentProxy.insertText(l.original)
         endUndo()
@@ -3367,19 +3499,28 @@ final class KeyboardViewController: KeyboardInputViewController {
         if mode.canUndo { mode.canUndo = false }
     }
 
-    /// Which action the bar offers for the field text around the cursor.
+    /// Which action the bar offers for the field text around the cursor, and whether new text was copied.
     private func refreshField() {
         let p = textDocumentProxy
         let text = (p.documentContextBeforeInput ?? "") + (p.documentContextAfterInput ?? "")
         let next: ActionMode? = session.isComposing || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? nil : ActionAPI.mode(forDraft: text)
         if mode.draftMode != next { mode.draftMode = next }
+
+        // changeCount and hasStrings never show the Allow Paste prompt; reading the string does.
+        // changeCount is cheap, so it goes first; hasStrings only runs after a change.
+        let pb = UIPasteboard.general
+        let d = UserDefaults.standard
+        if d.object(forKey: Self.clipboardKey) == nil { d.set(pb.changeCount, forKey: Self.clipboardKey) }  // first run: old clipboard is not new
+        let isNew = pb.changeCount != d.integer(forKey: Self.clipboardKey) && pb.hasStrings
+        if mode.clipboardIsNew != isNew { mode.clipboardIsNew = isNew }
     }
 
     private func refreshMode() {
         let korean = session.keycapLanguage == .korean
         if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
+        refreshField()
     }
 
     private static func loadPrevious() -> Language? {
@@ -3408,6 +3549,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     override func deleteBackward() {
         commitWord()
         session.forgetLast()
+        endUndo()
         super.deleteBackward()
         refreshMode()
     }
@@ -3415,6 +3557,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     override func deleteBackward(times: Int) {
         commitWord()
         session.forgetLast()
+        endUndo()
         super.deleteBackward(times: times)
         refreshMode()
     }
@@ -3422,6 +3565,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     override func adjustTextPosition(by offset: Int) {
         commitWord()
         session.forgetLast()
+        endUndo()
         super.adjustTextPosition(by: offset)
         refreshMode()
     }
@@ -3445,15 +3589,15 @@ final class KeyboardViewController: KeyboardInputViewController {
     // MARK: Host callbacks
 
     override func textDidChange(_ textInput: UITextInput?) {
-        // Space drag moves the cursor many times a second: skip the per-move sync and re-render.
-        if state.keyboardContext.isSpaceDragGestureActive { return }
         super.textDidChange(textInput)
+        noticeFieldMoved()
         refreshField()
     }
 
     override func selectionDidChange(_ textInput: UITextInput?) {
-        if state.keyboardContext.isSpaceDragGestureActive { return }
         super.selectionDidChange(textInput)
+        noticeFieldMoved()
+        refreshField()
     }
 
     override func textDidChangeAsync(_ textInput: UITextInput?) {
@@ -3469,7 +3613,8 @@ struct ProtlyRoot: View {
     @ObservedObject var context: KeyboardContext
 
     var body: some View {
-        let service = mode.korean ? (mode.manualShift ? host.korean : host.koreanPlain) : host.english
+        let doubled = mode.manualShift || context.keyboardCase == .capsLocked
+        let service = mode.korean ? (doubled ? host.korean : host.koreanPlain) : host.english
         let layout = service.keyboardLayout(for: context)
         let layoutHeight = layout.totalHeight
         KeyboardView(
@@ -3551,15 +3696,32 @@ Install, then Claude prints this checklist and waits:
 3. Select part of a draft (Instagram's own Select), tap the protly icon: only the selection changes.
 4. Copy a friend's English message, come back to an empty composer: bar shows `Read clipboard` and NO Allow
    Paste prompt appears yet. Tap it: Allow Paste prompt, then the Korean translation; `Done` returns to keys.
-5. A three-paragraph draft: Translate gets all of it and Insert replaces all of it.
+5. A three-paragraph draft: tap at the start of the first paragraph, then tap `Translate`: it gets all of it
+   and Insert replaces all of it.
 6. Airplane mode: an error line with `Retry`; the draft is untouched.
 7. Seconds from tap to result for Translate (Opus) and Read clipboard (Sonnet), two tries each.
 8. The panel is exactly the height of the keys (nothing jumps).
 9. Any crash.
+10. Type a word, tap space, then tap `Translate`: the bar's left slot showed the flip and the center showed
+    `Translate` at the same time; after Insert, the left slot is empty.
+11. While the panel shows a result, move the cursor with a tap in the text, tap `Insert`: "The text changed. Try
+    again." and the field is untouched.
 
-Record under `## Sprint 5: actions` in the notes and commit `docs: Sprint 5 phone check`.
+Record under `## Sprint 5: actions` in the notes and commit:
 
-**Sprint 5 done when:** items 1-4, 6, 8, 9 pass. Item 5 failing (field read truncated) adds "Select all, then tap
+```bash
+npm test 2>&1 | grep -E '^# fail|^OK'
+swift test --package-path ios-app/ProtlyCore 2>&1 | grep Executed | tail -1
+git add docs/ios-keyboard-notes.md
+git commit -F - <<'MSG'
+docs: Sprint 5 phone check
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
+MSG
+```
+
+**Sprint 5 done when:** items 1-4, 6, 8-11 pass. Item 5 failing (field read truncated) adds "Select all, then tap
 again" handling in Sprint 6's re-plan; item 7 over 10 s puts streaming into Sprint 6.
 
 ---

@@ -7,12 +7,12 @@
     "ProtlyLayout (54 pt pitch, 43 pt keys, toolbar and bottom insets), Dubeolsik input sets",
     "ProtlyActionHandler and controller wiring TypingSession to setMarkedText",
     "bar showing the other reading (tap flips)",
-    "emoji key, blank space, white active shift, haptics off, autocap on appear, space-drag sync skip",
+    "emoji key, blank space, white active shift, haptics off, autocap on appear, field-moved check (sent message, tapped cursor)",
     "Sprint 4 phone results in docs/ios-keyboard-notes.md"
   ],
   "success_criteria": [
     "xtool dev build succeeds with _OBJC_CLASS_$_KeyboardViewController present",
-    "Task 4.4 checklist items 1, 2, 4, 5, 8, 9, 12, 13, 14 pass on the iPhone",
+    "Task 4.4 checklist items 1, 2, 4, 5, 8, 9, 12, 13, 14, 16, 17, 18 pass on the iPhone",
     "bands above row 1 and below the last row within 2 pt of Apple's keyboard in the screenshot comparison"
   ],
   "testable_behaviors": [
