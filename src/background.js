@@ -4,6 +4,7 @@ import { createBadgeStore } from './lib/badge.js';
 import { statusFor } from './lib/status.js';
 import { DEFAULT_SITES } from './lib/flags.js';
 import { routeCommand } from './lib/route.js';
+import { createRouter, isLangCode } from './lib/messages.js';
 import { createNativeTransport, HOST_NAME } from './lib/native.js';
 import {
   buildIncomingRequest, buildOutgoingRequest, buildMemoRequest, buildEmailRequest, buildPolishRequest,
@@ -37,7 +38,11 @@ async function getSettings() {
 async function getThread(threadId, settings) {
   const k = threadKey(threadId);
   const got = await store.get(k);
-  return withThreadDefaults(got[k] || {}, (settings || (await getSettings())).threadDefaults);
+  const t = withThreadDefaults(got[k] || {}, (settings || (await getSettings())).threadDefaults);
+  // A language stored before codes were checked would come back in the next request and be refused there.
+  if (t.partnerLang != null && !isLangCode(t.partnerLang)) t.partnerLang = null;
+  if (t.outputLang !== 'auto' && !isLangCode(t.outputLang)) t.outputLang = 'auto';
+  return t;
 }
 
 async function setThread(threadId, patch) {
@@ -52,11 +57,11 @@ async function incoming({ threadId, context, items, updateLang }) {
   const thread = await getThread(threadId, settings);
   const keys = await Promise.all(items.map((it) => cacheKey(threadId, it.text, thread.otherTarget)));
   const hits = await store.get(keys);
-  const out = {};
+  const out = new Map(); // item id -> entry; ids are page-side strings, so never a plain-object lookup
   const misses = [];
   items.forEach((it, i) => {
     const h = hits[keys[i]];
-    if (h) out[it.id] = h; else misses.push({ it, key: keys[i] });
+    if (h) out.set(it.id, h); else misses.push({ it, key: keys[i] });
   });
 
   for (let i = 0; i < misses.length; i += BATCH) {
@@ -68,11 +73,11 @@ async function incoming({ threadId, context, items, updateLang }) {
     const res = await api(body, parseIncoming);
     const writes = {};
     for (const { it, key } of chunk) {
-      const r = res[it.id];
+      const r = Object.hasOwn(res, it.id) ? res[it.id] : null; // never an inherited 'constructor'
       if (!r) continue;
       const entry = { src_lang: r.src_lang, translation: r.translation, ts: Date.now() };
       writes[key] = entry;
-      out[it.id] = entry;
+      out.set(it.id, entry);
     }
     try {
       await store.set(writes);
@@ -82,18 +87,16 @@ async function incoming({ threadId, context, items, updateLang }) {
   }
 
   if (updateLang) {
-    const ordered = items.filter((it) => out[it.id]).map((it) => ({ from: it.from, src_lang: out[it.id].src_lang }));
+    const ordered = items.filter((it) => out.has(it.id)).map((it) => ({ from: it.from, src_lang: out.get(it.id).src_lang }));
     const lang = latestPartnerLang(ordered);
     if (lang && lang !== thread.partnerLang) await setThread(threadId, { partnerLang: lang });
   }
 
-  const data = {};
-  for (const it of items) {
-    const r = out[it.id];
-    if (!r) { data[it.id] = { missing: true }; continue; } // model skipped it or returned nothing
-    data[it.id] = incomingTarget(r.src_lang, thread.otherTarget) ? { src_lang: r.src_lang, translation: r.translation } : null;
-  }
-  return data;
+  return Object.fromEntries(items.map((it) => {
+    const r = out.get(it.id);
+    if (!r) return [it.id, { missing: true }]; // model skipped it or returned nothing
+    return [it.id, incomingTarget(r.src_lang, thread.otherTarget) ? { src_lang: r.src_lang, translation: r.translation } : null];
+  }));
 }
 
 async function outgoing({ threadId, context, korean, profile, lang }) {
@@ -158,9 +161,8 @@ async function sent({ threadId, text, korean }) {
 async function lookupSent({ threadId, texts }) {
   const keys = await Promise.all(texts.map((t) => sentKey(threadId, t)));
   const got = await store.get(keys);
-  const out = {};
-  texts.forEach((t, i) => { if (got[keys[i]]) out[t] = got[keys[i]].korean; });
-  return out;
+  // fromEntries: a message that reads '__proto__' is a key like any other
+  return Object.fromEntries(texts.flatMap((t, i) => (got[keys[i]] ? [[t, got[keys[i]].korean]] : [])));
 }
 
 // text '' clears the reason too: SPA navigation may never fire a 'loading' update.
@@ -194,14 +196,7 @@ const handlers = {
   badge: async ({ text, reason }, sender) => { await setTabBadge(sender.tab?.id, text, reason); return true; },
 };
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  const h = handlers[msg?.type];
-  if (!h) return false;
-  Promise.resolve(h(msg, sender))
-    .then((data) => sendResponse({ ok: true, data }))
-    .catch((e) => sendResponse({ ok: false, error: { kind: e instanceof ApiError ? e.kind : 'internal', message: String(e?.message || e) } }));
-  return true;
-});
+chrome.runtime.onMessage.addListener(createRouter({ handlers, extensionId: chrome.runtime.id }));
 
 const GENERIC = 'dist/generic.js';
 const inFrame = (tabId, frameId) => ({ tabId, frameIds: [frameId] });

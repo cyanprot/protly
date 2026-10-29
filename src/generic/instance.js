@@ -59,7 +59,7 @@ export function createInstance({ doc: top = document, fonts = null, ask = defaul
     const a = deepActive(top).el;
     if (!a) return false;
     if (a === cur.t.el || cur.t.el.contains(a)) return true;
-    return card && (a === cur.card.host || a.getRootNode?.() === cur.card.host.shadowRoot);
+    return card && (a === cur.card.host || a.getRootNode?.() === cur.card.shadow);
   }
 
   function onKeyDown(e) {

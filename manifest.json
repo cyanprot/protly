@@ -66,10 +66,31 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/content/*.js",
-        "src/lib/*.js",
-        "src/ui/*.js",
-        "src/ui/fonts/*.woff2"
+        "src/content/dom.js",
+        "src/content/main.js",
+        "src/content/outgoing.js",
+        "src/content/panel.js",
+        "src/content/selectors.js",
+        "src/lib/classify.js",
+        "src/lib/command.js",
+        "src/lib/flags.js",
+        "src/lib/ime.js",
+        "src/lib/keys.js",
+        "src/lib/lang.js",
+        "src/lib/limits.js",
+        "src/lib/preview.js",
+        "src/ui/card.css.js",
+        "src/ui/card.js",
+        "src/ui/errors.js",
+        "src/ui/fonts.js",
+        "src/ui/panel.css.js",
+        "src/ui/theme.js",
+        "src/ui/toast.css.js",
+        "src/ui/toast.js",
+        "src/ui/tokens.css.js",
+        "src/ui/trust.js",
+        "src/ui/fonts/protly-mono-400.woff2",
+        "src/ui/fonts/protly-mono-500.woff2"
       ],
       "matches": [
         "https://www.instagram.com/*"
@@ -77,10 +98,25 @@
     },
     {
       "resources": [
-        "src/content/gmail/*.js",
-        "src/lib/*.js",
-        "src/ui/*.js",
-        "src/ui/fonts/*.woff2"
+        "src/content/gmail/body.js",
+        "src/content/gmail/compose.js",
+        "src/content/gmail/main.js",
+        "src/content/gmail/selectors.js",
+        "src/content/gmail/thread.js",
+        "src/lib/command.js",
+        "src/lib/flags.js",
+        "src/lib/ime.js",
+        "src/lib/lang.js",
+        "src/lib/limits.js",
+        "src/ui/card.css.js",
+        "src/ui/card.js",
+        "src/ui/errors.js",
+        "src/ui/fonts.js",
+        "src/ui/theme.js",
+        "src/ui/tokens.css.js",
+        "src/ui/trust.js",
+        "src/ui/fonts/protly-mono-400.woff2",
+        "src/ui/fonts/protly-mono-500.woff2"
       ],
       "matches": [
         "https://mail.google.com/*"

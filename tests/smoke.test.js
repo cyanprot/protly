@@ -20,8 +20,8 @@ test('manifest injects the Gmail loader on mail.google.com', () => {
   assert.deepEqual(g.js, ['src/content/gmail/loader.js']);
   assert.deepEqual(g.css, ['src/content/gmail/style.css']);
   const war = m.web_accessible_resources.find((w) => w.matches.includes('https://mail.google.com/*'));
-  assert.ok(war.resources.includes('src/content/gmail/*.js'));
-  assert.ok(war.resources.includes('src/lib/*.js'));
+  assert.ok(war.resources.includes('src/content/gmail/main.js')); // the exact list is checked in war.test.js
+  assert.ok(war.resources.includes('src/lib/lang.js'));
 });
 
 test('the toolbar popup is wired and has the control-center fields', () => {
@@ -71,8 +71,8 @@ test('both content-script origins can load the shared UI modules and fonts', () 
   const m = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url)));
   for (const origin of ['https://www.instagram.com/*', 'https://mail.google.com/*']) {
     const war = m.web_accessible_resources.find((w) => w.matches.includes(origin));
-    assert.ok(war.resources.includes('src/ui/*.js'), origin);
-    assert.ok(war.resources.includes('src/ui/fonts/*.woff2'), origin);
+    assert.ok(war.resources.includes('src/ui/card.js'), origin);
+    assert.ok(war.resources.includes('src/ui/fonts/protly-mono-400.woff2'), origin);
   }
 });
 

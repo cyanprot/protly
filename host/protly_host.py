@@ -18,9 +18,11 @@ import urllib.request
 API_URL = 'https://api.anthropic.com/v1/messages'
 TIMEOUT_S = 240  # Opus hard (effort high, 32k tokens, non-streaming) can take minutes
 MAX_REPLY = 1024 * 1024  # Chrome rejects host messages larger than 1 MB
+MAX_REQUEST = 16 * 1024 * 1024  # far above any request the extension builds (its messages are size-checked)
 
 _out_lock = threading.Lock()
 EOF = object()  # distinct from a JSON null frame
+TOO_LARGE = object()  # a frame length over MAX_REQUEST: never allocated
 
 
 def read_message(stream):
@@ -28,6 +30,8 @@ def read_message(stream):
     if len(raw) < 4:
         return EOF
     (n,) = struct.unpack('=I', raw)
+    if n > MAX_REQUEST:
+        return TOO_LARGE
     data = stream.read(n)
     if len(data) < n:
         return EOF
@@ -35,7 +39,9 @@ def read_message(stream):
 
 
 def encode_message(obj):
-    data = json.dumps(obj).encode('utf-8')  # ASCII escapes: a lone surrogate cannot break encoding
+    # ASCII escapes: a lone surrogate cannot break encoding. allow_nan=False: NaN or Infinity in an API body would
+    # be invalid JSON, and Chrome drops the port (and every request in flight) on one bad frame.
+    data = json.dumps(obj, allow_nan=False).encode('utf-8')
     return struct.pack('=I', len(data)) + data
 
 
@@ -45,7 +51,10 @@ def local_error(req_id, kind, message):
 
 
 def write_message(stream, obj):
-    data = encode_message(obj)
+    try:
+        data = encode_message(obj)
+    except (ValueError, RecursionError):  # NaN, or an API body nested too deep to encode: reply, never hang
+        data = encode_message(local_error(obj.get('id'), 'host_error', 'reply is not valid JSON'))
     if len(data) - 4 > MAX_REPLY:
         data = encode_message(local_error(obj.get('id'), 'host_error', 'reply larger than 1 MB'))
     with _out_lock:
@@ -91,7 +100,7 @@ def ping(home):
     return {'ok': True, 'key_present': key_present, 'workspace_header': workspace}
 
 
-def handle(req, home, urlopen=urllib.request.urlopen):
+def handle(req, home, urlopen=None):
     req_id = req.get('id')
     if req.get('ping'):
         return {'id': req_id, 'ping': ping(home)}
@@ -103,7 +112,7 @@ def handle(req, home, urlopen=urllib.request.urlopen):
     request = urllib.request.Request(API_URL, data=json.dumps(req['body']).encode('utf-8'),
                                      headers=headers, method='POST')
     try:
-        with urlopen(request, timeout=TIMEOUT_S) as resp:
+        with (urlopen or urllib.request.urlopen)(request, timeout=TIMEOUT_S) as resp:  # looked up per call: tests patch it
             return {'id': req_id, 'status': resp.status,
                     'retry_after': resp.headers.get('retry-after'), 'body': json.loads(resp.read())}
     except urllib.error.HTTPError as e:
@@ -125,19 +134,31 @@ def safe_handle(req, home):
         return local_error(req.get('id') if isinstance(req, dict) else None, 'host_error', type(e).__name__)
 
 
-def main():
-    home = os.path.expanduser('~')
-    stdin, stdout = sys.stdin.buffer, sys.stdout.buffer
+def serve(stdin, stdout, home):
+    """Reads frames until EOF; each request is answered on its own thread. Returns the threads (tests join them)."""
+    threads = []
     while True:
         try:
             req = read_message(stdin)
-        except ValueError:
-            continue  # unparseable JSON has no id to reply to; the frame was consumed, keep reading
+        except (ValueError, RecursionError):
+            continue  # unparseable or absurdly nested JSON has no id to reply to; the frame was consumed
         if req is EOF:
             break  # Chrome closed the port
+        if req is TOO_LARGE:
+            # The payload cannot be skipped without reading it, and nothing the extension builds is this big.
+            # Exit: Chrome sees the port close and fails the pending requests at once instead of timing out.
+            sys.stderr.write('protly host: request frame over the size limit; exiting\n')
+            break
         if not isinstance(req, dict):
             continue  # no id to reply to
-        threading.Thread(target=lambda r=req: write_message(stdout, safe_handle(r, home)), daemon=True).start()
+        t = threading.Thread(target=lambda r=req: write_message(stdout, safe_handle(r, home)), daemon=True)
+        t.start()
+        threads = [x for x in threads if x.is_alive()] + [t]  # a long-lived host keeps only running threads
+    return threads
+
+
+def main():
+    serve(sys.stdin.buffer, sys.stdout.buffer, os.path.expanduser('~'))
 
 
 if __name__ == '__main__':

@@ -19,5 +19,5 @@ test('errorText: table text, detail only for host_bug and bad_request, raw messa
 });
 
 test('GLOBAL_KINDS are the page-wide problems', () => {
-  assert.deepEqual([...GLOBAL_KINDS].sort(), ['auth', 'bad_request', 'host', 'host_bug', 'spend_limit', 'stale']);
+  assert.deepEqual([...GLOBAL_KINDS].sort(), ['auth', 'bad_message', 'bad_request', 'forbidden', 'host', 'host_bug', 'spend_limit', 'stale']);
 });

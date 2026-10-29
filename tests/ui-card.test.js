@@ -1,7 +1,7 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
-import { createCard, modelLabel } from '../src/ui/card.js';
+import { createCard, modelLabel, shadowOf } from '../src/ui/card.js';
 
 let win;
 let doc;
@@ -9,7 +9,7 @@ beforeEach(() => {
   win = new JSDOM('<body><div id="row"></div><div id="box"></div></body>').window;
   doc = win.document;
 });
-const rootOf = (card) => card.host.shadowRoot.querySelector('.pl-root');
+const rootOf = (card) => shadowOf(card.host).querySelector('.pl-root');
 const buttons = (card) => [...rootOf(card).querySelectorAll('button')].map((b) => b.textContent);
 
 test('modelLabel', () => {

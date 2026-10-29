@@ -95,3 +95,58 @@ test('API requests still post {id, body} and resolve {status, retry_after, body}
   ports[0].reply({ id: sent.id, status: 200, body: { ok: 1 } });
   assert.deepEqual(await a, { status: 200, retry_after: null, body: { ok: 1 } });
 });
+
+test('a malformed host reply to an API request is a host_bug, never a success or a bad_request', async () => {
+  const { callClaude } = await import('../src/lib/api.js');
+  for (const bad of [{ ping: { ok: true } }, {}, { status: '200', body: {} }, { status: 200.5 }, { status: null }, { status: -1 }, { status: 99999 }]) {
+    const { t, ports } = setup(undefined, 1000);
+    const p = callClaude({}, { transport: t, sleep: async () => {} });
+    for (let i = 0; !ports[0]?.sent.length; i++) { // the request is on the port
+      if (i > 100) assert.fail('the request never reached the port');
+      await new Promise((r) => setImmediate(r));
+    }
+    ports[0].reply({ id: ports[0].sent[0].id, ...bad });
+    await assert.rejects(p, (e) => e.kind === 'host_bug', JSON.stringify(bad));
+  }
+});
+
+test('hostile listener input neither throws nor settles a request', async () => {
+  const { t, ports } = setup(undefined, 30);
+  const a = t({});
+  for (const m of [null, undefined, 'x', 7, [], { id: '1' }, { id: {} }, { id: ports[0].sent[0].id + 1 }]) ports[0].reply(m);
+  await assert.rejects(a, (e) => e.kind === 'timeout');
+});
+
+test('a reply after the timeout is ignored and the port keeps working; a duplicate reply settles once', async () => {
+  const { t, ports } = setup(undefined, 20);
+  const a = t({});
+  await assert.rejects(a, (e) => e.kind === 'timeout');
+  ports[0].reply({ id: ports[0].sent[0].id, status: 200, retry_after: null, body: { late: 1 } });
+  const b = t({});
+  const id = ports[0].sent[1].id;
+  ports[0].reply({ id, status: 200, retry_after: null, body: { n: 1 } });
+  ports[0].reply({ id, status: 500, retry_after: null, body: { n: 2 } });
+  assert.deepEqual((await b).body, { n: 1 });
+  assert.equal(ports.length, 1);
+});
+
+test('a late disconnect of a dead port does not reject requests on the new one', async () => {
+  const ports = [];
+  let first = true;
+  const t = createNativeTransport(() => {
+    const p = fakePort();
+    if (first) { first = false; p.postMessage = () => { throw new Error('port closed'); }; }
+    ports.push(p);
+    return p;
+  }, () => 'gone', 1000);
+  await assert.rejects(t({}), (e) => e.kind === 'host');
+  const b = t({});
+  assert.equal(ports.length, 2);
+  ports[0].disconnect(); // the first port's onDisconnect arrives late
+  ports[1].reply({ id: ports[1].sent[0].id, status: 200, retry_after: null, body: { ok: 1 } });
+  assert.deepEqual((await b).body, { ok: 1 });
+  const c = t({});
+  assert.equal(ports.length, 2);
+  ports[1].reply({ id: ports[1].sent[1].id, status: 200, retry_after: null, body: {} });
+  await c;
+});

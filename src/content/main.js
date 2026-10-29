@@ -1,4 +1,5 @@
 import { threadIdFromPath } from '../lib/keys.js';
+import { LIMITS, chunks } from '../lib/limits.js';
 import { watchFlags, siteEnabled } from '../lib/flags.js';
 import { isKoreanOnly, hasHangul as isHangulText } from '../lib/lang.js';
 import { classifyAdded } from '../lib/classify.js';
@@ -162,17 +163,46 @@ function onMutate(threadId) {
   }, DEBOUNCE_MS);
 }
 
+// Each context message is cut like Gmail's thread reading: one huge message must not crowd out the rest or exceed
+// the background's size limit.
+const CONTEXT_CHARS = 2000;
+const cut = (text) => (text.length > CONTEXT_CHARS
+  ? `${text.slice(0, CONTEXT_CHARS).replace(/[\uD800-\uDBFF]$/, '')} [...]` : text); // whole emoji only
+
 export function contextFor(root) {
-  return readMessages(root).slice(-CONTEXT_N).map(({ from, text }) => ({ from, text }));
+  return readMessages(root).slice(-CONTEXT_N).map(({ from, text }) => ({ from, text: cut(text) }));
+}
+
+// incomingItems split so no request carries more than LIMITS.items (the background refuses a longer list).
+export function incomingBatches(msgs) {
+  return chunks(incomingItems(msgs).todo, LIMITS.items).map(incomingItems);
+}
+
+// My own messages for the hover-original lookup, at most LIMITS.texts per request.
+export const sentBatches = (msgs) => chunks(msgs.filter((m) => m.from === 'me'), LIMITS.texts);
+
+// The partner messages worth translating, and the request items for them. A message over the size limit is
+// skipped (left as it is): the background would refuse the whole batch for it.
+export function incomingItems(msgs) {
+  const todo = msgs.filter((m) => m.from === 'partner' && !isKoreanOnly(m.text) && m.text.length <= LIMITS.text);
+  return { todo, items: todo.map((m, i) => ({ id: String(i), text: m.text, from: m.from })) };
 }
 
 // updateLang: true only for the initial scan and fresh arrivals (see Task 12).
 async function translate(msgs, mode, updateLang) {
   if (!current) return;
-  const todo = msgs.filter((m) => m.from === 'partner' && !isKoreanOnly(m.text));
-  if (!todo.length) return;
+  const batches = incomingBatches(msgs);
+  if (!batches.length) return;
+  if (batches.length > 1) { // a long thread after a re-render: one request per batch, in order; the newest sets the language
+    const cur0 = current; // the object, not the id: A -> B -> A must stop this loop too
+    for (const [i, b] of batches.entries()) {
+      if (current !== cur0) return; // switched threads: these rows are not the new thread's
+      await translate(b.todo, mode, updateLang && i === batches.length - 1);
+    }
+    return;
+  }
+  const [{ todo, items }] = batches;
   const threadId = current.threadId;
-  const items = todo.map((m, i) => ({ id: String(i), text: m.text, from: m.from }));
   try {
     const data = await ask({ type: 'incoming', threadId, context: contextFor(current.root), items, updateLang });
     if (current?.threadId !== threadId) return;
@@ -193,14 +223,26 @@ async function translate(msgs, mode, updateLang) {
   }
 }
 
+// The Korean original recorded for a sent text, by own key: a message reading 'constructor' has none.
+export const sentOriginal = (map, text) => (Object.hasOwn(map, text) && typeof map[text] === 'string' ? map[text] : null);
+
 async function hoverSent(msgs) {
-  const mine = msgs.filter((m) => m.from === 'me');
-  if (!mine.length || !current) return;
+  const batches = sentBatches(msgs);
+  if (!batches.length || !current) return;
+  if (batches.length > 1) {
+    const cur0 = current;
+    for (const b of batches) { if (current !== cur0) return; await hoverSent(b); }
+    return;
+  }
+  const [mine] = batches;
   const threadId = current.threadId;
   try {
     const map = await ask({ type: 'lookupSent', threadId, texts: mine.map((m) => m.text) });
     if (current?.threadId !== threadId) return;
-    for (const m of mine) if (map[m.text] && stillShows(m)) setHoverOriginal(m, map[m.text]);
+    for (const m of mine) {
+      const korean = sentOriginal(map, m.text);
+      if (korean && stillShows(m)) setHoverOriginal(m, korean);
+    }
   } catch {}
 }
 

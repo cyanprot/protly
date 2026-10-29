@@ -119,3 +119,21 @@ test('formatUsd', () => {
   assert.equal(formatUsd(1.234), '$1.23');
   assert.equal(formatUsd(1.234, true), '$1.23 ?');
 });
+
+test('a hostile model name in a reply never writes onto Object.prototype', async () => {
+  let stored;
+  const rec = createUsageRecorder({ get: async () => stored, set: async (u) => { stored = structuredClone(u); }, now: () => Date.UTC(2026, 9, 29, 12) });
+  for (const model of ['__proto__', 'constructor', 'toString', 'hasOwnProperty', 'a b\n', 42]) {
+    await rec.record({ model, usage: { input_tokens: 5, output_tokens: 3 } });
+  }
+  assert.equal(({}).calls, undefined);
+  assert.equal(({}).input, undefined);
+  assert.equal(Object.prototype.hasOwnProperty.call(Object.prototype, 'calls'), false);
+  const day = Object.values(stored)[0];
+  assert.deepEqual(Object.keys(day).sort(), ['constructor', 'hasOwnProperty', 'toString', 'unknown']); // own keys
+  assert.equal(day.unknown.calls, 3); // __proto__, 'a b\n', 42
+  assert.equal(day.constructor.calls, 1);
+  const sum = summarize(stored, Date.UTC(2026, 9, 29, 12));
+  assert.equal(sum.month, 0); // never NaN from an inherited PRICES entry
+  assert.equal(sum.unpriced, true);
+});

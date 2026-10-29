@@ -6,6 +6,7 @@ import { GSEL } from '../src/content/gmail/selectors.js';
 import { userNodes, nodesToText } from '../src/content/gmail/body.js';
 import { mountCompose, translate, undo, escape } from '../src/content/gmail/compose.js';
 import { flags } from '../src/lib/flags.js';
+import { shadowOf } from '../src/ui/card.js';
 
 const html = readFileSync(new URL('./fixtures/gmail.html', import.meta.url), 'utf8');
 const KOREAN = '한글 첫줄\n둘째 줄\n\n셋째 문단';
@@ -29,8 +30,8 @@ function setup() {
   };
   const [inline, dialog] = document.querySelectorAll(GSEL.body);
   const reply = async (r) => { pending.shift()(r); await flush(); };
-  // The card renders in an open shadow root; its .pl-root holds the text, buttons and picker.
-  const note = () => document.querySelector('.pl-card')?.shadowRoot.querySelector('.pl-root') ?? null;
+  // The card renders in a closed shadow root (shadowOf is protly's own handle); its .pl-root holds the text, buttons and picker.
+  const note = () => { const h = document.querySelector('.pl-card'); return h ? shadowOf(h).querySelector('.pl-root') : null; };
   const buttonIn = (label) => [...(note()?.querySelectorAll('button') || [])].find((b) => b.textContent === label);
   return { inline, dialog, calls, reply, note, buttonIn };
 }
@@ -160,6 +161,25 @@ test('the button title mentions polish, the label stays Translate', () => {
   const btn = inline.closest('.reply').querySelector('.pl-g-btn');
   assert.equal(btn.textContent, 'Translate');
   assert.match(btn.title, /polish an English one/);
+});
+
+test('a page script clicking the Translate button sends nothing; the user\'s own click does', async () => {
+  const { inline, calls } = setup();
+  mountCompose(inline);
+  draft(inline, '안녕하세요');
+  const btn = inline.closest('.reply').querySelector('.pl-g-btn');
+  btn.click(); // jsdom events are untrusted, like a page's synthetic click
+  btn.dispatchEvent(new document.defaultView.MouseEvent('click', { bubbles: true }));
+  assert.equal(calls.length, 0);
+  const { _trustSyntheticEvents } = await import('../src/ui/trust.js');
+  _trustSyntheticEvents(true);
+  try {
+    btn.click();
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].type, 'email');
+  } finally {
+    _trustSyntheticEvents(false);
+  }
 });
 
 test('an English draft gets one polish call, Undo restores the English', async () => {

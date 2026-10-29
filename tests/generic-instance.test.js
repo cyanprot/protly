@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import { createInstance } from '../src/generic/instance.js';
+import { shadowOf } from '../src/ui/card.js';
 import { ERRORS } from '../src/ui/errors.js';
 import { _resetToasts } from '../src/ui/toast.js';
 
@@ -21,7 +22,7 @@ function setup(html = '<textarea id="b"></textarea>') {
   const pending = [];
   const ask = (msg) => { calls.push(msg); return new Promise((res, rej) => pending.push({ res, rej })); };
   const inst = createInstance({ doc, ask, fonts: null });
-  const root = () => doc.querySelector('.pl-card')?.shadowRoot;
+  const root = () => { const h = doc.querySelector('.pl-card'); return h ? shadowOf(h) : undefined; };
   const msg = () => root()?.querySelector('.msg')?.textContent ?? null;
   const btn = (label) => [...(root()?.querySelectorAll('button') || [])].find((b) => b.textContent === label);
   const toasts = () => doc.querySelector('.pl-toasts')?.shadowRoot?.textContent ?? '';

@@ -25,3 +25,14 @@ test('injecting the bundle twice keeps one instance', () => {
   dom.window.eval(src);
   assert.equal(dom.window.__protly, first);
 });
+
+test('a page element named __protly cannot stand in for the instance', () => {
+  const src = readFileSync(url, 'utf8');
+  for (const html of ['<div id="__protly"></div>', '<form name="__protly"></form>', '<img name="__protly">']) {
+    const dom = new JSDOM(`<body>${html}</body>`, { runScripts: 'outside-only' });
+    assert.ok(dom.window.__protly, 'named access holds the element first');
+    dom.window.eval(src);
+    assert.equal(typeof dom.window.__protly.run, 'function', html);
+    assert.equal(typeof dom.window.__protly.toast, 'function', html);
+  }
+});

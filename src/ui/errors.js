@@ -14,11 +14,13 @@ export const ERRORS = {
   refused: 'The model declined this text.',
   truncated: 'The reply was cut off. Try Opus or a shorter text.',
   parse: 'The reply was not readable. Try again.',
+  forbidden: 'protly refused a request from this page. Reload the tab; if it keeps happening, report it.',
+  bad_message: 'protly could not send this request. Reload the tab; if it keeps happening, report it.',
 };
 // Kinds worth a page toast (once per text), not only an inline message. Replaces bannerFor's list.
-export const GLOBAL_KINDS = new Set(['auth', 'host', 'host_bug', 'spend_limit', 'bad_request', 'stale']);
+export const GLOBAL_KINDS = new Set(['auth', 'host', 'host_bug', 'spend_limit', 'bad_request', 'stale', 'forbidden', 'bad_message']);
 export function errorText(e) {
-  const base = ERRORS[e?.kind];
+  const base = Object.hasOwn(ERRORS, e?.kind ?? '') ? ERRORS[e.kind] : null; // kind crosses the message boundary
   if (!base) return String(e?.message || e || 'Unknown error');
   return e.kind === 'host_bug' || e.kind === 'bad_request' ? `${base}: ${e.message}` : base;
 }

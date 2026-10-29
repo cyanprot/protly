@@ -45,3 +45,15 @@ test('focused composer: answers handled at once, settles the IME, then runs', as
   assert.deepEqual(settled, [['box', { composing: true }]]);
   assert.deepEqual(ran, ['box']);
 });
+
+test('odd messages never reach owner or sendResponse', async () => {
+  const { commandListener } = await import('../src/lib/command.js');
+  let owned = 0;
+  let answered = 0;
+  const l = commandListener({ owner: () => { owned++; return {}; }, composing: () => false, run: () => {}, settle: async () => {} });
+  for (const msg of [null, undefined, 'command', 7, [], { type: ['command'] }, { type: 'Command' }, { type: 'command ' }]) {
+    assert.equal(l(msg, {}, () => { answered++; }), false, JSON.stringify(msg));
+  }
+  assert.equal(owned, 0);
+  assert.equal(answered, 0);
+});

@@ -1,6 +1,9 @@
+import http.client
 import io
 import json
 import os
+import shutil
+import subprocess
 import struct
 import sys
 import tempfile
@@ -13,8 +16,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import protly_host as h  # noqa: E402
 
 
+TEMP_DIRS = []
+
+
+def tearDownModule():
+    for d in TEMP_DIRS:
+        shutil.rmtree(d, True)
+
+
 def make_home(key='sk-ant-test-123', ws='wrkspc_test'):
     d = tempfile.mkdtemp()
+    TEMP_DIRS.append(d)
     base = os.path.join(d, '.config', 'anthropic')
     os.makedirs(os.path.join(base, 'configs'))
     if key is not None:
@@ -23,6 +35,11 @@ def make_home(key='sk-ant-test-123', ws='wrkspc_test'):
     with open(os.path.join(base, 'configs', 'default.json'), 'w') as f:
         json.dump({'workspace_id': ws}, f)
     return d
+
+
+def offline(urlopen):
+    """safe_handle calls handle() without urlopen, which then uses urllib.request.urlopen: replace that."""
+    return mock.patch.object(h.urllib.request, 'urlopen', urlopen)
 
 
 class FakeResp:
@@ -174,6 +191,147 @@ class Ping(unittest.TestCase):
     def test_reply_never_contains_the_key(self):
         r = h.safe_handle({'id': 15, 'ping': True}, make_home())
         self.assertNotIn('sk-ant-test-123', json.dumps(r))
+
+
+class HostileInput(unittest.TestCase):
+    """Malformed frames and bodies: the host keeps serving, never sends Chrome invalid JSON, never echoes the key."""
+
+    def serve(self, frames):
+        out = io.BytesIO()
+        threads = h.serve(io.BytesIO(b''.join(frames)), out, make_home())
+        for t in threads:
+            t.join(5)
+        out.seek(0)
+        replies = []
+        while (r := h.read_message(out)) is not h.EOF:
+            replies.append(r)
+        return replies
+
+    def test_oversized_frame_length_is_not_read(self):
+        frame = struct.pack('=I', h.MAX_REQUEST + 1)
+        stream = mock.Mock()
+        stream.read.side_effect = [frame]
+        self.assertIs(h.read_message(stream), h.TOO_LARGE)
+        stream.read.assert_called_once_with(4)  # the payload is never allocated
+
+    def test_oversized_frame_stops_the_host(self):
+        big = struct.pack('=I', h.MAX_REQUEST + 1) + b'{}'
+        self.assertEqual(self.serve([big, h.encode_message({'id': 1, 'ping': True})]), [])
+
+    def test_deeply_nested_json_does_not_kill_the_host(self):
+        deep = b'[' * 200000 + b']' * 200000
+        frames = [struct.pack('=I', len(deep)) + deep, h.encode_message({'id': 2, 'ping': True})]
+        replies = self.serve(frames)
+        self.assertEqual([r['id'] for r in replies], [2])
+
+    def test_garbage_frames_are_skipped(self):
+        bad = [b'\xff\xfe', b'{"id": 1,', b'[]', b'"x"', b'null']
+        frames = [struct.pack('=I', len(b)) + b for b in bad] + [h.encode_message({'id': 3, 'ping': True})]
+        self.assertEqual([r['id'] for r in self.serve(frames)], [3])
+
+    def test_nan_in_an_api_body_never_reaches_chrome_as_invalid_json(self):
+        class Resp(FakeResp):
+            def read(self):
+                return b'{"content": NaN, "usage": {"input_tokens": Infinity}}'
+        r = h.handle({'id': 4, 'body': {}}, make_home(), urlopen=mock.Mock(return_value=Resp(200, {})))
+        out = io.BytesIO()
+        h.write_message(out, r)
+        raw = out.getvalue()[4:].decode()
+        reply = json.loads(raw, parse_constant=lambda c: self.fail(f'{c} sent to Chrome'))
+        self.assertEqual(reply['id'], 4)
+        self.assertEqual(reply['status'], 0)
+        self.assertEqual(reply['body']['error']['type'], 'host_error')
+
+    def test_deeply_nested_api_body_gets_a_reply_not_a_hang(self):
+        body = []
+        for _ in range(100000):  # deeper than json.dumps can encode (its C encoder allows a few thousand)
+            body = [body]
+        out = io.BytesIO()
+        h.write_message(out, {'id': 8, 'status': 200, 'body': body})
+        out.seek(0)
+        r = h.read_message(out)
+        self.assertEqual((r['id'], r['status'], r['body']['error']['type']), (8, 0, 'host_error'))
+
+    def test_write_message_survives_an_unencodable_reply(self):
+        out = io.BytesIO()
+        real = h.encode_message
+        with mock.patch.object(h, 'encode_message', side_effect=[RecursionError(), real(h.local_error(9, 'host_error', 'x'))]):
+            h.write_message(out, {'id': 9, 'status': 200, 'body': {}})
+        out.seek(0)
+        r = h.read_message(out)
+        self.assertEqual((r['id'], r['status'], r['body']['error']['type']), (9, 0, 'host_error'))
+
+    def test_non_json_2xx_body_is_a_host_error_without_the_key(self):
+        class Resp(FakeResp):
+            def read(self):
+                return b'<html>captive portal sk-ant-test-123</html>'
+        with offline(mock.Mock(return_value=Resp(200, {}))):
+            r = h.safe_handle({'id': 5, 'body': {}}, make_home())
+        self.assertEqual(r['body']['error']['type'], 'host_error')
+        self.assertNotIn('sk-ant-test-123', json.dumps(r))
+
+    def test_a_key_that_breaks_the_header_never_appears_in_the_reply(self):
+        home = make_home(key='sk-ant-test\n-123')  # http.client's ValueError text quotes the header value
+
+        def validate_headers_only(request, timeout):  # real http.client header checks, no connection
+            conn = http.client.HTTPSConnection('api.anthropic.com')
+            conn.putrequest('POST', '/v1/messages')
+            for k, v in request.header_items():
+                conn.putheader(k, v)
+            self.fail('the header was accepted')
+        with offline(validate_headers_only):
+            r = h.safe_handle({'id': 6, 'body': {'model': 'x'}}, home)
+        self.assertEqual(r['status'], 0)
+        self.assertNotIn('sk-ant-test', json.dumps(r))
+
+
+class Install(unittest.TestCase):
+    """install.sh writes a valid manifest whatever the checkout path holds, and only for a real extension id."""
+
+    def run_install(self, dirname, ext_id='a' * 32):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        src = os.path.join(tmp, dirname)
+        os.makedirs(src)
+        here = os.path.dirname(os.path.abspath(__file__))
+        for f in ('install.sh', 'protly_host.py'):
+            shutil.copy(os.path.join(here, f), os.path.join(src, f))
+        env = {'HOME': tmp, 'PATH': os.environ.get('PATH', '/usr/bin:/bin')}
+        p = subprocess.run(['bash', os.path.join(src, 'install.sh'), ext_id], env=env, capture_output=True, text=True)
+        manifest = os.path.join(tmp, '.config', 'google-chrome', 'NativeMessagingHosts', 'com.northprot.protly.json')
+        return p, manifest, src
+
+    def test_quotes_and_backslashes_in_the_path_stay_inside_the_path(self):
+        p, manifest, src = self.run_install('pro"tly\\x", "allowed_origins": ["evil"], "y": "')
+        self.assertEqual(p.returncode, 0, p.stderr)
+        with open(manifest) as f:
+            m = json.load(f)
+        self.assertEqual(m['path'], os.path.join(src, 'protly_host.py'))
+        self.assertEqual(m['allowed_origins'], ['chrome-extension://' + 'a' * 32 + '/'])
+        self.assertEqual(sorted(m), ['allowed_origins', 'description', 'name', 'path', 'type'])
+
+    def test_a_failed_write_keeps_the_old_manifest(self):
+        p, manifest, src = self.run_install('protly')
+        self.assertEqual(p.returncode, 0, p.stderr)
+        with open(manifest) as f:
+            before = f.read()
+        tmp = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(manifest))))
+        bin_dir = os.path.join(tmp, 'bin')
+        os.makedirs(bin_dir)
+        with open(os.path.join(bin_dir, 'python3'), 'w') as f:
+            f.write('#!/bin/sh\nexit 3\n')
+        os.chmod(os.path.join(bin_dir, 'python3'), 0o755)
+        env = {'HOME': tmp, 'PATH': bin_dir + ':' + os.environ.get('PATH', '/usr/bin:/bin')}
+        q = subprocess.run(['bash', os.path.join(src, 'install.sh'), 'a' * 32], env=env, capture_output=True, text=True)
+        self.assertNotEqual(q.returncode, 0)
+        with open(manifest) as f:
+            self.assertEqual(f.read(), before)
+        self.assertEqual([n for n in os.listdir(os.path.dirname(manifest)) if n.startswith('.')], [])
+
+    def test_rejects_a_bad_extension_id(self):
+        p, manifest, _ = self.run_install('protly', ext_id='a' * 31 + '"')
+        self.assertNotEqual(p.returncode, 0)
+        self.assertFalse(os.path.exists(manifest))
 
 
 if __name__ == '__main__':

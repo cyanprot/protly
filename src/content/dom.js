@@ -1,4 +1,5 @@
 import { SEL, senderOf, findViewerName } from './selectors.js';
+import { trusted } from '../ui/trust.js';
 
 export const findThreadRoot = (doc) => doc.querySelector(SEL.threadRoot);
 export const findComposer = (doc) => doc.querySelector(SEL.composer);
@@ -58,7 +59,7 @@ export function renderRetry(m, onClick) {
   b.className = 'pl-tr pl-retry';
   b.textContent = '⟳';
   b.title = 'Translation failed, click to retry';
-  b.onclick = (e) => { e.stopPropagation(); onClick(); };
+  b.onclick = (e) => { e.stopPropagation(); if (trusted(e)) onClick(); }; // a page script's click is not the user's
   m.textEl.after(b);
 }
 
