@@ -21,6 +21,7 @@ struct ProtlyBar: View {
         }
         .lineLimit(1)
         .frame(height: ProtlyGeometry.toolbarHeight)
+        .padding(.top, ProtlyGeometry.topBand)
     }
 
     @ViewBuilder

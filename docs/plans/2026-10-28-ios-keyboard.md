@@ -2099,8 +2099,11 @@ import SwiftUI
 enum ProtlyGeometry {
     static let rowPitch: CGFloat = 54
     static let keyHeight: CGFloat = 43
-    /// Band above the first row is host padding + this + the first row's top inset. Tuned from screenshots.
+    /// The bar's text row. Band above the first row = topBand + this + the first row's top inset.
     static let toolbarHeight: CGFloat = 29
+    /// Empty space above the bar, ours so the height never depends on iOS: iOS used to add 17.5 pt above a
+    /// shorter view, then dropped it after an Emoji round-trip (Sprint 5). Apple's band above row 1 is 52 pt.
+    static let topBand: CGFloat = 52 - toolbarHeight - (rowPitch - keyHeight) / 2
     /// The last row's frame is this much shorter than the pitch (its key keeps keyHeight), so the key sits on
     /// the view's bottom edge. Apple's band below the last row is 71 pt; ours can only reach 74.83: iOS clips
     /// a third-party keyboard to its view and draws the globe/mic band under it (Sprint 4 screenshots).
@@ -3222,6 +3225,7 @@ struct ProtlyBar: View {
         }
         .lineLimit(1)
         .frame(height: ProtlyGeometry.toolbarHeight)
+        .padding(.top, ProtlyGeometry.topBand)
     }
 
     @ViewBuilder
