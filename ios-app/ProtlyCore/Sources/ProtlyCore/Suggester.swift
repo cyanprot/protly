@@ -53,17 +53,27 @@ public struct Suggester: Sendable {
         let typed = TypingSession.render(keys, as: language)
         let lower = typed.lowercased()
         // A shortcut is found in either reading, the current one first: after a Korean word the keys of "ty"
-        // compose as 쇼.
+        // compose as 쇼. An entry that is its own shortcut (a contact name) only marks the word known: a contact
+        // "Im" (a Korean surname, "im" -> "Im") still leaves im its "I'm".
+        var known = false
         for reading in [lower, TypingSession.render(keys, as: language.other).lowercased()] {
-            if let r = lexicon[reading] { return r.lowercased() == reading ? nil : r }
+            if let r = lexicon[reading] {
+                if r.lowercased() != reading { return r }
+                known = true
+                break
+            }
         }
         guard language == .english else { return nil }
         if let c = Self.contractions[lower] {
             let fixed = Self.matchCase(typed, c)
             return fixed == typed ? nil : fixed
         }
-        guard let english = lists?.english, lower.count >= 3, !Self.slang.contains(lower),
-              english.frequency(of: lower) == 0, learned.count(of: lower, in: .english) == 0 else { return nil }
+        // The typo search grows with the square of the word's length (1,000 letters took 482 ms): a word longer
+        // than any learned key gets none. A learned word that starts with the typed letters is still being
+        // typed: its completion keeps the slot.
+        guard !known, let english = lists?.english, lower.count >= 3, lower.count <= LearnedWords.maxKeyLength,
+              !Self.slang.contains(lower), english.frequency(of: lower) == 0,
+              !learned.hasPrefix(lower, in: .english) else { return nil }
         // A common longer word starts with the typed letters: the word is still being typed (abo -> "about"),
         // not a typo of "ago". Without this, 700 of the 2,076 en_50k top-3,000 words of 5+ letters showed a wrong
         // fix on the way (othe -> "the", thos -> "this", gre -> "grew").
@@ -72,23 +82,31 @@ public struct Suggester: Sendable {
         let best = Self.edits(lower).filter { $0.count >= 3 && !Self.stems.contains($0) }
             .max { (english.frequency(of: $0), $1) < (english.frequency(of: $1), $0) }
         guard let best, english.frequency(of: best) >= Self.minFixCount else { return nil }
-        return Self.matchCase(typed, best)
+        return Self.matchCase(typed, Self.shown(best))
     }
 
-    /// A longer word for the keys typed so far, nil when none.
+    /// A longer word for the keys typed so far, nil when none. Past `LearnedWords.maxKeyLength` keys there is
+    /// none: no learned or list key is that long (the longest list keys: 23 English, 26 Korean).
     public func completion(_ keys: [KeyEvent], as language: Language, lists: LanguageDetector?) -> String? {
-        guard !keys.isEmpty else { return nil }
+        guard !keys.isEmpty, keys.count <= LearnedWords.maxKeyLength else { return nil }
         switch language {
         case .english:
             let typed = Dubeolsik.latin(keys)
             let prefix = typed.lowercased()
             if let w = learned.completion(of: prefix, in: .english) { return Self.matchCase(typed, w) }
-            return lists?.english.completion(of: prefix).map { Self.matchCase(typed, Self.stems.contains($0) ? $0 + "'t" : $0) }
+            if Self.stems.contains(prefix) { return Self.matchCase(typed, prefix + "'t") }  // didn: "didn't"
+            return lists?.english.completion(of: prefix).map { Self.matchCase(typed, Self.shown($0)) }
         case .korean:
             let key = Dubeolsik.koreanKeyString(keys)
             if let w = learned.completion(of: key, in: .korean) { return w }
             return lists?.korean.completion(of: key).map { Hangul.compose($0.map { KeyEvent($0) }).text }
         }
+    }
+
+    /// A list word as the slot shows it: a stem or a contraction typed without its apostrophe (en_50k lists
+    /// didnt, dont, im, ...) gets the apostrophe.
+    static func shown(_ word: String) -> String {
+        Self.stems.contains(word) ? word + "'t" : Self.contractions[word] ?? word
     }
 
     /// Words one typo away: a key missed, an extra key, a neighbour key, two keys swapped.

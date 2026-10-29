@@ -3816,7 +3816,8 @@ clipboard and field-reading code of the keyboard. Keyboard-visual PR #1 (branch
 6. Task 6.8, the phone check.
 
 **Verified while planning (2026-10-29, scratch worktree of main at 1b4f408):** every code block below was applied
-task by task. `swift test` gave the counts stated per task (49 -> 54 -> 62 -> 65 -> 67 -> 74), and every "fails
+task by task. `swift test` gave the counts stated per task (49 -> 54 -> 62 -> 65 -> 67 -> 74; the review fixes
+after Task 6.2 add 8, so from Task 6.3 on the stated counts are 73, 75, 82), and every "fails
 with" line is the real first compiler error. The eval output in Task 6.4 is the real output; it was unchanged
 after Task 6.6. Every anchored edit's old text occurs exactly once on main. `xtool dev build` with Task 6.7
 applied printed `Build complete!` twice: once on main, and once on main plus visual PR #1's diff. Neither build
@@ -4424,8 +4425,17 @@ Claude-Session: https://claude.ai/code/session_011iEAzXmBo1j3ENqKp7CnKQ
 MSG
 ```
 
+**Review fixes (applied after 6.2)**, one commit on `sprint6` after an independent review, 8 tests added (62 -> 70):
+1. Completions and typo fixes show en_50k's apostrophe-less words through the tables (`didn` -> "didn't", never "didnt"); a typed stem offers its contraction.
+2. The typo search is skipped past `LearnedWords.maxKeyLength` letters (it was O(n^2): 1,000 letters took 482 ms), and so is completion.
+3. The limit test pins "the least used goes first" (a count-1 victim among count-2 words).
+4. A lexicon self-entry (contact "Im") skips only the typo stage, so `im` still offers "I'm".
+5. No typo fix while a learned word starts with the typed letters: its completion keeps the slot.
+6. Decoding `LearnedWords` drops keys over the cap and counts <= 0, and trims to `limit`, least used first.
+7. Tests added: all-caps case (`TEH` -> "THE"), `lists: nil`, a Korean self-entry in the lexicon.
+
 Stop here until the security 002 PR has merged (order step 2), then rebase `sprint6` onto main (step 3) and run
-the test line: `Executed 62 + S tests, with 0 failures`.
+the test line: `Executed 70 + S tests, with 0 failures`.
 
 ### Task 6.3: Detector carry-overs (걍, 걔) (order step 3)
 
@@ -4568,7 +4578,7 @@ them. If anything else calls it (security 002 may have added a caller), leave it
 
 **Step 4: Run all tests**
 
-Expected: `Executed 65 + S tests, with 0 failures` (62 + 3).
+Expected: `Executed 73 + S tests, with 0 failures` (70 + 3).
 
 **Step 5: Commit**
 
@@ -4788,7 +4798,7 @@ Expected: the test line prints `error: fatalError`; the first-error line prints
 
 **Step 4: Run all tests and the eval**
 
-Expected: `Executed 67 + S tests, with 0 failures`. The Task 6.4 eval command prints the same five lines (the
+Expected: `Executed 75 + S tests, with 0 failures`. The Task 6.4 eval command prints the same five lines (the
 eval teaches nothing).
 
 **Step 5: Commit**
@@ -5061,7 +5071,7 @@ Expected: the test line prints `error: fatalError`; the first-error line prints
 
 **Step 4: Run all tests and the eval**
 
-Expected: `Executed 74 + S tests, with 0 failures` (the 11 existing `TypingSessionTests` pass unchanged); the Task
+Expected: `Executed 82 + S tests, with 0 failures` (the 11 existing `TypingSessionTests` pass unchanged); the Task
 6.4 eval lines are unchanged.
 
 **Step 5: Commit**

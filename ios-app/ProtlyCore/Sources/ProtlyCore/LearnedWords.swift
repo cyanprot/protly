@@ -22,6 +22,22 @@ public struct LearnedWords: Sendable, Equatable, Codable {
 
     public init() {}
 
+    /// The saved JSON is read back as untrusted: keys longer than `maxKeyLength` and counts <= 0 are dropped,
+    /// and past `limit` the least used go first, as in `learn`.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        english = Self.cleaned(try c.decode([String: Entry].self, forKey: .english))
+        korean = Self.cleaned(try c.decode([String: Entry].self, forKey: .korean))
+    }
+
+    private static func cleaned(_ words: [String: Entry]) -> [String: Entry] {
+        let kept = words.filter { $0.key.count <= maxKeyLength && $0.value.count > 0 }
+        guard kept.count > limit else { return kept }
+        // Most used first; on a tie the key `learn` would push out last.
+        let order = kept.sorted { ($1.value.count, $0.key) < ($0.value.count, $1.key) }
+        return Dictionary(uniqueKeysWithValues: order.prefix(limit).map { ($0.key, $0.value) })
+    }
+
     /// The list key of a word, nil when it cannot be typed as one word (English: a-z only; Korean: Hangul only)
     /// or its key is longer than `maxKeyLength`.
     public static func key(of text: String, in language: Language) -> String? {
