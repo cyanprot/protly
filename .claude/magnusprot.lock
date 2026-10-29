@@ -1,0 +1,4 @@
+source: github.com/cyanprot/magnusprot
+commit: 669ade056e674112ed7ecf8c6abebe2ef3ccf410
+agents: code-architect.md code-explorer.md code-reviewer.md evaluator.md incident-investigator.md migration-planner.md silent-failure-hunter.md spec-validator.md test-strategist.md 
+hooks: bash-guard.sh caveman-activate.js caveman-config.js caveman-mode-tracker.js lang-mirror.py

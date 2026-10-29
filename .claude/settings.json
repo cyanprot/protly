@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ \"$CLAUDE_CODE_REMOTE\" = true ] || { cat >/dev/null; exit 0; }; exec node \"$CLAUDE_PROJECT_DIR/.claude/hooks/caveman-activate.js\"'"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ \"$CLAUDE_CODE_REMOTE\" = true ] || { cat >/dev/null; exit 0; }; exec node \"$CLAUDE_PROJECT_DIR/.claude/hooks/caveman-mode-tracker.js\"'"
+          },
+          {
+            "type": "command",
+            "command": "bash -c '[ \"$CLAUDE_CODE_REMOTE\" = true ] || { cat >/dev/null; exit 0; }; exec python3 -I \"$CLAUDE_PROJECT_DIR/.claude/hooks/lang-mirror.py\"'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ \"$CLAUDE_CODE_REMOTE\" = true ] || { cat >/dev/null; exit 0; }; exec bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.sh\"'"
+          }
+        ]
+      }
+    ]
+  }
+}

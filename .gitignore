@@ -6,3 +6,4 @@ ios-app/xtool/
 .swiftpm/
 ios-app/Sources/ProtlyKeyboard/Secrets.swift
 ios-app/.bsp/
+.claude/campaigns/

@@ -244,3 +244,23 @@ Geometry (pt, from 1170x2532 screenshots, Apple's English (Canada) keyboard vs p
 
 Sprint 4 gate: items 1, 2, 4, 5, 9, 12, 13, 14, 16, 17, 18 pass; item 8 is replaced by the protly key in Sprint 5
 (the system key opens Emoji); band below is 3.8 pt off for the platform reason above, accepted by the user.
+
+## Sprint 5: actions
+
+Checked 2026-10-29 on the iPhone 13 Pro (iOS 26, dark mode), builds 1a53c7f to 62a4d02. The user reported "mostly
+works" for the Task 5.4 checklist; item 7 (latency) "not slow", no seconds measured. Found on the phone and fixed:
+
+- Row 1 long-press bubbles (action callouts) were cut at the keyboard's top edge: the bubble (55 pt) was taller
+  than the room above the key (34.5 pt). The vendored `Callouts+ActionCallout.swift` now shrinks such a bubble to
+  fit (1a53c7f).
+- An empty left bar slot collapsed (an `if` with no else draws nothing), so Translate slid to the left quarter
+  (90e19b2).
+- The band above row 1 was 52 pt on first open and 35 pt after an Emoji round-trip: the view's content was
+  239.5 pt and iOS only sometimes added 17.5 pt above it. 62a4d02 made the content 257 pt (`topBand`), but the
+  user still sees the height change ("sometimes taller, sometimes shorter").
+- Quality review fixes (e420200): a cancelled field read stops at once; a partial read is refused with "Select
+  all, then tap again"; a selection gets its own mode; Read clipboard only on an empty field.
+
+The height instability moves to the cloud campaign 2026-10-29-keyboard-visual
+(`docs/plans/2026-10-29-keyboard-visual.md`): simulator screenshots measured against Apple's keyboard, so the
+fix is verified by Claude rather than by the user's eye. Sprint 5's features pass; Sprint 6 is planned meanwhile.
