@@ -426,3 +426,48 @@ above. Two checks are stricter than in the first table: `ㅋㅋ` must not become
   ("I'm running late. See you at 3."), although ENGLISH_STYLE says "clauses the draft joins stay joined". A run
   before the rebase kept the comma. The Russian runs added an emoji the draft lacks (that prompt has no
   ENGLISH_STYLE, as before).
+
+## Sprint 8: target eval (2026-10-29)
+
+Live run of `scripts/eval-polish.mjs` on 2026-10-29 on branch `sprint8` at 4738f83 (Tasks 8.1-8.4 on main
+12e27d1): `0 failure(s) of 24`. Same models and effort as above. The eight new cases are all keyboard cases; the
+four older keyboard MODE out cases now send `TARGET: English` and are the English-target style check.
+
+| Case | Result | in | out |
+|---|---|---|---|
+| polish chat, typos | PASS | 1,211 | 137 |
+| polish chat, CyanStyle rules | PASS | 1,217 | 158 |
+| polish email, greeting and paragraphs kept | PASS | 1,296 | 276 |
+| out, female friend in Russian (runs 1-3) | PASS x3 | 776 each | 51, 60, 59 |
+| out, English style: Canadian spelling, no dash or semicolon | PASS | 1,299 | 69 |
+| out, English style: adds no exclamation mark or emoji | PASS | 1,294 | 70 |
+| email, English style: no banned service phrases | PASS | 1,285 | 79 |
+| keyboard out, the style keeps a warm draft warm | PASS | 1,825 | 38 |
+| keyboard out, ㅋㅋ becomes lol or is dropped | PASS | 1,834 | 45 |
+| keyboard out, style without a note | PASS | 1,832 | 49 |
+| keyboard fix, CyanStyle rules | PASS | 1,829 | 142 |
+| keyboard out, about-me note spells the school, adds nothing | PASS | 1,928 | 51 |
+| keyboard fix, about-me note never leaks into the polish | PASS | 1,912 | 66 |
+| keyboard out, ru: prefix, the male writer in Russian past tense | PASS | 1,832 | 52 |
+| keyboard out, ru: prefix, a female friend (누나) saved the writer (runs 1-3) | PASS x3 | 1,834 each | 54, 60, 58 |
+| keyboard out, ja: prefix, ㅋㅋ rendered in Japanese | PASS | 1,842 | 64 |
+| keyboard out, es: prefix, masculine adjectives for the writer | PASS | 1,840 | 68 |
+| keyboard fix, ko: polishes a Korean draft in Korean | PASS | 1,839 | 144 |
+| keyboard fix, a Spanish draft stays Spanish, without the English style | PASS | 1,831 | 116 |
+| out, never Korean, ㅋㅋ never haha | PASS | 1,283 | 34 |
+
+- Prompt size: the bundled keyboard prompt is 4,280 characters with the final newline (was 3,871, budget now
+  4,300). Measured cost of that: the keyboard cases read 1,825-1,842 input tokens without the note and 1,912-1,928
+  with it, against 1,646-1,657 and 1,740-1,749 in the Sprint 7 run, so about 180 more input tokens per call. The
+  plan estimated about 100 (characters / 4); the Hangul and Cyrillic in the new lines cost more per character.
+  The extension cases are unchanged to the token.
+- Totals: 37,059 input and 2,000 output tokens. Cost about $0.20 [estimate from list prices, not billed figures].
+- Targets: Russian past tense is masculine for the writer ("устал ... лёг") and feminine for 누나 ("ты меня
+  спасла", three of three); Japanese renders ㅋㅋ as "w"; Spanish uses "cansado".
+- Polish: the `ko:` draft came back Korean, in banmal, with ㅋㅋ kept and 돼, 안 되면, 말해 줘 fixed; the Korean
+  change list names each fix. The Spanish draft stayed Spanish ("color", "¿dónde la compraste? jaja"), with no
+  English style applied.
+- Watch, not failed by any check: the `ko:` polish also turned the chat form 낼 into 내일, which is more formal
+  than the draft (spelling is right, register drifts a little). The Russian female-friend runs added "!" and
+  "просто", which the draft does not have; the non-English MODE out has no emoji and exclamation rule, as in the
+  extension.
