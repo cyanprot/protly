@@ -19,9 +19,10 @@ Scope: `ios-app/ProtlyCore/**`, `ios-app/Sources/Protly/**`, `ios-app/scripts/**
     unchecked: `URLSession.bytes(for:)` does not exist on Linux, so a shim of the same shape stood in for it.
   - The `KeyboardViewController.swift` changes are listed below for the tower to check on the phone.
 - **Source rules:** a ProtlyCore test (`KeyboardSourceRulesTests`) reads the keyboard sources, never
-  `Secrets.swift`. It fails if they log anything, if they read the pasteboard string outside `readClipboard`,
-  if they use `Secrets` anywhere but `ActionAPI.request`, or if they store anything but the change count and
-  the language in `UserDefaults`.
+  `Secrets.swift`, and checks code only (comments are blanked). It fails if they log anything, read the
+  pasteboard string outside `readClipboard`, use `Secrets` anywhere but `ActionAPI.request`, or call
+  `set`/`setValue` on `UserDefaults` (or a name bound to it) for anything but the change count and the
+  language. It also fails on any `@AppStorage`.
 
 ## What was already sound
 
@@ -51,7 +52,7 @@ Scope: `ios-app/ProtlyCore/**`, `ios-app/Sources/Protly/**`, `ios-app/scripts/**
 | F1 | MEDIUM | `ActionAPI.swift` `body`, `KeyboardViewController.swift` `readClipboard`/`act` | Field, selection and clipboard text went to the API at any length. A multi-MB clipboard took several copies of memory in the keyboard and a large bill, for a reply that cannot fit 16000 tokens anyway. | fixed `5e15292`: `ActionAPI.request` refuses more than 50,000 UTF-16 units with `.tooLong`, before any request exists |
 | F2 | MEDIUM | `ActionClient.swift` | `URLSession.shared` keeps a disk URL cache and a persistent cookie store, so a reply holding the translation of clipboard or field text could reach the keyboard's caches. | fixed `c1bb644`: ephemeral session, no URL cache, no cookie or credential store, requests ignore the local cache |
 | F6 | MEDIUM | `KeyboardViewController.swift` `insertResult`, `undoInsert` | Insert and Undo checked only the last 40 characters, then deleted the whole original or inserted text. A paste or cut earlier in the draft while the request ran passed the check, and the deletes removed the wrong text. | fixed `05c7135`: `FieldGuard` requires the text before the cursor to end with all of it; tower check 3 |
-| F3 | LOW | `ActionClient.swift` | `timeoutInterval` is an idle timeout: a reply dribbled byte by byte never ended. The body was read into memory at any size. | fixed `8681fc7`, `9ec001a`, `52af7d6`: 90 s cap on the whole request; `ActionAPI.collect` reads at most 2 MB and stops on cancel; the download is cancelled past it; `parse` refuses larger |
+| F3 | LOW | `ActionClient.swift` | `timeoutInterval` is an idle timeout: a reply dribbled byte by byte never ended. The body was read into memory at any size. | fixed `8681fc7`, `9ec001a`, `52af7d6`, and the last review commit: 90 s cap on the whole request; `ActionAPI.collect` reads at most 2 MB and stops on cancel; the download is cancelled on every way out; `parse` refuses larger |
 | F4 | LOW | `Hangul.swift` `Composer` | A raw compound-final key (ㄳ) followed by a vowel trapped on a force unwrap. Not reachable from the keyboard (it feeds only a-z), but the API is public. | fixed `039cbab` |
 | F5 | LOW | `Keys.swift` `latin` | `Character("ß".uppercased())` trapped: some letters uppercase to two characters. Same reachability as F4. | fixed `7d60cc0` |
 | F7 | LOW | `ActionClient.swift` | An empty key (the CI and cloud stand-in) still sent the user's text. A missing prompt read "The API rejected the request" although nothing was sent. | fixed `5717977`: `.noKey` and `.setup`, no request |
@@ -113,7 +114,7 @@ Scope: `ios-app/ProtlyCore/**`, `ios-app/Sources/Protly/**`, `ios-app/scripts/**
 - ProtlyCore `WordList`: counts saturate; lines split on any line break and fields on any whitespace.
 - `ActionClient`:
   - uses `ActionAPI.request`, and one session built from `sessionConfiguration()` with the redirect delegate;
-  - reads the reply through `bytes(for:)` and `ActionAPI.collect`, and cancels the download past the cap.
+  - reads the reply through `bytes(for:)` and `ActionAPI.collect`, and cancels the download on every way out.
 - `KeyboardViewController`: Insert and Undo call `FieldGuard`; `act` cancels a running action first.
 - `make-secrets.sh`: the gitignore check runs before writing; a readable key file gets a warning.
 - New tests (49 → 95 ProtlyCore tests):

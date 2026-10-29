@@ -12,14 +12,37 @@ final class KeyboardSourceRulesTests: XCTestCase {
         for dir in ["Sources/ProtlyKeyboard", "Sources/Protly"] {
             let url = iosApp.appendingPathComponent(dir)
             guard let names = try? FileManager.default.contentsOfDirectory(atPath: url.path) else {
+                // Only a copy of the package outside ios-app/ has no keyboard sources next to it.
+                if FileManager.default.fileExists(atPath: iosApp.appendingPathComponent("Package.swift").path) {
+                    XCTFail("\(dir) not found")
+                    return []
+                }
                 throw XCTSkip("\(dir) not found next to ProtlyCore")
             }
             for name in names.sorted() where name.hasSuffix(".swift") && name != "Secrets.swift" {
-                out.append((name, try String(contentsOf: url.appendingPathComponent(name), encoding: .utf8)))
+                let text = try String(contentsOf: url.appendingPathComponent(name), encoding: .utf8)
+                out.append((name, Self.withoutComments(text)))
             }
         }
         XCTAssertTrue(out.contains { $0.0 == "KeyboardViewController.swift" })
         return out
+    }
+
+    /// Line comments blanked (same length, so line numbers and ranges hold): only code is checked.
+    static func withoutComments(_ text: String) -> String {
+        text.components(separatedBy: "\n").map { line -> String in
+            guard let r = line.range(of: "//") else { return line }
+            return String(line[..<r.lowerBound]) + String(repeating: " ", count: line[r.lowerBound...].count)
+        }.joined(separator: "\n")
+    }
+
+    /// Names bound to an object: `let pb = UIPasteboard.general`, `let d = UserDefaults.standard`.
+    private func boundNames(_ object: String, in text: String) -> [String] {
+        let ns = text as NSString
+        return matches(#"let (\w+) = "# + object, in: text).compactMap { r in
+            let re = try! NSRegularExpression(pattern: #"let (\w+) ="#)
+            return re.firstMatch(in: text, range: r).map { ns.substring(with: $0.range(at: 1)) }
+        }
     }
 
     private func matches(_ pattern: String, in text: String) -> [NSRange] {
@@ -50,20 +73,16 @@ final class KeyboardSourceRulesTests: XCTestCase {
     func testTheClipboardStringIsReadOnlyInReadClipboard() throws {
         for (name, text) in try sources() {
             let ns = text as NSString
-            // Names bound to the pasteboard: `let pb = UIPasteboard.general`.
-            let names = matches(#"let (\w+) = UIPasteboard\.general\b"#, in: text).compactMap { r -> String? in
-                let re = try! NSRegularExpression(pattern: #"let (\w+) ="#)
-                guard let m = re.firstMatch(in: text, range: r) else { return nil }
-                return ns.substring(with: m.range(at: 1))
-            }
+            let names = boundNames(#"UIPasteboard\.general\b"#, in: text)
             let readers = [#"UIPasteboard\.general\.(string|strings|items|data|value)\b"#]
                 + names.map { #"\b\#($0)\.(string|strings|items|data|value)\b"# }
             let reads = readers.flatMap { matches($0, in: text) }
             guard !reads.isEmpty else { continue }
             XCTAssertEqual(name, "KeyboardViewController.swift")
             let body = ns.range(of: "private func readClipboard()")
-            XCTAssertNotEqual(body.location, NSNotFound)
+            guard body.location != NSNotFound else { XCTFail("\(name): readClipboard not found"); continue }
             let end = ns.range(of: "\n    }\n", range: NSRange(location: body.location, length: ns.length - body.location))
+            guard end.location != NSNotFound else { XCTFail("\(name): end of readClipboard not found"); continue }
             for r in reads {
                 XCTAssertTrue(r.location > body.location && r.location < end.location,
                               "\(name): clipboard read outside readClipboard: \(lineText(ns, r))")
@@ -71,14 +90,18 @@ final class KeyboardSourceRulesTests: XCTestCase {
         }
     }
 
-    func testUserDefaultsKeepsNoText() throws {
+    func testUserDefaultsHoldsOnlyTheChangeCountAndTheLanguage() throws {
         for (name, text) in try sources() {
             let ns = text as NSString
-            for r in matches(#"\.set\("#, in: text) {
-                let line = lineText(ns, r)
-                guard line.contains("UserDefaults") || line.contains("d.set(") else { continue }
-                XCTAssertTrue(line.contains("changeCount") || line.contains("previousKey"), "\(name): \(line)")
+            let receivers = [#"UserDefaults\.standard"#, #"UserDefaults\([^)]*\)"#]
+                + boundNames(#"UserDefaults\b"#, in: text).map { #"\b\#($0)"# }
+            for receiver in receivers {
+                for r in matches(receiver + #"\.(set|setValue)\("#, in: text) {
+                    let line = lineText(ns, r)
+                    XCTAssertTrue(line.contains("changeCount") || line.contains("previousKey"), "\(name): \(line)")
+                }
             }
+            XCTAssertEqual(matches(#"@AppStorage"#, in: text).count, 0, name)
         }
     }
 
