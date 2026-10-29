@@ -5,10 +5,15 @@ import ObjectiveC
 import os
 import UIKit
 
-/// Pins the keyboard's height in portrait so every presentation (first open, Emoji round-trip, app switch) gets
-/// the same frame. Without it iOS picked a height per presentation and the band above row 1 changed (Sprint 5;
-/// docs/ios-keyboard-notes.md, "Simulator verification"). Landscape keeps iOS's own height: its rows are
-/// KeyboardKit's, not ProtlyGeometry's.
+/// Pins the keyboard's height in portrait so every presentation (first open, Emoji round-trip, app switch) shows
+/// the same band above row 1 (Sprint 5; docs/ios-keyboard-notes.md, "Simulator verification"). Landscape keeps
+/// iOS's own height: its rows are KeyboardKit's, not ProtlyGeometry's.
+///
+/// iOS draws its glass `hostTopMargin` above the height it gives a third-party keyboard. On a fresh presentation it
+/// takes that margin out of the keyboard's own height, so the glass starts at the view's top. When the host app
+/// comes back from the background with the keyboard up, it keeps the full height and draws the margin above the
+/// view: an empty band 17 pt too tall (simulator runs 1-4). Then the pin drops by the margin, and ProtlyRoot keeps
+/// the content at the bottom, so only the empty top of the bar's band goes under iOS's margin.
 ///
 /// Logs the view's height at debug level (subsystem com.northprot.protly, category height): Console on a Mac
 /// shows it for the phone, `log show --debug` for the simulator.
@@ -17,6 +22,8 @@ final class ProtlyHeight: NSObject {
     /// The bar's band and four rows, the last one trimmed: 257 pt.
     static let portrait = ProtlyGeometry.topBand + ProtlyGeometry.toolbarHeight
         + 4 * ProtlyGeometry.rowPitch - ProtlyGeometry.lastRowTrim
+    /// Glass above the keyboard's height that iOS 26 adds for a third-party keyboard (measured in the simulator).
+    static let hostTopMargin: CGFloat = 17
 
     private static let log = Logger(subsystem: "com.northprot.protly", category: "height")
     private static var key: UInt8 = 0
@@ -40,8 +47,6 @@ final class ProtlyHeight: NSObject {
         constraint.priority = UILayoutPriority(999)
         super.init()
 
-        // A UIInputView takes iOS's height unless it may size itself from its constraints.
-        controller.inputView?.allowsSelfSizing = true
         orientation = controller.state.keyboardContext.$interfaceOrientation.sink { [weak self] value in
             MainActor.assumeIsolated {
                 self?.constraint.isActive = value.isPortrait
@@ -52,30 +57,25 @@ final class ProtlyHeight: NSObject {
             guard change.oldValue?.height != change.newValue?.height else { return }
             MainActor.assumeIsolated { self?.report("bounds") }
         }
-        // After an app switch iOS showed the keyboard 17 pt taller than the pin (simulator runs 1-3): ask again.
         // Selector observers go away with this object.
-        let center = NotificationCenter.default
-        center.addObserver(self, selector: #selector(hostChanged), name: .NSExtensionHostWillEnterForeground, object: nil)
-        center.addObserver(self, selector: #selector(hostChanged), name: .NSExtensionHostDidBecomeActive, object: nil)
-        report("pinned, allowsSelfSizing \(controller.inputView?.allowsSelfSizing ?? false)")
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(hostBecameActive), name: .NSExtensionHostDidBecomeActive, object: nil
+        )
+        report("pinned")
     }
 
-    @objc private func hostChanged(_ note: Notification) {
-        guard constraint.isActive, let view else { return }
-        constraint.isActive = false
-        constraint.isActive = true
-        view.setNeedsLayout()
-        view.layoutIfNeeded()
-        report(note.name.rawValue)
+    @objc private func hostBecameActive(_ note: Notification) {
+        constraint.constant = Self.portrait - Self.hostTopMargin
+        report("host became active")
     }
 
     private func report(_ reason: String) {
         guard let view else { return }
         let height = Double(view.bounds.height)
         let window = Double(view.window?.bounds.height ?? -1)
-        let safeTop = Double(view.safeAreaInsets.top)
-        let pinned = constraint.isActive
+        let pin = Double(constraint.constant)
+        let active = constraint.isActive
         let vertical = view.constraintsAffectingLayout(for: .vertical).map { "\($0)" }.joined(separator: " | ")
-        Self.log.debug("\(reason, privacy: .public): height \(height, privacy: .public) window \(window, privacy: .public) safe-top \(safeTop, privacy: .public) pin \(pinned, privacy: .public) vertical \(vertical, privacy: .public)")
+        Self.log.debug("\(reason, privacy: .public): height \(height, privacy: .public) window \(window, privacy: .public) pin \(pin, privacy: .public) active \(active, privacy: .public) vertical \(vertical, privacy: .public)")
     }
 }
