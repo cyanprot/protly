@@ -264,3 +264,64 @@ works" for the Task 5.4 checklist; item 7 (latency) "not slow", no seconds measu
 The height instability moves to the cloud campaign 2026-10-29-keyboard-visual
 (`docs/plans/2026-10-29-keyboard-visual.md`): simulator screenshots measured against Apple's keyboard, so the
 fix is verified by Claude rather than by the user's eye. Sprint 5's features pass; Sprint 6 is planned meanwhile.
+
+## Simulator verification
+
+Campaign 2026-10-29-keyboard-visual, sprint 001 (`docs/plans/2026-10-29-keyboard-visual.md`). The workflow
+`.github/workflows/keyboard-shots.yml` (`ios-app/CI/README.md`) builds a CI host app with the ProtlyKeyboard
+sources, screenshots 7 scenarios and measures them with `ios-app/CI/measure.py`; every run is on the branch
+`ci-shots` under `runs/<sha7>-<run>/` with `report.txt`, the PNGs, `ui-log.txt`, accessibility trees and, from
+run 4, `keyboard-log.txt` (ProtlyHeight's debug log).
+
+Setup: GitHub `macos-26` runner, Xcode 26.6 (17F113), iOS 26.5 simulator runtime, iPhone 13 Pro (390 x 844 pt,
+3x), dark mode, English (US). Protly was enabled by writing `AppleKeyboards` (Protly, Emoji, English (US)) into the
+shut-down simulator's global preferences: the Settings fallback was never needed. Switching keyboards uses the
+globe's long-press list ("Protly, Korean", "Emoji", "English (US)"): a plain globe tap's order changes after an
+app switch, and iOS 26's Emoji keyboard has no ABC key.
+
+### Final measurements (run 5, `runs/7a84a02-5`, RESULT PASS)
+
+Points; top = keyboard glass top edge from the screen top; band = top edge to the top of row 1's keys.
+
+| Scenario | Keyboard | Top | Band | Row pitch | Key height | Bar text centers |
+|---|---|---|---|---|---|---|
+| 01-apple | Apple English (US) | 509.00 | 52.00 | 54.00 | 43.00 | 65.0, 194.8, 325.0 (predictions) |
+| 02-first-open | Protly | 512.00 | 52.00 | 54.00 | 43.00 | none |
+| 03-after-emoji | Protly | 512.00 | 52.00 | 54.00 | 43.00 | none |
+| 04-after-background | Protly | 512.00 | 52.00 | 54.00 | 43.00 | none |
+| 05-after-second-emoji | Protly | 512.00 | 52.00 | 54.00 | 43.00 | none |
+| 06-word-typed | Protly | 512.00 | 52.00 | 54.00 | 43.00 | 67.5 (flip), 195.3 (Polish) |
+| 07-empty-left-slot | Protly | 512.00 | 52.00 | 54.00 | 43.00 | 195.3 (Polish) |
+
+The 3 pt between Apple's top (509) and Protly's (512) is the band under the last row (Apple 71, Protly 74.83,
+Sprint 4): accepted by the user. The empty left slot keeps its third: Polish is 0.33 pt from the screen center.
+
+### Rounds
+
+| Run | Commit | Keyboard change | Result |
+|---|---|---|---|
+| 1 | ec71172 | none (baseline) | Reproduced the phone: top 512 on first open, 495 (band 69) after the Emoji round-trip and after the app switch. 05-07 caught Apple's keyboard (test flow, fixed in run 2) |
+| 2 | 0db92c8 | Round 1: `ProtlyHeight` pins the view to 257 pt in portrait (priority 999) | Emoji round-trips fixed (512). After the app switch still 495 |
+| 3 | 06c3c10 | Round 2: vendored hosting controller ignores safe areas | No change: not a safe-area inset. Reverted in round 3 |
+| 4 | 4d93222 | Round 3: `allowsSelfSizing`, pin re-asserted when the host returns, debug log | No change. The log shows the view at 257 pt in every presentation with no system constraint against the pin |
+| 5 | 7a84a02 | Round 4: after `NSExtensionHostDidBecomeActive` the pin drops by 17 pt; `ProtlyRoot` keeps the content at the bottom | PASS |
+
+What the trees and the log showed: iOS draws its glass 17 pt above the height of its own `inputView` placeholder
+for a third-party keyboard. On a fresh presentation (first open, Emoji round-trip, relaunch) the placeholder is the
+keyboard's height minus those 17 pt, so the glass starts at the view's top. When the host app returns from the
+background with the keyboard up, iOS attaches a new keyboard controller to the kept presentation, the placeholder is
+the full 257 pt, and the 17 pt margin becomes empty band above the view. `NSExtensionHostDidBecomeActive` arrives
+only on that path; there the pin is 240 pt and the bar band's empty top 17 pt sits under iOS's margin. Before
+62a4d02 the view was 239.5 pt with no pin, which is why the phone showed 52 or 35 pt depending on the path.
+
+### What the simulator cannot show
+
+- The phone: other hosts (Instagram, KakaoTalk, Messages), iOS 26 builds other than 26.5, and whether
+  `NSExtensionHostDidBecomeActive` also arrives in other cases (Control Center, a notification, a call banner, a
+  cold launch that opens the keyboard at once). If it arrived before a fresh presentation, the band would be 35 pt
+  (240 - 17). The relaunch scenario (07) did not receive it. ProtlyHeight's log (Console, subsystem
+  `com.northprot.protly`) shows each presentation's heights on the phone.
+- After an app switch the view's top 17 pt are under iOS's margin, so a row 1 long-press bubble there has up to
+  17 pt less room than after a first open: check on the phone.
+- Landscape (the pin is portrait only), the row 1 long-press bubble in general and Hangul keycap rendering on the
+  device are checked by the tower on the phone.
