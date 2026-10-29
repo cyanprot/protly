@@ -101,11 +101,14 @@ final class KeyboardViewController: KeyboardInputViewController {
     func backspaceInWord() -> Bool {
         guard let edit = session.backspace() else { return false }
         apply(edit)
+        // Shift is spent, as on KeyboardKit's own path (this gesture skips its case change).
+        if state.keyboardContext.keyboardCase == .uppercased { setKeyboardCase(.lowercased) }
         refreshMode()
         return true
     }
 
     func flipWord() {
+        noticeFieldMoved()  // the field may have changed with no callback yet (a sent message, a moved cursor)
         guard let edit = session.flip() else { return }
         apply(edit)
         savePrevious()
@@ -254,7 +257,8 @@ struct ProtlyRoot: View {
     @ObservedObject var context: KeyboardContext
 
     var body: some View {
-        let doubled = mode.manualShift || context.keyboardCase == .capsLocked
+        // A late host callback can lower the case while manualShift is still set: trust the case too.
+        let doubled = context.keyboardCase == .capsLocked || (mode.manualShift && context.keyboardCase == .uppercased)
         let service = mode.korean ? (doubled ? host.korean : host.koreanPlain) : host.english
         KeyboardView(
             layout: service.keyboardLayout(for: context),
@@ -274,9 +278,10 @@ struct ProtlyRoot: View {
         )
         .autocompleteToolbarStyle(.init(height: ProtlyGeometry.toolbarHeight))
         .keyboardViewStyle(.init(edgeInsets: EdgeInsets(top: 0, leading: 0, bottom: ProtlyGeometry.bottomInset, trailing: 0)))
-        .keyboardButtonStyle(builder: { [context] params in
+        .keyboardButtonStyle(builder: { [context, mode] params in
             var style = params.standardStyle(for: context)
-            if case .shift = params.action, context.keyboardCase.isUppercasedOrCapslocked {
+            let shown = context.keyboardCase == .capsLocked || (context.keyboardCase == .uppercased && (!mode.korean || mode.manualShift))
+            if case .shift = params.action, shown {  // Korean auto-capital is invisible, so the key stays plain
                 style.backgroundColor = .white  // Apple: white key, black glyph
                 style.foregroundColor = .black
             }

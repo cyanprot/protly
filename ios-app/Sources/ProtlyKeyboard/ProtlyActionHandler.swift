@@ -9,17 +9,27 @@ final class ProtlyActionHandler: KeyboardAction.StandardActionHandler {
     override func handle(_ gesture: Keyboard.Gesture, on action: KeyboardAction, replaced: Bool) {
         // KeyboardKit calls this from button gestures, always on the main thread.
         MainActor.assumeIsolated {
+            if case .shift = action, gesture == .release, let host, host.mode.korean, !host.mode.manualShift,
+               keyboardContext.keyboardCase == .uppercased {
+                // Auto-capital is invisible on Korean keycaps, so this tap means "shift on" (ㅃㅉㄸ), not off.
+                // KeyboardKit's release toggle then goes .lowercased -> .uppercased.
+                keyboardContext.keyboardCase = .lowercased
+            }
             if !handleInWord(gesture, on: action) {
                 super.handle(gesture, on: action, replaced: replaced)
             }
             guard let host else { return }
+            var manual = host.mode.manualShift
             if case .shift = action {
-                host.mode.manualShift = keyboardContext.keyboardCase.isUppercasedOrCapslocked
+                // Shift acts on release; reading it on press would flag an auto-capital as manual.
+                if gesture == .release { manual = keyboardContext.keyboardCase.isUppercasedOrCapslocked }
             } else if gesture == .release || (gesture == .press && action == .backspace) {
                 // Shift then space/backspace/123: the manual shift is spent, or the next auto-capital
                 // sentence start would show ㅃㅉㄸ.
-                host.mode.manualShift = false
+                manual = false
             }
+            // @Published fires on every write; an unchanged write would rebuild the keyboard on each key.
+            if host.mode.manualShift != manual { host.mode.manualShift = manual }
         }
     }
 
