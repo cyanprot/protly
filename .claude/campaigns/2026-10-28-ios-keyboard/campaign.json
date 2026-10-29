@@ -4,8 +4,8 @@
   "project": "protly",
   "campaign_id": "2026-10-28-ios-keyboard",
   "started": "2026-10-28T21:46:10-07:00",
-  "updated": "2026-10-28T21:46:10-07:00",
-  "current_phase": "plan",
+  "updated": "2026-10-28T22:34:42-07:00",
+  "current_phase": "execute",
   "current_sprint": 1,
   "total_sprints": 6,
   "completed_sprints": [],
@@ -17,9 +17,10 @@
     "2026-10-28 no App Group (xtool drops it on free teams): phone API key baked in at build from ~/.config/protly/phone-api-key into gitignored Secrets.swift; container app = setup guide",
     "2026-10-28 toolchain: Swift 6.4.1 via swiftly --platform fedora41 (Fedora swift-lang 6.3.2 too old for xtool 1.24.0); Xcode 27.1 .xip for the SDK",
     "2026-10-28 detector measured in planning: Korean 99.83%, English 99.55%, chat 98.3% per word; priorBonus 2.0; repeated single jamo = Korean; sticky previous language while typing, Korean at message start",
-    "2026-10-28 Sprints 3-6 are contracts only; re-run plan-flow after the Sprint 2 gate"
+    "2026-10-28 Sprints 3-6 are contracts only; re-run plan-flow after the Sprint 2 gate",
+    "2026-10-28 setup done: Swift 6.4.1 (swiftly, ~/.bashrc.d/swiftly.sh), swift-lang removed, xtool 1.24.0, xtool auth (team HAFRPRP47A), Darwin SDK iPhoneOS27.1, phone key file saved; plan Task 1.1 and Task 2.1 Steps 1-4 complete"
   ],
-  "continuation_prompt": "Plan created for the protly iOS keyboard. 6 sprints; 1-2 detailed, 3-6 contracts. Ready for plancheck-flow, then execute-flow on Sprint 1 (Task 1.1 toolchain).",
+  "continuation_prompt": "Setup complete. Next: execute-flow from Task 1.2, Sprint 2 Task 2.2 in parallel; Task 2.3 needs the phone on USB.",
   "artifacts": {
     "plan": "docs/plans/2026-10-28-ios-keyboard.md",
     "design": "docs/plans/2026-10-28-ios-keyboard-design.md",
