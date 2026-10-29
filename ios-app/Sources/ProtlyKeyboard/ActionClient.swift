@@ -7,7 +7,7 @@ enum ActionClient {
     private static let session = URLSession(configuration: ActionAPI.sessionConfiguration())
 
     static func run(_ mode: ActionMode, text: String) async -> Result<ActionResult, ActionError> {
-        guard let system = try? ActionAPI.bundledPrompt() else { return .failure(ActionError(.badRequest)) }
+        guard let system = try? ActionAPI.bundledPrompt() else { return .failure(ActionError(.setup)) }
         let req: URLRequest
         switch ActionAPI.request(mode: mode, text: text, system: system, apiKey: Secrets.apiKey) {
         case .success(let r): req = r

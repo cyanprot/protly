@@ -20,7 +20,7 @@ public struct ActionResult: Sendable, Equatable {
 public struct ActionError: Error, Sendable, Equatable {
     public enum Kind: String, Sendable {
         case auth, spendLimit, rate, overloaded, server, badRequest, network, timeout, refused, truncated, parse
-        case tooLong
+        case tooLong, noKey, setup
     }
     public let kind: Kind
     /// Short English line for the bar.
@@ -38,6 +38,8 @@ public struct ActionError: Error, Sendable, Equatable {
         case .truncated: return "The reply was cut off. Try a shorter text."
         case .parse: return "The reply was not readable. Try again."
         case .tooLong: return "The text is too long. Try a shorter text."
+        case .noKey: return "protly was built without an API key. Run make-secrets.sh and rebuild."
+        case .setup: return "protly could not build the request. Rebuild protly."
         }
     }
     public init(_ kind: Kind) { self.kind = kind }
@@ -77,9 +79,10 @@ public enum ActionAPI {
 
     /// The request for one action, or the error to show without sending anything.
     public static func request(mode: ActionMode, text: String, system: String, apiKey: String) -> Result<URLRequest, ActionError> {
+        guard !apiKey.isEmpty else { return .failure(ActionError(.noKey)) }
         guard text.utf16.count <= maxInputLength else { return .failure(ActionError(.tooLong)) }
         guard let url = URL(string: url), let body = try? body(mode: mode, text: text, system: system) else {
-            return .failure(ActionError(.badRequest))
+            return .failure(ActionError(.setup))
         }
         var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: idleTimeout)
         req.httpMethod = "POST"

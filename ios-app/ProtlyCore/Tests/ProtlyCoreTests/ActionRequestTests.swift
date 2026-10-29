@@ -56,4 +56,11 @@ final class ActionRequestTests: XCTestCase {
         guard case .failure(let e) = ActionAPI.parse(status: 200, body: Data(padded.utf8)) else { return XCTFail("parsed") }
         XCTAssertEqual(e.kind, .parse)
     }
+
+    func testNoKeyMeansNoRequest() {
+        // The CI and cloud stand-in key is empty: the user's text must not leave the phone without a key.
+        XCTAssertEqual(kind(request("hi", key: "")), .noKey)
+        XCTAssertNotEqual(ActionError(.noKey).message, ActionError(.auth).message)
+        XCTAssertNotEqual(ActionError(.setup).message, ActionError(.badRequest).message)
+    }
 }
