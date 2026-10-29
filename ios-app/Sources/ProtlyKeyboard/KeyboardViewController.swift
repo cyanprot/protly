@@ -32,12 +32,15 @@ final class KeyboardViewController: UIInputViewController {
         stack.spacing = 8
         stack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stack)
+        // Below required so it does not fight the system's own height constraint.
+        let height = view.heightAnchor.constraint(equalToConstant: 216)
+        height.priority = UILayoutPriority(999)
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 8),
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
             stack.topAnchor.constraint(equalTo: view.topAnchor, constant: 8),
             stack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8),
-            view.heightAnchor.constraint(equalToConstant: 216),
+            height,
         ])
     }
 
