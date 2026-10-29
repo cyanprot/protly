@@ -15,8 +15,9 @@ How each value is found (docs/plans/2026-10-29-keyboard-visual.md, Task 3):
 - Keyboard background: sampled 6 pt below the top edge, in the band above the bar text.
 - Row tops and key height: in the center column of each row's second key, the first run of at least 30 pt that
   differs from the keyboard background by more than 24 (keys are 43 pt tall; bar text is shorter).
-- Bar text: columns between the top edge and row 1 with a pixel far from the keyboard background (> 96),
-  grouped into words with gaps of 12 pt or less.
+- Bar text: columns between the top edge and row 1 with at least 3 pixels far (> 96) from both the keyboard
+  background and the host color (not the glass's round corners or rim), grouped into words with gaps of 12 pt
+  or less.
 """
 
 import argparse
@@ -50,6 +51,7 @@ EDGE_ROWS = 6
 KEY_RUN_PT = 30.0
 TEXT_DIFF = 96
 TEXT_GAP_PT = 12.0
+TEXT_MIN_PX = 3  # per column: the glass rim crosses a column in 1-2 px, a glyph stroke in more
 
 TOP_TOLERANCE = 0.5
 BAND_TOLERANCE = 1.0
@@ -155,10 +157,11 @@ def measure_image(img, points):
         m.key = sum(heights) / 3 / scale
 
     # Bar text: everything between the top edge and row 1, minus 2 pt at each side and each screen edge.
+    # The glass's round top corners (host color) and their rim highlight (1-2 px per column) are not text.
     y0, y1 = top + round(2 * scale), tops[0] - round(2 * scale)
     text_cols = [
         x for x in range(round(2 * scale), w - round(2 * scale))
-        if any(diff(px[x, y], kb) > TEXT_DIFF for y in range(y0, y1))
+        if sum(diff(px[x, y], kb) > TEXT_DIFF and diff(px[x, y], bg) > TEXT_DIFF for y in range(y0, y1)) >= TEXT_MIN_PX
     ]
     words = []
     for x in text_cols:

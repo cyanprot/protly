@@ -23,7 +23,7 @@ SIDE = 11 / 3
 PITCH_X = (POINTS - 2 * SIDE) / 10
 
 
-def shot(top=512.0, band=52.0, pitch=54.0, key=43.0, texts=()):
+def shot(top=512.0, band=52.0, pitch=54.0, key=43.0, texts=(), corners=True):
     """A 1170x2532 screenshot: host background, keyboard from `top` down, rows of keys, bar text blocks.
     texts: (center_x_pt, width_pt) blocks in the bar, 14 pt tall, centered in the bar's 29 pt row."""
     img = Image.new("RGB", (POINTS * SCALE, HEIGHT * SCALE), BG)
@@ -33,6 +33,9 @@ def shot(top=512.0, band=52.0, pitch=54.0, key=43.0, texts=()):
         d.rectangle([round(x0 * SCALE), round(y0 * SCALE), round(x1 * SCALE) - 1, round(y1 * SCALE) - 1], fill=color)
 
     rect(0, top, POINTS, HEIGHT, KB)
+    if corners:  # iOS 26's glass has round top corners: host background shows through in the bar band
+        rect(0, top, 12, top + 12, BG)
+        rect(POINTS - 12, top, POINTS, top + 12, BG)
     centers = [
         [POINTS / 2 + (i - 4.5) * PITCH_X for i in range(10)],
         [POINTS / 2 + (i - 4) * PITCH_X for i in range(9)],
@@ -68,6 +71,10 @@ class MeasureImageTests(unittest.TestCase):
         m = measure.measure_image(shot(texts=[(POINTS / 6, 60), (POINTS / 2, 50)]), POINTS)
         self.assertEqual(len(m.bar_text), 2)
         self.assertAlmostEqual(m.bar_center(), POINTS / 2, delta=0.34)
+
+    def test_round_glass_corners_are_not_bar_text(self):
+        m = measure.measure_image(shot(texts=[]), POINTS)
+        self.assertEqual(m.bar_text, [])
 
     def test_no_keyboard(self):
         img = Image.new("RGB", (POINTS * SCALE, HEIGHT * SCALE), BG)

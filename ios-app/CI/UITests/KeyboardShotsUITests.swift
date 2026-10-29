@@ -54,14 +54,14 @@ final class Driver {
         if frame.width > 0 { width = frame.width }
         log("screen \(frame.size.width)x\(frame.size.height) pt, shots in \(out.path)")
 
-        // Protly should be first in AppleKeyboards (run-shots.sh); otherwise the globe or Settings brings it.
+        // Protly is first in AppleKeyboards (run-shots.sh); otherwise the globe's list or Settings brings it.
         if !waitForKeyboard() { focusField() }
-        if !cycle(to: .protly, taps: 3, quiet: true) {
-            log("Protly not reached with the globe: adding it in Settings")
+        if !wait(for: .protly, timeout: 2) && !pick(.protly) {
+            log("Protly not in the globe list: adding it in Settings")
             addKeyboardInSettings()
             app.activate()
             if !waitForKeyboard() { focusField() }
-            _ = cycle(to: .protly, taps: 3)
+            if !pick(.protly) && !cycle(to: .protly, taps: 3) { XCTFail("protly keyboard not reached") }
         }
         shoot("02-first-open", expect: .protly)
 
@@ -133,9 +133,9 @@ final class Driver {
         _ = waitForKeyboard()
     }
 
-    /// Taps the globe until `board` is up. The list order is Protly, Emoji, English, so 3 taps visit all.
+    /// Taps the dock globe until `board` is up (a fallback: the order after an app switch is not the list order).
     @discardableResult
-    private func cycle(to board: Board, taps: Int, quiet: Bool = false) -> Bool {
+    private func cycle(to board: Board, taps: Int) -> Bool {
         for i in 0...taps {
             if wait(for: board, timeout: i == 0 ? 1.5 : 4) {
                 log("\(board.rawValue) after \(i) globe taps")
@@ -144,66 +144,72 @@ final class Driver {
             if i < taps { tapGlobe() }
         }
         log("\(board.rawValue) not reached after \(taps) globe taps; now \(current().rawValue)")
-        if !quiet { XCTFail("\(board.rawValue) keyboard not reached") }
         return false
     }
 
-    /// Protly -> Emoji with the dock globe (Emoji is next in the list), then Emoji's ABC key back to Protly.
-    private func emojiRoundTrip() {
-        guard cycle(to: .emoji, taps: 3) else { return }
-        let abc = app.descendants(matching: .any).matching(NSPredicate(format: "label ==[c] 'ABC'")).firstMatch
-        if abc.exists && abc.isHittable {
-            abc.tap()
-            log("tapped Emoji's ABC")
-            if wait(for: .protly, timeout: 4) { return }
-            log("ABC did not return to Protly; now \(current().rawValue)")
-        } else {
-            log("no ABC key on Emoji")
+    /// Long-presses the dock globe and picks `board` in the list ("Protly, Korean", "Emoji", "English (US)").
+    @discardableResult
+    private func pick(_ board: Board) -> Bool {
+        let name: String
+        switch board {
+        case .protly: name = "Protly"
+        case .emoji: name = "Emoji"
+        case .english: name = "English"
+        case .none: return false
         }
-        cycle(to: .protly, taps: 3)
+        globePoint().press(forDuration: 1.2)
+        pause(0.8)
+        dumpOnce("globe-menu")
+        let cell = app.cells.matching(NSPredicate(format: "label BEGINSWITH[c] %@", name)).firstMatch
+        guard cell.waitForExistence(timeout: 2) else {
+            log("no \(name) in the globe list")
+            let dismiss = app.descendants(matching: .any)["PopoverDismissRegion"]
+            if dismiss.exists { dismiss.tap() }
+            return false
+        }
+        let label = cell.label  // read before the tap closes the list
+        cell.tap()
+        let ok = wait(for: board, timeout: 4)
+        log("picked \(label) from the globe list: \(ok ? board.rawValue : current().rawValue)")
+        return ok
+    }
+
+    /// Protly -> Emoji with a tap on the dock globe (Emoji follows Protly in the list), then back to Protly from
+    /// the globe's list. iOS 26's Emoji keyboard has no ABC key.
+    private func emojiRoundTrip() {
+        tapGlobe()
+        if wait(for: .emoji, timeout: 4) {
+            log("emoji after a globe tap")
+        } else {
+            log("a globe tap gave \(current().rawValue), not emoji")
+            if !pick(.emoji) && !cycle(to: .emoji, taps: 3) { XCTFail("emoji keyboard not reached") }
+        }
+        if !pick(.protly) && !cycle(to: .protly, taps: 3) { XCTFail("protly keyboard not reached from Emoji") }
     }
 
     /// English from the globe's long-press list, else by globe taps.
     private func switchToEnglish() {
-        let g = globe()
-        if g.exists && g.isHittable {
-            g.press(forDuration: 1.2)
-        } else {
-            globePoint().press(forDuration: 1.2)
-        }
-        pause(1)
-        dumpOnce("globe-menu")
-        let english = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH[c] 'English'")).firstMatch
-        if english.exists && english.isHittable {
-            english.tap()
-            log("picked \(english.label) from the globe list")
-        } else {
-            log("no English item in the globe list")
-            tapGlobe()
-        }
-        cycle(to: .english, taps: 3)
+        if !pick(.english) && !cycle(to: .english, taps: 3) { XCTFail("english keyboard not reached") }
     }
 
-    private func globe() -> XCUIElement {
-        app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label ==[c] 'Next keyboard' OR identifier ==[c] 'Next keyboard'"))
-            .firstMatch
-    }
-
-    /// The dock globe under the keyboard on a 390 x 844 pt Face ID iPhone, if XCUITest cannot see it.
+    /// The dock's globe: the lowest "Next keyboard" button (Emoji has a second one in its own bottom row).
+    /// Measured in run 1 at {{8.5, 775.7}, {68.1, 68.7}} on the iPhone 13 Pro; that is the fallback.
     private func globePoint() -> XCUICoordinate {
-        point(34, height() - 49)
+        let buttons = app.buttons
+            .matching(NSPredicate(format: "label ==[c] 'Next keyboard'"))
+            .allElementsBoundByIndex
+            .map { $0.frame }
+            .filter { $0.width > 0 }
+        if let dock = buttons.max(by: { $0.minY < $1.minY }), dock.minY > height() * 0.85 {
+            return point(dock.midX, dock.midY)
+        }
+        log("dock globe not found: using its run 1 position")
+        return point(42.5, height() - 34)
     }
 
     private func tapGlobe() {
-        let g = globe()
-        if g.exists && g.isHittable {
-            g.tap()
-            log("globe tapped (element at \(g.frame))")
-        } else {
-            globePoint().tap()
-            log("globe tapped (coordinate)")
-        }
+        globePoint().tap()
+        log("globe tapped")
     }
 
     /// Adds Protly in Settings > General > Keyboard > Keyboards > Add New Keyboard (the fallback of Task 2.2).
