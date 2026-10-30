@@ -4,7 +4,10 @@ import Foundation
 // 1. Keys that do not compose into valid Hangul are English ("hello" starts with a lone vowel ㅗ).
 // 2. Otherwise compare relative frequency in each language (count / list total, because the Korean
 //    list is much smaller), plus `priorBonus` for the language of the previous word.
-// 3. Unknown in both lists but valid Hangul: Korean (inflected Korean words are mostly not listed).
+// 3. Unknown in English but valid Hangul: Korean (inflected Korean words are mostly not listed). On a
+//    complete word unknown in both lists, a syllable followed by a trailing run of lone jamo that is not
+//    glue (ChatShorthand.glueJamo) is English: a finished Korean word does not end in a stray consonant
+//    (Spanish encanta = 둧뭇ㅁ, chaqueta = 촘볃ㅅㅁ).
 // While typing (`complete == false`) a word with that key prefix stands in for the word.
 // Words the user taught (LearnedWords) count as known in their language, with `learnedBonus` on top.
 
@@ -70,13 +73,24 @@ public struct LanguageDetector: Sendable {
         let ko = korean.frequency(of: koKey)
         let enLearned = learned.count(of: enKey, in: .english) > 0
         let koLearned = learned.count(of: koKey, in: .korean) > 0
-        if en == 0, !enLearned { return .korean }  // unknown English, valid Hangul
+        if en == 0, !enLearned {  // unknown English, valid Hangul
+            if ko == 0, !koLearned, Self.endsInStrayConsonant(hangul.text) { return .english }
+            return .korean
+        }
         if ko == 0, !koLearned { return .english }
         var enScore = Self.score(en, english.total, learned: enLearned)
         var koScore = Self.score(ko, korean.total, learned: koLearned)
         if previous == .english { enScore += priorBonus }
         if previous == .korean { koScore += priorBonus }
         return koScore >= enScore ? .korean : .english
+    }
+
+    /// A syllable followed by a trailing run of lone jamo that is not glue (ㅋ ㅎ ㅠ ㅜ): 둧뭇ㅁ, 촘볃ㅅㅁ.
+    /// False for 했ㅋㅋ and 앜ㅋ (glue), ㄱㅅ (no syllable) and 안녕 (no trailing jamo).
+    static func endsInStrayConsonant(_ text: String) -> Bool {
+        let tail = text.reversed().prefix(while: Hangul.isLoneJamo)
+        guard !tail.isEmpty, tail.count < text.count else { return false }
+        return !tail.allSatisfy { ChatShorthand.glueJamo.contains($0) }
     }
 
     /// Log relative frequency; a learned word gets the floor and the bonus (count 0 is -inf before the floor).

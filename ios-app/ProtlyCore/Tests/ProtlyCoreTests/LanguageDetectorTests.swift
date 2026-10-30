@@ -83,6 +83,32 @@ final class LanguageDetectorTests: XCTestCase {
             XCTAssertEqual(detector.decide(keys(w), complete: true, previous: .english), .korean, w)
         }
     }
+
+    func testStrayTrailingConsonantOnCommitIsEnglish() {
+        // Spanish encanta = 둧뭇ㅁ, chaqueta = 촘볃ㅅㅁ: in neither list, a finished Korean word does not end so.
+        for w in ["encanta", "chaqueta"] {
+            for prev in [nil, Language.english, .korean] {
+                XCTAssertEqual(detector.decide(keys(w), complete: true, previous: prev), .english,
+                               "\(w) prev \(String(describing: prev))")
+            }
+        }
+    }
+
+    func testStrayTrailingConsonantWhileTypingStaysKorean() {
+        // Commit only: while typing a trailing consonant is normal (안ㄴ on the way to 안녕).
+        XCTAssertEqual(detector.decide(keys("encanta"), complete: false, previous: .english), .korean)
+    }
+
+    func testGlueTailAfterEnglishStaysKorean() {
+        for w in ["dkzz", "qorhvkbb"] {  // 앜ㅋ, 배고파ㅠㅠ: a trailing run of glue jamo is chat, not a stray
+            XCTAssertEqual(detector.decide(keys(w), complete: true, previous: .english), .korean, w)
+        }
+    }
+
+    func testEndsInStrayConsonant() {
+        for t in ["둧뭇ㅁ", "촘볃ㅅㅁ"] { XCTAssertTrue(LanguageDetector.endsInStrayConsonant(t), t) }
+        for t in ["했ㅋㅋ", "앜ㅋ", "ㄱㅅ", "안녕"] { XCTAssertFalse(LanguageDetector.endsInStrayConsonant(t), t) }
+    }
 }
 
 /// The bundled 50k lists, for cases that depend on what the real lists do and do not contain.
@@ -115,5 +141,29 @@ final class LanguageDetectorBundledTests: XCTestCase {
         XCTAssertEqual(typeDraft(&s, "gym rksmswnd "), "gym 가는중 ")
         var t = TypingSession(detector: d, previous: .english)
         XCTAssertEqual(typeDraft(&t, "the xpsltmfmf "), "the 테니스를 ")
+    }
+
+    /// 8.5-9o (runs/e301e04-15): a Spanish draft typed on English keys after one committed English word.
+    func testSpanishDraftAfterAnEnglishWordStaysLatin() throws {
+        var s = TypingSession(detector: try LanguageDetector.bundled(), previous: .korean)  // 8.5-8o left Korean
+        // The check's context step: "the" shows 솓 while typed (previous Korean), the left slot flips it, space.
+        for k in keys("the") { _ = s.type(k) }
+        XCTAssertEqual(s.flip(), .mark("the"))
+        XCTAssertEqual(s.commit(), .commit("the"))
+        s.noteInserted(" ")
+        s.abandon()  // clearField
+        XCTAssertEqual(s.previous, .english)
+
+        let draft = "me encanta el color de tu chaqueta, donde la conprastes? jaja "
+        let field = typeDraft(&s, draft)
+        XCTAssertEqual(field, draft)
+        XCTAssertEqual(ActionAPI.mode(forDraft: field), .fix)
+    }
+
+    func testEachSpanishWordAfterEnglishIsEnglish() throws {
+        let d = try LanguageDetector.bundled()
+        for w in ["encanta", "el", "chaqueta"] {
+            XCTAssertEqual(d.decide(keys(w), complete: true, previous: .english), .english, w)
+        }
     }
 }
