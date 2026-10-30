@@ -321,7 +321,11 @@ final class Driver {
             log("field not found")
             return nil
         }
-        return field.value as? String ?? ""
+        guard let value = field.value as? String else {
+            log("field value is not text: \(String(describing: field.value))")
+            return nil
+        }
+        return value
     }
 
     /// The host's Clear button empties the field (no keys are involved).
@@ -460,9 +464,10 @@ final class Driver {
         if save(s.pngRepresentation, as: name + ".png") { log("\(name): \(now.rawValue)") }
     }
 
-    /// Writes a screenshot (the current screen when nil) as <name>.png.
-    func savePNG(_ name: String, _ shot: XCUIScreenshot? = nil) {
-        _ = save((shot ?? XCUIScreen.main.screenshot()).pngRepresentation, as: name + ".png")
+    /// Writes a screenshot (the current screen when nil) as <name>.png. false when it could not be written.
+    @discardableResult
+    func savePNG(_ name: String, _ shot: XCUIScreenshot? = nil) -> Bool {
+        save((shot ?? XCUIScreen.main.screenshot()).pngRepresentation, as: name + ".png")
     }
 
     private func save(_ data: Data, as file: String) -> Bool {

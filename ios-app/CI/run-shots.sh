@@ -5,7 +5,8 @@
 # fails the job unless the report says RESULT PASS and no CHECK is FAIL. macOS only (bash 3.2 compatible).
 #
 # Usage: ios-app/CI/run-shots.sh <out-dir>
-# Env: SOURCE_SHA (for the report), PROBE=1 (run the phone checks' probe, plan Task 1.0).
+# Env: SOURCE_SHA (for the report), PROBE=1 (run the phone checks' probe, plan Task 1.0), OCR_FALLBACK=1 (label
+# checks RECORD a crop when Vision fails its self-test; off: they FAIL unreadable).
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -98,7 +99,8 @@ xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b > /dev/null
 xcrun simctl ui "$udid" appearance dark
 xcrun simctl install "$udid" "$dd/Build/Products/Debug-iphonesimulator/ProtlyCIHost.app"
-xcrun simctl install "$udid" "$dd/Build/Products/Debug-iphonesimulator/ProtlyCIApp.app"
+xcrun simctl install "$udid" "$dd/Build/Products/Debug-iphonesimulator/ProtlyCIApp.app" \
+  || note "ProtlyCIApp install failed: the icon check will FAIL"
 xcrun simctl shutdown "$udid"
 
 prefs="$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Library/Preferences"
@@ -136,7 +138,8 @@ note "memory sampler pid $sampler, probe ${PROBE:-0}"
 
 # Layout scenarios (KeyboardShotsUITests), then the phone checks (PhoneChecksUITests).
 rm -rf "$work/Tests.xcresult"
-TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" xcodebuild test-without-building \
+TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" TEST_RUNNER_OCR_FALLBACK="${OCR_FALLBACK:-0}" \
+  xcodebuild test-without-building \
   -project "$here/ProtlyCI.xcodeproj" -scheme ProtlyCI \
   -destination "platform=iOS Simulator,id=$udid" \
   -derivedDataPath "$dd" -resultBundlePath "$work/Tests.xcresult" > "$work/test.log" 2>&1

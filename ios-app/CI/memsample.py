@@ -113,6 +113,7 @@ def main(argv=None):
                 pr.write(f"pgrep -x {args.name}: {' '.join(map(str, pids))}\n")
                 method = probe(pids[0], pr)
                 probed = True
+                t = time.time()  # the probe can take a while: the samples below describe now
             for pid in pids:
                 rss = parse_rss(run(["ps", "-o", "rss=", "-p", str(pid)])[1])
                 if rss is not None:

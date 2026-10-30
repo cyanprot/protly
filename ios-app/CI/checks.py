@@ -57,7 +57,10 @@ def parse_line(line):
         return unreadable(check_id, f"malformed line {text[:120]!r}")
     if parts[2] not in STATUSES:
         return unreadable(parts[1], f"malformed line {text[:120]!r}")
-    return Check(parts[1], parts[2], parts[3] if len(parts) > 3 else "")
+    evidence = parts[3] if len(parts) > 3 else ""
+    if parts[2] == "PASS" and not evidence.strip():
+        return unreadable(parts[1], "PASS without evidence")
+    return Check(parts[1], parts[2], evidence)
 
 
 def quoted_field(text, name):
@@ -192,7 +195,12 @@ def assemble(checks_text, log_text, mem_text):
         if c.id == "malformed":
             c.id = f"malformed-{len(extra) + 1}"
             extra.append(c.id)
-        by_id[c.id] = c  # a later line for the same ID replaces the earlier one
+        if c.id in by_id:
+            # A test writes each ID once: a second line must not hide the first (a FAIL, a malformed line).
+            first = by_id[c.id]
+            c = unreadable(c.id, f"duplicate CHECK lines: {first.status} {first.evidence[:80]!r}; "
+                                 f"{c.status} {c.evidence[:80]!r}")
+        by_id[c.id] = c
     marks = parse_marks(log_text)
     samples = parse_mem(mem_text)
     for check_id, c in list(by_id.items()):

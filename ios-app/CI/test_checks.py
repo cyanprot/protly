@@ -79,11 +79,23 @@ class AssembleTests(unittest.TestCase):
         self.assertEqual(len(final), len(checks.EXPECTED_IDS))
         self.assertTrue(all(c.status == "FAIL" and "unreadable" in c.evidence for c in final))
 
-    def test_duplicate_keeps_the_last(self):
+    def test_duplicate_id_is_fail(self):
+        # A later PASS must not hide an earlier FAIL (or a malformed line for the same ID).
         text = every_id_but("ws-1") + "CHECK ws-1 FAIL first\nCHECK ws-1 PASS second\n"
         final = {c.id: c for c in checks.assemble(text, "", "")}
-        self.assertEqual(final["ws-1"].status, "PASS")
-        self.assertIn("second", final["ws-1"].evidence)
+        self.assertEqual(final["ws-1"].status, "FAIL")
+        self.assertIn("duplicate", final["ws-1"].evidence)
+        self.assertIn("first", final["ws-1"].evidence)
+
+    def test_malformed_then_valid_line_is_fail(self):
+        text = every_id_but("ws-1") + "CHECK ws-1 PASSED x\nCHECK ws-1 PASS y\n"
+        final = {c.id: c for c in checks.assemble(text, "", "")}
+        self.assertEqual(final["ws-1"].status, "FAIL")
+
+    def test_pass_without_evidence_is_fail(self):
+        c = checks.parse_line("CHECK 6.8-1 PASS")
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("unreadable", c.evidence)
 
     def test_unresolved_pending_is_fail(self):
         text = every_id_but("6.8-3") + "CHECK 6.8-3 PENDING whatever\n"

@@ -86,6 +86,15 @@ final class Item {
         notes.append(s)
     }
 
+    /// A field reading kept as evidence; an unreadable field makes the item FAIL unreadable, RECORD items too.
+    func noteField(_ name: String, _ value: String?) {
+        if let value {
+            notes.append("\(name)=\(q(value))")
+        } else {
+            markUnreadable("\(name)=unreadable")
+        }
+    }
+
     /// `got` must equal `want` (Swift compares canonically, so NFC and NFD Hangul are equal).
     func expect(_ name: String, _ got: String?, _ want: String) {
         guard let got else {
@@ -130,12 +139,13 @@ final class Item {
     }
 }
 
-/// What a bar slot showed: OCR text (nil when Vision failed or is unusable), ink pixels (-1: no keyboard found), and
-/// the saved screenshot.
+/// What a bar slot showed: OCR text (nil when Vision failed or is unusable), ink pixels, and the saved screenshot.
+/// `unreadable` says why nothing could be read (no Protly keyboard on screen, the screenshot not saved).
 struct SlotRead {
     let text: String?
     let ink: Int
     let file: String
+    var unreadable: String?
 }
 
 @MainActor
@@ -143,6 +153,9 @@ final class PhoneRun {
     let d: Driver
     let reader: Reader
     private let ready: Bool
+    /// OCR_FALLBACK=1 (plan Task 1.2 step 3): when Vision fails its self-test, label checks RECORD the crop instead
+    /// of FAIL. Off by default: run 8's probe showed Vision works in the UI test.
+    private let ocrFallback = ProcessInfo.processInfo.environment["OCR_FALLBACK"] == "1"
     /// Fewer ink pixels than this in a slot = nothing drawn there. A word is thousands at 3x.
     static let inkEmpty = 40
 
@@ -173,8 +186,13 @@ final class PhoneRun {
     }
 
     func finish(_ item: Item, record: Bool = false) {
-        for p in d.takeProblems() { item.note("problem=\(q(p))") }
-        write(item.id, item.status(record: record), item.evidence)
+        // A step that did not happen (no keyboard to type on, Clear left text, a slot tap without a keyboard) means
+        // the evidence does not show what the item claims.
+        for p in d.takeProblems() { item.markUnreadable("problem=\(q(p))") }
+        if !d.savePNG("c-\(item.id)") { item.markUnreadable("c-\(item.id).png not written") }
+        let line = "CHECK \(item.id) \(item.status(record: record)) \(item.evidence)"
+        d.append(line, to: "checks.txt")
+        d.log(line)
     }
 
     /// Every ID of a group FAIL when Protly could not be brought up (the CI could not check them).
@@ -194,12 +212,15 @@ final class PhoneRun {
     /// Screenshot (saved), then OCR and ink of one slot.
     func readSlot(_ slot: Slot, _ item: Item) -> SlotRead {
         d.pause(0.6)  // the bar follows the last key
+        let board = d.current()
         let screen = XCUIScreen.main.screenshot()
         let file = item.nextShot(slot.name)
-        d.savePNG(file, screen)
-        guard let shot = d.screenshot(screen), let row1 = d.rowOne(shot) else {
-            d.log("\(item.id): no keyboard in \(file)")
-            return SlotRead(text: nil, ink: -1, file: file + ".png")
+        guard d.savePNG(file, screen) else {
+            return SlotRead(text: nil, ink: -1, file: file + ".png", unreadable: "screenshot not written")
+        }
+        guard board == .protly, let shot = d.screenshot(screen), let row1 = d.rowOne(shot) else {
+            d.log("\(item.id): no Protly keyboard in \(file) (\(board.rawValue))")
+            return SlotRead(text: nil, ink: -1, file: file + ".png", unreadable: "no Protly keyboard (\(board.rawValue))")
         }
         let rect = d.slotRect(slot, row1: row1)
         let ink = shot.ink(in: rect, background: CGPoint(x: rect.midX, y: rect.minY + 1))
@@ -220,19 +241,24 @@ final class PhoneRun {
     /// The slot's text must pass `ok`; a missing reading is FAIL unreadable (RECORD with the crop when Vision is
     /// unusable in this run).
     func expectSlot(_ item: Item, _ name: String, _ r: SlotRead, _ want: String, _ ok: (String) -> Bool) {
-        guard r.ink >= 0 else {
-            item.markUnreadable("\(name)=no keyboard (\(r.file))")
+        if let why = r.unreadable {
+            item.markUnreadable("\(name)=\(why) (\(r.file))")
             return
         }
         guard let text = r.text else {
-            if reader.works {
-                item.markUnreadable("\(name)=ocr error (\(r.file))")
-            } else {
-                item.markOCRMissing("\(name)=ocr-unavailable ink \(r.ink) crop \(r.file)")
-            }
+            missingOCR(item, name, r)
             return
         }
         item.require(name, ok(text), "\(q(text)) want \(want)")
+    }
+
+    /// No OCR text: FAIL unreadable, or RECORD with the crop when Vision failed its self-test and OCR_FALLBACK=1.
+    func missingOCR(_ item: Item, _ name: String, _ r: SlotRead) {
+        if !reader.works && ocrFallback {
+            item.markOCRMissing("\(name)=ocr-unavailable ink \(r.ink) crop \(r.file)")
+        } else {
+            item.markUnreadable("\(name)=ocr \(reader.works ? "error" : "self-test failed") (\(r.file))")
+        }
     }
 
     func expectSlot(_ item: Item, _ name: String, _ r: SlotRead, equals want: String) {
@@ -241,16 +267,13 @@ final class PhoneRun {
 
     /// Nothing in the slot: no OCR text and (near) no ink.
     func expectEmpty(_ item: Item, _ name: String, _ r: SlotRead) {
-        guard r.ink >= 0 else {
-            item.markUnreadable("\(name)=no keyboard (\(r.file))")
+        if let why = r.unreadable {
+            item.markUnreadable("\(name)=\(why) (\(r.file))")
             return
         }
         if r.text == nil {
-            if reader.works {
-                item.markUnreadable("\(name)=ocr error (\(r.file))")
-                return
-            }
-            item.markOCRMissing("\(name)=ocr-unavailable")
+            missingOCR(item, name, r)
+            if reader.works || !ocrFallback { return }
         }
         let empty = r.ink < Self.inkEmpty && (r.text ?? "").isEmpty
         item.require(name, empty, "ocr \(q(r.text)) ink \(r.ink) (\(r.file))")
@@ -258,28 +281,28 @@ final class PhoneRun {
 
     /// Records what a slot shows (RECORD items); a missing reading is FAIL unreadable.
     func noteSlot(_ item: Item, _ name: String, _ r: SlotRead) {
-        guard r.ink >= 0 else {
-            item.markUnreadable("\(name)=no keyboard (\(r.file))")
-            return
-        }
-        if let text = r.text {
+        if let why = r.unreadable {
+            item.markUnreadable("\(name)=\(why) (\(r.file))")
+        } else if let text = r.text {
             item.note("\(name)=\(q(text)) ink \(r.ink)")
-        } else if reader.works {
-            item.markUnreadable("\(name)=ocr error (\(r.file))")
         } else {
-            item.markOCRMissing("\(name)=ocr-unavailable ink \(r.ink) crop \(r.file)")
+            missingOCR(item, name, r)
         }
     }
 
     /// The flip rule: a language code that comes out as Hangul is flipped with the left slot before the colon.
     func typeCode(_ code: String, _ item: Item) {
         d.type(code)
-        let f = field()
+        guard let f = field() else {
+            item.markUnreadable("\(code)=unreadable")
+            return
+        }
         if f == code {
             item.note("\(code)=latin")
         } else {
+            item.note("\(code)=\(q(f)) flip")
             d.tapSlot(.left)
-            item.note("\(code)=\(q(f)) flip -> \(q(field()))")
+            item.expect("\(code)-after-flip", field(), code)
         }
     }
 
@@ -290,10 +313,14 @@ final class PhoneRun {
         let word = korean ? "안녕" : "the"
         d.clearField()
         d.type(word)
-        let f = field() ?? ""
+        guard let f = field() else {
+            item.markUnreadable("context=unreadable")
+            return
+        }
         if hasHangul(f) != korean {
             d.tapSlot(.left)
-            item.note("context=\(q(f)) flip -> \(q(field()))")
+            item.note("context=\(q(f)) flip")
+            item.noteField("context-after-flip", field())
         } else {
             item.note("context=\(q(f))")
         }
@@ -340,7 +367,7 @@ final class PhoneRun {
         expectSlot(it, "right", readSlot(.right, it), "starts with \(q("안녕"))") { $0.hasPrefix("안녕") }
         d.clearField()
         d.type("안녕ㅎ")
-        it.note("typed=\(q(field()))")
+        it.noteField("typed", field())
         d.tapSlot(.right)
         it.expect("after-tap", field(), "안녕하세요 ")
         finish(it)
@@ -350,7 +377,7 @@ final class PhoneRun {
         d.type("omw")
         noteSlot(it, "right", readSlot(.right, it))
         d.type(" ")
-        it.note("after-space=\(q(field()))")
+        it.noteField("after-space", field())
         finish(it, record: true)
 
         write("6.8-6", "SKIP", "no contacts in the simulator")
@@ -414,10 +441,9 @@ final class PhoneRun {
         let left = readSlot(.left, it)
         expectSlot(it, "left", left, "Hangul") { hasHangul($0) }
         d.tapSlot(.left)
-        let f = field()
-        it.note("after-tap=\(q(f))")
-        if let f {
-            it.require("korean-reading-plus-space", hasHangul(f) && !hasLatinLetter(f) && f.hasSuffix(" "), q(f))
+        if let f = field() {
+            it.require("after-tap", hasHangul(f) && !hasLatinLetter(f) && f.hasSuffix(" "),
+                       "\(q(f)) want the Korean reading plus a space")
         } else {
             it.markUnreadable("after-tap=unreadable")
         }
@@ -427,14 +453,14 @@ final class PhoneRun {
         d.clearField()
         d.type("hello.")
         d.type(" ")
-        it.note("field=\(q(field()))")
+        it.expect("field", field(), "hello. ")
         expectEmpty(it, "left", readSlot(.left, it))
         finish(it)
 
         it = Item("ws-3")
         d.clearField()
         d.type("hello\n")
-        it.note("field=\(q(field()))")
+        it.expect("field", field(), "hello\n")
         expectEmpty(it, "left", readSlot(.left, it))
         finish(it)
         d.clearField()
@@ -451,28 +477,28 @@ final class PhoneRun {
         d.clearField()
         typeCode("ru", it)
         d.type(": 누나 노트 고마워 누나 덕분에 살았다 ")
-        it.note("field=\(q(field()))")
+        it.expect("field", field(), "ru: 누나 노트 고마워 누나 덕분에 살았다 ")
         expectSlot(it, "center", readSlot(.center, it), equals: "Translate")
         finish(it)
 
         it = Item("8.5-2o")
         d.clearField()
         d.type("ru")
-        it.note("ru-again=\(q(field()))")
+        it.noteField("ru-again", field())
         d.clearField()
         typeCode("zh", it)
         d.type(": 안녕 ")
-        it.note("taught=\(q(field()))")
+        it.noteField("taught", field())
         d.clearField()
         d.type("zh ")
-        it.note("zh-space=\(q(field()))")
+        it.noteField("zh-space", field())
         finish(it, record: true)
 
         it = Item("8.5-6o")
         d.clearField()
         typeCode("ok", it)
         d.type(": 내일 봐 ")
-        it.note("field=\(q(field()))")
+        it.expect("field", field(), "ok: 내일 봐 ")
         expectSlot(it, "center", readSlot(.center, it), equals: "Translate")
         finish(it)
 
@@ -480,7 +506,7 @@ final class PhoneRun {
         d.clearField()
         typeCode("ko", it)
         d.type(": 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 ")
-        it.note("field=\(q(field()))")
+        it.expect("field", field(), "ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 ")
         expectSlot(it, "center", readSlot(.center, it), equals: "Polish")
         finish(it)
 
@@ -488,14 +514,15 @@ final class PhoneRun {
         d.clearField()
         typeCode("ko", it)
         d.type(": 오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ")
-        it.note("field=\(q(field()))")
+        it.noteField("field", field())
         noteSlot(it, "center", readSlot(.center, it))
         finish(it, record: true)
 
         it = Item("8.5-9o")
         context(korean: false, it)  // "on English keys"; 8.5-8o left a Korean word before this
-        d.type("me encanta el color de tu chaqueta, donde la conprastes? jaja ")
-        it.note("field=\(q(field()))")
+        let spanish = "me encanta el color de tu chaqueta, donde la conprastes? jaja "
+        d.type(spanish)
+        it.expect("field", field(), spanish)
         expectSlot(it, "center", readSlot(.center, it), equals: "Polish")
         finish(it)
         d.clearField()
@@ -510,20 +537,27 @@ final class PhoneRun {
         d.clearField()
         d.pause(3)  // a sample with the keyboard up before the start mark
         d.mark("mem-start")
+        // Each round must really hide the keyboard and bring Protly back, or the numbers are not 30 presentations.
+        var hidden = 0
         var shown = 0
         for i in 1...30 {
             d.dismissKeyboard()
             d.pause(1)
-            if i == 1 { d.log("after the first dismiss: \(d.current().rawValue)") }
+            let after = d.current()
+            if after == .none { hidden += 1 } else { d.log("round \(i): \(after.rawValue) after Dismiss") }
             if d.field.waitForExistence(timeout: 2) { d.field.tap() }
-            if d.waitForKeyboard(timeout: 4) { shown += 1 }
+            if d.wait(for: .protly, timeout: 4) { shown += 1 } else { d.log("round \(i): no Protly after the tap") }
             d.pause(1)
         }
         d.mark("mem-end")
         d.pause(3)  // and one after the end mark
         let problems = d.takeProblems()
         let extra = problems.isEmpty ? "" : " problems=\(q(problems.joined(separator: "; ")))"
-        write("6.8-10", "PENDING", "presentations=\(shown)/30\(extra)")
+        if hidden == 30 && shown == 30 && problems.isEmpty {
+            write("6.8-10", "PENDING", "presentations=30/30")
+        } else {
+            write("6.8-10", "FAIL", "unreadable: hidden \(hidden)/30, Protly shown \(shown)/30\(extra)")
+        }
     }
 
     // MARK: The app icon (plan Task 1.5)
@@ -540,18 +574,21 @@ final class PhoneRun {
             page += 1
         }
         d.savePNG("c-icon-home")
+        // The tower judges the crop; a missing icon or crop is the CI's failure to show it (ProtlyCIApp is installed
+        // by run-shots.sh), so FAIL unreadable.
         if icon.exists && icon.isHittable {
             let frame = icon.frame
+            let f = String(format: "{%.1f,%.1f,%.1f,%.1f}", frame.minX, frame.minY, frame.width, frame.height)
             do {
                 try icon.screenshot().pngRepresentation.write(to: d.out.appendingPathComponent("c-icon.png"))
+                d.append("CHECK icon RECORD \(f) found on page \(page + 1) (c-icon.png, c-icon-home.png)", to: "checks.txt")
             } catch {
                 d.log("icon: could not write the crop: \(error)")
+                d.append("CHECK icon FAIL unreadable: \(f) found, c-icon.png not written", to: "checks.txt")
             }
-            let f = String(format: "{%.1f,%.1f,%.1f,%.1f}", frame.minX, frame.minY, frame.width, frame.height)
-            d.append("CHECK icon RECORD \(f) found on page \(page + 1) (c-icon.png, c-icon-home.png)", to: "checks.txt")
         } else {
             d.savePNG("c-icon")
-            d.append("CHECK icon RECORD missing after \(page) swipes (c-icon-home.png)", to: "checks.txt")
+            d.append("CHECK icon FAIL unreadable: no Protly icon after \(page) swipes (c-icon.png)", to: "checks.txt")
         }
         d.log("icon: page \(page + 1), exists \(icon.exists)")
     }
