@@ -123,6 +123,12 @@ Required behaviour, each a test (failing first):
   the after-context unchanged. Tests: history 안, 안ㄴ, 안녀; context `start + 안ㄴ` -> keep. `start` "hello",
   Protly then inserted " " and a first key read the stale context "hello" -> keep. Context "" with an expected
   non-empty field: keep inside the own-edit window, abandon after it.
+  Amended 2026-10-30 after the tower review: a history state matches only while it is younger than about 150 ms
+  (twice the measured 50 to 70 ms lag). A field that silently drops an insert (maxlength, a delegate cap, an
+  input filter) keeps showing the older state, and keeping the word there makes the next edit delete a user
+  character. Older state -> abandon. Test: capped field, insert dropped, next key after 150 ms -> abandon.
+- not composing, a selection exists while `lastTail` is still a suffix: forget last, so a flip never deletes the
+  selection (amended 2026-10-30; the edit menu makes selections common).
 - compare tails, not whole strings: the proxy may truncate the context at the front, so a long field must not
   abandon. Test with a `start` of 500 characters truncated to its last 100.
 - not composing, `lastTail` no longer a suffix of the context: forget last (unchanged behaviour).
