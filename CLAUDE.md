@@ -10,6 +10,8 @@ that types Korean and English on one QWERTY grid and offers Translate / Polish /
   6.8, 7.7 and 8.5).
 - Keyboard visual verification (cloud): `docs/plans/2026-10-29-keyboard-visual.md`.
 - Security review and test hardening (cloud): `docs/plans/2026-10-29-security-review.md`.
+- Typing fixes (cloud): `docs/plans/2026-10-30-typing-fixes.md` (plain-text composition, Spanish flip, space
+  trackpad, simulator proof; research in `docs/research/`).
 - Phone and simulator findings: `docs/ios-keyboard-notes.md`.
 
 ## Layout
