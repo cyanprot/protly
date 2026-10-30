@@ -482,7 +482,9 @@ with `c-<id>.png` (and `c-<id>-<n>-<slot>.png` per bar reading) in the run folde
 
 Setup: GitHub `macos-26` runner, Xcode 26.6 (17F113), iOS 26.5 simulator runtime, iPhone 13 Pro (390 x 844 pt,
 3x), dark mode, English (US). Runs: `runs/b390712-8` (probe), `runs/f0d0943-9`, `runs/307483a-12`,
-run 4 pending. The table is from `runs/307483a-12`; runs 9 and 12 gave the same result per ID.
+`runs/083f4c9-14` and the final `runs/e301e04-15` (`STATUS measured`, layout `RESULT PASS`,
+`CHECKS pass 13 fail 1 record 6 skip 1`). The table is from the final run; runs 9 to 15 gave the same result per
+ID (6.8-7 and 8.5-9o run with their language context from run 9 on).
 
 ### Results
 
@@ -499,7 +501,7 @@ Field text is read through XCUITest (exact); bar labels with Vision OCR in the U
 | 6.8-7 | PASS | after a Korean word: `걍 가자`, `걔 진짜 웃겨`, `얘 뭐야`, `꽤 좋다` all Korean; `I need to get rid of it` all English |
 | 6.8-8 | PASS | `wyd`: field `죵`; left slot: `wyd`; space, clear, `wyd `: field `wyd ` |
 | 6.8-9 | RECORD | host terminated and relaunched: `wyd ` English; same keyboard process (pid unchanged), so this shows the learned word survives a new host, not a new keyboard process |
-| 6.8-10 | RECORD | 30 rounds, each hiding the keyboard and bringing Protly back: footprint 62 -> 61 MB (-1 MB), same pid; macOS-side `footprint`, whole MB |
+| 6.8-10 | RECORD | 30 rounds, each hiding the keyboard and bringing Protly back: footprint 60 -> 63 MB (+3 MB; runs 9 to 14: +0, -1, -2), same pid; macOS-side `footprint`, whole MB |
 | 6.8-11 | PASS | flip part: `내일 봐`, left slot: field `내일 qhk` (Translate is sprint 002's) |
 | ws-1 | PASS | `hello `: left slot OCR `ㅗ디 \|ㅐ` (Hangul); tap: field `ㅗ디ㅣㅐ ` |
 | ws-2 | PASS | field `hello. `: left slot empty (no OCR text, ink 0) |
@@ -521,12 +523,17 @@ Field text is read through XCUITest (exact); bar labels with Vision OCR in the U
   no action (`refreshField`). The checklist's "type `ru: ...`: the center shows Translate" holds after a space (the
   tests add one); with the cursor right after the last letter (8.5-8o) the center is empty.
 - Layout scenario 04 (after an app switch) is intermittent: `runs/b390712-8` and `runs/307483a-12` measured a 69 pt
-  band, `runs/f0d0943-9` 52 pt. In the failing runs the controller the host attaches after the switch never logged
+  band, `runs/f0d0943-9`, `runs/083f4c9-14` and `runs/e301e04-15` 52 pt. In the failing runs the controller the host attaches after the switch never logged
   `host became active` (ProtlyHeight's drop needs `NSExtensionHostDidBecomeActive` within 2 s of loading). Run 8
   had the memory sampler attached; run 12 did not (it starts with the phone checks), so the sampler is not the
-  cause. Run 12 was slow (layout scenarios 197 s against 81 s in run 9) and also measured 02-first-open at 509 pt
-  (only an 844 pt layout logged). When the notification does not come, the keyboard keeps the 17 pt band; on a
-  slow phone the same can happen.
+  cause. When the notification does not come, the keyboard keeps the 17 pt band; on a slow phone the same can
+  happen.
+- A slow extension start shows Apple's Korean keyboard instead: in runs 12 and 14 (layout scenarios 197 s and
+  247 s against 81-98 s) the first presentation was Apple's Korean keyboard (`한` on the space bar), iOS's stand-in
+  for Protly's primary language, and run 14 then lost the keyboard after Emoji (03 found none). The driver had
+  measured that stand-in as Protly (02 at 509 pt); since `e301e04` a keyboard whose keys XCUITest can see, other
+  than English and Emoji, is `system-keyboard`, and the tests wait for Protly to take over. The final run had no
+  stand-in. On the phone this would be a first open right after install or a memory kill.
 - 8.5-2o: `ru` at the start came out Latin in 8.5-1o and as `겨` in 8.5-2o: the previous message's language decides
   (8.5-1o followed English text, 8.5-2o followed `ru: ` + Korean). `zh` needed the flip once and then stayed Latin.
 - 6.8-7 depends on context: in `runs/b390712-8`, right after `omw ` (English), `걍` came out `rid`. After a Korean

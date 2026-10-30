@@ -59,6 +59,9 @@ the order `test0_probe` (only with `[probe]` in the commit message), `test1_68`,
 - `ProtlyCIApp` is the container app built as xtool builds it (phone Info.plist, `AppIcon.png` at the bundle
   root), for the home-screen icon (`c-icon.png`).
 - Every item saves `c-<id>.png`, and each slot reading `c-<id>-<n>-<slot>.png`.
+- A keyboard whose keys XCUITest can see, other than English and Emoji, is `system-keyboard`: iOS shows Apple's
+  Korean keyboard while Protly is slow to start (runs 12 and 14). The tests wait up to 20 s for Protly to take
+  over; a bar reading on anything but Protly is FAIL `unreadable`.
 - `leak-guard.sh` runs before every publish: a run folder with a key prefix in any file publishes only a
   `STATUS leak-guard` report and the step fails.
 
