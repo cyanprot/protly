@@ -2,6 +2,8 @@ import SwiftUI
 
 /// CI-only host for the keyboard screenshots (ios-app/CI/README.md): one multi-line field, focused on launch,
 /// on one solid color that measure.py knows (`HOST_BG`). `-prefill "text"` on the command line puts text in it.
+/// The phone checks use `Clear` (empties the field without keys) and `Dismiss` (the field loses focus, which hides
+/// the keyboard), both in the top-right corner, away from the field and the center column measure.py samples.
 @main
 struct HostApp: App {
     var body: some Scene {
@@ -26,6 +28,16 @@ struct HostView: View {
                 .frame(width: 200, alignment: .leading)
                 .padding(.leading, 16)
                 .padding(.top, 24)
+            VStack(alignment: .trailing, spacing: 16) {
+                Button("Clear") { text = "" }
+                    .accessibilityIdentifier("clear")
+                Button("Dismiss") { focused = false }
+                    .accessibilityIdentifier("dismiss")
+            }
+            .tint(.white)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.trailing, 16)
+            .padding(.top, 24)
         }
         .task {
             try? await Task.sleep(nanoseconds: 500_000_000)  // focus right at launch is sometimes dropped
