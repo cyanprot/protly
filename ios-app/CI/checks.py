@@ -175,8 +175,10 @@ def resolve_memory(check, marks, samples):
         return Check(check.id, "RECORD", f"pid changed, not comparable: start pid {s.pid} {mb(s.kb)}, "
                      f"end pid {e.pid} {mb(e.kb)} ({method})")
     growth = (e.kb - s.kb) / 1024
+    resolution = "; footprint prints whole MB, so growth under 1 MB reads as zero" if "footprint" in method else ""
     return Check(check.id, "RECORD", f"start {mb(s.kb)} end {mb(e.kb)} growth {growth:+.1f} MB over "
-                 f"{check.evidence or 'the presentations'} ({method}, pid {s.pid}; macOS-side, not the phone's limit)")
+                 f"{check.evidence or 'the presentations'} ({method}, pid {s.pid}; macOS-side, not the phone's "
+                 f"limit{resolution})")
 
 
 RESOLVERS = {"6.8-9": resolve_relaunch, "6.8-10": resolve_memory}

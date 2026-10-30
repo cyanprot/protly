@@ -174,6 +174,7 @@ class MemoryTests(unittest.TestCase):
         self.assertIn("25.0 MB", c.evidence)
         self.assertIn("+5.0 MB", c.evidence)
         self.assertIn("footprint", c.evidence)
+        self.assertIn("whole MB", c.evidence)  # footprint prints MB: growth under 1 MB reads as zero
 
     def test_falls_back_to_rss(self):
         c = memory("100.0 41 rss 10240\n160.0 41 rss 12288\n")
