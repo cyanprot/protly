@@ -179,6 +179,45 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertTrue(calls.first?.contains("insert: { [unowned host] in host.insertResult() }") == true, calls.joined())
     }
 
+    /// typing-fixes 001: the word being typed is plain text. Marked text made hosts hide the word on dark screens,
+    /// drop it on Return in web views and hold back the edit menu (docs/research/2026-10-30-*.md).
+    func testNoMarkedTextInTheKeyboard() throws {
+        for (name, text) in try sources() {
+            let ns = text as NSString
+            for call in [#"\bsetMarkedText\b"#, #"\bunmarkText\b"#, #"\bmarkedText\w*"#] {
+                for r in matches(call, in: text) {
+                    XCTFail("\(name): marked text: \(lineText(ns, r))")
+                }
+            }
+        }
+    }
+
+    /// Host callbacks only read the field and decide; they never write to it (edit-menu-missing.md 4.2). A write
+    /// there would land wherever the user just put the cursor or selection.
+    func testHostCallbacksNeverWrite() throws {
+        guard let text = try sources().first(where: { $0.name == "KeyboardViewController.swift" })?.text else { return }
+        let ns = text as NSString
+        let writes = [#"\binsertText\b"#, #"\bdeleteBackward\b"#, #"\badjustTextPosition\b"#, #"\bsetMarkedText\b"#,
+                      #"\bunmarkText\b"#, #"\bapply\("#, #"\bcommitWord\("#, #"\bFieldText\.replace\b"#]
+        // The callbacks and what they call to decide (required), and callbacks Protly may override later.
+        let required = ["override func textDidChange(", "override func selectionDidChange(", "func refreshField()",
+                        "func noticeFieldMoved()", "func abandonWord()"]
+        let optional = ["override func selectionWillChange(", "override func textWillChange(",
+                        "override func textDidChangeAsync("]
+        for declaration in required + optional {
+            guard let range = body(of: declaration, in: ns) else {
+                if required.contains(declaration) { XCTFail("KeyboardViewController.swift: \(declaration) not found") }
+                continue
+            }
+            let bodyText = ns.substring(with: range)
+            for write in writes {
+                for r in matches(write, in: bodyText) {
+                    XCTFail("\(declaration) writes: \(lineText(bodyText as NSString, r))")
+                }
+            }
+        }
+    }
+
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {
         let line = ns.lineRange(for: r)
         return "\(ns.substring(to: r.location).components(separatedBy: "\n").count): "
