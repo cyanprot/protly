@@ -48,7 +48,9 @@ the order `test0_probe` (only with `[probe]` in the commit message), `test1_68`,
   `Dismiss` buttons empty the field and hide the keyboard; the field's text is read through XCUITest (exact).
 - `UITests/Reader.swift`: Vision OCR of a bar slot inside the test. A self-test (Vision reads "Polish" and Hangul
   drawn by the test) is the positive control; a slot also gets an ink count (pixels far from the bar's
-  background), so "empty" never rests on OCR alone. A missing reading is FAIL `unreadable`.
+  background), so "empty" never rests on OCR alone. A missing reading is FAIL `unreadable`; only with
+  `OCR_FALLBACK=1` in the job's environment (for a runner where the self-test fails) do label checks RECORD the
+  saved crop instead. Run 8's probe showed Vision works, so it is off.
 - `memsample.py` samples the `ProtlyCIKeyboard` process every 2 s from the macOS side (`mem.txt`; which memory
   method works is in `probe-mem.txt`). The test logs `MARK` lines in `ui-log.txt`.
 - `checks.py` resolves 6.8-9 (relaunch) and 6.8-10 (memory) from the marks and samples, turns a missing or

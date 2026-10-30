@@ -471,3 +471,81 @@ four older keyboard MODE out cases now send `TARGET: English` and are the Englis
   than the draft (spelling is right, register drifts a little). The Russian female-friend runs added "!" and
   "просто", which the draft does not have; the non-English MODE out has no emoji and exclamation rule, as in the
   extension.
+
+## Simulator phone checks
+
+Campaign 2026-10-30-sim-phone-checks, sprint 001 (`docs/plans/2026-10-30-sim-phone-checks.md`). The phone checks
+of Tasks 6.8 and 8.5 (feature plan) that need no network, the flip-over-whitespace rule (997f108), memory and the
+app icon run in the simulator job after the layout scenarios (`ios-app/CI/README.md`, "Phone checks"). Each item
+is one `CHECK <id> PASS|FAIL|RECORD|SKIP <evidence>` line in `checks.txt` and in the report's `CHECKS` section,
+with `c-<id>.png` (and `c-<id>-<n>-<slot>.png` per bar reading) in the run folder.
+
+Setup: GitHub `macos-26` runner, Xcode 26.6 (17F113), iOS 26.5 simulator runtime, iPhone 13 Pro (390 x 844 pt,
+3x), dark mode, English (US). Final run: `runs/RUNDIR` (layout `RESULT PASS`, `STATUS measured`).
+
+### Results
+
+Field text is read through XCUITest (exact); bar labels with Vision OCR in the UI test. Drafts that must offer an
+action end with a space: while a word is being typed the bar offers no action (`refreshField`), so on the phone the
+center stays empty until the last word is ended.
+
+| ID | Result | Evidence |
+|---|---|---|
+| 6.8-1 | PASS | `i dont think its ok teh.` exactly; `teh`: right slot `the`, tap: `the ` |
+| 6.8-2 | PASS | `recieve`: right slot `receive`; `.` leaves `recieve.` |
+| 6.8-3 | PASS | `tomo`: right slot `tomorrow`, tap: `tomorrow ` |
+| 6.8-4 | PASS | `안녀`: right slot `안녕`; `안녕ㅎ` + right slot: `안녕하세요 ` |
+| 6.8-5 | RECORD | `omw`: right slot empty (the simulator has no `omw` text replacement), space: `omw ` |
+| 6.8-6 | SKIP | no contacts in the simulator |
+| 6.8-7 | PASS | after a Korean word: `걍 가자`, `걔 진짜 웃겨`, `얘 뭐야`, `꽤 좋다` all Korean; `I need to get rid of it` all English |
+| 6.8-8 | PASS | `wyd` shows `죵`; left slot: `wyd`; space, clear, `wyd `: `wyd ` |
+| 6.8-9 | RECORD | after terminating and relaunching the host: `wyd ` English; same keyboard process (pid unchanged), so this shows the learned word survives a new host, not a new keyboard process |
+| 6.8-10 | RECORD | 30 dismiss/focus rounds: footprint 61.0 MB -> 61.0 MB (+0.0), same pid; macOS-side `footprint` of the simulator process |
+| 6.8-11 | PASS | flip part: `내일 봐`, left slot: `내일 qhk` (Translate is sprint 002's) |
+| ws-1 | PASS | `hello `: left slot `ㅗ디ㅣㅐ` (Hangul), tap: `ㅗ디ㅣㅐ ` |
+| ws-2 | PASS | `hello. `: left slot empty (no OCR text, ink 0) |
+| ws-3 | PASS | `hello` + return: left slot empty (no OCR text, ink 0) |
+| 8.5-1o | PASS | `ru` came out Latin (no flip); `ru: 누나 노트 고마워 누나 덕분에 살았다 `: center `Translate` |
+| 8.5-2o | RECORD | `ru` again at the start: `겨` (Hangul now); `zh` came out `코`, flipped to `zh`, `zh: 안녕 `; then `zh ` alone: `zh ` (Latin: the flip taught it) |
+| 8.5-6o | PASS | `ok` Latin; `ok: 내일 봐 `: center `Translate` |
+| 8.5-7o | PASS | `ko` Latin; `ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 `: center `Polish` |
+| 8.5-8o | RECORD | three-paragraph `ko:` draft, cursor after `ㅠㅠ`: center empty (the last word is still being typed) |
+| 8.5-9o | FAIL | keyboard: after an English word, `me encanta el color de tu chaqueta, donde la conprastes? jaja ` came out `me 둧뭇ㅁ 디 color de tu 촘볃ㅅㅁ, ...`, so the center offers `Translate`, not `Polish` |
+| icon | RECORD | `Protly` on home page 1 at {296, 163, 68, 90.7}; `c-icon.png` for the tower |
+
+Findings for the tower (keyboard behaviour, not fixed here):
+- 8.5-9o: Spanish words that are not English words (`encanta`, `el`, `chaqueta`) are read as Korean even after an
+  English word, and `the` at a message start after Korean text came out `솓` (flipped for the context). On the
+  phone the user would flip each of them before Polish appears.
+- 8.5-2o: `ru` at the start came out Latin in 8.5-1o and as `겨` in 8.5-2o: the previous message's language decides
+  (8.5-1o followed English text, 8.5-2o followed `ru: ` + Korean). `zh` needed the flip once and then stayed Latin.
+- 6.8-7 depends on context: in run 1 (`runs/b390712-8`), right after `omw ` (English), `걍` came out `rid`. After a
+  Korean word all four phrases are Korean, as the checklist ("in a Korean conversation") expects.
+
+### Probe (run 1, `runs/b390712-8`)
+
+- Vision works inside the UI test on the iOS 26.5 simulator: `.accurate` offers ko-KR and en-US among 30
+  languages; a self-test on drawn text reads `Polish 안녕하세요`; the bar after `hello ` read `"ㅗ디 |ㅐ"` (left)
+  and `Polish` (center), the field `안녕`. No pixel-signature fallback was needed (`OCR_FALLBACK=1` keeps it).
+- `123` layer (`probe-123.png`): KeyboardKit's iPhone numeric layout; rows 1-2 have 10 keys on the letter pitch
+  (colon at x 99.3 pt), row 3 has `. , ? ! ’` at 14% of the width each (x 87.9, 141.4, 195.0, 248.6, 302.2 pt).
+  `:`, `?`, `,`, `.`, `!` each typed at its computed position. Space goes back to the letters; otherwise the test
+  taps `ABC` (same place as `123`).
+- Memory from the macOS side: `pgrep -x ProtlyCIKeyboard` finds one process; `footprint -p` and `sudo footprint -p`
+  both print it (54 MB at first), `ps -o rss=` prints 295600 KB (shared pages counted), and `vmmap --summary` hung
+  for 20 s (it suspends its target). The sampler uses `footprint` every 2 s.
+- Run 1's layout scenario 04 kept a 69 pt band: the controller the host attaches after the app switch never got
+  `NSExtensionHostDidBecomeActive` (no `host became active` line in `keyboard-log.txt`), while the sampler had
+  `vmmap` and then `footprint` attached from the first presentation. With the sampler starting only at the phone
+  checks, runs 2 and 3 measured 512 pt again. Runs 1, 4 and 6 of the visual campaign had the same band for other
+  reasons, so this is the likely cause, not a proven one.
+
+### What the simulator cannot show
+
+- Memory: the numbers are the simulator process's footprint on macOS, not the phone's jetsam ledger; the 40 MB
+  limit and the 10 MB growth line are judged on the device. The pid did not change over 30 presentations, and the
+  keyboard process survived the host's relaunch (6.8-9 RECORD), so a cold keyboard start is not covered.
+- 6.8-5 text replacements and 6.8-6 contact names: the simulator has none; the phone's own (`omw`, `ㄱㅅㄱㅅ`,
+  names) are the tower's.
+- The icon on the real home screen (the crop is the simulator's rendering of the same `AppIcon.png`).
+- Other host apps (Messages, KakaoTalk, Instagram), typing feel and haptics.
