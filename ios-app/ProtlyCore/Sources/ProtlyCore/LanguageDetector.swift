@@ -87,13 +87,18 @@ public struct LanguageDetector: Sendable {
 
     /// Two-consonant abbreviations that end a chat word (대박ㄹㅇ, 넵ㄱㅅ), on top of ChatShorthand.abbreviations.
     static let trailingAbbreviations: Set<String> = [
-        "ㄹㅇ", "ㄱㅅ", "ㅇㅋ", "ㅇㅈ", "ㄴㄴ", "ㅂㅂ", "ㅅㄱ", "ㄱㄷ", "ㅊㅋ", "ㅎㅇ", "ㅁㅊ", "ㄱㅊ", "ㅈㅅ",
+        "ㄹㅇ", "ㄱㅅ", "ㅇㅋ", "ㅇㅈ", "ㄴㄴ", "ㅂㅂ", "ㅅㄱ", "ㄱㄷ", "ㅊㅋ", "ㅎㅇ", "ㅁㅊ", "ㄱㅊ", "ㅈㅅ", "ㅁㄹ",
     ]
+
+    /// The second jamo of a double final (ㄵ -> ㅈ, ㄻ -> ㅁ): the jamo the next key added to the syllable.
+    private static let secondOfDoubleFinal: [Character: Character] =
+        Dictionary(uniqueKeysWithValues: Hangul.finalPairs.map { ($0.value, Array($0.key)[1]) })
 
     /// A syllable followed by a trailing run of lone jamo that is not chat shorthand: 둧뭇ㅁ, 촘볃ㅅㅁ.
     /// Shorthand: a run with a vowel (ㅡㅡ, ㅠ), glue alone (ㅋ ㅎ: 앜ㅋ), or one jamo repeated (ㅇㅇ, ㄷㄷ) or an
     /// abbreviation (ㄹㅇ, ㄱㅅ), either one optionally followed by glue (ㄹㅇㅋㅋ). The run's first jamo may have
-    /// composed as the last syllable's final (좋아ㅇㅇ = 좋앙ㅇ, 가자ㄱㄱ = 가작ㄱ), so that final counts too.
+    /// composed as the last syllable's final (좋아ㅇㅇ = 좋앙ㅇ, 가자ㄱㄱ = 가작ㄱ), so that final counts too; for a
+    /// double final only its second jamo (미안ㅈㅅ = 미앉ㅅ, ㄵ -> ㅈ; 헐ㅁㅊ = 헒ㅊ, ㄻ -> ㅁ).
     static func endsInStrayConsonant(_ text: String) -> Bool {
         let tail = Array(text.reversed().prefix(while: Hangul.isLoneJamo).reversed())
         guard !tail.isEmpty, tail.count < text.count else { return false }
@@ -103,7 +108,7 @@ public struct LanguageDetector: Sendable {
         if run.isEmpty { return false }
         if isShorthandRun(String(run)) { return false }
         if let fin = text.dropLast(tail.count).last.flatMap(Hangul.finalJamo),
-           isShorthandRun(String(fin) + String(run)) {
+           isShorthandRun(String(secondOfDoubleFinal[fin] ?? fin) + String(run)) {
             return false
         }
         return true

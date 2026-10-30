@@ -115,6 +115,11 @@ final class LanguageDetectorTests: XCTestCase {
         for t in ["대박ㄹㅇ", "응ㅇㅇ", "아니ㅡㅡ", "헐ㄷㄷ", "넵ㄱㅅ", "좋앙ㅇ", "왜ㅡㅡ", "가작ㄱ", "대박ㄹㅇㅋㅋ"] {
             XCTAssertFalse(LanguageDetector.endsInStrayConsonant(t), t)
         }
+        // The run's first jamo joined a double final: 미안ㅈㅅ = 미앉ㅅ (ㄵ), 헐ㅁㅊ = 헒ㅊ (ㄻ), 넵ㅅㄱ = 넶ㄱ (ㅄ).
+        // 몰라ㅁㄹ = 몰람ㄹ has a single final.
+        for t in ["미앉ㅅ", "헒ㅊ", "넶ㄱ", "몰람ㄹ"] {
+            XCTAssertFalse(LanguageDetector.endsInStrayConsonant(t), t)
+        }
     }
 }
 
@@ -173,7 +178,7 @@ final class LanguageDetectorBundledTests: XCTestCase {
         let d = try LanguageDetector.bundled()
         let words = ["대박ㄹㅇ", "응ㅇㅇ", "아니ㅡㅡ", "헐ㄷㄷ", "넵ㄱㅅ", "좋아ㅇㅇ", "왜ㅡㅡ", "가자ㄱㄱ",
                      "진짜ㄹㅇ", "아ㅇㅋ", "오키ㅇㅋ", "감사ㅎㅎ", "미친ㅅㄲ", "배고파ㅠㅠ", "했ㅋㅋ", "고마워ㄳ",
-                     "ㄹㅇ", "ㅇㅇ", "ㄱㄱ", "대박ㄹㅇㅋㅋ"]
+                     "ㄹㅇ", "ㅇㅇ", "ㄱㄱ", "대박ㄹㅇㅋㅋ", "미안ㅈㅅ", "헐ㅁㅊ", "몰라ㅁㄹ", "넵ㅅㄱ"]
         for w in words {
             let k = try XCTUnwrap(KeyEncoder.keys(forHangul: w), w)
             for prev in [Language.english, .korean] {
