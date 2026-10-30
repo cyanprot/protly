@@ -1,0 +1,25 @@
+memsample: process name ProtlyCIKeyboard, interval 2.0 s
+pgrep -x ProtlyCIKeyboard: 11517
+footprint: `footprint -p 11517` exit 0 value_kb 55296
+    ======================================================================
+    ProtlyCIKeyboard [11517]: 64-bit    Footprint: 54 MB (16384 bytes per page)
+    ======================================================================
+    
+      Dirty      Clean  Reclaimable    Regions    Category
+        ---        ---          ---        ---    ---
+      16 MB        0 B          0 B         73    dyld private memory
+      14 MB        0 B        16 MB          9    MALLOC_SMALL
+sudo-footprint: `sudo -n footprint -p 11517` exit 0 value_kb 55296
+    ======================================================================
+    ProtlyCIKeyboard [11517]: 64-bit    Footprint: 54 MB (16384 bytes per page)
+    ======================================================================
+    
+      Dirty      Clean  Reclaimable    Regions    Category
+        ---        ---          ---        ---    ---
+      16 MB        0 B          0 B         73    dyld private memory
+      14 MB        0 B        17 MB          9    MALLOC_SMALL
+vmmap: `vmmap --summary 11517` exit -1 value_kb None
+    TimeoutExpired: Command '['vmmap', '--summary', '11517']' timed out after 20 seconds
+rss: `ps -o rss= -p 11517` exit 0 value_kb 295600
+    295600
+chosen footprint method: footprint

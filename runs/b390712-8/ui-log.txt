@@ -1,0 +1,176 @@
+== KeyboardShotsUITests.testScenarios
+screen 390.0x844.0 pt, shots in /Users/runner/work/_temp/shots
+02-first-open: protly
+globe tapped
+emoji after a globe tap
+picked Protly, Korean from the globe list: protly
+03-after-emoji: protly
+04-after-background: protly
+globe tapped
+a globe tap gave english, not emoji
+picked Emoji from the globe list: emoji
+picked Protly, Korean from the globe list: protly
+05-after-second-emoji: protly
+typing: keyboard top 512.00, row 1 564.00
+typed "hello "
+06-word-typed: protly
+07-empty-left-slot: protly
+picked English (US) from the globe list: english
+01-apple: english
+== PhoneChecksUITests.test0_probe
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+picked Protly, Korean from the globe list: protly
+typing: keyboard top 495.00, row 1 564.00
+typed "hello "
+ocr probe bar: "\"ㅗ디 |ㅐ\"" "Polish"
+ocr probe left: "\"ㅗ디 |ㅐ\""
+ocr probe center: "Polish"
+ocr probe right: 
+typing: keyboard top 495.00, row 1 564.00
+typed "안녕"
+ocr probe field: "안녕"
+typing: keyboard top 495.00, row 1 564.00
+typed ":"
+typing: keyboard top 495.00, row 1 564.00
+typed "?"
+typing: keyboard top 495.00, row 1 564.00
+typed ","
+typing: keyboard top 495.00, row 1 564.00
+typed "."
+typing: keyboard top 495.00, row 1 564.00
+typed "!"
+== PhoneChecksUITests.test1_68
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+typing: keyboard top 512.00, row 1 564.00
+typed "i dont think its ok teh."
+typing: keyboard top 512.00, row 1 564.00
+typed "teh"
+ocr 6.8-1 right: "the"
+tapped the right slot
+CHECK 6.8-1 PASS field="i dont think its ok teh." right="the" want "the" after-tap="the "
+typing: keyboard top 512.00, row 1 564.00
+typed "recieve"
+ocr 6.8-2 right: "receive"
+typing: keyboard top 512.00, row 1 564.00
+typed "."
+CHECK 6.8-2 PASS right="receive" want "receive" field="recieve."
+typing: keyboard top 512.00, row 1 564.00
+typed "tomo"
+ocr 6.8-3 right: "tomorrow"
+tapped the right slot
+CHECK 6.8-3 PASS right="tomorrow" want "tomorrow" after-tap="tomorrow "
+typing: keyboard top 512.00, row 1 564.00
+typed "안녀"
+ocr 6.8-4 right: "안녕"
+typing: keyboard top 512.00, row 1 564.00
+typed "안녕ㅎ"
+tapped the right slot
+CHECK 6.8-4 PASS right="안녕" want starts with "안녕" typed="안녕ㅎ" after-tap="안녕하세요 "
+typing: keyboard top 512.00, row 1 564.00
+typed "omw"
+ocr 6.8-5 right: 
+typing: keyboard top 512.00, row 1 564.00
+typed " "
+CHECK 6.8-5 RECORD right="" ink 0 after-space="omw "
+CHECK 6.8-6 SKIP no contacts in the simulator
+typing: keyboard top 512.00, row 1 564.00
+typed "걍 가자 "
+typing: keyboard top 512.00, row 1 564.00
+typed "걔 진짜 웃겨 "
+typing: keyboard top 512.00, row 1 564.00
+typed "얘 뭐야 "
+typing: keyboard top 512.00, row 1 564.00
+typed "꽤 좋다 "
+typing: keyboard top 512.00, row 1 564.00
+typed "I need to get rid of it "
+CHECK 6.8-7 FAIL field="rid 가자 " want "걍 가자 " field="걔 진짜 웃겨 " field="얘 뭐야 " field="꽤 좋다 " field="I need to get rid of it "
+typing: keyboard top 512.00, row 1 564.00
+typed "wyd"
+tapped the left slot
+typing: keyboard top 512.00, row 1 564.00
+typed " "
+typing: keyboard top 512.00, row 1 564.00
+typed "wyd "
+CHECK 6.8-8 PASS typed="죵" after-flip="wyd" again="wyd "
+typing: keyboard top 512.00, row 1 564.00
+typed "내일 봐"
+ocr 6.8-11 left: "\"ghk\""
+tapped the left slot
+CHECK 6.8-11 PASS left="ghk" ink 1434 after-flip="내일 qhk"
+MARK relaunch-before 1793363879.768
+MARK relaunch-after 1793363900.150
+typing: keyboard top 512.00, row 1 564.00
+typed "wyd "
+CHECK 6.8-9 PENDING field="wyd "
+== PhoneChecksUITests.test2_ws
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+typing: keyboard top 512.00, row 1 564.00
+typed "hello "
+ocr ws-1 left: "\"ㅗ디 |ㅐ\""
+tapped the left slot
+CHECK ws-1 PASS left="ㅗ디 |ㅐ" want Hangul after-tap="ㅗ디ㅣㅐ " korean-reading-plus-space="ㅗ디ㅣㅐ "
+typing: keyboard top 512.00, row 1 564.00
+typed "hello."
+typing: keyboard top 512.00, row 1 564.00
+typed " "
+ocr ws-2 left: 
+CHECK ws-2 PASS field="hello. " left=ocr "" ink 0 (c-ws-2-1-left.png)
+typing: keyboard top 512.00, row 1 564.00
+typed "hello\n"
+ocr ws-3 left: 
+CHECK ws-3 PASS field="hello\n" left=ocr "" ink 0 (c-ws-3-1-left.png)
+== PhoneChecksUITests.test3_85offline
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+typing: keyboard top 512.00, row 1 564.00
+typed "ru"
+typing: keyboard top 512.00, row 1 564.00
+typed ": 누나 노트 고마워 누나 덕분에 살았다 "
+ocr 8.5-1o center: "Translate"
+CHECK 8.5-1o PASS ru=latin field="ru: 누나 노트 고마워 누나 덕분에 살았다 " center="Translate" want "Translate"
+typing: keyboard top 512.00, row 1 564.00
+typed "ru"
+typing: keyboard top 512.00, row 1 564.00
+typed "zh"
+tapped the left slot
+typing: keyboard top 512.00, row 1 564.00
+typed ": 안녕 "
+typing: keyboard top 512.00, row 1 564.00
+typed "zh "
+CHECK 8.5-2o RECORD ru-again="겨" zh="코" flip -> "zh" taught="zh: 안녕 " zh-space="zh "
+typing: keyboard top 512.00, row 1 564.00
+typed "ok"
+typing: keyboard top 512.00, row 1 564.00
+typed ": 내일 봐 "
+ocr 8.5-6o center: "Translate"
+CHECK 8.5-6o PASS ok=latin field="ok: 내일 봐 " center="Translate" want "Translate"
+typing: keyboard top 512.00, row 1 564.00
+typed "ko"
+typing: keyboard top 512.00, row 1 564.00
+typed ": 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 "
+ocr 8.5-7o center: "Polish"
+CHECK 8.5-7o PASS ko=latin field="ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 " center="Polish" want "Polish"
+typing: keyboard top 512.00, row 1 564.00
+typed "ko"
+typing: keyboard top 512.00, row 1 564.00
+typed ": 오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ"
+ocr 8.5-8o center: 
+CHECK 8.5-8o RECORD ko=latin field="ko: 오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ" center="" ink 0
+typing: keyboard top 512.00, row 1 564.00
+typed "me encanta el color de tu chaqueta, donde la conprastes? jaja "
+ocr 8.5-9o center: "Translate"
+CHECK 8.5-9o FAIL field="me 둧뭇ㅁ 디 color de tu 촘볃ㅅㅁ, donde la conprastes? jaja " center="Translate" want "Polish" (not as expected)
+== PhoneChecksUITests.test4_memory
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+MARK mem-start 1793364359.114
+after the first dismiss: none
+MARK mem-end 1793364545.546
+CHECK 6.8-10 PENDING presentations=30/30
+== PhoneChecksUITests.test5_icon
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+icon: page 1, exists true

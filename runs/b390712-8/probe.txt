@@ -1,0 +1,15 @@
+vision languages (.accurate): en-US,fr-FR,it-IT,de-DE,es-ES,pt-BR,zh-Hans,zh-Hant,yue-Hans,yue-Hant,ko-KR,ja-JP,ru-RU,uk-UA,th-TH,vi-VT,ar-SA,ars-SA,tr-TR,id-ID,cs-CZ,da-DK,nl-NL,no-NO,nn-NO,nb-NO,ms-MY,pl-PL,ro-RO,sv-SE
+vision self-test: works true, hangul true
+row 1 top 564.00 pt
+hello space, whole bar: ["\"ㅗ디 |ㅐ\"", "Polish"]
+hello space, left (16.0, 527.5, 115.22222222222223, 32.0): ["\"ㅗ디 |ㅐ\""] ink 1644
+hello space, center (131.22222222222223, 527.5, 127.55555555555554, 32.0): ["Polish"] ink 1809
+hello space, right (258.77777777777777, 527.5, 115.22222222222223, 32.0): [] ink 0
+field 안녕: value "안녕", ocr of (8.0, 63.0, 216.0, 38.0): ["안녕"]
+123 layer: probe-123.png (123 key tapped at 27.2, 747.5)
+symbol : at its computed position: field ":"
+symbol ? at its computed position: field "?"
+symbol , at its computed position: field ","
+symbol . at its computed position: field "."
+symbol ! at its computed position: field "!"
+problems: []
