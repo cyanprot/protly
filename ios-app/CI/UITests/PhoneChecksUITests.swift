@@ -178,11 +178,15 @@ final class PhoneRun {
 
     // MARK: Recording
 
+    /// A line for an item that does not go through `finish` (SKIP, not ready, PENDING). Its c-<id>.png must exist, or
+    /// the line is FAIL unreadable.
     func write(_ id: String, _ status: String, _ evidence: String) {
-        let line = "CHECK \(id) \(status) \(evidence)"
+        var line = "CHECK \(id) \(status) \(evidence)"
+        if !d.savePNG("c-\(id)") && status != "FAIL" && status != "SKIP" {
+            line = "CHECK \(id) FAIL unreadable: c-\(id).png not written; \(status) \(evidence)"
+        }
         d.append(line, to: "checks.txt")
         d.log(line)
-        d.savePNG("c-\(id)")
     }
 
     func finish(_ item: Item, record: Bool = false) {
@@ -423,7 +427,13 @@ final class PhoneRun {
             d.mark("relaunch-after")
             d.clearField()
             d.type("wyd ")
-            write("6.8-9", "PENDING", "field=\(q(field()))")
+            let f = field()
+            let problems = d.takeProblems()
+            if problems.isEmpty {
+                write("6.8-9", "PENDING", "field=\(q(f))")
+            } else {
+                write("6.8-9", "FAIL", "unreadable: field=\(q(f)) problems=\(q(problems.joined(separator: "; ")))")
+            }
         } else {
             write("6.8-9", "FAIL", "unreadable: protly keyboard not reached after the relaunch")
         }
@@ -573,7 +583,7 @@ final class PhoneRun {
             d.pause(1)
             page += 1
         }
-        d.savePNG("c-icon-home")
+        let home = d.savePNG("c-icon-home")
         // The tower judges the crop; a missing icon or crop is the CI's failure to show it (ProtlyCIApp is installed
         // by run-shots.sh), so FAIL unreadable.
         if icon.exists && icon.isHittable {
@@ -581,7 +591,11 @@ final class PhoneRun {
             let f = String(format: "{%.1f,%.1f,%.1f,%.1f}", frame.minX, frame.minY, frame.width, frame.height)
             do {
                 try icon.screenshot().pngRepresentation.write(to: d.out.appendingPathComponent("c-icon.png"))
-                d.append("CHECK icon RECORD \(f) found on page \(page + 1) (c-icon.png, c-icon-home.png)", to: "checks.txt")
+                if home {
+                    d.append("CHECK icon RECORD \(f) found on page \(page + 1) (c-icon.png, c-icon-home.png)", to: "checks.txt")
+                } else {
+                    d.append("CHECK icon FAIL unreadable: \(f) found, c-icon-home.png not written", to: "checks.txt")
+                }
             } catch {
                 d.log("icon: could not write the crop: \(error)")
                 d.append("CHECK icon FAIL unreadable: \(f) found, c-icon.png not written", to: "checks.txt")
