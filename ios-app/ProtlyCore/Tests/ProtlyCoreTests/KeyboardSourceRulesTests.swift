@@ -193,26 +193,36 @@ final class KeyboardSourceRulesTests: XCTestCase {
     }
 
     /// Host callbacks only read the field and decide; they never write to it (edit-menu-missing.md 4.2). A write
-    /// there would land wherever the user just put the cursor or selection.
+    /// there would land wherever the user just put the cursor or selection. Checked: the callbacks and every
+    /// function they call on the way (refreshMode, refreshWords, savePrevious ...), in whichever file it lives.
     func testHostCallbacksNeverWrite() throws {
-        guard let text = try sources().first(where: { $0.name == "KeyboardViewController.swift" })?.text else { return }
-        let ns = text as NSString
+        let files = try sources().map { (name: $0.name, ns: $0.text as NSString) }
         let writes = [#"\binsertText\b"#, #"\bdeleteBackward\b"#, #"\badjustTextPosition\b"#, #"\bsetMarkedText\b"#,
-                      #"\bunmarkText\b"#, #"\bapply\("#, #"\bcommitWord\("#, #"\bFieldText\.replace\b"#]
-        // The callbacks and what they call to decide (required), and callbacks Protly may override later.
+                      #"\bunmarkText\b"#, #"\bapply\("#, #"\bcommitWord\("#, #"\bFieldText\.replace\b"#,
+                      // The typing and action entry points all write.
+                      #"\btypeLetter\("#, #"\bbackspaceInWord\("#, #"\bflipWord\("#, #"\bpickSuggestion\("#,
+                      #"\bact\("#, #"\binsertResult\("#, #"\bundoInsert\("#]
         let required = ["override func textDidChange(", "override func selectionDidChange(", "func refreshField()",
-                        "func noticeFieldMoved()", "func abandonWord()"]
+                        "func noticeFieldMoved()", "func abandonWord()", "func refreshMode()", "func refreshWords()",
+                        "func savePrevious()", "func observed()"]
+        // Callbacks Protly may override later fall under the same rule.
         let optional = ["override func selectionWillChange(", "override func textWillChange(",
                         "override func textDidChangeAsync("]
         for declaration in required + optional {
-            guard let range = body(of: declaration, in: ns) else {
-                if required.contains(declaration) { XCTFail("KeyboardViewController.swift: \(declaration) not found") }
+            var found: (name: String, body: NSString)?
+            for f in files {
+                if let range = body(of: declaration, in: f.ns) {
+                    found = (f.name, f.ns.substring(with: range) as NSString)
+                    break
+                }
+            }
+            guard let found else {
+                if required.contains(declaration) { XCTFail("\(declaration) not found in the keyboard sources") }
                 continue
             }
-            let bodyText = ns.substring(with: range)
             for write in writes {
-                for r in matches(write, in: bodyText) {
-                    XCTFail("\(declaration) writes: \(lineText(bodyText as NSString, r))")
+                for r in matches(write, in: found.body as String) {
+                    XCTFail("\(found.name): \(declaration) writes: \(lineText(found.body, r))")
                 }
             }
         }
