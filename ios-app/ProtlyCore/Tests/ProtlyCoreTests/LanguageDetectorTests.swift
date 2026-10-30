@@ -95,12 +95,12 @@ final class LanguageDetectorTests: XCTestCase {
     }
 
     func testStrayTrailingConsonantWhileTypingStaysKorean() {
-        // Commit only: while typing a trailing consonant is normal (안ㄴ on the way to 안녕).
+        // Commit only: while typing, encanta shows Hangul from "encan" on (no English word starts with it).
         XCTAssertEqual(detector.decide(keys("encanta"), complete: false, previous: .english), .korean)
     }
 
     func testGlueTailAfterEnglishStaysKorean() {
-        for w in ["dkzz", "qorhvkbb"] {  // 앜ㅋ, 배고파ㅠㅠ: a trailing run of glue jamo is chat, not a stray
+        for w in ["dkzz", "qorhvkbb"] {  // 앜ㅋ (glue), 배고파ㅠㅠ (a vowel run): chat, not a stray
             XCTAssertEqual(detector.decide(keys(w), complete: true, previous: .english), .korean, w)
         }
     }
@@ -120,6 +120,21 @@ final class LanguageDetectorTests: XCTestCase {
         for t in ["미앉ㅅ", "헒ㅊ", "넶ㄱ", "몰람ㄹ"] {
             XCTAssertFalse(LanguageDetector.endsInStrayConsonant(t), t)
         }
+        // An abbreviation that ends in glue (생일ㅊㅋ, 굿ㅇㅋ), and runs of several units.
+        for t in ["생일ㅊㅋ", "굿ㅇㅋ", "넵ㄱㅅㄱㅅ", "대박ㅋㅋㄹㅇ", "무섭ㅎㄷㄷ"] {
+            XCTAssertFalse(LanguageDetector.endsInStrayConsonant(t), t)
+        }
+        XCTAssertFalse(LanguageDetector.endsInStrayConsonant("ㅂㄷㅂㄷ"))  // no syllable: not a word ending
+    }
+
+    func testStrayRuleNeedsTheWordUnknownInKorean() {
+        // Listed or learned as Korean, the same keys stay Korean: a flip to Korean teaches the word.
+        let listed = LanguageDetector(english: WordList(entries: [("the", 1000)]),
+                                      korean: WordList(entries: [("encanta", 10)]), priorBonus: 2.0)
+        XCTAssertEqual(listed.decide(keys("encanta"), complete: true, previous: .english), .korean)
+        var l = LearnedWords()
+        l.learn("둧뭇ㅁ", as: .korean)
+        XCTAssertEqual(detector.decide(keys("encanta"), complete: true, previous: .english, learned: l), .korean)
     }
 }
 
@@ -178,7 +193,11 @@ final class LanguageDetectorBundledTests: XCTestCase {
         let d = try LanguageDetector.bundled()
         let words = ["대박ㄹㅇ", "응ㅇㅇ", "아니ㅡㅡ", "헐ㄷㄷ", "넵ㄱㅅ", "좋아ㅇㅇ", "왜ㅡㅡ", "가자ㄱㄱ",
                      "진짜ㄹㅇ", "아ㅇㅋ", "오키ㅇㅋ", "감사ㅎㅎ", "미친ㅅㄲ", "배고파ㅠㅠ", "했ㅋㅋ", "고마워ㄳ",
-                     "ㄹㅇ", "ㅇㅇ", "ㄱㄱ", "대박ㄹㅇㅋㅋ", "미안ㅈㅅ", "헐ㅁㅊ", "몰라ㅁㄹ", "넵ㅅㄱ"]
+                     "ㄹㅇ", "ㅇㅇ", "ㄱㄱ", "대박ㄹㅇㅋㅋ", "미안ㅈㅅ", "헐ㅁㅊ", "몰라ㅁㄹ", "넵ㅅㄱ",
+                     // Unshifted, so rule 3 decides them: the final+run path, the abbreviation sets, a lone
+                     // vowel, an abbreviation ending in glue, runs of several units.
+                     "콜ㄱㄱ", "그래ㄹㅇ", "맞아ㄹㅇ", "나도ㅇㅈ", "그래ㄹㅇㅋㅋ", "와ㅁㅊ", "잠만ㄱㄷ", "왜ㅡ",
+                     "생일ㅊㅋ", "굿ㅇㅋ", "생일ㅊㅋㅊㅋ", "넵ㄱㅅㄱㅅ", "대박ㅋㅋㄹㅇ", "무섭ㅎㄷㄷ"]
         for w in words {
             let k = try XCTUnwrap(KeyEncoder.keys(forHangul: w), w)
             for prev in [Language.english, .korean] {

@@ -95,29 +95,40 @@ public struct LanguageDetector: Sendable {
         Dictionary(uniqueKeysWithValues: Hangul.finalPairs.map { ($0.value, Array($0.key)[1]) })
 
     /// A syllable followed by a trailing run of lone jamo that is not chat shorthand: 둧뭇ㅁ, 촘볃ㅅㅁ.
-    /// Shorthand: a run with a vowel (ㅡㅡ, ㅠ), glue alone (ㅋ ㅎ: 앜ㅋ), or one jamo repeated (ㅇㅇ, ㄷㄷ) or an
-    /// abbreviation (ㄹㅇ, ㄱㅅ), either one optionally followed by glue (ㄹㅇㅋㅋ). The run's first jamo may have
-    /// composed as the last syllable's final (좋아ㅇㅇ = 좋앙ㅇ, 가자ㄱㄱ = 가작ㄱ), so that final counts too; for a
-    /// double final only its second jamo (미안ㅈㅅ = 미앉ㅅ, ㄵ -> ㅈ; 헐ㅁㅊ = 헒ㅊ, ㄻ -> ㅁ).
+    /// Shorthand: a run with a vowel (ㅡㅡ, ㅠ), or a run that splits into chat units (`isChatRun`): 대박ㄹㅇ,
+    /// 응ㅇㅇ, 생일ㅊㅋ, 대박ㄹㅇㅋㅋ, 넵ㄱㅅㄱㅅ. The run's first jamo may have composed as the last syllable's final
+    /// (좋아ㅇㅇ = 좋앙ㅇ, 가자ㄱㄱ = 가작ㄱ), so that final counts too; for a double final only its second jamo
+    /// (미안ㅈㅅ = 미앉ㅅ, ㄵ -> ㅈ; 헐ㅁㅊ = 헒ㅊ, ㄻ -> ㅁ).
     static func endsInStrayConsonant(_ text: String) -> Bool {
         let tail = Array(text.reversed().prefix(while: Hangul.isLoneJamo).reversed())
         guard !tail.isEmpty, tail.count < text.count else { return false }
         if tail.contains(where: Hangul.isVowel) { return false }
-        var run = tail
-        while let last = run.last, ChatShorthand.glueJamo.contains(last) { run.removeLast() }
-        if run.isEmpty { return false }
-        if isShorthandRun(String(run)) { return false }
+        if isChatRun(tail) { return false }
         if let fin = text.dropLast(tail.count).last.flatMap(Hangul.finalJamo),
-           isShorthandRun(String(secondOfDoubleFinal[fin] ?? fin) + String(run)) {
+           isChatRun([secondOfDoubleFinal[fin] ?? fin] + tail) {
             return false
         }
         return true
     }
 
-    /// One jamo repeated (ㅇㅇ) or a two-consonant abbreviation (ㄹㅇ).
-    private static func isShorthandRun(_ run: String) -> Bool {
-        (run.count >= 2 && Set(run).count == 1)
-            || trailingAbbreviations.contains(run) || ChatShorthand.abbreviations.contains(run)
+    /// The run splits fully into chat units: a glue jamo (ㅋ), one jamo repeated (ㅇㅇ), an abbreviation (ㄹㅇ).
+    private static func isChatRun(_ run: [Character]) -> Bool {
+        guard !run.isEmpty else { return false }
+        // splits[i]: the first i jamo split into units.
+        var splits = [true] + Array(repeating: false, count: run.count)
+        for end in 1...run.count {
+            let split = (0..<end).contains { start in splits[start] && isChatUnit(run[start..<end]) }
+            splits[end] = split
+        }
+        return splits[run.count]
+    }
+
+    private static func isChatUnit(_ unit: ArraySlice<Character>) -> Bool {
+        guard let first = unit.first else { return false }
+        if unit.count == 1 { return ChatShorthand.glueJamo.contains(first) }
+        if unit.allSatisfy({ $0 == first }) { return true }
+        let s = String(unit)
+        return trailingAbbreviations.contains(s) || ChatShorthand.abbreviations.contains(s)
     }
 
     /// Log relative frequency; a learned word gets the floor and the bonus (count 0 is -inf before the floor).
