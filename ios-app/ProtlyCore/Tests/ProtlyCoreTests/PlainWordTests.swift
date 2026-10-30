@@ -131,6 +131,8 @@ struct Replay {
     /// FieldWatch's model is the field, and a host callback now keeps the word, whether it reads the field as it is
     /// or one state late.
     private func checkWatch(file: StaticString, line: UInt) {
+        // The keyboard opens with an unknown model; a space or commit before any key leaves it unknown.
+        guard watch.known else { return }
         XCTAssertEqual(watch.expected, field.text, "model", file: file, line: line)
         let now = t + 0.01
         if session.isComposing {
