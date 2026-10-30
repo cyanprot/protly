@@ -63,8 +63,8 @@ simulator check harness this campaign extends.
   `ios-app/Vendor/`. No `#if targetEnvironment(simulator)` paths in `ios-app/Sources/**`.
 - `KeyboardSourceRulesTests.swift` reads the keyboard sources as text and enforces rules about them. Keep it
   passing and extend it where a sprint says so.
-- Haptics stay off: the owner keeps them off, and a keyboard cannot read the system switch
-  (`KeyboardViewController.swift` `viewDidLoad`). Do not add the trackpad haptic the space research suggests (R2).
+- Haptics stay as they are in this campaign (forced off in `viewDidLoad`). Haptics and key sound become app
+  settings in the next campaign; do not add the trackpad haptic the space research suggests (R2) here.
 
 ## Sprint 001: plain-text composition (no marked text)
 
@@ -308,5 +308,7 @@ above has a CHECK line; the verify command passes; at most 8 runs.
 
 - App settings and a settings screen (`docs/research/2026-10-30-app-settings.md`): read later, planned separately.
 - The UI and UX audit and competitor ideas (`2026-10-30-ui-audit.md`, `2026-10-30-competitors.md`): Sprint 9.
-- Vertical cursor movement (space R6) and the trackpad haptic (R2).
+- Vertical cursor movement (space R6).
+- Haptics and key sound as app settings, and the trackpad haptic (R2) following that setting: the next campaign
+  (settings), after an App Group spike (`2026-10-30-app-settings.md` sections 1.4 and 5).
 - Spanish option 3 (a Spanish word list).
