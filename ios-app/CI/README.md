@@ -30,10 +30,37 @@ script takes the newest iOS 26 runtime and an iPhone 13 Pro (else the first 390 
 4. `measure.py <dir>` prints one line per screenshot, one line per check and `RESULT PASS` or `RESULT FAIL`.
    `test_measure.py` tests it on synthetic screenshots (`python3 -m unittest discover -s ios-app/CI -p 'test_*.py'`,
    needs Pillow).
-5. `publish-shots.sh` commits the PNGs, the logs and `report.txt` to the orphan branch `ci-shots` under
-   `runs/<sha7>-<run_number>/`, whatever the outcome. Line 1 of `report.txt` is `STATUS build-failed`,
-   `STATUS test-failed` or `STATUS measured`; a failure ends with the last 200 lines of the failing log. The job
-   then fails unless the report says `RESULT PASS`.
+5. `publish-shots.sh` (after `leak-guard.sh`) commits the PNGs, the logs and `report.txt` to the orphan branch
+   `ci-shots` under `runs/<sha7>-<run_number>/`, whatever the outcome. Line 1 of `report.txt` is
+   `STATUS build-failed`, `STATUS test-failed` or `STATUS measured`; a failure ends with the last 200 lines of the
+   failing log. The job then fails unless the report says `RESULT PASS` (and, from the phone checks, no FAIL).
+
+## Phone checks
+
+`docs/plans/2026-10-30-sim-phone-checks.md` (results: `docs/ios-keyboard-notes.md`, "Simulator phone checks").
+After the layout scenarios, `UITests/PhoneChecksUITests.swift` runs the phone checklists that need no network, in
+the order `test0_probe` (only with `[probe]` in the commit message), `test1_68`, `test2_ws`, `test3_85offline`,
+`test4_memory`, `test5_icon`; learned words carry over between them.
+
+- `UITests/Driver.swift`: the shared helpers. Text is typed by coordinate: Hangul as its Dubeolsik keys
+  (ProtlyCore `KeyEncoder`, linked into the UI tests), capitals and shifted jamo with a shift tap, symbols on the
+  123 layer (positions from KeyboardKit's iPhone layout widths), `\n` with return. The host's `Clear` and
+  `Dismiss` buttons empty the field and hide the keyboard; the field's text is read through XCUITest (exact).
+- `UITests/Reader.swift`: Vision OCR of a bar slot inside the test. A self-test (Vision reads "Polish" and Hangul
+  drawn by the test) is the positive control; a slot also gets an ink count (pixels far from the bar's
+  background), so "empty" never rests on OCR alone. A missing reading is FAIL `unreadable`.
+- `memsample.py` samples the `ProtlyCIKeyboard` process every 2 s from the macOS side (`mem.txt`; which memory
+  method works is in `probe-mem.txt`). The test logs `MARK` lines in `ui-log.txt`.
+- `checks.py` resolves 6.8-9 (relaunch) and 6.8-10 (memory) from the marks and samples, turns a missing or
+  malformed line into FAIL `unreadable`, and writes the sorted `checks.txt` and the report's `CHECKS` section
+  (`CHECKS pass N fail N record N skip N`). The test's own lines stay in `checks-raw.txt`.
+- `ProtlyCIApp` is the container app built as xtool builds it (phone Info.plist, `AppIcon.png` at the bundle
+  root), for the home-screen icon (`c-icon.png`).
+- Every item saves `c-<id>.png`, and each slot reading `c-<id>-<n>-<slot>.png`.
+- `leak-guard.sh` runs before every publish: a run folder with a key prefix in any file publishes only a
+  `STATUS leak-guard` report and the step fails.
+
+The job fails unless the report says `STATUS measured`, `RESULT PASS` and no `CHECK ... FAIL`.
 
 ## Reading a run without GitHub access
 
