@@ -186,7 +186,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     /// The word's first key, before anything is written: where the word starts.
     private func beginWord() {
-        watch.begin(observed())
+        watch.begin(observed(), now: now)
     }
 
     private func observed() -> FieldWatch.Observed {
@@ -406,8 +406,9 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func insertText(_ text: String) {
         commitWord()  // Return after a word: the word is already in the field, so only "\n" follows it
+        let overSelection = proxyHasSelection
         super.insertText(text)
-        watch.wrote(deleting: 0, inserting: text, at: now)
+        noteKeyboardKitWrite(deleting: 0, inserting: text, overSelection: overSelection)
         session.noteInserted(text)
         endUndo()
         refreshMode()
@@ -417,10 +418,11 @@ final class KeyboardViewController: KeyboardInputViewController {
         commitWord()
         session.forgetLast()
         endUndo()
+        let overSelection = proxyHasSelection
         super.deleteBackward()
         // One Character, unless KeyboardKit deletes a word or a sentence at a time: then the model is lost.
         if services.keyboardBehavior.backspaceRange == .character {
-            watch.wrote(deleting: 1, inserting: "", at: now)
+            noteKeyboardKitWrite(deleting: 1, inserting: "", overSelection: overSelection)
         } else {
             watch.forget()
         }
@@ -431,9 +433,21 @@ final class KeyboardViewController: KeyboardInputViewController {
         commitWord()
         session.forgetLast()
         endUndo()
+        let overSelection = proxyHasSelection
         super.deleteBackward(times: times)
-        watch.wrote(deleting: times, inserting: "", at: now)
+        noteKeyboardKitWrite(deleting: times, inserting: "", overSelection: overSelection)
         refreshMode()
+    }
+
+    private var proxyHasSelection: Bool { !(textDocumentProxy.selectedText ?? "").isEmpty }
+
+    /// A write through KeyboardKit, outside a word. Over a selection it replaced text the model never saw.
+    private func noteKeyboardKitWrite(deleting: Int, inserting: String, overSelection: Bool) {
+        if overSelection {
+            watch.forget()
+            return
+        }
+        watch.wrote(deleting: deleting, inserting: inserting, at: now)
     }
 
     override func adjustTextPosition(by offset: Int) {
