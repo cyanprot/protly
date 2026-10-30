@@ -17,7 +17,7 @@ fi
 # Leak guard (plan Task 1.6): a run folder holding a key prefix anywhere is never published. Only a
 # `STATUS leak-guard` report naming the files goes out, and the step fails.
 leaked=0
-guard_out="$(bash "$here/leak-guard.sh" "$src")" || leaked=1
+guard_out="$(bash "$here/leak-guard.sh" "$src" 2>&1)" || leaked=1
 if [ "$leaked" = 1 ]; then
   echo "$guard_out"
   src="${RUNNER_TEMP:-/tmp}/ci-shots-leak-guard"

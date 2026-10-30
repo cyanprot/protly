@@ -13,7 +13,7 @@ import checks  # noqa: E402
 import memsample  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# Built at run time so no key-shaped literal sits in the repository.
+# Split so no key-shaped literal sits in the source file (the compiled .pyc, gitignored, may fold it).
 FAKE_KEY = "sk-" + "ant-test"
 
 

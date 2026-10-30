@@ -72,7 +72,10 @@ jobs:
         run: |
           report="$RUNNER_TEMP/shots/report.txt"
           head -n 1 "$report"
-          grep -E '^CHECKS (pass|$)|^CHECK .* FAIL' "$report" || true
+          # The evidence is printed only when the leak guard passes it (publish-shots.sh ran the same guard).
+          if bash ios-app/CI/leak-guard.sh "$RUNNER_TEMP/shots" > /dev/null 2>&1; then
+            grep -E '^CHECKS (pass|$)|^CHECK .* FAIL' "$report" || true
+          fi
           [ "$(head -n 1 "$report")" = "STATUS measured" ]
           grep -qx 'RESULT PASS' "$report"
           grep -qE '^CHECKS pass [0-9]+ fail 0 ' "$report"

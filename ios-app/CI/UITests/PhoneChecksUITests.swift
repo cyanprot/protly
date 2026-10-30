@@ -331,7 +331,7 @@ final class PhoneRun {
     // MARK: Task 6.8 (feature plan) items 1-11
 
     func checks68() {
-        let ids = (1...11).map { "6.8-\($0)" }
+        let ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11].map { "6.8-\($0)" }  // 6.8-10 is test4_memory's
         if notReady(ids) { return }
 
         var it = Item("6.8-1")

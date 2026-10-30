@@ -15,6 +15,7 @@ mkdir -p "$out"
 out="$(cd "$out" && pwd)"
 work="${RUNNER_TEMP:-/tmp}/protly-shots-work"
 mkdir -p "$work"
+rm -f "$work/checks-section.txt"  # never a previous run's checks in this report
 dd="$here/build/DerivedData"
 report="$out/report.txt"
 keyboard_id="com.northprot.protly.cihost.keyboard"
