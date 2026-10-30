@@ -16,6 +16,9 @@ enum Geo {
 
 enum Board: String {
     case protly, emoji, english, none
+    /// A system keyboard that is not English or Emoji: iOS shows Apple's keyboard for Protly's primary language
+    /// (Korean) while the extension is slow to start (runs 12 and 14 measured it as Protly).
+    case system = "system-keyboard"
 }
 
 /// The bar's three equal slots (ProtlyBar.swift): flip, action, suggestion.
@@ -152,7 +155,17 @@ final class Driver {
         let emoji = NSPredicate(format: "label CONTAINS[c] 'Frequently Used' OR label CONTAINS[c] 'Smileys' "
             + "OR label CONTAINS[c] 'Search Emoji' OR placeholderValue CONTAINS[c] 'Search Emoji'")
         if app.descendants(matching: .any).matching(emoji).firstMatch.exists { return .emoji }
+        // Protly's keys are invisible to XCUITest; a system keyboard's are not.
+        if keys.firstMatch.exists { return .system }
         return screenshot()?.keyboardTop() != nil ? .protly : .none
+    }
+
+    /// When a system keyboard stands in for a slow Protly, waits for Protly to take over.
+    func waitOutStandIn(timeout: TimeInterval = 20) {
+        guard current() == .system else { return }
+        log("a system keyboard stands in for Protly: waiting up to \(Int(timeout)) s")
+        dumpOnce("system-keyboard")
+        log(wait(for: .protly, timeout: timeout) ? "Protly took over" : "still \(current().rawValue)")
     }
 
     func wait(for board: Board, timeout: TimeInterval) -> Bool {
@@ -192,6 +205,7 @@ final class Driver {
     @discardableResult
     func ensureProtly() -> Bool {
         if !waitForKeyboard() { focusField() }
+        waitOutStandIn()
         if wait(for: .protly, timeout: 2) || pick(.protly) || cycle(to: .protly, taps: 3) { return true }
         fail("protly keyboard not reached")
         return false
@@ -219,7 +233,7 @@ final class Driver {
         case .protly: name = "Protly"
         case .emoji: name = "Emoji"
         case .english: name = "English"
-        case .none: return false
+        case .none, .system: return false
         }
         globePoint().press(forDuration: 1.2)
         pause(0.8)

@@ -21,6 +21,7 @@ final class KeyboardShotsUITests: XCTestCase {
 
         // Protly is first in AppleKeyboards (run-shots.sh); otherwise the globe's list or Settings brings it.
         if !d.waitForKeyboard() { d.focusField() }
+        d.waitOutStandIn()
         if !d.wait(for: .protly, timeout: 2) && !d.pick(.protly) {
             d.log("Protly not in the globe list: adding it in Settings")
             d.addKeyboardInSettings()
