@@ -471,3 +471,95 @@ four older keyboard MODE out cases now send `TARGET: English` and are the Englis
   than the draft (spelling is right, register drifts a little). The Russian female-friend runs added "!" and
   "просто", which the draft does not have; the non-English MODE out has no emoji and exclamation rule, as in the
   extension.
+
+## Simulator phone checks
+
+Campaign 2026-10-30-sim-phone-checks, sprint 001 (`docs/plans/2026-10-30-sim-phone-checks.md`). The phone checks
+of Tasks 6.8 and 8.5 (feature plan) that need no network, the flip-over-whitespace rule (997f108), memory and the
+app icon run in the simulator job after the layout scenarios (`ios-app/CI/README.md`, "Phone checks"). Each item
+is one `CHECK <id> PASS|FAIL|RECORD|SKIP <evidence>` line in `checks.txt` and in the report's `CHECKS` section,
+with `c-<id>.png` (and `c-<id>-<n>-<slot>.png` per bar reading) in the run folder.
+
+Setup: GitHub `macos-26` runner, Xcode 26.6 (17F113), iOS 26.5 simulator runtime, iPhone 13 Pro (390 x 844 pt,
+3x), dark mode, English (US). Runs: `runs/b390712-8` (probe), `runs/f0d0943-9`, `runs/307483a-12`,
+`runs/083f4c9-14` and the final `runs/e301e04-15` (`STATUS measured`, layout `RESULT PASS`,
+`CHECKS pass 13 fail 1 record 6 skip 1`). The table is from the final run; runs 9 to 15 gave the same result per
+ID (6.8-7 and 8.5-9o run with their language context from run 9 on).
+
+### Results
+
+Field text is read through XCUITest (exact); bar labels with Vision OCR in the UI test (quoted as OCR).
+
+| ID | Result | Evidence |
+|---|---|---|
+| 6.8-1 | PASS | field `i dont think its ok teh.` exactly; `teh`: right slot OCR `the`, tap: field `the ` |
+| 6.8-2 | PASS | `recieve`: right slot OCR `receive`; `.`: field `recieve.` |
+| 6.8-3 | PASS | `tomo`: right slot OCR `tomorrow`, tap: field `tomorrow ` |
+| 6.8-4 | PASS | `안녀`: right slot OCR `안녕`; `안녕ㅎ` + right slot: field `안녕하세요 ` |
+| 6.8-5 | RECORD | `omw`: right slot empty (the simulator has no `omw` text replacement), space: field `omw ` |
+| 6.8-6 | SKIP | no contacts in the simulator |
+| 6.8-7 | PASS | after a Korean word: `걍 가자`, `걔 진짜 웃겨`, `얘 뭐야`, `꽤 좋다` all Korean; `I need to get rid of it` all English |
+| 6.8-8 | PASS | `wyd`: field `죵`; left slot: `wyd`; space, clear, `wyd `: field `wyd ` |
+| 6.8-9 | RECORD | host terminated and relaunched: `wyd ` English; same keyboard process (pid unchanged), so this shows the learned word survives a new host, not a new keyboard process |
+| 6.8-10 | RECORD | 30 rounds, each hiding the keyboard and bringing Protly back: footprint 60 -> 63 MB (+3 MB; runs 9 to 14: +0, -1, -2), same pid; macOS-side `footprint`, whole MB |
+| 6.8-11 | PASS | flip part: `내일 봐`, left slot: field `내일 qhk` (Translate is sprint 002's) |
+| ws-1 | PASS | `hello `: left slot OCR `ㅗ디 \|ㅐ` (Hangul); tap: field `ㅗ디ㅣㅐ ` |
+| ws-2 | PASS | field `hello. `: left slot empty (no OCR text, ink 0) |
+| ws-3 | PASS | field `hello` + newline: left slot empty (no OCR text, ink 0) |
+| 8.5-1o | PASS | `ru` came out Latin (no flip); field `ru: 누나 노트 고마워 누나 덕분에 살았다 `: center OCR `Translate` |
+| 8.5-2o | RECORD | `ru` again at the start: `겨`; `zh` came out `코`, flipped to `zh`, `zh: 안녕 `; then `zh ` alone: `zh ` (Latin: the flip taught it) |
+| 8.5-6o | PASS | `ok` Latin; field `ok: 내일 봐 `: center OCR `Translate` |
+| 8.5-7o | PASS | `ko` Latin; field `ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 `: center OCR `Polish` |
+| 8.5-8o | RECORD | three-paragraph `ko:` draft, cursor after `ㅠㅠ`: center empty (the last word is still being typed) |
+| 8.5-9o | FAIL | keyboard: after an English word, the draft came out `me 둧뭇ㅁ 디 color de tu 촘볃ㅅㅁ, donde la conprastes? jaja `, so the center offers `Translate`, not `Polish` |
+| icon | RECORD | `Protly` on home page 1 at {296, 163, 68, 90.7}; `c-icon.png` for the tower |
+
+### Findings for the tower (keyboard behaviour, not fixed here)
+
+- 8.5-9o: Spanish words that are not English words (`encanta`, `el`, `chaqueta`) are read as Korean even after an
+  English word, and `the` at a message start after Korean text came out `솓` (flipped for the context). On the
+  phone the user would flip each of them before Polish appears.
+- A draft offers Translate or Polish only once its last word is ended: while a word is being typed the bar offers
+  no action (`refreshField`). The checklist's "type `ru: ...`: the center shows Translate" holds after a space (the
+  tests add one); with the cursor right after the last letter (8.5-8o) the center is empty.
+- Layout scenario 04 (after an app switch) is intermittent: `runs/b390712-8` and `runs/307483a-12` measured a 69 pt
+  band, `runs/f0d0943-9`, `runs/083f4c9-14` and `runs/e301e04-15` 52 pt. In the failing runs the controller the host attaches after the switch never logged
+  `host became active` (ProtlyHeight's drop needs `NSExtensionHostDidBecomeActive` within 2 s of loading). Run 8
+  had the memory sampler attached; run 12 did not (it starts with the phone checks), so the sampler is not the
+  cause. When the notification does not come, the keyboard keeps the 17 pt band; on a slow phone the same can
+  happen.
+- A slow extension start shows Apple's Korean keyboard instead: in runs 12 and 14 (layout scenarios 197 s and
+  247 s against 81-98 s) the first presentation was Apple's Korean keyboard (`한` on the space bar), iOS's stand-in
+  for Protly's primary language, and run 14 then lost the keyboard after Emoji (03 found none). The driver had
+  measured that stand-in as Protly (02 at 509 pt); since `e301e04` a keyboard whose keys XCUITest can see, other
+  than English and Emoji, is `system-keyboard`; at the first open (02) and at the start of each phone-check group the
+  tests wait up to 20 s for Protly to take over (if it does not, 02 comes from a pick in the globe list, logged in
+  `ui-log.txt`), and a stand-in anywhere else fails its scenario or check. The final run had no stand-in. On the phone this would be a first open right after install or a memory kill.
+- 8.5-2o: `ru` at the start came out Latin in 8.5-1o and as `겨` in 8.5-2o: the previous message's language decides
+  (8.5-1o followed English text, 8.5-2o followed `ru: ` + Korean). `zh` needed the flip once and then stayed Latin.
+- 6.8-7 depends on context: in `runs/b390712-8`, right after `omw ` (English), `걍` came out `rid`. After a Korean
+  word all four phrases are Korean, as the checklist ("in a Korean conversation") expects.
+
+### Probe (`runs/b390712-8`)
+
+- Vision works inside the UI test on the iOS 26.5 simulator: `.accurate` offers ko-KR and en-US among 30
+  languages; a self-test on drawn text reads `Polish 안녕하세요`; the bar after `hello ` read `"ㅗ디 |ㅐ"` (left)
+  and `Polish` (center), the field `안녕`. No pixel-signature fallback was needed (`OCR_FALLBACK=1` keeps it).
+- `123` layer (`probe-123.png`): KeyboardKit's iPhone numeric layout; rows 1-2 have 10 keys on the letter pitch
+  (colon at x 99.3 pt), row 3 has `. , ? ! ’` at 14% of the width each (x 87.9, 141.4, 195.0, 248.6, 302.2 pt).
+  `:`, `?`, `,`, `.`, `!` each typed at its computed position. Space goes back to the letters; otherwise the test
+  taps `ABC` (same place as `123`).
+- Memory from the macOS side: `pgrep -x ProtlyCIKeyboard` finds one process; `footprint -p` and `sudo footprint -p`
+  both print it (54 MB at first), `ps -o rss=` prints 295600 KB (shared pages counted), and `vmmap --summary` hung
+  for 20 s (it suspends its target). The sampler uses `footprint` every 2 s, during the phone checks only.
+
+### What the simulator cannot show
+
+- Memory: the numbers are the simulator process's footprint on macOS in whole MB, not the phone's jetsam ledger;
+  the 40 MB limit and the 10 MB growth line are judged on the device. The pid did not change over 30
+  presentations, and the keyboard process survived the host's relaunch (6.8-9 RECORD), so a cold keyboard start is
+  not covered.
+- 6.8-5 text replacements and 6.8-6 contact names: the simulator has none; the phone's own (`omw`, `ㄱㅅㄱㅅ`,
+  names) are the tower's.
+- The icon on the real home screen (the crop is the simulator's rendering of the same `AppIcon.png`).
+- Other host apps (Messages, KakaoTalk, Instagram), typing feel and haptics.

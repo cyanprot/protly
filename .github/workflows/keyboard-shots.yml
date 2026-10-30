@@ -1,5 +1,6 @@
-# Simulator screenshots of the Protly keyboard, measured against Apple's keyboard (ios-app/CI/README.md).
-# Runs only for a head commit whose message contains [shots]: macOS minutes are scarce.
+# Simulator screenshots of the Protly keyboard, measured against Apple's keyboard, and the phone checks
+# (ios-app/CI/README.md). Runs only for a head commit whose message contains [shots]: macOS minutes are scarce.
+# [probe] in the same message also runs the phone checks' probe (PhoneChecksUITests.test0_probe).
 # Every outcome is published to the orphan branch ci-shots under runs/<sha7>-<run_number>/.
 name: keyboard-shots
 
@@ -22,7 +23,7 @@ jobs:
       group: keyboard-shots-${{ github.ref }}
       cancel-in-progress: true
     runs-on: macos-26
-    timeout-minutes: 40
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,7 +33,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: measure.py tests
+      - name: measure.py and checks.py tests
         run: |
           python -m pip install --quiet "pillow>=11,<13"
           python -m unittest discover -s ios-app/CI -p 'test_*.py'
@@ -55,6 +56,7 @@ jobs:
       - name: Build, run scenarios, measure
         env:
           SOURCE_SHA: ${{ github.sha }}
+          PROBE: ${{ contains(github.event.head_commit.message, '[probe]') && '1' || '0' }}
         run: bash ios-app/CI/run-shots.sh "$RUNNER_TEMP/shots"
 
       - name: Publish to ci-shots
@@ -65,9 +67,16 @@ jobs:
           mkdir -p "$RUNNER_TEMP/shots"
           bash ios-app/CI/publish-shots.sh "$RUNNER_TEMP/shots" "runs/${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}"
 
-      - name: Require STATUS measured and RESULT PASS
+      - name: Require STATUS measured, RESULT PASS and no CHECK FAIL
         if: ${{ !cancelled() }}
         run: |
-          head -n 1 "$RUNNER_TEMP/shots/report.txt"
-          [ "$(head -n 1 "$RUNNER_TEMP/shots/report.txt")" = "STATUS measured" ]
-          grep -qx 'RESULT PASS' "$RUNNER_TEMP/shots/report.txt"
+          report="$RUNNER_TEMP/shots/report.txt"
+          head -n 1 "$report"
+          # The evidence is printed only when the leak guard passes it (publish-shots.sh ran the same guard).
+          if bash ios-app/CI/leak-guard.sh "$RUNNER_TEMP/shots" > /dev/null 2>&1; then
+            grep -E '^CHECKS (pass|$)|^CHECK .* FAIL' "$report" || true
+          fi
+          [ "$(head -n 1 "$report")" = "STATUS measured" ]
+          grep -qx 'RESULT PASS' "$report"
+          grep -qE '^CHECKS pass [0-9]+ fail 0 ' "$report"
+          if grep -qE '^CHECK [^ ]+ FAIL' "$report"; then exit 1; fi

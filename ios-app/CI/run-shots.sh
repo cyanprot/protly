@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Builds the CI host with the Protly keyboard, runs the screenshot scenarios in an iOS Simulator, measures them and
-# writes <out>/report.txt (line 1: STATUS build-failed | test-failed | measured). Always exits 0 once the report is
-# written; the workflow fails the job unless the report says RESULT PASS. macOS only (bash 3.2 compatible).
+# Builds the CI host with the Protly keyboard, runs the screenshot scenarios and the phone checks in an iOS
+# Simulator, measures them and writes <out>/report.txt (line 1: STATUS build-failed | test-failed | measured; the
+# layout RESULT line; a CHECKS section from checks.py). Always exits 0 once the report is written; the workflow
+# fails the job unless the report says RESULT PASS and no CHECK is FAIL. macOS only (bash 3.2 compatible).
 #
 # Usage: ios-app/CI/run-shots.sh <out-dir>
-# Env: SOURCE_SHA (for the report), XCODE_APP (default: the selected Xcode).
+# Env: SOURCE_SHA (for the report), PROBE=1 (run the phone checks' probe, plan Task 1.0), OCR_FALLBACK=1 (label
+# checks RECORD a crop when Vision fails its self-test; off: they FAIL unreadable).
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -13,6 +15,7 @@ mkdir -p "$out"
 out="$(cd "$out" && pwd)"
 work="${RUNNER_TEMP:-/tmp}/protly-shots-work"
 mkdir -p "$work"
+rm -f "$work/checks-section.txt"  # never a previous run's checks in this report
 dd="$here/build/DerivedData"
 report="$out/report.txt"
 keyboard_id="com.northprot.protly.cihost.keyboard"
@@ -29,6 +32,7 @@ finish() {
     echo "STATUS $status"
     printf '%s' "$info"
     if [ -f "$out/measure.txt" ]; then cat "$out/measure.txt"; fi
+    if [ -f "$work/checks-section.txt" ]; then cat "$work/checks-section.txt"; fi
     if [ -n "$failing_log" ] && [ -f "$failing_log" ]; then
       echo "--- last 200 lines of $(basename "$failing_log")"
       tail -n 200 "$failing_log"
@@ -96,6 +100,8 @@ xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b > /dev/null
 xcrun simctl ui "$udid" appearance dark
 xcrun simctl install "$udid" "$dd/Build/Products/Debug-iphonesimulator/ProtlyCIHost.app"
+xcrun simctl install "$udid" "$dd/Build/Products/Debug-iphonesimulator/ProtlyCIApp.app" \
+  || note "ProtlyCIApp install failed: the icon check will FAIL"
 xcrun simctl shutdown "$udid"
 
 prefs="$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Library/Preferences"
@@ -123,13 +129,26 @@ note "appearance $(xcrun simctl ui "$udid" appearance 2>&1)"
 # Keep the keyboard's debug log (ProtlyHeight.swift); debug messages are not stored by default.
 xcrun simctl spawn "$udid" log config --subsystem com.northprot.protly --mode "level:debug,persist:debug" > /dev/null 2>&1
 
-# Scenarios.
+# The keyboard process's memory from the macOS side during the phone checks (plan Task 1.4): mem.txt,
+# probe-mem.txt. It starts at the phone checks' first log line: in run 8, with the sampler attached from the start,
+# scenario 04 lost the host-active notification (band 69).
+python3 "$here/memsample.py" "$out/mem.txt" "$out/probe-mem.txt" --name ProtlyCIKeyboard --interval 2 \
+  --wait-for "$out/ui-log.txt" "== PhoneChecksUITests" > "$work/memsample.log" 2>&1 &
+sampler=$!
+note "memory sampler pid $sampler, probe ${PROBE:-0}"
+
+# Layout scenarios (KeyboardShotsUITests), then the phone checks (PhoneChecksUITests).
 rm -rf "$work/Tests.xcresult"
-TEST_RUNNER_SHOTS_DIR="$out" xcodebuild test-without-building \
+TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" TEST_RUNNER_OCR_FALLBACK="${OCR_FALLBACK:-0}" \
+  xcodebuild test-without-building \
   -project "$here/ProtlyCI.xcodeproj" -scheme ProtlyCI \
   -destination "platform=iOS Simulator,id=$udid" \
   -derivedDataPath "$dd" -resultBundlePath "$work/Tests.xcresult" > "$work/test.log" 2>&1
 test_code=$?
+kill "$sampler" > /dev/null 2>&1
+wait "$sampler" > /dev/null 2>&1
+if [ -s "$work/memsample.log" ]; then note "memsample: $(tail -n 3 "$work/memsample.log" | tr '\n' ' ')"; fi
+grep -E '^Test Case .*(passed|failed|skipped)' "$work/test.log" > "$out/test-cases.txt" 2>/dev/null
 
 # The runner writes the PNGs straight to $out; if it could not, take them from the result bundle.
 if ! ls "$out"/0*.png > /dev/null 2>&1 && [ -d "$work/Tests.xcresult" ]; then
@@ -162,4 +181,5 @@ if [ $test_code -ne 0 ]; then
 fi
 
 python3 "$here/measure.py" "$out" --points "$points" > "$out/measure.txt" 2>&1
+python3 "$here/checks.py" "$out" > "$work/checks-section.txt" 2>&1
 finish

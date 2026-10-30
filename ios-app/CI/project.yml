@@ -48,6 +48,23 @@ targets:
     dependencies:
       - package: ProtlyCore
       - package: KeyboardKit
+  # The container app as xtool builds it, for the home-screen icon check (plan Task 1.5): the phone's Info.plist
+  # (CFBundleIconFiles = AppIcon), no asset catalog, AppIcon.png copied to the bundle root.
+  ProtlyCIApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: ../Sources/Protly
+      - path: ../Support/AppIcon.png
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.northprot.protly.ciapp
+        INFOPLIST_FILE: ../Support/Protly-Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Protly
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
   ProtlyCIUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -60,11 +77,14 @@ targets:
         TEST_TARGET_NAME: ProtlyCIHost
     dependencies:
       - target: ProtlyCIHost
+      # KeyEncoder turns Hangul into the keys the tests tap (no KeyboardKit dependency).
+      - package: ProtlyCore
 schemes:
   ProtlyCI:
     build:
       targets:
         ProtlyCIHost: all
+        ProtlyCIApp: all
         ProtlyCIUITests: [test]
     test:
       config: Debug
