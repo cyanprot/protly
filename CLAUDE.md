@@ -5,7 +5,9 @@ that types Korean and English on one QWERTY grid and offers Translate / Polish /
 
 ## Plans of record
 
-- iPhone keyboard features: `docs/plans/2026-10-28-ios-keyboard.md` (Sprints 1-5 done; Sprint 6 next).
+- iPhone keyboard features: `docs/plans/2026-10-28-ios-keyboard.md` (Sprints 1-8 done).
+- Simulator phone checks (cloud): `docs/plans/2026-10-30-sim-phone-checks.md` (replaces the USER steps of Tasks
+  6.8, 7.7 and 8.5).
 - Keyboard visual verification (cloud): `docs/plans/2026-10-29-keyboard-visual.md`.
 - Security review and test hardening (cloud): `docs/plans/2026-10-29-security-review.md`.
 - Phone and simulator findings: `docs/ios-keyboard-notes.md`.
@@ -21,7 +23,10 @@ that types Korean and English on one QWERTY grid and offers Translate / Polish /
 
 - English for code, comments, commits and docs.
 - Never commit, print or log secrets. `ios-app/Sources/ProtlyKeyboard/Secrets.swift` is gitignored and written by
-  `ios-app/scripts/make-secrets.sh`; CI and cloud sessions use a stand-in with an empty key.
+  `ios-app/scripts/make-secrets.sh`; cloud sessions use a stand-in with an empty key. From Sprint 002 of
+  the sim-phone-checks plan, the keyboard-shots workflow writes Secrets.swift from the Actions secret
+  `PROTLY_API_KEY` (a CI-only key) through make-secrets.sh when it is set (empty stand-in otherwise), never prints
+  it, and publish-shots.sh refuses any file containing `sk-ant-`.
 - Tests run offline: `npm test` (extension, host) and `swift test --package-path ios-app/ProtlyCore` (needs a
   Swift toolchain). Both pass before every commit.
 - The phone build (`xtool dev build` on the laptop) must keep working: do not edit `ios-app/Package.swift` or

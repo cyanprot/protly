@@ -5365,6 +5365,8 @@ words are capped: 1,000 per language, 32-character keys). The other source rules
 
 ### Task 6.8: Install and check on the phone (USER) (order step 6)
 
+> **2026-10-30:** the USER steps of this task run in the simulator instead: `docs/plans/2026-10-30-sim-phone-checks.md`.
+
 **Step 1 (Claude):** set `static let showsMemory = true` in `Words.swift` (do not commit it), then install (see
 "Build and install" above Sprint 3).
 
@@ -6655,6 +6657,8 @@ the outgoing message passes `bridge.py scan` with exit 0, Cyan approves).
 
 ### Task 7.7: Install and check on the phone (USER)
 
+> **2026-10-30:** the USER steps of this task run in the simulator instead: `docs/plans/2026-10-30-sim-phone-checks.md`.
+
 Install (see "Build and install" above Sprint 3). Claude prints this checklist and waits. Every iPhone label is the
 English UI string. The style itself is checked by the live eval (Task 7.3), not here.
 
@@ -7527,6 +7531,8 @@ git commit --file=<scratchpad>/msg84b.txt   # "docs: Sprint 8 target eval" + the
 ```
 
 ### Task 8.5: Install and check on the phone (USER)
+
+> **2026-10-30:** the USER steps of this task run in the simulator instead: `docs/plans/2026-10-30-sim-phone-checks.md`.
 
 Install (see "Build and install" above Sprint 3). Claude prints this checklist and waits. Every iPhone label is the
 English UI string; `Translate`, `Polish`, `Insert`, `Cancel`, `Undo` and `Done` are protly's own. To type the colon,
