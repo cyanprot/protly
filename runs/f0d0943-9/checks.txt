@@ -1,0 +1,21 @@
+CHECK 6.8-1 PASS field="i dont think its ok teh." right="the" want "the" after-tap="the "
+CHECK 6.8-2 PASS right="receive" want "receive" field="recieve."
+CHECK 6.8-3 PASS right="tomorrow" want "tomorrow" after-tap="tomorrow "
+CHECK 6.8-4 PASS right="안녕" want starts with "안녕" typed="안녕ㅎ" after-tap="안녕하세요 "
+CHECK 6.8-5 RECORD right="" ink 0 after-space="omw "
+CHECK 6.8-6 SKIP no contacts in the simulator
+CHECK 6.8-7 PASS context="안녕" field="걍 가자 " field="걔 진짜 웃겨 " field="얘 뭐야 " field="꽤 좋다 " field="I need to get rid of it "
+CHECK 6.8-8 PASS typed="죵" after-flip="wyd" again="wyd "
+CHECK 6.8-9 RECORD same process: field='wyd ' pid 11471 -> 11471
+CHECK 6.8-10 RECORD start 61.0 MB end 61.0 MB growth +0.0 MB over presentations=30/30 (footprint, pid 11471; macOS-side, not the phone's limit)
+CHECK 6.8-11 PASS left="ghk" ink 1434 after-flip="내일 qhk"
+CHECK 8.5-1o PASS ru=latin field="ru: 누나 노트 고마워 누나 덕분에 살았다 " center="Translate" want "Translate"
+CHECK 8.5-2o RECORD ru-again="겨" zh="코" flip -> "zh" taught="zh: 안녕 " zh-space="zh "
+CHECK 8.5-6o PASS ok=latin field="ok: 내일 봐 " center="Translate" want "Translate"
+CHECK 8.5-7o PASS ko=latin field="ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 " center="Polish" want "Polish"
+CHECK 8.5-8o RECORD ko=latin field="ko: 오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ" center="" ink 0
+CHECK 8.5-9o FAIL context="솓" flip -> "the" field="me 둧뭇ㅁ 디 color de tu 촘볃ㅅㅁ, donde la conprastes? jaja " center="Translate" want "Polish" (not as expected)
+CHECK icon RECORD {296.0,163.0,68.0,90.7} found on page 1 (c-icon.png, c-icon-home.png)
+CHECK ws-1 PASS left="ㅗ디 |ㅐ" want Hangul after-tap="ㅗ디ㅣㅐ " korean-reading-plus-space="ㅗ디ㅣㅐ "
+CHECK ws-2 PASS field="hello. " left=ocr "" ink 0 (c-ws-2-1-left.png)
+CHECK ws-3 PASS field="hello\n" left=ocr "" ink 0 (c-ws-3-1-left.png)
