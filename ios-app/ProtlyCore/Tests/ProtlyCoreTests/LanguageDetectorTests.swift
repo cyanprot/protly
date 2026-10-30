@@ -76,4 +76,44 @@ final class LanguageDetectorTests: XCTestCase {
         XCTAssertFalse(list.hasPrefix("x"))
         XCTAssertFalse(list.hasPrefix("zzz"))  // past the end
     }
+
+    func testUnlistedUnshiftedKoreanAfterEnglishIsKorean() {
+        // Rule 3 without the shift rule (testUnknownValidHangulIsKorean's 했어 is decided by the shift).
+        for w in ["rksmswnd", "xpsltmfmf"] {  // 가는중, 테니스를: in neither list, no shifted key
+            XCTAssertEqual(detector.decide(keys(w), complete: true, previous: .english), .korean, w)
+        }
+    }
+}
+
+/// The bundled 50k lists, for cases that depend on what the real lists do and do not contain.
+final class LanguageDetectorBundledTests: XCTestCase {
+    private func keys(_ s: String) -> [KeyEvent] { s.map { KeyEvent($0) } }
+
+    /// Feeds a draft the way KeyboardViewController does: letters through `type`, then `commit` and
+    /// `noteInserted` for each space or punctuation mark. Returns the field text.
+    private func typeDraft(_ s: inout TypingSession, _ text: String) -> String {
+        var field = ""
+        for ch in text {
+            if ch.isASCII, ch.isLetter {
+                _ = s.type(KeyEvent(ch))
+            } else {
+                if case .commit(let w)? = s.commit() { field += w }
+                field += String(ch)
+                s.noteInserted(String(ch))
+            }
+        }
+        return field
+    }
+
+    /// Korean after English: an inflected word missing from ko_50k stays Korean (chat.txt, spanish-flip.md).
+    func testUnlistedKoreanAfterAnEnglishWordStaysKorean() throws {
+        let d = try LanguageDetector.bundled()
+        for w in ["rksmswnd", "xpsltmfmf"] {  // 가는중, 테니스를
+            XCTAssertEqual(d.decide(keys(w), complete: true, previous: .english), .korean, w)
+        }
+        var s = TypingSession(detector: d, previous: .english)
+        XCTAssertEqual(typeDraft(&s, "gym rksmswnd "), "gym 가는중 ")
+        var t = TypingSession(detector: d, previous: .english)
+        XCTAssertEqual(typeDraft(&t, "the xpsltmfmf "), "the 테니스를 ")
+    }
 }
