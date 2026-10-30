@@ -532,8 +532,9 @@ Field text is read through XCUITest (exact); bar labels with Vision OCR in the U
   247 s against 81-98 s) the first presentation was Apple's Korean keyboard (`한` on the space bar), iOS's stand-in
   for Protly's primary language, and run 14 then lost the keyboard after Emoji (03 found none). The driver had
   measured that stand-in as Protly (02 at 509 pt); since `e301e04` a keyboard whose keys XCUITest can see, other
-  than English and Emoji, is `system-keyboard`, and the tests wait for Protly to take over. The final run had no
-  stand-in. On the phone this would be a first open right after install or a memory kill.
+  than English and Emoji, is `system-keyboard`; at the first open (02) and at the start of each phone-check group the
+  tests wait up to 20 s for Protly to take over (if it does not, 02 comes from a pick in the globe list, logged in
+  `ui-log.txt`), and a stand-in anywhere else fails its scenario or check. The final run had no stand-in. On the phone this would be a first open right after install or a memory kill.
 - 8.5-2o: `ru` at the start came out Latin in 8.5-1o and as `겨` in 8.5-2o: the previous message's language decides
   (8.5-1o followed English text, 8.5-2o followed `ru: ` + Korean). `zh` needed the flip once and then stayed Latin.
 - 6.8-7 depends on context: in `runs/b390712-8`, right after `omw ` (English), `걍` came out `rid`. After a Korean
