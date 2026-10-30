@@ -126,9 +126,11 @@ note "appearance $(xcrun simctl ui "$udid" appearance 2>&1)"
 # Keep the keyboard's debug log (ProtlyHeight.swift); debug messages are not stored by default.
 xcrun simctl spawn "$udid" log config --subsystem com.northprot.protly --mode "level:debug,persist:debug" > /dev/null 2>&1
 
-# The keyboard process's memory from the macOS side while the tests run (plan Task 1.4): mem.txt, probe-mem.txt.
+# The keyboard process's memory from the macOS side during the phone checks (plan Task 1.4): mem.txt,
+# probe-mem.txt. It starts at the phone checks' first log line: in run 8, with the sampler attached from the start,
+# scenario 04 lost the host-active notification (band 69).
 python3 "$here/memsample.py" "$out/mem.txt" "$out/probe-mem.txt" --name ProtlyCIKeyboard --interval 2 \
-  > "$work/memsample.log" 2>&1 &
+  --wait-for "$out/ui-log.txt" "== PhoneChecksUITests" > "$work/memsample.log" 2>&1 &
 sampler=$!
 note "memory sampler pid $sampler, probe ${PROBE:-0}"
 

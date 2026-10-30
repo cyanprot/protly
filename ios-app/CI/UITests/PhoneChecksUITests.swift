@@ -283,6 +283,24 @@ final class PhoneRun {
         }
     }
 
+    /// Sets the language of "the previous word" (the keyboard keeps it across messages): commits one word in that
+    /// language, flipped with the left slot if it came out in the other one, then clears the field. The checklist's
+    /// "in a Korean conversation" and "on English keys" mean this context.
+    func context(korean: Bool, _ item: Item) {
+        let word = korean ? "안녕" : "the"
+        d.clearField()
+        d.type(word)
+        let f = field() ?? ""
+        if hasHangul(f) != korean {
+            d.tapSlot(.left)
+            item.note("context=\(q(f)) flip -> \(q(field()))")
+        } else {
+            item.note("context=\(q(f))")
+        }
+        d.type(" ")
+        d.clearField()
+    }
+
     // MARK: Task 6.8 (feature plan) items 1-11
 
     func checks68() {
@@ -338,6 +356,7 @@ final class PhoneRun {
         write("6.8-6", "SKIP", "no contacts in the simulator")
 
         it = Item("6.8-7")
+        context(korean: true, it)  // "in a Korean conversation"; 6.8-5 left an English word before this
         for phrase in ["걍 가자", "걔 진짜 웃겨", "얘 뭐야", "꽤 좋다", "I need to get rid of it"] {
             d.clearField()
             d.type(phrase + " ")  // the space ends the last word, as sending would
@@ -474,7 +493,7 @@ final class PhoneRun {
         finish(it, record: true)
 
         it = Item("8.5-9o")
-        d.clearField()
+        context(korean: false, it)  // "on English keys"; 8.5-8o left a Korean word before this
         d.type("me encanta el color de tu chaqueta, donde la conprastes? jaja ")
         it.note("field=\(q(field()))")
         expectSlot(it, "center", readSlot(.center, it), equals: "Polish")

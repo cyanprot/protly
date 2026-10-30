@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Samples the keyboard extension's memory from the macOS side while the UI tests run (plan Task 1.4).
 
-Usage: memsample.py <mem.txt> <probe-mem.txt> [--name ProtlyCIKeyboard] [--interval 2]
+Usage: memsample.py <mem.txt> <probe-mem.txt> [--name ProtlyCIKeyboard] [--interval 2] [--wait-for FILE TEXT]
 
+With --wait-for it touches nothing until FILE contains TEXT (run-shots.sh: the phone checks' first line in
+ui-log.txt), so the layout scenarios run with no tool attached to the keyboard process.
 Every interval: `pgrep -x <name>`, then per pid one `<epoch> <pid> rss <kb>` line (`ps -o rss=`) and, when one of
 them worked on the first pid, one `<epoch> <pid> <method> <kb>` line for the best footprint method
-(`footprint -p`, `sudo -n footprint -p`, `vmmap --summary`). `<epoch> - none -` when no process runs.
+(`footprint -p`, `sudo -n footprint -p`). `<epoch> - none -` when no process runs. `vmmap --summary` is not tried:
+in run 8 it hung 20 s on the keyboard process (it suspends its target).
 The first time a pid is seen, every method's exit code, first lines and parsed value go to probe-mem.txt
 (plan Task 1.0 step 3). Runs until SIGTERM or SIGINT; every line is flushed at once.
 """
@@ -42,9 +45,16 @@ def parse_pids(text):
 METHODS = [
     ("footprint", lambda pid: ["footprint", "-p", str(pid)], parse_footprint),
     ("sudo-footprint", lambda pid: ["sudo", "-n", "footprint", "-p", str(pid)], parse_footprint),
-    ("vmmap", lambda pid: ["vmmap", "--summary", str(pid)], parse_vmmap),
     ("rss", lambda pid: ["ps", "-o", "rss=", "-p", str(pid)], parse_rss),
 ]
+
+
+def has_text(path, text):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            return text in f.read()
+    except OSError:
+        return False
 
 
 def run(cmd, timeout=20):
@@ -76,6 +86,7 @@ def main(argv=None):
     ap.add_argument("probe")
     ap.add_argument("--name", default="ProtlyCIKeyboard")
     ap.add_argument("--interval", type=float, default=2.0)
+    ap.add_argument("--wait-for", nargs=2, metavar=("FILE", "TEXT"))
     args = ap.parse_args(argv)
 
     stop = []
@@ -87,6 +98,11 @@ def main(argv=None):
     with open(args.mem, "a", encoding="utf-8") as mem, open(args.probe, "a", encoding="utf-8") as pr:
         pr.write(f"memsample: process name {args.name}, interval {args.interval} s\n")
         pr.flush()
+        if args.wait_for:
+            while not stop and not has_text(*args.wait_for):
+                time.sleep(0.5)
+            pr.write(f"memsample: started at {time.time():.3f} after {args.wait_for[1]!r} in {args.wait_for[0]}\n")
+            pr.flush()
         while not stop:
             t = time.time()
             code, text = run(["pgrep", "-x", args.name], timeout=10)

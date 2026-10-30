@@ -230,6 +230,21 @@ class MemsampleParseTests(unittest.TestCase):
         self.assertEqual(memsample.parse_rss("  12345\n"), 12345)
         self.assertIsNone(memsample.parse_rss(""))
 
+    def test_wait_for_text(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "ui-log.txt")
+            self.assertFalse(memsample.has_text(path, "== PhoneChecksUITests"))
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("== KeyboardShotsUITests.testScenarios\n")
+            self.assertFalse(memsample.has_text(path, "== PhoneChecksUITests"))
+            with open(path, "a", encoding="utf-8") as f:
+                f.write("== PhoneChecksUITests.test1_68\n")
+            self.assertTrue(memsample.has_text(path, "== PhoneChecksUITests"))
+
+    def test_probe_skips_vmmap(self):
+        # Run 8: vmmap --summary hung 20 s on the keyboard process (it suspends its target).
+        self.assertNotIn("vmmap", [m[0] for m in memsample.METHODS])
+
     def test_pids(self):
         self.assertEqual(memsample.parse_pids("41\n52\n"), [41, 52])
         self.assertEqual(memsample.parse_pids(""), [])
