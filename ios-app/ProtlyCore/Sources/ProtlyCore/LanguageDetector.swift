@@ -6,8 +6,8 @@ import Foundation
 //    list is much smaller), plus `priorBonus` for the language of the previous word.
 // 3. Unknown in English but valid Hangul: Korean (inflected Korean words are mostly not listed). On a
 //    complete word unknown in both lists, a syllable followed by a trailing run of lone jamo that is not
-//    glue (ChatShorthand.glueJamo) is English: a finished Korean word does not end in a stray consonant
-//    (Spanish encanta = 둧뭇ㅁ, chaqueta = 촘볃ㅅㅁ).
+//    chat shorthand is English: a finished Korean word does not end in a stray consonant (Spanish
+//    encanta = 둧뭇ㅁ, chaqueta = 촘볃ㅅㅁ), but chat does (대박ㄹㅇ, 응ㅇㅇ, 아니ㅡㅡ, 감사ㅎㅎ).
 // While typing (`complete == false`) a word with that key prefix stands in for the word.
 // Words the user taught (LearnedWords) count as known in their language, with `learnedBonus` on top.
 
@@ -85,12 +85,34 @@ public struct LanguageDetector: Sendable {
         return koScore >= enScore ? .korean : .english
     }
 
-    /// A syllable followed by a trailing run of lone jamo that is not glue (ㅋ ㅎ ㅠ ㅜ): 둧뭇ㅁ, 촘볃ㅅㅁ.
-    /// False for 했ㅋㅋ and 앜ㅋ (glue), ㄱㅅ (no syllable) and 안녕 (no trailing jamo).
+    /// Two-consonant abbreviations that end a chat word (대박ㄹㅇ, 넵ㄱㅅ), on top of ChatShorthand.abbreviations.
+    static let trailingAbbreviations: Set<String> = [
+        "ㄹㅇ", "ㄱㅅ", "ㅇㅋ", "ㅇㅈ", "ㄴㄴ", "ㅂㅂ", "ㅅㄱ", "ㄱㄷ", "ㅊㅋ", "ㅎㅇ", "ㅁㅊ", "ㄱㅊ", "ㅈㅅ",
+    ]
+
+    /// A syllable followed by a trailing run of lone jamo that is not chat shorthand: 둧뭇ㅁ, 촘볃ㅅㅁ.
+    /// Shorthand: a run with a vowel (ㅡㅡ, ㅠ), glue alone (ㅋ ㅎ: 앜ㅋ), or one jamo repeated (ㅇㅇ, ㄷㄷ) or an
+    /// abbreviation (ㄹㅇ, ㄱㅅ), either one optionally followed by glue (ㄹㅇㅋㅋ). The run's first jamo may have
+    /// composed as the last syllable's final (좋아ㅇㅇ = 좋앙ㅇ, 가자ㄱㄱ = 가작ㄱ), so that final counts too.
     static func endsInStrayConsonant(_ text: String) -> Bool {
-        let tail = text.reversed().prefix(while: Hangul.isLoneJamo)
+        let tail = Array(text.reversed().prefix(while: Hangul.isLoneJamo).reversed())
         guard !tail.isEmpty, tail.count < text.count else { return false }
-        return !tail.allSatisfy { ChatShorthand.glueJamo.contains($0) }
+        if tail.contains(where: Hangul.isVowel) { return false }
+        var run = tail
+        while let last = run.last, ChatShorthand.glueJamo.contains(last) { run.removeLast() }
+        if run.isEmpty { return false }
+        if isShorthandRun(String(run)) { return false }
+        if let fin = text.dropLast(tail.count).last.flatMap(Hangul.finalJamo),
+           isShorthandRun(String(fin) + String(run)) {
+            return false
+        }
+        return true
+    }
+
+    /// One jamo repeated (ㅇㅇ) or a two-consonant abbreviation (ㄹㅇ).
+    private static func isShorthandRun(_ run: String) -> Bool {
+        (run.count >= 2 && Set(run).count == 1)
+            || trailingAbbreviations.contains(run) || ChatShorthand.abbreviations.contains(run)
     }
 
     /// Log relative frequency; a learned word gets the floor and the bonus (count 0 is -inf before the floor).

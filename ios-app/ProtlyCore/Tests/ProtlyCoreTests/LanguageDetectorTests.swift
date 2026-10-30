@@ -109,6 +109,13 @@ final class LanguageDetectorTests: XCTestCase {
         for t in ["둧뭇ㅁ", "촘볃ㅅㅁ"] { XCTAssertTrue(LanguageDetector.endsInStrayConsonant(t), t) }
         for t in ["했ㅋㅋ", "앜ㅋ", "ㄱㅅ", "안녕"] { XCTAssertFalse(LanguageDetector.endsInStrayConsonant(t), t) }
     }
+
+    func testChatShorthandTailIsNotStray() {
+        // As composed: 좋아ㅇㅇ = 좋앙ㅇ and 가자ㄱㄱ = 가작ㄱ (the run's first jamo became the final).
+        for t in ["대박ㄹㅇ", "응ㅇㅇ", "아니ㅡㅡ", "헐ㄷㄷ", "넵ㄱㅅ", "좋앙ㅇ", "왜ㅡㅡ", "가작ㄱ", "대박ㄹㅇㅋㅋ"] {
+            XCTAssertFalse(LanguageDetector.endsInStrayConsonant(t), t)
+        }
+    }
 }
 
 /// The bundled 50k lists, for cases that depend on what the real lists do and do not contain.
@@ -158,6 +165,21 @@ final class LanguageDetectorBundledTests: XCTestCase {
         let field = typeDraft(&s, draft)
         XCTAssertEqual(field, draft)
         XCTAssertEqual(ActionAPI.mode(forDraft: field), .fix)
+    }
+
+    /// Korean chat must not regress for the Spanish fix: words ending in shorthand stay Korean on commit
+    /// after either language. The first list flipped to English under the first cut of the stray rule.
+    func testChatShorthandEndingsStayKorean() throws {
+        let d = try LanguageDetector.bundled()
+        let words = ["대박ㄹㅇ", "응ㅇㅇ", "아니ㅡㅡ", "헐ㄷㄷ", "넵ㄱㅅ", "좋아ㅇㅇ", "왜ㅡㅡ", "가자ㄱㄱ",
+                     "진짜ㄹㅇ", "아ㅇㅋ", "오키ㅇㅋ", "감사ㅎㅎ", "미친ㅅㄲ", "배고파ㅠㅠ", "했ㅋㅋ", "고마워ㄳ",
+                     "ㄹㅇ", "ㅇㅇ", "ㄱㄱ", "대박ㄹㅇㅋㅋ"]
+        for w in words {
+            let k = try XCTUnwrap(KeyEncoder.keys(forHangul: w), w)
+            for prev in [Language.english, .korean] {
+                XCTAssertEqual(d.decide(k, complete: true, previous: prev), .korean, "\(w) prev \(prev)")
+            }
+        }
     }
 
     func testEachSpanishWordAfterEnglishIsEnglish() throws {
