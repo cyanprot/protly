@@ -85,9 +85,11 @@ public struct LanguageDetector: Sendable {
         return koScore >= enScore ? .korean : .english
     }
 
-    /// Two-consonant abbreviations that end a chat word (대박ㄹㅇ, 넵ㄱㅅ), on top of ChatShorthand.abbreviations.
+    /// Abbreviations that end a chat word (아ㅅㅂ, 어디ㅇㄷ, 개이득ㄱㅇㄷ), on top of ChatShorthand.abbreviations
+    /// (ㄹㅇ ㄱㅅ ㅇㅋ ...) and runs of one repeated jamo (ㄴㄴ ㅂㅂ), which `isChatUnit` also accepts.
+    /// ㄱㄷ spells "re": Spanish words ending in -re (sufre, corre, alegre) stay Korean, a known cost.
     static let trailingAbbreviations: Set<String> = [
-        "ㄹㅇ", "ㄱㅅ", "ㅇㅋ", "ㅇㅈ", "ㄴㄴ", "ㅂㅂ", "ㅅㄱ", "ㄱㄷ", "ㅊㅋ", "ㅎㅇ", "ㅁㅊ", "ㄱㅊ", "ㅈㅅ", "ㅁㄹ",
+        "ㄱㄷ", "ㅁㅊ", "ㅁㄹ", "ㅅㅂ", "ㅆㅂ", "ㅈㄹ", "ㅈㄴ", "ㅇㄷ", "ㄴㄱ", "ㄷㅊ", "ㄲㅈ", "ㅂㅅ", "ㅂㄷ", "ㄱㅇㄷ",
     ]
 
     /// The second jamo of a double final (ㄵ -> ㅈ, ㄻ -> ㅁ): the jamo the next key added to the syllable.
@@ -111,7 +113,8 @@ public struct LanguageDetector: Sendable {
         return true
     }
 
-    /// The run splits fully into chat units: a glue jamo (ㅋ), one jamo repeated (ㅇㅇ), an abbreviation (ㄹㅇ).
+    /// The run splits fully into chat units: a glue jamo (ㅋ), one jamo repeated (ㅇㅇ), an abbreviation (ㄹㅇ,
+    /// ㄱㅇㄷ).
     private static func isChatRun(_ run: [Character]) -> Bool {
         guard !run.isEmpty else { return false }
         // splits[i]: the first i jamo split into units.

@@ -125,6 +125,10 @@ final class LanguageDetectorTests: XCTestCase {
             XCTAssertFalse(LanguageDetector.endsInStrayConsonant(t), t)
         }
         XCTAssertFalse(LanguageDetector.endsInStrayConsonant("ㅂㄷㅂㄷ"))  // no syllable: not a word ending
+        // A stray consonant after a chat unit is still a stray: the whole run must split into units.
+        for t in ["대박ㄹㅇㅁ", "생일ㅊㅋㅅ", "앜ㅋㅁ"] { XCTAssertTrue(LanguageDetector.endsInStrayConsonant(t), t) }
+        // Spanish cierre = 챧ㄱㄱㄷ: a repeat followed by a jamo that is no unit.
+        for t in ["챧ㄱㄱㄷ", "믿ㄱㅅㅁ"] { XCTAssertTrue(LanguageDetector.endsInStrayConsonant(t), t) }
     }
 
     func testStrayRuleNeedsTheWordUnknownInKorean() {
@@ -197,7 +201,9 @@ final class LanguageDetectorBundledTests: XCTestCase {
                      // Unshifted, so rule 3 decides them: the final+run path, the abbreviation sets, a lone
                      // vowel, an abbreviation ending in glue, runs of several units.
                      "콜ㄱㄱ", "그래ㄹㅇ", "맞아ㄹㅇ", "나도ㅇㅈ", "그래ㄹㅇㅋㅋ", "와ㅁㅊ", "잠만ㄱㄷ", "왜ㅡ",
-                     "생일ㅊㅋ", "굿ㅇㅋ", "생일ㅊㅋㅊㅋ", "넵ㄱㅅㄱㅅ", "대박ㅋㅋㄹㅇ", "무섭ㅎㄷㄷ"]
+                     "생일ㅊㅋ", "굿ㅇㅋ", "생일ㅊㅋㅊㅋ", "넵ㄱㅅㄱㅅ", "대박ㅋㅋㄹㅇ", "무섭ㅎㄷㄷ",
+                     // Slang abbreviations, a three-jamo unit (ㄱㅇㄷ), and a run after a double final (부듧ㄷㅂㄷ).
+                     "아ㅅㅂ", "짜증나ㅅㅂ", "아ㅈㄹ", "웃겨ㅈㄴ", "어디ㅇㄷ", "누구ㄴㄱ", "개이득ㄱㅇㄷ", "부들ㅂㄷㅂㄷ"]
         for w in words {
             let k = try XCTUnwrap(KeyEncoder.keys(forHangul: w), w)
             for prev in [Language.english, .korean] {
