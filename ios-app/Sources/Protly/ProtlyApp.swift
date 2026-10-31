@@ -81,8 +81,9 @@ struct SetupView: View {
         test = ""
         guide = .saveNote
         testFocused = true
+        // Top, not center: the scroll runs before the keyboard rises, and a centered field ends up under it.
         withAnimation(reduceMotion ? nil : .default) {
-            proxy.scrollTo(TryItSection.fieldID, anchor: .center)
+            proxy.scrollTo(TryItSection.fieldID, anchor: .top)
         }
     }
 }
@@ -158,8 +159,9 @@ private struct Hero: View {
     }
 }
 
-/// F2: the two switches in Settings and the Emoji keyboard to keep, why each is needed, and what leaves the phone. The app cannot read whether the
-/// keyboard or Full Access is on (no App Group), so it shows no status.
+/// F2: the three setup steps (add the keyboard, allow Full Access, keep Apple's Emoji), why each is needed, and
+/// what leaves the phone. The app cannot read whether the keyboard or Full Access is on (no App Group), so it shows
+/// no status.
 private struct TurnOnSection: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.openURL) private var openURL
@@ -181,10 +183,10 @@ private struct TurnOnSection: View {
                 Text("Only when you tap an action, and only to the model API: Translate and Polish send the field's text and your About me note; Read sends the copied text. Keystrokes are never sent. Words the keyboard learns stay on this phone.")
                     .foregroundStyle(Brand.secondary(scheme))
             }
-            // The in-row emoji key is the protly key; iOS's own key under the keyboard opens Emoji.
+            // The in-row emoji key is the protly key; iOS's own key under the keyboard reaches Emoji.
             NumberedRow(number: 3) {
                 Text("Keep Apple's Emoji keyboard").font(.headline)
-                Text("Protly has no emoji keys: the key under the keyboard opens Apple's Emoji.")
+                Text("Protly has no emoji keys: switch to Apple's Emoji with the key under the keyboard.")
                     .foregroundStyle(Brand.secondary(scheme))
             }
             Button("Open Settings", systemImage: "gear", action: openSettings)
