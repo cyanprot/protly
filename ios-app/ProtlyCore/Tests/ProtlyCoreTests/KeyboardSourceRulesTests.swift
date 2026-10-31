@@ -76,6 +76,18 @@ final class KeyboardSourceRulesTests: XCTestCase {
         }
     }
 
+    /// Tower decision D-E: the host's became-active notice can come just before the new controller pins (run 59: 32 ms),
+    /// so every pin remembers it and a pin made soon after takes the drop itself.
+    func testTheHeightPinCatchesAHostReturnThatCameJustBefore() throws {
+        guard let text = try sources().first(where: { $0.name == "ProtlyHeight.swift" })?.text else { return }
+        let ns = text as NSString
+        let became = body(of: "@objc private func hostBecameActive(", in: ns).map { ns.substring(with: $0) } ?? ""
+        XCTAssertTrue(became.contains("Self.lastHostBecameActive = "), "hostBecameActive records the time for the next pin")
+        let initBody = body(of: "private init(_ controller: KeyboardInputViewController)", in: ns).map { ns.substring(with: $0) } ?? ""
+        XCTAssertTrue(initBody.contains("Self.lastHostBecameActive"), "a new pin checks the host's last return")
+        XCTAssertTrue(initBody.contains("< Self.earlyWindow"), "only a return just before the pin counts")
+    }
+
     func testTheKeyGoesOnlyIntoTheRequest() throws {
         var uses: [String] = []
         for (name, text) in try sources() {
