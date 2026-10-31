@@ -1,0 +1,3 @@
+full access: on, turned on in Settings (switch tap 2, Allow in the alert)
+full access: on, already on
+allow paste (probe clipboard): interruption monitor
