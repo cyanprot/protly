@@ -570,39 +570,38 @@ Campaign 2026-10-30-sim-phone-checks, sprint 002. Same runner, Xcode, runtime an
 workflow writes `Secrets.swift` from the Actions secret `PROTLY_API_KEY` (a CI-only key) through
 `make-secrets.sh`; a run with the key only restores the DerivedData cache, never saves it (`network key: present
 (CI key); DerivedData cache: restore only, not saved in this run` in each report), and the leak guard writes
-`LEAK-GUARD pass: no key prefix in N files` before publishing. Runs: `runs/8a801d5-30` (probe 1),
+`LEAK-GUARD pass: no key prefix in N files` before publishing. Full runs: `runs/8a801d5-30` (probe 1),
 `runs/79473e5-34`, run 35 (cancelled by a push), run 36 (hung, hit the 80-minute job limit, nothing published),
-`runs/c6d83a1-40` (probe 2), `runs/067c1cd-41`, `runs/30a1fbf-44` (the full run of record), run 48 (cancelled by
-a push) and the closing run `runs/ec69307-50`. Under the tower's closing rule (TOWER-CLOSE-RULE-2), `runs/30a1fbf-44`
-(`CHECKS pass 25 fail 1 record 8 skip 2`; its one FAIL is 8.5-7 under the rule before the tower's ruling, and its
-layout test stopped at launch) is the record for every check it measured, and the filtered closing run
-`runs/ec69307-50` (`[shots:KeyboardShotsUITests,PhoneChecksUITests/test6_85net]`, `STATUS measured`, layout
-`RESULT PASS` with every band at +0, `CHECKS pass 8 fail 0 record 1 skip 0 not-run 27`, leak guard on 63 files)
-proves the layout and the 8.5 network IDs. 8.5-3 to 8.5-9 passed in both runs with the same outputs or
-near ones; the evidence quotes run 44 unless it names run 50.
+`runs/c6d83a1-40` (probe 2), `runs/067c1cd-41`, `runs/30a1fbf-44`, run 48 (cancelled by a push),
+`runs/1f067a6-53` (stopped at the 3000 s test deadline in test7_77 on a slow runner), `runs/7ae22f7-54` (the
+3900 s deadline: every method finished; one lost keystroke in 6.8-2) and `runs/7ae22f7-57`, the final full run of
+record: `STATUS measured`, no filter, layout `RESULT PASS` with every band at +0, `CHECKS pass 26 fail 0 record 8
+skip 2`, 13 requests, leak guard on 132 files. Filtered debug runs: run 49 (refused, a bad filter) and
+`runs/ec69307-50` (`[shots:KeyboardShotsUITests,PhoneChecksUITests/test6_85net]`, the closing run under
+TOWER-CLOSE-RULE-2 before run 57 replaced it). The evidence below quotes run 57 unless it names another run.
 
 | ID | Result | Evidence |
 |---|---|---|
-| 6.8-11 | PASS | `내일 봐` typed as `ghk` + flip, center Translate: `Translating`, Insert after 4.0 s: `Thanks so much for today` (Latin) |
-| 8.5-1 | PASS | `ru: 누나 노트 고마워 누나 덕분에 살았다` (`ru` came out `겨`, flipped): `Translating`; run 50's first try inserted `Спасибо за конспект! Ты меня спасла.ㅋ` (a Hangul `ㅋ`: rule fail), the retry `Спасибо за конспект! Ты меня спасла` after 3.3 s with a Hangul back translation in the panel (RECORD); Undo: the field equals the draft again (run 44: first try, 4.5 s) |
-| 8.5-3 | PASS | `ja:`: `明日ひま？一緒にご飯行こうよw` (kana and kanji, no `ㅋ`, no `lol`), 3.4 s |
-| 8.5-4 | PASS | `es:`: `Hoy estoy muy cansado`, 4.6 s |
-| 8.5-5 | PASS | `내일 3시에 봐`: `See you tomorrow at 3`, 3.0 s |
-| 8.5-6 | PASS | `ok: 내일 봐`: `ok, see you tomorrow`, 3.0 s |
-| 8.5-7 | PASS | run 50: `Polishing`, 3.4 s: `내일 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘`. The model always writes the spaced `말해 줘` (runs 41, 44, 50); the tower ruled both spellings correct (plan row updated), and run 44's FAIL was under the earlier rule. Change lines (RECORD): `되? -> 돼? (맞춤법)`, `말해죠 -> 말해 줘 (맞춤법)`, `낼 -> 내일, 밥먹자 -> 밥 먹자 (띄어쓰기)` |
-| 8.5-8 | PASS | three-paragraph `ko:` draft: `Polishing`, 3.4 s, `오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ` (paragraphs kept, no `ko:`); panel: `고칠 부분이 거의 없어서 그대로 뒀어요.` |
-| 8.5-9 | PASS | Spanish polish: `Me encanta el color de tu chaqueta, ¿dónde la compraste? jaja` (no `colour`, no `conprastes`), 4.1 s |
-| 8.5-10 | RECORD | 8.5-1 tap to `Insert`: 4.0 s and 3.3 s in run 50 (run 44: 4.5 s, 4.2 s; run 41: 3.6 s, 3.2 s) |
+| 6.8-11 | PASS | `내일 봐` typed as `ghk` + flip, center Translate: busy, Insert after 5.1 s: `Thanks so much for today` (Latin) |
+| 8.5-1 | PASS | `ru: 누나 노트 고마워 누나 덕분에 살았다` (`ru` came out `겨`, flipped): `Translating`, 3.5 s: `Спасибо за конспекты! Ты меня спасла` with a Hangul back translation in the panel (RECORD); Undo: the field equals the draft again. Run 50's first try once kept a Hangul `ㅋ` (rule fail; its retry passed) |
+| 8.5-3 | PASS | `ja:`: `明日ひま？一緒にご飯行こうよw` (kana and kanji, no `ㅋ`, no `lol`), 3.7 s |
+| 8.5-4 | PASS | `es:`: `Hoy estoy muy cansado`, 3.6 s |
+| 8.5-5 | PASS | `내일 3시에 봐`: `See you tomorrow at 3`, 2.6 s |
+| 8.5-6 | PASS | `ok: 내일 봐`: `ok, see you tomorrow`, 4.2 s |
+| 8.5-7 | PASS | `Polishing`, 5.6 s: `내일 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘`. The model always writes the spaced `말해 줘` (runs 41, 44, 50, 53, 54, 57); the tower ruled both spellings correct (plan row updated), and run 44's FAIL was under the earlier rule. Change lines (RECORD): `되? -> 돼? (맞춤법)`, `밥먹자 -> 밥 먹자 (띄어쓰기)`, `말해죠 -> 말해 줘 (맞춤법)` |
+| 8.5-8 | PASS | three-paragraph `ko:` draft: `Polishing`, 3.5 s, `오늘 진짜 길었어\n\n내일 아침에 전화할게\n\n늦으면 미안 ㅠㅠ` (paragraphs kept, no `ko:`) |
+| 8.5-9 | PASS | Spanish polish: `Me encanta el color de tu chaqueta, ¿dónde la compraste? jaja` (no `colour`, no `conprastes`), 3.4 s |
+| 8.5-10 | RECORD | 8.5-1 tap to `Insert`: 3.5 s and 3.8 s (run 54: 4.0 s, 3.3 s; run 50: 4.0 s, 3.3 s; run 44: 4.5 s, 4.2 s) |
 | 7.7-1 | PASS | `ProtlyCIApp`: in-app Paste of the test note, counter `58 / 1,000` = 58; `Copy for the keyboard`: `Copied`; Read clipboard in the app's Test field, Allow Paste: `Save as your About me note (58 characters)?`; Save: `About me saved: 58 characters.`; Done: keys back, no panel text |
-| 7.7-2 | PASS | `우리 문빔 킬른 다음 주에 오픈해` -> `Moonbeam Kiln opens next week` (no `pottery`, no `Victoria`), 2.7 s |
-| 7.7-3 | PASS | `Can you send me the photos from yesterday?`, Read clipboard: `어제 찍은 사진 나한테 보내줄 수 있어?`; `protly about me v1` + `test`: `Save as your About me note (4 characters)?`, Cancel; 7.7-2 again: `Moonbeam Kiln opens next week`, 3.2 s |
-| 7.7-4 | RECORD | 7.7-2 tap to `Insert`: 2.7 s and 3.2 s (7.7-2 and 7.7-3's repeat) |
+| 7.7-2 | PASS | `우리 문빔 킬른 다음 주에 오픈해` -> `Moonbeam Kiln opens next week` (no `pottery`, no `Victoria`), 3.4 s |
+| 7.7-3 | PASS | `Can you send me the photos from yesterday?`, Read clipboard: `어제 찍은 사진 좀 보내줄래?`; `protly about me v1` + `test`: `Save as your About me note (4 characters)?`, Cancel; 7.7-2 again: `We're opening Moonbeam Kiln next week`, 2.9 s |
+| 7.7-4 | RECORD | 7.7-2 tap to `Insert`: 3.4 s and 2.9 s (7.7-2 and 7.7-3's repeat) |
 | 7.7-5 | PASS | Select All, Cut: counter 0; Copy: `Copied`; Read clipboard: `Clear your About me note?`; Save: `About me cleared.`; the 7.7-1 copy and save again: 58 characters |
 | 7.7-6 | SKIP | needs a phone reinstall |
 
 Each run sends at most 14 requests (cap 60). Sprint 001's rows did not change in these runs; 8.5-9o now PASSes
-(the Spanish flip fix on main) and 6.8-5 reads `On my way!` in the right slot in run 40 but nothing in runs 41
-and 44 (the simulator's text replacements are not stable; RECORD either way).
+(the Spanish flip fix on main) and 6.8-5 reads `On my way!` in the right slot in runs 40, 53 and 57 but nothing in
+runs 41, 44 and 54 (the simulator's text replacements are not stable; RECORD either way).
 
 ### Sprint 002 findings
 
@@ -624,8 +623,18 @@ and 44 (the simulator's text replacements are not stable; RECORD either way).
 - The layout test once stopped at launch: `runs/30a1fbf-44` stopped in `app.launch()` 17 s in, before any shot,
   and the 200-line log tail did not say why. The same code passed in runs 41 and 50 (run 50 with every band at
   +0), so it counts as a flake until shown otherwise (tower ruling); `test-failures.txt` now keeps xcodebuild's
-  error lines for the next one. Runs 30, 34, 40 and 41 measured the +17 pt band flake on one shot or two adjacent shots with `top-edge`
-  495..512 pt, which the tower counts as layout PASS.
+  error lines for the next one. Runs 30, 34, 40, 41 and 53 measured the +17 pt band flake on one shot or two
+  adjacent shots with `top-edge` 495..512 pt, which the tower counts as layout PASS; runs 50, 54 and 57 had
+  every band at +0.
+- Run time: `runs/1f067a6-53` ran on a slow runner (testScenarios 249 s against 115 s, test6_85net 924 s against
+  726 s) and hit the 3000 s main-test deadline in test7_77, so 7.7-3 to 7.7-6 had no CHECK line. The deadline is
+  now 3900 s, the build step 85 minutes and the job 95; run 54 (also slow, 2900 s of tests) finished every method,
+  run 57 took 2270 s.
+- One lost keystroke: in `runs/7ae22f7-54`, 6.8-2 typed `recieve` and the field read `reciev`; the keyboard's own
+  reading of the word (left slot `"ㄱㄷ챺"`, run 53 `"ㄱㄷ챺ㄷ"`) lacked the last `e` too, so the tap never reached the
+  keyboard's input and the bar had nothing to correct. The typing path is sprint 001's (0.35 s between taps) and
+  6.8-2 passed in runs 30, 34, 40, 41, 44, 53 and 57. Whether the driver should check the field after typing is
+  open (a silent retype could hide a keyboard that drops keys).
 
 ## Plain-text composition (typing-fixes 001)
 
