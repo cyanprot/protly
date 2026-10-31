@@ -4,6 +4,24 @@ Date: 2026-10-30. Status: approved by Cyan in a brainstorm on 2026-10-30.
 Inputs: `docs/research/2026-10-30-ui-audit.md` (issue IDs B*, K*, P*, F*, A*, H* below are from it) and
 `docs/research/2026-10-30-competitors.md`.
 
+## Owner amendments 2026-10-30 (after the first phone build)
+
+These override the text below wherever they disagree.
+
+- **No sparkles.** Translate and Polish show words only in the pill (`→ English`, `Polish`); `BarAction.symbol` is
+  nil for them. The protly key falls back to `character.bubble` (`BarAction.keySymbol`). The logo, the app icon
+  and any brand mark are a later Recraft pass, so no placeholder art until then. Task 1.5: shot 06 shows `Polish`
+  with no symbol in front.
+- **Written for an English speaker, not Korean only.** Hero: "Polish and translate as you type." Try it has two
+  chips, Polish first (the English sentence with mistakes, "Tap Polish in the bar.") and Translate Korean
+  (`오늘 고마워`, "Tap → English in the bar."); the `ru:` chip is gone. Instruction rows: `teh`, then Undo, then
+  "Writing Korean? Type `dkssud`, then tap the left slot." Other languages come gradually, in later plans.
+- **Dictation follows the keycaps.** The keyboard reports `en-US` (Info.plist `PrimaryLanguage` and the
+  `primaryLanguage` override), `ko-KR` only on Korean keycaps; before, dictation was Korean only. Phone check:
+  dictation listens in English on English keycaps and in Korean on Korean keycaps.
+- **Open, not in this campaign:** Read translates someone else's text into Korean (`ActionMode.in`). An English
+  speaker needs English; changing the target is logic, planned later with the other languages.
+
 ## Goal
 
 The keyboard works but does not feel finished. This campaign makes the moments people touch many times a message
