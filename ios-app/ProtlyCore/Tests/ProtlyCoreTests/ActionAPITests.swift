@@ -89,9 +89,9 @@ final class ActionAPITests: XCTestCase {
         XCTAssertEqual(ActionAPI.result(text: #"{"translation":" ","back_translation":""}"#, stopReason: nil).failureKind, .parse)
     }
 
-    /// keyboard-ui 003 (P4): Retry only where trying again can work.
+    /// keyboard-ui 003 (P4): Retry only where trying again can work, and exactly those lines say to try again.
     func testRetryOnlyWhereItCanWork() {
-        let retry: Set<ActionError.Kind> = [.network, .timeout, .overloaded, .rate]
+        let retry: Set<ActionError.Kind> = [.network, .timeout, .overloaded, .rate, .server, .parse]
         for k in [ActionError.Kind.auth, .spendLimit, .rate, .overloaded, .server, .badRequest, .network, .timeout,
                   .refused, .truncated, .parse, .tooLong, .noKey, .setup] {
             XCTAssertEqual(ActionError(k).canRetry, retry.contains(k), "\(k)")
@@ -99,21 +99,23 @@ final class ActionAPITests: XCTestCase {
             let m = ActionError(k).message
             XCTAssertGreaterThanOrEqual(m.components(separatedBy: ". ").count, 2, m)
             XCTAssertTrue(m.hasSuffix("."), m)
+            XCTAssertEqual(m.lowercased().contains("try again"), retry.contains(k), m)
         }
     }
 
-    /// A stream's error event maps through the same table as an error body, by the status its type stands for.
-    func testStreamErrorTypesStandForTheirStatus() {
-        let table: [(String, Int, ActionError.Kind)] = [
-            ("invalid_request_error", 400, .badRequest), ("authentication_error", 401, .auth),
-            ("permission_error", 403, .auth), ("not_found_error", 404, .badRequest),
-            ("request_too_large", 413, .badRequest), ("rate_limit_error", 429, .rate), ("api_error", 500, .server),
-            ("overloaded_error", 529, .overloaded), ("something_new", 500, .server), ("", 500, .server),
+    /// A stream's error event type -> the kind shown; the spend limit is read from the body as for a 429.
+    func testStreamErrorTypes() {
+        let table: [(String, ActionError.Kind)] = [
+            ("invalid_request_error", .badRequest), ("authentication_error", .auth), ("permission_error", .auth),
+            ("not_found_error", .badRequest), ("request_too_large", .badRequest), ("rate_limit_error", .rate),
+            ("api_error", .server), ("overloaded_error", .overloaded), ("timeout_error", .timeout),
+            ("something_new", .server), ("", .server),
         ]
-        for (type, status, kind) in table {
-            XCTAssertEqual(ActionAPI.status(forStreamError: type), status, type)
-            XCTAssertEqual(ActionAPI.kind(status: status, body: Data()), kind, type)
+        for (type, kind) in table {
+            XCTAssertEqual(ActionAPI.kind(streamError: type, body: Data()), kind, type)
         }
+        let spend = Data(#"{"type": "error", "error": {"type": "rate_limit_error", "details": {"error_code": "enforced_spend_limit_reached"}}}"#.utf8)
+        XCTAssertEqual(ActionAPI.kind(streamError: "rate_limit_error", body: spend), .spendLimit)
     }
 }
 

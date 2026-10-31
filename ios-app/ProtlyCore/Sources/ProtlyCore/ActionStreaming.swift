@@ -15,15 +15,17 @@ extension ActionAPI {
     /// The updates of one streamed call. `open` builds and sends the request (throwing an ActionError when it cannot
     /// be built) and returns the HTTP status, the reply's bytes and a way to stop the download; the keyboard's ActionClient passes URLSession's, the tests pass fakes.
     /// Runs off the caller's actor. Ending the consumer (its task cancelled, or the stream dropped) cancels the
-    /// producer and so the download; a cancel never shows as an error. The buffer keeps only the newest update:
-    /// a partial carries the whole text so far, so a dropped one loses nothing, and the final update is yielded
-    /// last, so it is never the one dropped.
+    /// producer and so the download; a cancel never shows as an error. The buffer keeps the newest two updates: a
+    /// partial carries the whole text so far, so a dropped older one loses nothing, and the final update is yielded
+    /// last, so the buffer always ends with the newest partial and then the result. A consumer that paces itself
+    /// (the keyboard redraws the card at most 20 times a second) still gets all the text before a failure, which
+    /// carries none.
     /// `SendableMetatype`: the producer task is generic over the byte sequence's type.
     public static func updates<S: AsyncSequence & SendableMetatype>(
         limit: Int = maxResponseBytes,
         open: @escaping @Sendable () async throws -> (status: Int, bytes: S, stop: @Sendable () -> Void)
     ) -> AsyncStream<ActionUpdate> where S.Element == UInt8 {
-        AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
+        AsyncStream(bufferingPolicy: .bufferingNewest(2)) { continuation in
             let producer = Task {
                 defer { continuation.finish() }
                 do {
@@ -38,9 +40,10 @@ extension ActionAPI {
         }
     }
 
-    /// Reads one reply and yields its updates. A 200 is a stream: partials as the translation grows, then the
-    /// result. Any other status is a plain JSON error body. `limit` counts raw bytes; past it the reply is not
-    /// read (`.parse`). Throws what the bytes throw, and CancellationError when cancelled.
+    /// Reads one reply and yields its updates. A 200 is a stream: partials as the translation grows, then the result. Any other status is a plain JSON error
+    /// body. `limit` counts raw bytes; past it the reply is not read (`.parse`). A stream that ends with no stop
+    /// reason and no whole reply was cut off on the way: `.network`, so Retry is offered. Throws what the bytes
+    /// throw, and CancellationError when cancelled.
     static func drive<S: AsyncSequence>(status: Int, bytes: S, limit: Int, yield: (ActionUpdate) -> Void) async throws
     where S.Element == UInt8 {
         guard status == 200 else {
@@ -52,11 +55,17 @@ extension ActionAPI {
         var text = ""
         var stopReason: String?
         var count = 0
+        /// The bytes since the last line end: the parser is fed whole lines, not single bytes.
+        var line: [UInt8] = []
         for try await byte in bytes {
             count += 1
             guard count <= limit else { return yield(.failed(ActionError(.parse))) }
             if count % 4096 == 0 { try Task.checkCancellation() }
-            for event in stream.feed(CollectionOfOne(byte)) {
+            line.append(byte)
+            guard byte == 0x0A || byte == 0x0D else { continue }
+            let events = stream.feed(line)
+            line.removeAll(keepingCapacity: true)
+            for event in events {
                 switch event {
                 case .text(let t):
                     text += t
@@ -66,14 +75,16 @@ extension ActionAPI {
                 case .stop(let reason):
                     stopReason = reason
                 case let .error(type, body):
-                    return yield(.failed(ActionError(kind(status: Self.status(forStreamError: type), body: body))))
+                    return yield(.failed(ActionError(kind(streamError: type, body: body))))
                 }
             }
         }
         try Task.checkCancellation()
         switch result(text: text, stopReason: stopReason) {
-        case .success(let r): yield(.done(r))
-        case .failure(let e): yield(.failed(e))
+        case .success(let r):
+            yield(.done(r))
+        case .failure(let e):
+            yield(.failed(stopReason == nil && e.kind == .parse ? ActionError(.network) : e))
         }
     }
 
