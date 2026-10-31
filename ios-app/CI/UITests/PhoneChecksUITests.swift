@@ -269,7 +269,7 @@ final class PhoneRun {
     }
 
     /// Screenshot (saved), then OCR and ink of one slot.
-    func readSlot(_ slot: Slot, _ item: Item) -> SlotRead {
+    func readSlot(_ slot: Slot, _ item: Item, languages: [String] = Reader.languages) -> SlotRead {
         d.pause(0.6)  // the bar follows the last key
         let board = d.current()
         let screen = XCUIScreen.main.screenshot()
@@ -284,7 +284,8 @@ final class PhoneRun {
         let rect = d.slotRect(slot, row1: row1)
         let ink = shot.ink(in: rect, background: CGPoint(x: rect.midX, y: rect.minY + 1))
         var text: String?
-        if reader.works, let lines = reader.text(in: rect, of: screen, points: d.width, label: "\(item.id) \(slot.name)") {
+        if reader.works, let lines = reader.text(in: rect, of: screen, points: d.width, label: "\(item.id) \(slot.name)",
+                                                 languages: languages) {
             text = Self.clean(lines.joined(separator: " "))
         }
         return SlotRead(text: text, ink: ink, file: file + ".png")
