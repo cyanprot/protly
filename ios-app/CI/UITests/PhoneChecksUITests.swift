@@ -291,6 +291,21 @@ final class PhoneRun {
         return SlotRead(text: text, ink: ink, file: file + ".png")
     }
 
+    /// A slot read again from contrast-stretched crops (Reader.contrastTexts), for a dim label; the first variant whose
+    /// text passes `ok` wins. Every reading is noted, so the report shows which variant read it.
+    func rereadDim(_ slot: Slot, _ item: Item, _ first: SlotRead, _ ok: (String) -> Bool) -> SlotRead {
+        guard first.unreadable == nil, reader.works, !(first.text.map(ok) ?? false) else { return first }
+        let screen = XCUIScreen.main.screenshot()
+        guard let shot = d.screenshot(screen), let row1 = d.rowOne(shot) else { return first }
+        let reads = reader.contrastTexts(in: d.slotRect(slot, row1: row1), of: screen, points: d.width,
+                                         label: "\(item.id) \(slot.name)")
+        let texts = reads.map { (name: $0.name, text: $0.lines.map { Self.clean($0.joined(separator: " ")) }) }
+        let readings = texts.map { "\($0.name)=\(q($0.text))" }.joined(separator: " ")
+        item.note("\(slot.name)-plain=\(q(first.text)) \(readings)")
+        guard let hit = texts.first(where: { $0.text.map(ok) ?? false }) else { return first }
+        return SlotRead(text: hit.text, ink: first.ink, file: first.file)
+    }
+
     /// OCR text without the flip's curly quotes around it.
     static func clean(_ s: String) -> String {
         s.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -505,7 +520,8 @@ final class PhoneRun {
         var it = Item("ws-1")
         d.clearField()
         d.type("hello ")
-        let left = readSlot(.left, it)
+        // `ㅗ디ㅣㅐ` is not a word, so the slot dims it (keyboard-ui 001): read it again with more contrast if needed.
+        let left = rereadDim(.left, it, readSlot(.left, it)) { hasHangul($0) }
         expectSlot(it, "left", left, "Hangul") { hasHangul($0) }
         d.tapSlot(.left)
         if let f = field() {
