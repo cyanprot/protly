@@ -1,0 +1,3 @@
+Test Case '-[ProtlyCIUITests.KeyboardShotsUITests testScenarios]' passed (115.105 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test0_access]' passed (37.885 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test6_85net]' passed (725.760 seconds).
