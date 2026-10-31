@@ -112,6 +112,15 @@ def summary(lines):
     return text + (f" not-run {n[NOT_RUN]}" if n[NOT_RUN] else "")
 
 
+def known_entry(entry):
+    """A test class, or a class and one of its methods, as shotsfilter.py passes them."""
+    cls, sep, method = entry.partition("/")
+    if cls not in OTHER_METHODS:
+        return False
+    methods = set(OTHER_METHODS[cls]) | (set(METHOD_IDS) if cls == "PhoneChecksUITests" else set())
+    return not sep or method in methods
+
+
 def covered_ids(entries):
     """The IDs (and "layout") a run with these -only-testing entries writes; None is the full run."""
     if entries is None:
@@ -396,7 +405,12 @@ def main(argv=None):
         if i + 1 >= len(argv):
             print(__doc__, file=sys.stderr)
             return 2
-        ran = covered_ids([e for e in argv[i + 1].split(",") if e])
+        entries = [e for e in argv[i + 1].split(",") if e]
+        bad = [e for e in entries if not known_entry(e)]
+        if not entries or bad:
+            print(f"checks.py: --ran needs test entries, got {argv[i + 1]!r}", file=sys.stderr)
+            return 2
+        ran = covered_ids(entries)
         del argv[i:i + 2]
     if len(argv) != 1:
         print(__doc__, file=sys.stderr)

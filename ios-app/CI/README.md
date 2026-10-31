@@ -19,8 +19,11 @@ build). A selected `PhoneChecksUITests` method always brings `test0_access` firs
 methods need the Full Access it sets. The report's second block has a `FILTER ...` line; the layout `RESULT` is
 `NOT-RUN` unless `KeyboardShotsUITests` is selected, and every ID of an unselected method is `CHECK <id> NOT-RUN`
 (`checks.py --ran`, counted as `not-run N` on the `CHECKS` line), not FAIL. A selected method that writes no line
-still FAILs. Filtered runs are outside the sprint's run budget. The run that closes a sprint stays a full `[shots]`
-run with the key. `[shots:...]` wins when a message carries both tags.
+still FAILs, and a selected entry with no passing test case (skipped, renamed, zero tests run) makes the run
+`test-failed`. A filter that measures nothing (`test0_access` or `test0_probe` alone) is refused, and so is a message
+with both `[shots]` and a `[shots:...]` tag. The judge step prints `FILTERED RUN ...` in its log and the job summary.
+Filtered runs are outside the sprint's run budget; the run that closes a sprint is a full `[shots]` run with the key
+unless the tower rules otherwise (sprint 002 closed on a filtered run, TOWER-CLOSE-RULE-2).
 
 A method is the smallest unit: items inside one depend on each other (6.8-9 on the word 6.8-8 teaches, 8.5-10 and
 7.7-4 on earlier timings, 7.7-3 repeats 7.7-2). Across methods, each phone method sets its own context (6.8-7 and

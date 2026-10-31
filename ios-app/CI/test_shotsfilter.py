@@ -50,6 +50,16 @@ class ParseTests(unittest.TestCase):
             with self.assertRaises(ValueError, msg=message):
                 shotsfilter.parse(message)
 
+    def test_both_tags_are_refused(self):
+        # A full-run commit that quotes a filter tag must not quietly run part of the suite.
+        with self.assertRaises(ValueError):
+            shotsfilter.parse("fix [shots] (closing run was [shots:KeyboardShotsUITests])")
+
+    def test_a_filter_that_measures_nothing_is_refused(self):
+        for message in ("[shots:PhoneChecksUITests/test0_access]", "[shots:PhoneChecksUITests/test0_probe]"):
+            with self.assertRaises(ValueError, msg=message):
+                shotsfilter.parse(message)
+
     def test_layout_method_by_name(self):
         self.assertEqual(shotsfilter.parse("[shots:KeyboardShotsUITests/testScenarios]"),
                          ["KeyboardShotsUITests/testScenarios"])
@@ -66,6 +76,11 @@ class MemWaitTests(unittest.TestCase):
 
     def test_no_phone_method(self):
         self.assertEqual(shotsfilter.mem_wait(["KeyboardShotsUITests"]), "")
+
+    def test_xctest_order_not_tag_order(self):
+        # XCTest runs a class's methods alphabetically: test4_memory comes before test6_85net.
+        entries = [ACCESS, "PhoneChecksUITests/test6_85net", "PhoneChecksUITests/test4_memory"]
+        self.assertEqual(shotsfilter.mem_wait(entries), "== PhoneChecksUITests.test4_memory")
 
 
 class MainTests(unittest.TestCase):
@@ -91,6 +106,28 @@ class MainTests(unittest.TestCase):
     def test_mem_wait(self):
         out = self.run_main("x [shots:PhoneChecksUITests/test6_85net]", "mem-wait")
         self.assertEqual(out.stdout.strip(), "== PhoneChecksUITests.test6_85net")
+
+
+class SwiftNamesTests(unittest.TestCase):
+    """The filter's method lists match the test methods in the Swift sources, so a rename cannot leave a name the
+    filter accepts and -only-testing silently runs nothing for."""
+
+    def swift_methods(self, cls):
+        import re
+        names = set()
+        for name in os.listdir(os.path.join(HERE, "UITests")):
+            with open(os.path.join(HERE, "UITests", name), encoding="utf-8") as f:
+                src = f.read()
+            m = re.search(r"final class " + cls + r"\b.*?\n}\n", src, re.S)
+            if m:
+                names |= set(re.findall(r"func (test\w+)\(", m.group(0)))
+        return names
+
+    def test_phone_methods(self):
+        self.assertEqual(self.swift_methods("PhoneChecksUITests"), shotsfilter.methods("PhoneChecksUITests"))
+
+    def test_layout_methods(self):
+        self.assertEqual(self.swift_methods("KeyboardShotsUITests"), shotsfilter.methods("KeyboardShotsUITests"))
 
 
 class CoveredIdsTests(unittest.TestCase):
@@ -128,6 +165,15 @@ class NotRunTests(unittest.TestCase):
         self.assertEqual(checks.summary(lines), "CHECKS pass 1 fail 0 record 0 skip 0 not-run 1")
         self.assertEqual(checks.summary(lines[:1]), "CHECKS pass 1 fail 0 record 0 skip 0")
 
+    def test_main_refuses_a_bad_ran_list(self):
+        import tempfile
+        for ran in ("", ",", "PhoneCheckUITests/test1_68", "ProtlyCIUITests/PhoneChecksUITests",
+                    "PhoneChecksUITests/test8_85"):
+            with tempfile.TemporaryDirectory() as d:
+                out = subprocess.run([sys.executable, os.path.join(HERE, "checks.py"), d, "--ran", ran],
+                                     capture_output=True, text=True)
+                self.assertEqual(out.returncode, 2, ran)
+
     def test_main_ran_flag(self):
         import tempfile
         with tempfile.TemporaryDirectory() as d:
@@ -144,6 +190,35 @@ class NotRunTests(unittest.TestCase):
         # Only checks.py writes NOT-RUN; a test line with it is not a status the tests use.
         final = {c.id: c for c in checks.assemble("CHECK icon NOT-RUN x\n", "", "")}
         self.assertEqual(final["icon"].status, "FAIL")
+
+
+class UnranTests(unittest.TestCase):
+    """A filtered run is test-failed when a selected entry has no passing test case (a skip, a rename, 0 tests)."""
+
+    CASES = ("Test Case '-[ProtlyCIUITests.KeyboardShotsUITests testScenarios]' passed (115.105 seconds).\n"
+             "Test Case '-[ProtlyCIUITests.PhoneChecksUITests test0_access]' passed (37.885 seconds).\n"
+             "Test Case '-[ProtlyCIUITests.PhoneChecksUITests test0_probe]' skipped (0.166 seconds).\n"
+             "Test Case '-[ProtlyCIUITests.PhoneChecksUITests test6_85net]' failed (725.760 seconds).\n")
+
+    def test_passed_entries(self):
+        self.assertEqual(shotsfilter.unran(["KeyboardShotsUITests", ACCESS], self.CASES), [])
+        self.assertEqual(shotsfilter.unran(["PhoneChecksUITests"], self.CASES), [])
+
+    def test_failed_skipped_and_missing_entries(self):
+        entries = ["PhoneChecksUITests/test0_probe", "PhoneChecksUITests/test6_85net", "PhoneChecksUITests/test7_77"]
+        self.assertEqual(shotsfilter.unran(entries, self.CASES), entries)
+        self.assertEqual(shotsfilter.unran(["KeyboardShotsUITests"], ""), ["KeyboardShotsUITests"])
+
+    def test_main(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "test-cases.txt")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(self.CASES)
+            env = dict(os.environ, SHOTS_MESSAGE="x [shots:KeyboardShotsUITests,PhoneChecksUITests/test7_77]")
+            out = subprocess.run([sys.executable, os.path.join(HERE, "shotsfilter.py"), "unran", path],
+                                 capture_output=True, text=True, env=env)
+            self.assertEqual((out.returncode, out.stdout.split()), (0, ["PhoneChecksUITests/test7_77"]))
 
 
 class RunShotsBlockTests(unittest.TestCase):

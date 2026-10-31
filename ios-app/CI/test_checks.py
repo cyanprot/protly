@@ -661,8 +661,12 @@ class WorkflowTests(unittest.TestCase):
     def test_judge_takes_not_run_layout_only_in_a_filtered_run(self):
         judge = next(s for s in self.steps if "RESULT PASS" in s.get("run", ""))["run"]
         self.assertIn("grep -q '^FILTER ' \"$report\"", judge)
-        self.assertIn("grep -qE '^RESULT (PASS|NOT-RUN)'", judge)
         self.assertIn("grep -qx 'RESULT PASS' \"$report\"", judge)
+        # NOT-RUN only when the filter left the layout out; a filtered run says so in the log and step summary.
+        self.assertIn("grep -q '^FILTER .*KeyboardShotsUITests' \"$report\"", judge)
+        self.assertIn("grep -q '^RESULT NOT-RUN' \"$report\"", judge)
+        self.assertIn("FILTERED RUN", judge)
+        self.assertIn("$GITHUB_STEP_SUMMARY", judge)
 
     def test_publish_goes_through_the_leak_guard(self):
         publish = [s for s in self.steps if "bash ios-app/CI/publish-shots.sh" in s.get("run", "")]

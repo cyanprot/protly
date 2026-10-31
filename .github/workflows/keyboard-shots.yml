@@ -106,9 +106,16 @@ jobs:
             grep -E '^CHECKS (pass|$)|^CHECK .* FAIL' "$report" || true
           fi
           [ "$(head -n 1 "$report")" = "STATUS measured" ]
-          # A filtered run (FILTER line) may leave the layout out: RESULT NOT-RUN. A full run needs RESULT PASS.
+          # A filtered run (FILTER line, only checked test names) says so in the log and the step summary, so a
+          # green debug run never reads as a full one. Its layout is RESULT NOT-RUN only when the filter left
+          # KeyboardShotsUITests out. A full run needs RESULT PASS.
           if grep -q '^FILTER ' "$report"; then
-            grep -qE '^RESULT (PASS|NOT-RUN)' "$report"
+            echo "FILTERED RUN (debug, not a full run): $(grep -m 1 '^FILTER ' "$report")" | tee -a "$GITHUB_STEP_SUMMARY"
+            if grep -q '^FILTER .*KeyboardShotsUITests' "$report"; then
+              grep -qx 'RESULT PASS' "$report"
+            else
+              grep -q '^RESULT NOT-RUN' "$report"
+            fi
           else
             grep -qx 'RESULT PASS' "$report"
           fi

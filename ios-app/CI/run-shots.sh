@@ -92,7 +92,10 @@ if [ -n "$filter" ]; then
   done <<< "$filter"
   note "FILTER $(printf '%s' "$filter" | tr '\n' ' ') (a debug run, outside the run budget; other IDs are NOT-RUN)"
 fi
-mem_wait="$(python3 "$here/shotsfilter.py" mem-wait 2> /dev/null)"
+if ! mem_wait="$(python3 "$here/shotsfilter.py" mem-wait 2> "$work/filter.err")"; then
+  note "memory sampler: no start line from shotsfilter.py ($(tail -n 1 "$work/filter.err")): waiting for test1"
+  mem_wait=""
+fi
 [ -n "$mem_wait" ] || mem_wait="== PhoneChecksUITests.test1"  # no phone method: the sampler never starts
 
 # Newest iOS 26 runtime, then iPhone 13 Pro or the first 390 pt wide iPhone that the runtime takes.
@@ -297,7 +300,7 @@ if [ -s "$work/memsample.log" ]; then note "memsample: $(tail -n 3 "$work/memsam
 grep -E '^Test Case .*(passed|failed|skipped)' "$work/test.log" > "$out/test-cases.txt" 2>/dev/null
 # The reason a test failed sits far above the log tail (run 44: testScenarios stopped in app.launch() and the tail
 # did not say why), so the error lines go to their own file and the report.
-grep -E ': error: |Failed to |failed - ' "$work/test.log" 2>/dev/null | cut -c1-400 | head -n 40 > "$out/test-failures.txt"
+grep -E ': error: |Failed to |failed - |exceeded execution time allowance|Restarting after unexpected exit' "$work/test.log" 2>/dev/null | cut -c1-400 | head -n 40 > "$out/test-failures.txt"
 if [ -s "$out/test-failures.txt" ]; then
   note "test failures ($(wc -l < "$out/test-failures.txt" | tr -d ' ') lines, test-failures.txt):"
   while IFS= read -r line; do note "  $line"; done < <(head -n 8 "$out/test-failures.txt")
@@ -333,6 +336,15 @@ xcrun simctl shutdown "$udid" > /dev/null 2>&1
 if [ $test_code -ne 0 ]; then
   note "tests failed (xcodebuild exit $test_code)"
   status="test-failed"; failing_log="$work/test.log"
+fi
+# A filtered run measures only what it selected: an entry with no passing test case (skipped, renamed, zero tests
+# run) would otherwise leave nothing but NOT-RUN lines and pass.
+if [ -n "$filter" ]; then
+  unran="$(python3 "$here/shotsfilter.py" unran "$out/test-cases.txt" 2>&1 | tr '\n' ' ')"
+  if [ -n "$unran" ]; then
+    note "filter entries with no passing test case: $unran"
+    status="test-failed"; failing_log="$work/test.log"
+  fi
 fi
 
 if [ "$layout" = 1 ]; then
