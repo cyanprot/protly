@@ -1,0 +1,28 @@
+== PhoneChecksUITests.test0_access
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+Settings: General
+Settings: Keyboard
+Settings: Keyboards
+Settings: Protly
+Settings: switch tap 1, no alert, switch Optional(0)
+Settings: switch tap 2, Allow in the alert, switch Optional(1)
+full access: on, turned on in Settings (switch tap 2, Allow in the alert)
+== PhoneChecksUITests.test2_ws
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+typing: keyboard top 512.00, row 1 564.00
+typed "hello "
+ocr ws-1 left: "-]T"
+tapped the left slot
+CHECK ws-1 PASS left-ocr="-]T" left-label="ㅗ디ㅣㅐ" ink 1326 left="ㅗ디ㅣㅐ" want Hangul after-tap="ㅗ디ㅣㅐ " want the Korean reading plus a space
+typing: keyboard top 512.00, row 1 564.00
+typed "hello."
+typing: keyboard top 512.00, row 1 564.00
+typed " "
+ocr ws-2 left: 
+CHECK ws-2 PASS field="hello. " left=ocr "" ink 0 (c-ws-2-1-left.png)
+typing: keyboard top 512.00, row 1 564.00
+typed "hello\n"
+ocr ws-3 left: 
+CHECK ws-3 PASS field="hello\n" left=ocr "" ink 0 (c-ws-3-1-left.png)
