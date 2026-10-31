@@ -41,6 +41,23 @@ public struct TypingSession: Sendable {
         return last.map { Self.render($0.keys, as: $0.language.other) }
     }
 
+    /// The bar draws `alternative` in the primary color only when this is true, else dimmed (audit B4): the other
+    /// reading is a word in that language's bundled list. While composing it is half a word, so a list word that
+    /// starts with it counts. Learned words do not count. true until the lists load (never dim on missing data);
+    /// false when there is no alternative.
+    public var alternativeIsWord: Bool {
+        let keys: [KeyEvent], other: Language
+        if isComposing {
+            (keys, other) = (self.keys, language.other)
+        } else if let last {
+            (keys, other) = (last.keys, last.language.other)
+        } else {
+            return false
+        }
+        guard let detector else { return true }
+        return detector.lists(keys, as: other, prefix: isComposing)
+    }
+
     /// The committed word plus what was typed after it, while it can still be flipped. The keyboard checks
     /// that the field still ends with it before a flip deletes anything.
     public var lastTail: String? { last.map { $0.text + $0.after } }

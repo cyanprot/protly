@@ -88,24 +88,34 @@ final class KeyboardSourceRulesTests: XCTestCase {
                       uses.joined())
     }
 
+    /// keyboard-ui 003: the one write, Copy on the result card, is an assignment inside copyResult().
     func testTheClipboardStringIsReadOnlyInReadClipboard() throws {
+        var writes: [String] = []
         for (name, text) in try sources() {
             let ns = text as NSString
-            let names = boundNames(#"UIPasteboard\.general\b"#, in: text)
+            let names = Set(boundNames(#"UIPasteboard\.general\b"#, in: text))
             let readers = [#"UIPasteboard\.general\.(string|strings|items|data|value)\b"#]
                 + names.map { #"\b\#($0)\.(string|strings|items|data|value)\b"# }
-            let reads = readers.flatMap { matches($0, in: text) }
-            guard !reads.isEmpty else { continue }
+            let uses = readers.flatMap { matches($0, in: text) }
+            guard !uses.isEmpty else { continue }
             XCTAssertEqual(name, "KeyboardViewController.swift")
-            let body = ns.range(of: "private func readClipboard()")
-            guard body.location != NSNotFound else { XCTFail("\(name): readClipboard not found"); continue }
-            let end = ns.range(of: "\n    }\n", range: NSRange(location: body.location, length: ns.length - body.location))
-            guard end.location != NSNotFound else { XCTFail("\(name): end of readClipboard not found"); continue }
-            for r in reads {
-                XCTAssertTrue(r.location > body.location && r.location < end.location,
-                              "\(name): clipboard read outside readClipboard: \(lineText(ns, r))")
+            guard let read = body(of: "private func readClipboard()", in: ns) else {
+                XCTFail("\(name): readClipboard not found"); continue
+            }
+            let copy = body(of: "func copyResult()", in: ns)
+            for r in uses {
+                let rest = ns.substring(from: r.location + r.length)
+                if rest.range(of: #"^\s*=(?!=)"#, options: .regularExpression) != nil {
+                    XCTAssertTrue(copy.map { NSLocationInRange(r.location, $0) } == true,
+                                  "\(name): clipboard write outside copyResult: \(lineText(ns, r))")
+                    writes.append("\(name): \(lineText(ns, r))")
+                } else {
+                    XCTAssertTrue(NSLocationInRange(r.location, read),
+                                  "\(name): clipboard read outside readClipboard: \(lineText(ns, r))")
+                }
             }
         }
+        XCTAssertEqual(writes.count, 1, writes.joined(separator: "\n"))
     }
 
     /// The range of a function's body: from its declaration to the first line that is only `    }`.
@@ -285,6 +295,33 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertEqual(matches(#"action == \.space\s*\?\s*\.init\(longPressDelay:\s*SpaceTrackpad\.longPressDelay\)\s*:\s*\.standard\b"#,
                                in: controller).count, 1, "R3: the shorter hold is not limited to space")
         XCTAssertTrue(controller.contains("hapticConfiguration = .disabled"), "haptics must stay off")
+    }
+
+    /// keyboard-ui 001: the bar and the protly key read their labels only through BarAction (ProtlyCore), so a label
+    /// cannot drift from the request again. Longer strings (the Full Access notice, the panel's "Polishing") stay
+    /// allowed; the container app has its own copy. The pill's motion has a Reduce Motion form.
+    func testBarLabelsComeOnlyFromBarAction() throws {
+        let all = try sources()
+        for (name, text) in all where name != "ProtlyApp.swift" {
+            let ns = text as NSString
+            for r in matches(#""(Translate|Polish|Read clipboard)""#, in: text) {
+                XCTFail("\(name): a bar label outside BarAction: \(lineText(ns, r))")
+            }
+        }
+        guard let bar = all.first(where: { $0.name == "ProtlyBar.swift" })?.text else {
+            return XCTFail("ProtlyBar.swift not found")
+        }
+        XCTAssertTrue(bar.contains("accessibilityReduceMotion"), "ProtlyBar.swift has no Reduce Motion form")
+    }
+
+    /// keyboard-ui 003: ActionClient stays nonisolated, so the download and the parsing run off the main actor, and
+    /// it reads the reply only through ProtlyCore's stream driver.
+    func testActionClientIsNotOnTheMainActor() throws {
+        guard let client = try sources().first(where: { $0.name == "ActionClient.swift" })?.text else {
+            return XCTFail("ActionClient.swift not found")
+        }
+        XCTAssertFalse(client.contains("@MainActor"), "ActionClient.swift must not be on the main actor")
+        XCTAssertTrue(client.contains("ActionAPI.updates"), "ActionClient.swift must read the reply through ActionAPI.updates")
     }
 
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {

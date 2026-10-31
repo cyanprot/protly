@@ -1,4 +1,4 @@
-// swift-tools-version:6.0
+// swift-tools-version:6.2
 import PackageDescription
 
 // ProtlyCore: platform-free keyboard logic (no UIKit). Builds and tests on Linux.
