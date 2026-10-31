@@ -255,7 +255,9 @@ final class KeyboardViewController: KeyboardInputViewController {
         // Every path below shows its own panel: a request still running must not replace it later.
         actionTask?.cancel()
         guard hasFullAccess else {
-            mode.panel = .failed("Turn on Full Access in Settings to use protly actions", retry: requested ?? .in)
+            // F1: say why instead of a failed call (the bar shows the outlined lock pill).
+            mode.panel = .notice(
+                "Translate, Polish and Read need Full Access: Settings > General > Keyboard > Keyboards > Protly > Allow Full Access")
             return
         }
         if requested == .in {
@@ -349,6 +351,15 @@ final class KeyboardViewController: KeyboardInputViewController {
         mode.canUndo = true
         mode.panel = nil
         refreshField()
+    }
+
+    /// The protly key runs exactly what its symbol shows (K1): symbol and action are the same BarAction value.
+    func runProtlyKey() {
+        if mode.protlyKey == .undo {
+            undoInsert()
+        } else {
+            act(nil)
+        }
     }
 
     func undoInsert() {
@@ -508,7 +519,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func setKeyboardType(_ type: Keyboard.KeyboardType) {
         if case .emojis = type {
-            act(nil)  // the protly key; iOS's own bottom-left key opens Emoji
+            runProtlyKey()  // the protly key; iOS's own bottom-left key opens Emoji
             return
         }
         super.setKeyboardType(type)
@@ -548,15 +559,27 @@ struct ProtlyRoot: View {
                 if params.item.action == .space {
                     Color.clear  // Apple's space bar has no label
                 } else if params.item.action == .keyboardType(.emojis) {
-                    Image(systemName: "character.bubble").font(.system(size: 21))  // the protly key
+                    // The protly key: the symbol of what a tap runs, in the pill's accent (keyboardButtonStyle below).
+                    Image(systemName: mode.protlyKey.symbol).font(.system(size: 21))
                 } else {
                     params.view
                 }
             },
             // The space trackpad starts after a shorter hold (R3); other keys keep KeyboardKit's 0.5 s.
-            buttonView: {
-                $0.view.keyboardButtonGestureConfiguration(
-                    $0.item.action == .space ? .init(longPressDelay: SpaceTrackpad.longPressDelay) : .standard)
+            buttonView: { params in
+                let view = params.view.keyboardButtonGestureConfiguration(
+                    params.item.action == .space ? .init(longPressDelay: SpaceTrackpad.longPressDelay) : .standard)
+                if params.item.action == .keyboardType(.emojis) {
+                    // The protly key's spoken name is its action (D6 exception; KeyboardKit says "Keyboard Type -
+                    // emojis"). KeyboardKit makes each key one element that ignores its content's labels, and its own
+                    // label sits inside, so the key's accessibility is replaced, not relabeled. Drawing and gestures
+                    // stay KeyboardKit's.
+                    view.accessibilityRepresentation {
+                        Button(mode.protlyKey.spokenLabel) { [unowned host] in host.runProtlyKey() }
+                    }
+                } else {
+                    view
+                }
             },
             collapsedView: { $0.view },
             emojiKeyboard: { _ in EmptyView() },  // not KeyboardKit's placeholder: keeps the emoji key
@@ -594,6 +617,10 @@ struct ProtlyRoot: View {
                 // Apple iOS 26: an active shift is the same gray key with the letters' arrow color.
                 // KeyboardKit draws it black, for its older white key.
                 style.foregroundColor = KeyboardAction.character("a").standardButtonForegroundColor(for: context)
+            }
+            if case .keyboardType(.emojis) = params.action {
+                // The protly key in the pill's accent (K1): tint only, Apple's key shape, size and pressed look stay.
+                style.foregroundColor = Brand.pillFill(context.colorScheme)
             }
             return style
         })

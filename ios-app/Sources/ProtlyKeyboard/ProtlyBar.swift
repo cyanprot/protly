@@ -72,11 +72,14 @@ struct ProtlyBar: View {
     }
 
     /// Symbol, arrow and title are separate views: a right-to-left endonym cannot reorder them.
+    /// Without Full Access (F1) the pill is an outlined capsule in the label color with `lock.fill`, not a dimmed
+    /// fill (about 2.5:1 on the light ink pill); a tap explains why (KeyboardViewController.act).
     private func pill(_ action: BarAction) -> some View {
-        ZStack {
+        let locked = !mode.fullAccess && action != .undo
+        return ZStack {
             // A change between two actions keeps the pill and only crossfades the label.
             HStack(spacing: 4) {
-                Image(systemName: action.symbol).imageScale(.small)
+                Image(systemName: locked ? "lock.fill" : action.symbol).imageScale(.small)
                 if action.arrow { Text(verbatim: "→") }
                 Text(action.title)
             }
@@ -86,8 +89,11 @@ struct ProtlyBar: View {
         .fontWeight(.medium)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .foregroundStyle(Brand.pillText(scheme))
-        .background(Brand.pillFill(scheme), in: .capsule)
+        .foregroundStyle(locked ? AnyShapeStyle(.primary) : AnyShapeStyle(Brand.pillText(scheme)))
+        .background(locked ? AnyShapeStyle(.clear) : AnyShapeStyle(Brand.pillFill(scheme)), in: .capsule)
+        .overlay {
+            Capsule().strokeBorder(locked ? AnyShapeStyle(.primary) : AnyShapeStyle(.clear), lineWidth: 1)
+        }
         .padding(.horizontal, 6)
     }
 
