@@ -553,6 +553,27 @@ class WriteSecretsTests(unittest.TestCase):
         self.assertEqual(os.listdir(self.tmpdir), [])
 
 
+class DeadlineTests(unittest.TestCase):
+    """run-shots.sh's with_deadline: a hung command is stopped (exit 124), others keep their exit code."""
+
+    def run_fn(self, body):
+        with open(os.path.join(HERE, "run-shots.sh"), encoding="utf-8") as f:
+            src = f.read()
+        fn = src[src.index("with_deadline() {"):]
+        fn = fn[:fn.index("\n}\n") + 3]
+        with tempfile.TemporaryDirectory() as work:
+            script = f"work={work}\n{fn}\n{body}\n"
+            return subprocess.run(["bash", "-c", script], capture_output=True, text=True, timeout=30)
+
+    def test_hung_command_is_stopped(self):
+        out = self.run_fn("with_deadline 1 sleep 20; echo code=$?")
+        self.assertIn("code=124", out.stdout)
+
+    def test_exit_code_is_kept(self):
+        self.assertIn("code=3", self.run_fn("with_deadline 5 sh -c 'exit 3'; echo code=$?").stdout)
+        self.assertIn("code=0", self.run_fn("with_deadline 5 true; echo code=$?").stdout)
+
+
 class WorkflowTests(unittest.TestCase):
     """keyboard-shots.yml (plan Task 2.1): the key reaches one step, and a run with the key never saves the cache."""
 
@@ -580,6 +601,13 @@ class WorkflowTests(unittest.TestCase):
         # The cache key is hashed before Secrets.swift exists.
         self.assertLess(restore[0], secrets_step)
         self.assertIn("env.HAS_KEY == 'false'", self.steps[save[0]]["if"])  # unset (the step failed) never saves
+
+    def test_build_step_times_out_before_the_job(self):
+        job = next(iter(__import__("yaml").safe_load(self.text)["jobs"].values()))
+        build = next(s for s in self.steps if "run-shots.sh" in s.get("run", ""))
+        self.assertLess(build["timeout-minutes"] + 5, job["timeout-minutes"])
+        publish = next(s for s in self.steps if "bash ios-app/CI/publish-shots.sh" in s.get("run", ""))
+        self.assertIn("!cancelled()", publish["if"])
 
     def test_publish_goes_through_the_leak_guard(self):
         publish = [s for s in self.steps if "bash ios-app/CI/publish-shots.sh" in s.get("run", "")]

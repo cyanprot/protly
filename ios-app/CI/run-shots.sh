@@ -149,13 +149,72 @@ boot() {
   xcrun simctl spawn "$udid" log config --subsystem com.northprot.protly --mode "level:debug,persist:debug" > /dev/null 2>&1
 }
 
+# A command with a deadline: TERM at the deadline, KILL 30 s later, exit 124 when stopped. Run 36 hung 71 minutes and
+# the job limit cancelled it before anything was published; this way the run keeps time to measure and publish.
+with_deadline() {  # seconds command...
+  local limit="$1"
+  shift
+  rm -f "$work/deadline-hit"
+  "$@" &
+  local pid=$!
+  (
+    exec > /dev/null 2>&1  # holds no pipe of the caller's (a leftover sleep would keep the step's output open)
+    sleep "$limit"
+    if kill -0 "$pid" 2> /dev/null; then
+      touch "$work/deadline-hit"
+      kill -TERM "$pid" 2> /dev/null
+      sleep 30
+      kill -KILL "$pid" 2> /dev/null
+    fi
+  ) &
+  local dog=$!
+  wait "$pid"
+  local code=$?
+  pkill -P "$dog" 2> /dev/null
+  kill "$dog" 2> /dev/null
+  wait "$dog" 2> /dev/null
+  if [ -f "$work/deadline-hit" ]; then
+    rm -f "$work/deadline-hit"
+    return 124
+  fi
+  return $code
+}
+
+# Progress for the step log while the tests run, every 20 s: each method's start, each CHECK's ID and status (no
+# evidence), request counts, group deadlines, and a heartbeat every 5 minutes. Nothing else from the logs.
+progress() {
+  local log_n=0 chk_n=0 ticks=0 n
+  while sleep 20; do
+    ticks=$((ticks + 1))
+    if [ -f "$out/ui-log.txt" ]; then
+      n=$(wc -l < "$out/ui-log.txt" | tr -d ' ')
+      if [ "$n" -gt "$log_n" ]; then
+        sed -n "$((log_n + 1)),${n}p" "$out/ui-log.txt" \
+          | grep -E '^(== |request [0-9]+ of|full access:|group deadline|MARK )' | cut -c1-100 \
+          | sed "s/^/[$(date -u +%H:%M:%S)] /"
+        log_n=$n
+      fi
+    fi
+    if [ -f "$out/checks.txt" ]; then
+      n=$(wc -l < "$out/checks.txt" | tr -d ' ')
+      if [ "$n" -gt "$chk_n" ]; then
+        sed -n "$((chk_n + 1)),${n}p" "$out/checks.txt" | awk '{print $1, $2, $3}' | sed "s/^/[$(date -u +%H:%M:%S)] /"
+        chk_n=$n
+      fi
+    fi
+    if [ $((ticks % 15)) -eq 0 ]; then
+      echo "[$(date -u +%H:%M:%S)] still running: ui-log $log_n lines, checks $chk_n lines"
+    fi
+  done
+}
+
 # One test method on its own (the probe's Full Access step).
 run_one() {  # test-id log
-  TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" TEST_RUNNER_NETWORK="$network" \
+  with_deadline 600 env TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" TEST_RUNNER_NETWORK="$network" \
     xcodebuild test-without-building \
     -project "$here/ProtlyCI.xcodeproj" -scheme ProtlyCI \
     -destination "platform=iOS Simulator,id=$udid" \
-    -derivedDataPath "$dd" -only-testing:"$1" > "$2" 2>&1
+    -derivedDataPath "$dd" -test-timeouts-enabled YES -only-testing:"$1" > "$2" 2>&1
 }
 
 devdata="$HOME/Library/Developer/CoreSimulator/Devices/$udid/data"
@@ -190,15 +249,24 @@ python3 "$here/memsample.py" "$out/mem.txt" "$out/probe-mem.txt" --name ProtlyCI
 sampler=$!
 note "memory sampler pid $sampler, probe ${PROBE:-0}, network $network"
 
-# Layout scenarios (KeyboardShotsUITests), then the phone checks (PhoneChecksUITests).
+# Layout scenarios (KeyboardShotsUITests), then the phone checks (PhoneChecksUITests). Each method has an XCTest
+# time allowance (PhoneChecksUITests.allowance, -test-timeouts-enabled), and the whole run a deadline
+# (MAIN_TEST_DEADLINE, 50 minutes) that leaves the 72-minute step time to measure and the job time to publish.
 rm -rf "$work/Tests.xcresult"
-TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" TEST_RUNNER_OCR_FALLBACK="${OCR_FALLBACK:-0}" \
-  TEST_RUNNER_NETWORK="$network" \
+progress &
+progress_pid=$!
+main_deadline="${MAIN_TEST_DEADLINE:-3000}"
+with_deadline "$main_deadline" env TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" \
+  TEST_RUNNER_OCR_FALLBACK="${OCR_FALLBACK:-0}" TEST_RUNNER_NETWORK="$network" \
   xcodebuild test-without-building \
   -project "$here/ProtlyCI.xcodeproj" -scheme ProtlyCI \
   -destination "platform=iOS Simulator,id=$udid" \
-  -derivedDataPath "$dd" -resultBundlePath "$work/Tests.xcresult" > "$work/test.log" 2>&1
+  -derivedDataPath "$dd" -test-timeouts-enabled YES -resultBundlePath "$work/Tests.xcresult" > "$work/test.log" 2>&1
 test_code=$?
+pkill -P "$progress_pid" > /dev/null 2>&1  # its sleep, which holds the step's output
+kill "$progress_pid" > /dev/null 2>&1
+wait "$progress_pid" > /dev/null 2>&1
+if [ $test_code -eq 124 ]; then note "main tests stopped at the ${main_deadline} s deadline (see the last CHECK and == lines)"; fi
 kill "$sampler" > /dev/null 2>&1
 wait "$sampler" > /dev/null 2>&1
 if [ -s "$work/memsample.log" ]; then note "memsample: $(tail -n 3 "$work/memsample.log" | tr '\n' ' ')"; fi

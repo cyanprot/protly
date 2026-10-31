@@ -17,10 +17,12 @@ extension PhoneRun {
     static let kiln = Draft(code: nil, text: "우리 문빔 킬른 다음 주에 오픈해 ")
     /// Plan Task 2.4: at most 60 API requests per run.
     static let requestCap = 60
-    static var requests = 0
-    /// Set by test0_access; nil when it did not run.
-    static var fullAccess: Bool?
-    static var fullAccessHow = "not checked (test0_access did not run)"
+    /// Set by test0_access, kept in full-access.txt: XCTest restarts the runner after a method runs over its
+    /// time allowance, and statics do not survive that.
+    static var fullAccessState: (on: Bool, how: String)?
+    /// Each group stops starting items at this time, so its lines get written before XCTest's hard allowance
+    /// (PhoneChecksUITests.allowance) stops the method.
+    static var groupDeadline = Date.distantFuture
     /// run-shots.sh passes NETWORK=1 when the workflow wrote Secrets.swift with the CI key (HAS_KEY=true).
     static var network: Bool { ProcessInfo.processInfo.environment["NETWORK"] == "1" }
 
@@ -29,21 +31,57 @@ extension PhoneRun {
     /// test0_access: Full Access read in Settings and turned on there when off (plan Task 2.2).
     func fullAccess() {
         let r = d.fullAccessInSettings()
-        Self.fullAccess = r.on
-        Self.fullAccessHow = r.how
+        Self.fullAccessState = r
         let line = "full access: \(r.on ? "on" : "off"), \(r.how)"
         d.log(line)
         d.append(line, to: "network.txt")
+        try? "\(r.on ? "on" : "off") \(r.how)\n".write(to: d.out.appendingPathComponent("full-access.txt"),
+                                                    atomically: true, encoding: .utf8)
+    }
+
+    /// test0_access's outcome, from memory or from full-access.txt (a restarted runner).
+    var fullAccessOn: Bool { accessState.on }
+
+    var fullAccessHow: String { accessState.how }
+
+    private var accessState: (on: Bool, how: String) {
+        if let s = Self.fullAccessState { return s }
+        guard let text = try? String(contentsOf: d.out.appendingPathComponent("full-access.txt"), encoding: .utf8) else {
+            return (false, "not checked (test0_access did not run)")
+        }
+        let s = (text.hasPrefix("on "), text.trimmingCharacters(in: .whitespacesAndNewlines))
+        Self.fullAccessState = s
+        return s
+    }
+
+    /// Requests sent in this run: lines of requests.txt (it survives a runner restart).
+    var requests: Int {
+        let text = (try? String(contentsOf: d.out.appendingPathComponent("requests.txt"), encoding: .utf8)) ?? ""
+        return text.split(separator: "\n").count
     }
 
     /// Counts a tap that sends a request; false (and nothing is tapped) once the cap is reached.
     func send(_ item: Item) -> Bool {
-        guard Self.requests < Self.requestCap else {
+        let n = requests
+        guard n < Self.requestCap else {
             d.log("\(item.id): request cap \(Self.requestCap) reached")
             return false
         }
-        Self.requests += 1
-        d.log("request \(Self.requests) of at most \(Self.requestCap) (\(item.id))")
+        d.append("\(item.id)", to: "requests.txt")
+        d.log("request \(n + 1) of at most \(Self.requestCap) (\(item.id))")
+        return true
+    }
+
+    /// Sets this group's soft deadline (seconds from now).
+    func startGroup(_ seconds: TimeInterval) {
+        Self.groupDeadline = Date().addingTimeInterval(seconds)
+        d.log(String(format: "group deadline in %.0f s", seconds))
+    }
+
+    /// true (and the item marked) once the group's deadline has passed: the item is not started.
+    func pastDeadline(_ item: Item, _ what: String) -> Bool {
+        guard Date() >= Self.groupDeadline else { return false }
+        item.markUnreadable("\(what): the group's deadline passed before it started")
         return true
     }
 
@@ -57,8 +95,8 @@ extension PhoneRun {
     }
 
     func accessReady(_ ids: [String]) -> Bool {
-        guard Self.fullAccess == true else {
-            for id in ids { write(id, "FAIL", "unreadable: full access not on (\(Self.fullAccessHow))") }
+        guard fullAccessOn else {
+            for id in ids { write(id, "FAIL", "unreadable: full access not on (\(fullAccessHow))") }
             return false
         }
         return true
@@ -169,6 +207,10 @@ extension PhoneRun {
     func attempt(_ item: Item, _ draft: Draft, center want: String, busy: String, n: Int, insert: Bool = true,
                  saveBusy: Bool = false) -> Attempt {
         var a = Attempt()
+        if Date() >= Self.groupDeadline {
+            a.problem = "try#\(n) not started: the group's deadline passed"
+            return a
+        }
         d.clearField()
         if let code = draft.code {
             typeCode(code, item)
@@ -288,8 +330,8 @@ extension PhoneRun {
             it.skip("no network key")  // the Translate part is the item's half: no PASS on the flip alone
             return
         }
-        guard Self.fullAccess == true else {
-            it.markUnreadable("translate: full access not on (\(Self.fullAccessHow))")
+        guard fullAccessOn else {
+            it.markUnreadable("translate: full access not on (\(fullAccessHow))")
             return
         }
         context(korean: true, it)  // the flip just made the previous word English
@@ -302,6 +344,7 @@ extension PhoneRun {
 
     func checks85network() {
         let ids = ["8.5-1", "8.5-3", "8.5-4", "8.5-5", "8.5-6", "8.5-7", "8.5-8", "8.5-9", "8.5-10"]
+        startGroup(PhoneChecksUITests.allowance["test6_85net"]! - 120)
         if notReady(ids) || !networkReady(ids) { return }
 
         // Drafts end with a space: the bar offers no action while a word is being typed (Sprint 001 finding).
@@ -397,6 +440,7 @@ extension PhoneRun {
     /// center does not offer it, noted), answers Allow Paste and waits for one of `labels`. nil: it did not start.
     func readClipboard(_ item: Item, _ text: String?, waitFor labels: [String], sends: Bool, name: String = "clipboard",
                        markTimeout: Bool = true, probe: ((String) -> Void)? = nil) -> ClipRead? {
+        if pastDeadline(item, name) { return nil }
         let inHost = text != nil
         if let text {
             d.clearField()
@@ -433,18 +477,28 @@ extension PhoneRun {
             d.pause(1.5)
             d.savePNG("probe-paste")
             let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-            try? d.app.debugDescription.write(to: d.out.appendingPathComponent("tree-paste-app.txt"), atomically: true, encoding: .utf8)
+            // Not the host's tree: with the keyboard waiting on the prompt, a snapshot of the host can stall (run 36).
             try? springboard.debugDescription.write(to: d.out.appendingPathComponent("tree-paste-springboard.txt"),
                                                     atomically: true, encoding: .utf8)
-            probe("paste prompt: app alerts \(d.app.alerts.count), springboard alerts \(springboard.alerts.count), "
-                  + "Allow Paste in app \(d.app.buttons["Allow Paste"].exists), in springboard \(springboard.buttons["Allow Paste"].exists)")
+            probe("paste prompt: springboard alerts \(springboard.alerts.count), "
+                  + "Allow Paste in springboard \(springboard.buttons["Allow Paste"].exists)")
         }
         let how = allowPaste(trigger: inHost)
         item.note("\(name)-paste=\(q(how))")
         probe?("allow paste: \(how)")
         d.append("allow paste (\(item.id) \(name)): \(how)", to: "network.txt")
         let w = waitPanel(row1, item, for: labels, timeout: sends ? 30 : 10, name: name)
-        if w.label == nil && markTimeout { item.markUnreadable("\(name): none of \(labels) on the panel, \(q(w.read.seen?.text))") }
+        if w.label == nil {
+            if markTimeout { item.markUnreadable("\(name): none of \(labels) on the panel, \(q(w.read.seen?.text))") }
+            // A read that never shows a panel may be waiting on an unanswered prompt, with the keyboard blocked in
+            // the clipboard read: end the app so the keyboard is freed for the next item (run 36 stalled).
+            d.log("\(item.id) \(name): no panel; relaunching \(inHost ? "the host" : "the app") to free the keyboard")
+            d.app.terminate()
+            if inHost {
+                d.launch()
+                d.ensureProtly()
+            }
+        }
         return ClipRead(label: w.label, seen: w.read.seen, rect: w.rect, row1: row1)
     }
 
@@ -488,6 +542,7 @@ extension PhoneRun {
 
     func checks77() {
         let ids = (1...6).map { "7.7-\($0)" }
+        startGroup(PhoneChecksUITests.allowance["test7_77"]! - 120)
         if notReady(ids) { return }
         guard accessReady(ids.filter { $0 != "7.7-6" }) else {
             write("7.7-6", "SKIP", "needs a phone reinstall")
@@ -558,7 +613,7 @@ extension PhoneRun {
         finish(it)
 
         write("7.7-6", "SKIP", "needs a phone reinstall")
-        d.append("requests: \(Self.requests) of at most \(Self.requestCap)", to: "network.txt")
+        d.append("requests: \(requests) of at most \(Self.requestCap)", to: "network.txt")
     }
 
     /// 7.7-3's first part: a friend's English message, empty field, Read clipboard: Korean on the panel (one retry).
@@ -585,6 +640,7 @@ extension PhoneRun {
 
     /// Runs `body` in the container app (ProtlyCIApp), then brings the host back with Protly.
     private func inApp(_ item: Item, _ body: (Driver) -> Void) {
+        if pastDeadline(item, "container app") { return }
         guard let a = try? Driver(test: d.test, bundleIdentifier: Self.appID) else {
             item.markUnreadable("no driver for \(Self.appID)")
             return

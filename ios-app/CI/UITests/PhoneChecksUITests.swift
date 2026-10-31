@@ -12,8 +12,19 @@ import XCTest
 /// keyboard behaviour is a finding, and the job still measures the layout). Learned words carry over between
 /// methods, so the methods are numbered: XCTest runs them alphabetically, after KeyboardShotsUITests.
 final class PhoneChecksUITests: XCTestCase {
+    /// Seconds each method may run before XCTest stops it (run-shots.sh passes -test-timeouts-enabled YES; XCTest
+    /// rounds up to whole minutes). Run 36 ran 71 minutes without a line: a method that hangs now ends, and the
+    /// network groups stop starting items 2 minutes before theirs (PhoneRun.startGroup).
+    static let allowance: [String: TimeInterval] = [
+        "test0_access": 300, "test0_probe": 480, "test1_68": 900, "test2_ws": 300, "test3_85offline": 900,
+        "test4_memory": 600, "test5_icon": 300, "test6_85net": 1080, "test7_77": 1080,
+    ]
+
     override func setUpWithError() throws {
         continueAfterFailure = true
+        // name is "-[ProtlyCIUITests.PhoneChecksUITests test6_85net]".
+        let method = name.split(separator: " ").last.map { String($0.dropLast()) } ?? ""
+        executionTimeAllowance = Self.allowance[method] ?? 600
     }
 
     /// Full Access for Protly (plan Task 2.2): read in Settings, turned on there when off. Every later method that
@@ -659,7 +670,7 @@ final class PhoneRun {
     func probe() {
         let p = { (line: String) in self.d.append(line, to: "probe.txt") }
         p("== sprint 002 probe")
-        p("full access: \(Self.fullAccessHow)")
+        p("full access: \(fullAccessHow)")
         p("network key: \(Self.network)")
         guard ready else {
             p("protly not reached: \(d.takeProblems())")

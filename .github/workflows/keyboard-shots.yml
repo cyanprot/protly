@@ -64,7 +64,10 @@ jobs:
           PROTLY_API_KEY: ${{ secrets.PROTLY_API_KEY }}
         run: bash ios-app/CI/write-secrets.sh
 
+      # Under the job's limit: a step timeout fails the step (the publish steps still run), a job timeout cancels the
+      # job (run 36 published nothing). run-shots.sh stops the tests itself after 50 minutes.
       - name: Build, run scenarios, measure
+        timeout-minutes: 72
         env:
           SOURCE_SHA: ${{ github.sha }}
           PROBE: ${{ contains(github.event.head_commit.message, '[probe]') && '1' || '0' }}
