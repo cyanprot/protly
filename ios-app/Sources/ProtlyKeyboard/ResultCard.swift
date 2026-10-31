@@ -47,19 +47,8 @@ struct ResultCard: View {
         VStack(alignment: .leading, spacing: 8) {
             header
             ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    text
-                    if card.phase == .done, !feed.back.isEmpty {
-                        Text(feed.back).font(.subheadline).foregroundStyle(.secondary)
-                    }
-                    if let error = feed.failed {
-                        Text(error.message).font(.footnote).foregroundStyle(.secondary)
-                    } else if card.copyOnly {
-                        Text("The text changed while this ran. Copy the result instead.")
-                            .font(.footnote).foregroundStyle(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // Only this view reads the streamed text: a delta redraws it, not the header or the buttons.
+                CardText(feed: feed, phase: card.phase, copyOnly: card.copyOnly)
             }
             // Follows new text without a scrollTo per delta.
             .defaultScrollAnchor(.bottom)
@@ -75,23 +64,12 @@ struct ResultCard: View {
     /// Symbol, arrow and title as in the pill: separate views, so a right-to-left endonym cannot reorder them.
     private var header: some View {
         HStack(spacing: 4) {
-            if let symbol = card.label.symbol { Image(systemName: symbol).imageScale(.small) }
+            if let symbol = card.label.symbol { Image(systemName: symbol).imageScale(.small).accessibilityHidden(true) }
             if card.label.arrow { Text(verbatim: "→") }
             Text(card.label.title)
         }
         .font(.subheadline.weight(.semibold))
         .foregroundStyle(.secondary)
-    }
-
-    /// While streaming, a steady caret (text, no blink) after the text. Kept text after an error is dimmed.
-    @ViewBuilder
-    private var text: some View {
-        if card.phase == .streaming {
-            let caret = Text(verbatim: "▍").foregroundStyle(.secondary)
-            Text("\(feed.partial)\(caret)").font(.body)
-        } else {
-            Text(feed.partial).font(.body).foregroundStyle(card.phase == .failed ? .secondary : .primary)
-        }
     }
 
     private var buttons: some View {
@@ -131,6 +109,36 @@ struct ResultCard: View {
                 .frame(maxWidth: stacked ? .infinity : nil, minHeight: 44)
                 .contentShape(.rect)
         }
+    }
+}
+
+/// The card's text: the translation (with a steady caret while it streams, dimmed when kept after an error), the back
+/// translation once done, and the error or field-changed line.
+private struct CardText: View {
+    let feed: ResultFeed
+    let phase: CardState.Phase
+    let copyOnly: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if phase == .streaming {
+                // The caret is text, not an icon, and never blinks. VoiceOver reads the text without it.
+                let caret = Text(verbatim: "▍").foregroundStyle(.secondary)
+                Text("\(feed.partial)\(caret)").font(.body).accessibilityLabel(Text(feed.partial))
+            } else {
+                Text(feed.partial).font(.body).foregroundStyle(phase == .failed ? .secondary : .primary)
+            }
+            if phase == .done, !feed.back.isEmpty {
+                Text(feed.back).font(.subheadline).foregroundStyle(.secondary)
+            }
+            if let error = feed.failed {
+                Text(error.message).font(.footnote).foregroundStyle(.secondary)
+            } else if copyOnly {
+                Text("The text changed while this ran. Copy the result instead.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

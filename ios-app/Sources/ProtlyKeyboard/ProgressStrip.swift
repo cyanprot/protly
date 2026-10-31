@@ -32,7 +32,7 @@ struct ProgressStrip: View {
                         .font(.subheadline)
                         .lineLimit(2)
                 } else {
-                    label.font(.subheadline.weight(.medium))
+                    label.font(.subheadline.weight(.medium)).accessibilityElement(children: .combine)
                     if slow, let line = state.label.slowLine {
                         Text(line).font(.footnote).foregroundStyle(.secondary)
                     }
@@ -46,10 +46,11 @@ struct ProgressStrip: View {
                     Text("Retry").fontWeight(.semibold).frame(minWidth: 44, minHeight: 44).contentShape(.rect)
                 }
             }
-            Button("Cancel", systemImage: "xmark", action: close)
-                .labelStyle(.iconOnly)
-                .frame(width: 44, height: 44)
-                .contentShape(.rect)
+            // The 44 pt frame is inside the label: with the plain style only the label takes taps.
+            Button(action: close) {
+                Image(systemName: "xmark").frame(width: 44, height: 44).contentShape(.rect)
+            }
+            .accessibilityLabel("Cancel")
         }
         .buttonStyle(.plain)
         .padding(.leading, 12)

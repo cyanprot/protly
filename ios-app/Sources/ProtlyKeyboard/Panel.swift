@@ -65,10 +65,11 @@ struct PanelView: View {
     @ViewBuilder
     private func buttons(primary: (String, () -> Void)?, closeLabel: String) -> some View {
         HStack {
-            Button(closeLabel, action: close).frame(minHeight: 44)
+            // The 44 pt frame is inside each label, where it takes taps.
+            Button(action: close) { Text(closeLabel).frame(minHeight: 44).contentShape(.rect) }
             Spacer()
             if let (label, action) = primary {
-                Button(label, action: action).fontWeight(.semibold).frame(minHeight: 44)
+                Button(action: action) { Text(label).frame(minHeight: 44).contentShape(.rect) }.fontWeight(.semibold)
             }
         }
     }
