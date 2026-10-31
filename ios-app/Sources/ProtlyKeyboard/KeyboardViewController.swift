@@ -756,6 +756,9 @@ struct ProtlyRoot: View {
     @State private var shown: (state: PanelState, feed: ResultFeed)?
     /// The layer is showing (or fading in), not fading out or gone.
     @State private var visible = false
+    /// Counts follow() calls: a fade-out's completion drops the panel only if nothing changed since it started, so a
+    /// late completion from card A cannot drop card B mid-fade.
+    @State private var generation = 0
 
     var body: some View {
         // A late host callback can lower the case while manualShift is still set: trust the case too.
@@ -865,6 +868,8 @@ struct ProtlyRoot: View {
     /// text, then drops it. A panel that comes back during the fade-out reverses it.
     private func follow(_ panel: PanelState?) {
         let animation: Animation = reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.3, bounce: 0)
+        generation &+= 1
+        let fade = generation
         if let panel {
             shown = (panel, host.feed)
             if !visible { withAnimation(animation) { visible = true } }
@@ -872,7 +877,8 @@ struct ProtlyRoot: View {
             withAnimation(animation, completionCriteria: .removed) {
                 visible = false
             } completion: {
-                if !visible { shown = nil }  // not if a new panel came during the fade
+                // Only the latest fade: not if a new panel came during it, nor if that one is fading out by now.
+                if fade == generation { shown = nil }
             }
         }
     }

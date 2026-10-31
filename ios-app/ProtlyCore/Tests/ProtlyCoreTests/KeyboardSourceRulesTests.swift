@@ -341,6 +341,12 @@ final class KeyboardSourceRulesTests: XCTestCase {
         for needle in [".allowsHitTesting(visible)", ".accessibilityHidden(!visible)", "completionCriteria: .removed"] {
             XCTAssertTrue(controller.contains(needle), "the panel layer: \(needle)")
         }
+        // A late fade-out completion of card A must not drop card B (D-D): only the latest fade drops the panel.
+        let cns = controller as NSString
+        let follow = body(of: "private func follow(", in: cns).map { cns.substring(with: $0) } ?? ""
+        XCTAssertTrue(follow.contains("generation &+= 1"), "follow() numbers each change")
+        XCTAssertTrue(follow.contains("if fade == generation"), "a fade-out completion drops the panel only if it is the latest")
+        XCTAssertFalse(follow.contains("if !visible { shown = nil }"), "a late completion can drop the next card")
         // The keys wait while the field read walks the cursor: a key then would land mid-text.
         let hns = handler as NSString
         for declaration in ["override func handle(", "override func handleDrag("] {
@@ -354,7 +360,6 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertEqual(matches(#"retry: \{ \[unowned host\] in host\.retry\(\$0\) \}"#, in: controller).count, 2)
         XCTAssertEqual(matches(#"retry: \{ \[unowned host\] in host\.act\("#, in: controller).count, 0)
         // Read's Insert keeps what it typed over, so Undo can put a selection back.
-        let cns = controller as NSString
         let insert = body(of: "func insertResult()", in: cns).map { cns.substring(with: $0) } ?? ""
         XCTAssertTrue(insert.contains("lastInsert = (result, selected, !selected.isEmpty)"), "Read's Insert drops the selection")
     }
