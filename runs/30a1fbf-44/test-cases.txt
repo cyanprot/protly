@@ -1,0 +1,10 @@
+Test Case '-[ProtlyCIUITests.KeyboardShotsUITests testScenarios]' failed (17.676 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test0_access]' passed (45.432 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test0_probe]' skipped (0.166 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test1_68]' passed (420.722 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test2_ws]' passed (57.552 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test3_85offline]' passed (367.094 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test4_memory]' passed (227.026 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test5_icon]' passed (4.412 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test6_85net]' passed (791.341 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test7_77]' passed (386.459 seconds).

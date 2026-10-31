@@ -1,0 +1,28 @@
+01-apple: FAIL missing 01-apple.png
+02-first-open: FAIL missing 02-first-open.png
+03-after-emoji: FAIL missing 03-after-emoji.png
+04-after-background: FAIL missing 04-after-background.png
+05-after-second-emoji: FAIL missing 05-after-second-emoji.png
+06-word-typed: FAIL missing 06-word-typed.png
+07-empty-left-slot: FAIL missing 07-empty-left-slot.png
+CHECK top-edge FAIL no top edge in 02-first-open, 03-after-emoji, 04-after-background, 05-after-second-emoji, 06-word-typed, 07-empty-left-slot
+CHECK band-02-first-open FAIL n/a vs apple n/a
+CHECK band-03-after-emoji FAIL n/a vs apple n/a
+CHECK band-04-after-background FAIL n/a vs apple n/a
+CHECK band-05-after-second-emoji FAIL n/a vs apple n/a
+CHECK band-06-word-typed FAIL n/a vs apple n/a
+CHECK band-07-empty-left-slot FAIL n/a vs apple n/a
+CHECK pitch-02-first-open FAIL n/a vs 54.00
+CHECK key-02-first-open FAIL n/a vs 43.00
+CHECK pitch-03-after-emoji FAIL n/a vs 54.00
+CHECK key-03-after-emoji FAIL n/a vs 43.00
+CHECK pitch-04-after-background FAIL n/a vs 54.00
+CHECK key-04-after-background FAIL n/a vs 43.00
+CHECK pitch-05-after-second-emoji FAIL n/a vs 54.00
+CHECK key-05-after-second-emoji FAIL n/a vs 43.00
+CHECK pitch-06-word-typed FAIL n/a vs 54.00
+CHECK key-06-word-typed FAIL n/a vs 43.00
+CHECK pitch-07-empty-left-slot FAIL n/a vs 54.00
+CHECK key-07-empty-left-slot FAIL n/a vs 43.00
+CHECK bar-center-07 FAIL no bar text found
+RESULT FAIL
