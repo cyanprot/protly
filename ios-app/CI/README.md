@@ -38,9 +38,10 @@ script takes the newest iOS 26 runtime and an iPhone 13 Pro (else the first 390 
 ## Phone checks
 
 `docs/plans/2026-10-30-sim-phone-checks.md` (results: `docs/ios-keyboard-notes.md`, "Simulator phone checks").
-After the layout scenarios, `UITests/PhoneChecksUITests.swift` runs the phone checklists that need no network, in
-the order `test0_probe` (only with `[probe]` in the commit message), `test1_68`, `test2_ws`, `test3_85offline`,
-`test4_memory`, `test5_icon`; learned words carry over between them.
+After the layout scenarios, `UITests/PhoneChecksUITests.swift` runs the phone checklists in the order
+`test0_access`, `test0_probe` (only with `[probe]` in the commit message; Sprint 002's probe since then), `test1_68`,
+`test2_ws`, `test3_85offline`, `test4_memory`, `test5_icon`, then the network groups `test6_85net` and `test7_77`
+(below); learned words carry over between them.
 
 - `UITests/Driver.swift`: the shared helpers. Text is typed by coordinate: Hangul as its Dubeolsik keys
   (ProtlyCore `KeyEncoder`, linked into the UI tests), capitals and shifted jamo with a shift tap, symbols on the
@@ -66,6 +67,43 @@ the order `test0_probe` (only with `[probe]` in the commit message), `test1_68`,
   `STATUS leak-guard` report and the step fails.
 
 The job fails unless the report says `STATUS measured`, `RESULT PASS` and no `CHECK ... FAIL`.
+
+## Network phone checks (Sprint 002)
+
+Plan section "Sprint 002" of `docs/plans/2026-10-30-sim-phone-checks.md`. The methods `test0_access` (first),
+`test6_85net` and `test7_77` (last, after every offline group) add Full Access, Translate / Polish / Read clipboard
+and the container app's about-me note: 6.8-11 (its Translate part runs inside `test1_68`), 8.5-1 and 8.5-3 to
+8.5-10, 7.7-1 to 7.7-6. Code: `UITests/NetworkChecks.swift`.
+
+- **The key.** The repository secret `PROTLY_API_KEY` (a CI-only key) reaches one step, `Write Secrets.swift`:
+  `write-secrets.sh` writes it with `umask 077` to `<mktemp -d>/.config/protly/phone-api-key`, runs
+  `HOME=<that folder> ios-app/scripts/make-secrets.sh` (which refuses unless `Secrets.swift` is gitignored) and
+  removes the folder; it never prints the key and sets `HAS_KEY` in `$GITHUB_ENV`. With no secret every network
+  item is `SKIP no network key` (7.7-1 and 7.7-5 need only Full Access and still run).
+- **The cache.** `actions/cache/restore` runs before `Secrets.swift` exists; `actions/cache/save` runs only when
+  `HAS_KEY == 'false'`, so a DerivedData that holds the compiled key is never cached. `report.txt` says which.
+- **The leak guard** still runs before every publish (the build log tail is inside the guarded folder) and adds
+  `LEAK-GUARD pass: ...` to the published report. Nothing prints a request, a header or a response body: the panel
+  shows protly's fixed error messages only.
+- **Full Access.** `test0_access` opens Settings > General > Keyboard > Keyboards > Protly, turns on Allow Full
+  Access and taps Allow; the outcome is in `network.txt`. With `[probe]`, `run-shots.sh` runs `test0_access` alone
+  between two snapshots of the shut-down device (`prefsdump.py`) and writes what changed to `probe-prefs.txt`.
+- **Panel buttons** (Insert, Undo is the bar's center, Save, Cancel, Done, Retry) are inside the keyboard: the test
+  polls Vision OCR of the panel every 0.5 s (up to 30 s) and taps the label's word box from the same screenshot,
+  in the panel's bottom 45 pt so the same word in the panel's text does not count. The poll time is the timing.
+- **Allow Paste.** A `Read clipboard` tap is followed by an interruption monitor (the next interaction is a tap on
+  the host's empty background), then the `Allow Paste` button in the app or SpringBoard; `network.txt` logs which.
+  The test runner sets the clipboard with `UIPasteboard.general.string` with the keyboard down, then brings it back
+  on the empty field, so the bar's center offers `Read clipboard`.
+- **The container app** (`ProtlyCIApp`): the note is pasted into About me from the edit menu (no `typeText`), the
+  counter is read through XCUITest, Copy for the keyboard, then Read clipboard in its Test field. Row 1 comes from
+  the host's last measurement (the Form is not a solid color); the Form is dragged so no tap lands on the keyboard.
+- **Model output** goes into the CHECK line as `out#1="..."` (and `out#2` after the one retry; `panel#n` for 7.7-3's
+  Read clipboard). The test writes `PENDING`, and `checks.py` applies the script rules (`RULES`: Cyrillic, Hangul,
+  kana or kanji, Latin, contains / lacks) and writes PASS or FAIL. Steps the test judges itself (the typed draft,
+  the center's label, `Translating` at once, Undo, the confirm panel's count) make the line FAIL directly.
+- **Request cap**: at most 60 requests per run (`requests:` in `network.txt`); above it items are `SKIP request cap`.
+- The fictional test note: `I run Moonbeam Kiln (문빔 킬른), a pottery studio in Victoria.`
 
 ## Reading a run without GitHub access
 
