@@ -49,8 +49,10 @@ final class KeyboardViewController: KeyboardInputViewController {
     /// LearnedWords.changes at the last save (Words.swift). Per controller: each one loads its own copy.
     var savedChanges = 0
 
+    /// Follows the keycaps, so dictation listens in the language on the keys (it stayed Korean before).
+    /// KeyboardKit's setter is ignored: it would report its own locale.
     override var primaryLanguage: String? {
-        get { "ko-KR" }  // KeyboardKit would report its English locale; protly is mainly Korean
+        get { session.keycapLanguage == .korean ? "ko-KR" : "en-US" }
         set {}
     }
 
@@ -561,7 +563,7 @@ struct ProtlyRoot: View {
                     Color.clear  // Apple's space bar has no label
                 } else if params.item.action == .keyboardType(.emojis) {
                     // The protly key: the symbol of what a tap runs, in the pill's accent (keyboardButtonStyle below).
-                    Image(systemName: mode.protlyKey.symbol).font(.system(size: 21))
+                    Image(systemName: mode.protlyKey.keySymbol).font(.system(size: 21))
                 } else {
                     params.view
                 }

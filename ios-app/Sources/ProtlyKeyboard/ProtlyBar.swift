@@ -85,7 +85,9 @@ struct ProtlyBar: View {
         return ZStack {
             // A change between two actions keeps the pill and only crossfades the label.
             HStack(spacing: 4) {
-                Image(systemName: locked ? "lock.fill" : action.symbol).imageScale(.small)
+                if let symbol = locked ? "lock.fill" : action.symbol {
+                    Image(systemName: symbol).imageScale(.small)
+                }
                 if action.arrow { Text(verbatim: "→") }
                 Text(action.title)
             }

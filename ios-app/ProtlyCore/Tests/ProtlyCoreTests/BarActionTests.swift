@@ -38,16 +38,17 @@ final class BarActionTests: XCTestCase {
     }
 
     func testSymbolArrowTitleAndSpokenLabel() {
-        let rows: [(BarAction, String, Bool, String, String)] = [
-            (.undo, "arrow.uturn.backward", false, "Undo", "Undo"),
-            (.translate(target: "English"), "sparkles", true, "English", "Translate to English"),
-            (.translate(target: "Русский"), "sparkles", true, "Русский", "Translate to Русский"),
-            (.polish(korean: false), "sparkles", false, "Polish", "Polish"),
-            (.polish(korean: true), "sparkles", false, "한 Polish", "Polish Korean"),
-            (.read, "doc.on.clipboard", false, "Read", "Read clipboard"),
+        let rows: [(BarAction, String?, String, Bool, String, String)] = [
+            (.undo, "arrow.uturn.backward", "arrow.uturn.backward", false, "Undo", "Undo"),
+            (.translate(target: "English"), nil, "character.bubble", true, "English", "Translate to English"),
+            (.translate(target: "Русский"), nil, "character.bubble", true, "Русский", "Translate to Русский"),
+            (.polish(korean: false), nil, "character.bubble", false, "Polish", "Polish"),
+            (.polish(korean: true), nil, "character.bubble", false, "한 Polish", "Polish Korean"),
+            (.read, "doc.on.clipboard", "doc.on.clipboard", false, "Read", "Read clipboard"),
         ]
-        for (action, symbol, arrow, title, spoken) in rows {
+        for (action, symbol, keySymbol, arrow, title, spoken) in rows {
             XCTAssertEqual(action.symbol, symbol, "\(action)")
+            XCTAssertEqual(action.keySymbol, keySymbol, "\(action)")
             XCTAssertEqual(action.arrow, arrow, "\(action)")
             XCTAssertEqual(action.title, title, "\(action)")
             XCTAssertEqual(action.spokenLabel, spoken, "\(action)")

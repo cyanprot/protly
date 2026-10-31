@@ -12,14 +12,18 @@ public enum BarAction: Hashable, Sendable {
     case read
     case undo
 
-    /// An SF Symbol name.
-    public var symbol: String {
+    /// The pill's SF Symbol name. Translate and Polish show words only: no placeholder art until the brand mark
+    /// exists (owner, 2026-10-30).
+    public var symbol: String? {
         switch self {
-        case .translate, .polish: return "sparkles"
+        case .translate, .polish: return nil
         case .read: return "doc.on.clipboard"
         case .undo: return "arrow.uturn.backward"
         }
     }
+
+    /// The protly key always needs a symbol: the action's, else the speech bubble the key had before.
+    public var keySymbol: String { symbol ?? "character.bubble" }
 
     /// An arrow goes between the symbol and the title: only for translate ("→ English").
     public var arrow: Bool {
