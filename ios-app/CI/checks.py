@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
-"""Assembles the phone checks of one CI run (docs/plans/2026-10-30-sim-phone-checks.md, Tasks 1.2-1.6).
+"""Assembles the phone checks of one CI run (docs/plans/2026-10-30-sim-phone-checks.md, Tasks 1.2-1.6 and 2.3).
 
-Usage: checks.py <dir>
+Usage: checks.py <dir> [--network-key] [--ran <entry>,<entry>...]
+
+--network-key: the run had the CI key (run-shots.sh passes it with HAS_KEY=true), so a `SKIP no network key` line
+means the key did not reach the tests and is FAIL unreadable.
+--ran: a filtered run's -only-testing entries (shotsfilter.py); the IDs of methods outside them are NOT-RUN.
 
 Reads from <dir>:
 - checks.txt: `CHECK <id> PASS|FAIL|RECORD|SKIP|PENDING <evidence>` lines written by UITests/PhoneChecksUITests.swift.
 - ui-log.txt: `MARK <name> <epoch seconds>` lines (relaunch-before/-after, mem-start/-end).
 - mem.txt: `<epoch> <pid> <method> <kb>` samples written by memsample.py (`<epoch> - none -` with no process).
 
-Resolves the PENDING lines (6.8-9 relaunch, 6.8-10 memory) from the marks and the samples, adds a FAIL `unreadable`
+Resolves the PENDING lines (6.8-9 relaunch, 6.8-10 memory) from the marks and the samples, and the network items'
+PENDING lines (model output as `<group>#<try>="..."`) with the script rules in RULES; adds a FAIL `unreadable`
 line for every expected ID without a line (and for every malformed line), sorts by ID, keeps the test's own lines in
 checks-raw.txt and rewrites checks.txt with the final lines. Prints `CHECKS`, the lines and
-`CHECKS pass N fail N record N skip N`. Exit 1 when any line is FAIL.
+`CHECKS pass N fail N record N skip N` (plus ` not-run N` in a filtered run). Exit 1 when any line is FAIL.
 """
 
 import os
@@ -20,9 +25,26 @@ import sys
 import unicodedata
 from dataclasses import dataclass
 
-# Every ID of the plan's Task 1.3 table.
-EXPECTED_IDS = [f"6.8-{i}" for i in range(1, 12)] + ["ws-1", "ws-2", "ws-3"] + [
+# Every ID of the plan's Task 1.3 table (Sprint 001) and Task 2.3 table (Sprint 002, network).
+OFFLINE_IDS = [f"6.8-{i}" for i in range(1, 12)] + ["ws-1", "ws-2", "ws-3"] + [
     "8.5-1o", "8.5-2o", "8.5-6o", "8.5-7o", "8.5-8o", "8.5-9o", "icon"]
+NETWORK_IDS = ["6.8-11"] + [f"8.5-{i}" for i in (1, 3, 4, 5, 6, 7, 8, 9, 10)] + [f"7.7-{i}" for i in range(1, 7)]
+EXPECTED_IDS = OFFLINE_IDS + [i for i in NETWORK_IDS if i not in OFFLINE_IDS]
+# The PhoneChecksUITests method that writes each ID. A filtered run (`[shots:...]`, shotsfilter.py) marks the IDs of
+# methods it did not select NOT-RUN. Items inside one method depend on each other (6.8-9 on 6.8-8's learned word,
+# 8.5-10 and 7.7-4 on earlier timings), so a method is the smallest unit a filter selects.
+METHOD_IDS = {
+    "test1_68": [f"6.8-{i}" for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 11)],
+    "test2_ws": ["ws-1", "ws-2", "ws-3"],
+    "test3_85offline": ["8.5-1o", "8.5-2o", "8.5-6o", "8.5-7o", "8.5-8o", "8.5-9o"],
+    "test4_memory": ["6.8-10"],
+    "test5_icon": ["icon"],
+    "test6_85net": [f"8.5-{i}" for i in (1, 3, 4, 5, 6, 7, 8, 9, 10)],
+    "test7_77": [f"7.7-{i}" for i in range(1, 7)],
+}
+# Methods that write no ID of their own (Full Access, the probe) and the layout test.
+OTHER_METHODS = {"PhoneChecksUITests": ("test0_access", "test0_probe"), "KeyboardShotsUITests": ("testScenarios",)}
+NOT_RUN = "NOT-RUN"
 
 STATUSES = ("PASS", "FAIL", "RECORD", "SKIP", "PENDING")
 # Preferred memory method first (memsample.py writes these names).
@@ -63,12 +85,17 @@ def parse_line(line):
     return Check(parts[1], parts[2], evidence)
 
 
+def unescape(value):
+    """Backslash escapes as the Swift side's q() writes them."""
+    return re.sub(r"\\(.)", lambda e: "\n" if e.group(1) == "n" else e.group(1), value)
+
+
 def quoted_field(text, name):
     """The value of name="..." in a line (backslash escapes as the Swift side writes them), or None."""
     m = re.search(name + r'="((?:[^"\\]|\\.)*)"', text)
     if not m:
         return None
-    return re.sub(r"\\(.)", lambda e: "\n" if e.group(1) == "n" else e.group(1), m.group(1))
+    return unescape(m.group(1))
 
 
 def same_text(a, b):
@@ -80,8 +107,32 @@ def sort_key(check_id):
 
 
 def summary(lines):
-    n = {s: sum(1 for c in lines if c.status == s) for s in ("PASS", "FAIL", "RECORD", "SKIP")}
-    return f"CHECKS pass {n['PASS']} fail {n['FAIL']} record {n['RECORD']} skip {n['SKIP']}"
+    n = {s: sum(1 for c in lines if c.status == s) for s in ("PASS", "FAIL", "RECORD", "SKIP", NOT_RUN)}
+    text = f"CHECKS pass {n['PASS']} fail {n['FAIL']} record {n['RECORD']} skip {n['SKIP']}"
+    return text + (f" not-run {n[NOT_RUN]}" if n[NOT_RUN] else "")
+
+
+def known_entry(entry):
+    """A test class, or a class and one of its methods, as shotsfilter.py passes them."""
+    cls, sep, method = entry.partition("/")
+    if cls not in OTHER_METHODS:
+        return False
+    methods = set(OTHER_METHODS[cls]) | (set(METHOD_IDS) if cls == "PhoneChecksUITests" else set())
+    return not sep or method in methods
+
+
+def covered_ids(entries):
+    """The IDs (and "layout") a run with these -only-testing entries writes; None is the full run."""
+    if entries is None:
+        return set(EXPECTED_IDS) | {"layout"}
+    ids = set()
+    for entry in entries:
+        cls, _, method = entry.partition("/")
+        if cls == "KeyboardShotsUITests":
+            ids.add("layout")
+        elif cls == "PhoneChecksUITests":
+            ids.update(i for m, v in METHOD_IDS.items() if not method or m == method for i in v)
+    return ids
 
 
 def parse_marks(text):
@@ -181,11 +232,121 @@ def resolve_memory(check, marks, samples):
                  f"limit{resolution})")
 
 
-RESOLVERS = {"6.8-9": resolve_relaunch, "6.8-10": resolve_memory}
+# Script rules for model output (plan Task 2.3). Text is NFC first: conjoining jamo compose into syllables.
+def _nfc(s):
+    return unicodedata.normalize("NFC", s)
 
 
-def assemble(checks_text, log_text, mem_text):
-    """The final, sorted lines. None for checks_text means the test wrote no checks.txt."""
+def has_cyrillic(s):
+    return any(0x0400 <= ord(c) <= 0x04FF for c in _nfc(s))
+
+
+def has_hangul(s):
+    return any(0xAC00 <= ord(c) <= 0xD7A3 or 0x3131 <= ord(c) <= 0x318E for c in _nfc(s))
+
+
+def has_kana_or_kanji(s):
+    return any(0x3040 <= ord(c) <= 0x30FF or 0x4E00 <= ord(c) <= 0x9FFF for c in _nfc(s))
+
+
+def is_latin(s):
+    return any(c.isascii() and c.isalpha() for c in s) and not has_hangul(s)
+
+
+def contains(sub, case=True):
+    if case:
+        return (f"contains {sub!r}", lambda s: _nfc(sub) in _nfc(s))
+    return (f"contains {sub!r}", lambda s: _nfc(sub).casefold() in _nfc(s).casefold())
+
+
+def contains_word(word):
+    """Case-insensitive, whole word: `comprastes` is not `compraste`."""
+    pattern = re.compile(r"(?<!\w)" + re.escape(word) + r"(?!\w)", re.IGNORECASE)
+    return (f"contains the word {word!r}", lambda s: pattern.search(_nfc(s)) is not None)
+
+
+def contains_any(*subs):
+    """One of several spellings (8.5-7: the auxiliary verb spaced or joined)."""
+    return (f"contains one of {list(subs)!r}", lambda s: any(_nfc(sub) in _nfc(s) for sub in subs))
+
+
+def lacks(sub):
+    """Case-insensitive: `KO:` and `Pottery` count."""
+    return (f"no {sub!r}", lambda s: _nfc(sub).casefold() not in _nfc(s).casefold())
+
+
+CYRILLIC = ("Cyrillic", has_cyrillic)
+HANGUL = ("Hangul", has_hangul)
+NO_HANGUL = ("no Hangul", lambda s: not has_hangul(s))
+KANA_OR_KANJI = ("kana or kanji", has_kana_or_kanji)
+LATIN = ("Latin", is_latin)
+ABOUT_ME = [contains("Moonbeam Kiln"), lacks("pottery"), lacks("Victoria"), NO_HANGUL]
+
+# ID -> output group -> the rules every try of that group is held to. The test writes `<group>#<n>="..."` per try
+# (n = 1, and 2 after a retry); a group passes when one try passes all its rules. "No Hangul" on a translation into
+# another script is how the field shows only the translation (the draft was Hangul).
+RULES = {
+    "6.8-11": {"out": [LATIN]},
+    "8.5-1": {"out": [CYRILLIC, NO_HANGUL, lacks("ru:"), contains("спасла")]},
+    "8.5-3": {"out": [KANA_OR_KANJI, NO_HANGUL, lacks("ㅋ"), lacks("lol")]},
+    "8.5-4": {"out": [contains("cansado", case=False), lacks("cansada"), NO_HANGUL]},
+    "8.5-5": {"out": [LATIN]},
+    "8.5-6": {"out": [LATIN]},
+    # 말해 줘 (spaced, the standard) or 말해줘 (joined): tower ruling 2026-10-31 after run 41.
+    "8.5-7": {"out": [HANGUL, contains("ㅋㅋ"), contains("돼"), contains_any("말해 줘", "말해줘"), lacks("ko:")]},
+    "8.5-8": {"out": [HANGUL, lacks("ko:")]},
+    "8.5-9": {"out": [contains("color", case=False), contains_word("compraste"), contains("jaja", case=False),
+                      lacks("colour"), lacks("conprastes")]},
+    "7.7-2": {"out": ABOUT_ME},
+    "7.7-3": {"panel": [HANGUL], "out": ABOUT_ME},
+}
+
+TRY = re.compile(r'(?<![\w#])([a-z]+)#(\d+)="((?:[^"\\]|\\.)*)"')
+
+
+def tries(evidence):
+    """{group: [(n, text), ...]} from the `<group>#<n>="..."` pairs of a line, in order."""
+    found = {}
+    for m in TRY.finditer(evidence):
+        found.setdefault(m.group(1), []).append((int(m.group(2)), unescape(m.group(3))))
+    return found
+
+
+def resolve_rules(check, marks, samples):
+    found = tries(check.evidence)
+    missing = [g for g in RULES[check.id] if g not in found]
+    if missing:
+        return unreadable(check.id, f"no {'/'.join(missing)} output in {check.evidence[:200]!r}")
+    verdicts = []
+    passed = True
+    for group, rules in RULES[check.id].items():
+        group_ok = False
+        for n, text in found[group]:
+            fails = [name for name, ok in rules if not ok(text)]
+            verdicts.append(f"{group}#{n} " + ("ok" if not fails else "fails " + ", ".join(fails)))
+            group_ok = group_ok or not fails
+        passed = passed and group_ok
+    return Check(check.id, "PASS" if passed else "FAIL", f"{check.evidence} => {'; '.join(verdicts)}")
+
+
+RESOLVERS = {"6.8-9": resolve_relaunch, "6.8-10": resolve_memory, **{i: resolve_rules for i in RULES}}
+
+
+NO_KEY = "no network key"
+
+
+def guard_network(c, network_key):
+    """A RULES item passes only through its model output; with the key a missing key is the CI's failure."""
+    if c.id in RULES and c.status == "PASS":
+        return unreadable(c.id, f"PASS without model output to judge: {c.evidence[:200]!r}")
+    if network_key and c.status == "SKIP" and c.evidence.startswith(NO_KEY):
+        return unreadable(c.id, f"the run had the key but the test wrote {c.evidence[:120]!r}")
+    return c
+
+
+def assemble(checks_text, log_text, mem_text, network_key=False, ran=None):
+    """The final, sorted lines. None for checks_text means the test wrote no checks.txt. `ran` (covered_ids) is the
+    set of IDs a filtered run selected: an expected ID outside it without a line is NOT-RUN, not FAIL."""
     by_id = {}
     extra = []
     if checks_text is None:
@@ -210,8 +371,17 @@ def assemble(checks_text, log_text, mem_text):
             continue
         resolver = RESOLVERS.get(check_id)
         by_id[check_id] = resolver(c, marks, samples) if resolver else unreadable(check_id, f"unresolved PENDING {c.evidence}")
+    for check_id, c in list(by_id.items()):
+        if c.evidence.startswith("unreadable") or c.status not in ("PASS", "SKIP"):
+            continue
+        # Lines the test wrote PASS directly; resolved PENDING lines carry their verdict after " => ".
+        if c.status == "PASS" and " => " in c.evidence:
+            continue
+        by_id[check_id] = guard_network(c, network_key)
     for check_id in EXPECTED_IDS:
-        if check_id not in by_id:
+        if check_id not in by_id and ran is not None and check_id not in ran:
+            by_id[check_id] = Check(check_id, NOT_RUN, "filtered run: its test method was not selected")
+        elif check_id not in by_id:
             why = "no checks.txt" if checks_text is None else "no CHECK line"
             by_id[check_id] = unreadable(check_id, why)
     return sorted(by_id.values(), key=lambda c: sort_key(c.id))
@@ -227,12 +397,27 @@ def read(path):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    network_key = "--network-key" in argv
+    argv = [a for a in argv if a != "--network-key"]
+    ran = None
+    if "--ran" in argv:
+        i = argv.index("--ran")
+        if i + 1 >= len(argv):
+            print(__doc__, file=sys.stderr)
+            return 2
+        entries = [e for e in argv[i + 1].split(",") if e]
+        bad = [e for e in entries if not known_entry(e)]
+        if not entries or bad:
+            print(f"checks.py: --ran needs test entries, got {argv[i + 1]!r}", file=sys.stderr)
+            return 2
+        ran = covered_ids(entries)
+        del argv[i:i + 2]
     if len(argv) != 1:
         print(__doc__, file=sys.stderr)
         return 2
     d = argv[0]
     raw = read(os.path.join(d, "checks.txt"))
-    final = assemble(raw, read(os.path.join(d, "ui-log.txt")), read(os.path.join(d, "mem.txt")))
+    final = assemble(raw, read(os.path.join(d, "ui-log.txt")), read(os.path.join(d, "mem.txt")), network_key, ran)
     raw_copy = os.path.join(d, "checks-raw.txt")
     if raw is not None and not os.path.exists(raw_copy):
         with open(raw_copy, "w", encoding="utf-8") as f:

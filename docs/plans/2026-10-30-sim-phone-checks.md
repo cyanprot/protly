@@ -249,7 +249,7 @@ Test note (fictional, fixed, never the user's): `I run Moonbeam Kiln (문빔 킬
 | 8.5-4 | `es: 나 오늘 너무 피곤해` -> Insert: field contains `cansado`, not `cansada` |
 | 8.5-5 | `내일 3시에 봐` -> Insert: field is Latin, no Hangul |
 | 8.5-6 | `ok: 내일 봐` -> Insert: Latin, no Hangul |
-| 8.5-7 | `ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠` -> center Polish, tap: panel contains `Polishing`; OCR the change line before Insert (RECORD); Insert: field is Hangul, contains `ㅋㅋ`, `돼`, `말해줘`, no `ko:` |
+| 8.5-7 | `ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠` -> center Polish, tap: panel contains `Polishing`; OCR the change line before Insert (RECORD); Insert: field is Hangul, contains `ㅋㅋ`, `돼`, `말해 줘` or `말해줘` (the auxiliary verb spaced, the standard, or joined; tower ruling 2026-10-31 after run 41), no `ko:` |
 | 8.5-8 | the three-paragraph `ko:` draft -> center, tap: panel contains `Polishing`; Insert: Hangul, no `ko:` |
 | 8.5-9 | the Spanish polish -> Insert: contains `color`, `compraste`, `jaja`; no `colour` |
 | 8.5-10 | seconds from tap to `Insert` for 8.5-1, two tries: RECORD |

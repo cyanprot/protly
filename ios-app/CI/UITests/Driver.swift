@@ -33,6 +33,10 @@ enum Tap: Equatable {
     case letter(Character)
     case symbol(Character)
     case shift, space, ret, layer123, layerABC
+    /// The protly key (bottom row, after 123): the action that fits the field, Read clipboard on an empty one.
+    case protlyKey
+    /// Delete (row 3, right end).
+    case delete
 }
 
 /// Text to Protly taps (no actor: plain functions of the text).
@@ -109,8 +113,15 @@ enum Typing {
 @MainActor
 final class Driver {
     let test: XCTestCase
-    let app = XCUIApplication()
+    let app: XCUIApplication
     let out: URL
+    /// Row 1's top as last measured in the host, for apps whose screens keyboardTop() cannot read (the container
+    /// app's Form): the keyboard pins its own height, so row 1 sits at the same place in every app.
+    static var lastRow1: CGFloat?
+    /// When set, rowOne() returns it instead of measuring (the container app).
+    var fixedRow1: CGFloat?
+    /// The text input `field` stands for, when it is not the host's (`field` identifier).
+    var fieldOverride: XCUIElement?
     private(set) var width: CGFloat = 390
     /// true: a helper that cannot do its job fails the test (layout scenarios). false: it only logs and collects the
     /// message in `problems`; the phone checks put it in their CHECK lines and keep going.
@@ -121,8 +132,10 @@ final class Driver {
     /// Trees are dumped once per test run, not once per Driver.
     private static var dumped: Set<String> = []
 
-    init(test: XCTestCase) throws {
+    /// bundleIdentifier nil: the UI tests' target app, ProtlyCIHost.
+    init(test: XCTestCase, bundleIdentifier: String? = nil) throws {
         self.test = test
+        app = bundleIdentifier.map { XCUIApplication(bundleIdentifier: $0) } ?? XCUIApplication()
         let env = ProcessInfo.processInfo.environment
         let path = env["SHOTS_DIR"] ?? (env["SIMULATOR_HOST_HOME"] ?? NSTemporaryDirectory()) + "/protly-shots"
         out = URL(fileURLWithPath: path)
@@ -189,7 +202,7 @@ final class Driver {
         return false
     }
 
-    var field: XCUIElement { app.descendants(matching: .any)["field"] }
+    var field: XCUIElement { fieldOverride ?? app.descendants(matching: .any)["field"] }
 
     func focusField() {
         if field.waitForExistence(timeout: 3) {
@@ -315,16 +328,43 @@ final class Driver {
         s.terminate()
     }
 
-    private func tapRow(in a: XCUIApplication, _ predicate: NSPredicate) -> Bool {
-        for _ in 0..<6 {
-            let e = a.descendants(matching: .any).matching(predicate).firstMatch
-            if e.waitForExistence(timeout: 2) && e.isHittable {
-                e.tap()
-                return true
+    /// Taps a row once it is on screen, scrolling either way to get it there: Settings can open scrolled anywhere
+    /// (it keeps its position), and run 34 swiped past General with up-swipes only. A row that exists is scrolled
+    /// toward by its frame; one not loaded yet is looked for toward the top first, then toward the bottom.
+    /// cellsOnly: a row, never a title with the same text (iOS 26 titles General > Keyboard "Keyboards", run 30).
+    private func tapRow(in a: XCUIApplication, _ predicate: NSPredicate, cellsOnly: Bool = false) -> Bool {
+        let window = a.windows.firstMatch.frame
+        let top: CGFloat = 110, bottom = (window.height > 0 ? window.height : 844) - 40
+        var towardTop = 4  // swipes down (content toward the top) before looking further down
+        for _ in 0..<14 {
+            let e = cellsOnly ? row(in: a, predicate) : a.descendants(matching: .any).matching(predicate).firstMatch
+            if e.waitForExistence(timeout: 2) {
+                let f = e.frame
+                if f.minY >= top && f.maxY <= bottom && e.isHittable {
+                    e.tap()
+                    return true
+                }
+                // A third of the screen with no fling, so the list cannot overshoot the row.
+                let from = a.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: f.minY < top ? 0.35 : 0.65))
+                let to = a.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: f.minY < top ? 0.65 : 0.35))
+                from.press(forDuration: 0.05, thenDragTo: to)
+                log(String(format: "Settings: row at y %.0f..%.0f, scrolling %@", f.minY, f.maxY, f.minY < top ? "up" : "down"))
+            } else if towardTop > 0 {
+                towardTop -= 1
+                a.swipeDown()
+            } else {
+                a.swipeUp()
             }
-            a.swipeUp()
+            pause(0.6)
         }
         return false
+    }
+
+    /// A Settings row: a cell labeled so (General > Keyboard, run 30) or a cell holding a button labeled so (the root
+    /// page's cells carry no label of their own, run 34).
+    private func row(in a: XCUIApplication, _ predicate: NSPredicate) -> XCUIElement {
+        let own = a.cells.matching(predicate).firstMatch
+        return own.exists ? own : a.cells.containing(predicate).firstMatch
     }
 
     // MARK: Host field (ios-app/CI/Host)
@@ -373,8 +413,11 @@ final class Driver {
 
     /// Row 1's top in points, from a screenshot (measure.py's way); nil without a keyboard.
     func rowOne(_ shot: Shot? = nil) -> CGFloat? {
+        if let fixedRow1 { return fixedRow1 }
         guard let s = shot ?? screenshot(), let top = s.keyboardTop() else { return nil }
-        return s.row1Top(below: top, column: keyX(row: 0, index: 1)) ?? (CGFloat(top) / s.scale + Geo.band)
+        let row1 = s.row1Top(below: top, column: keyX(row: 0, index: 1)) ?? (CGFloat(top) / s.scale + Geo.band)
+        Self.lastRow1 = row1
+        return row1
     }
 
     /// Types `text` on Protly. Hangul goes in as its Dubeolsik keys (ProtlyCore KeyEncoder), capitals and the
@@ -426,6 +469,10 @@ final class Driver {
             return (width - Geo.sideInset - inner * 0.125, y(3))
         case .layer123, .layerABC:
             return (Geo.sideInset + inner * 0.0615, y(3))
+        case .protlyKey:
+            return (Geo.sideInset + inner * (0.123 + 0.0615), y(3))
+        case .delete:
+            return (width - Geo.sideInset - inner * 0.065, y(2))
         }
     }
 
@@ -449,18 +496,108 @@ final class Driver {
         return CGRect(x: x0, y: top, width: x1 - x0, height: Geo.barHeight + 3)
     }
 
-    /// Taps a bar slot at its center. false without a keyboard.
+    /// Taps a bar slot at its center, then waits `settle` seconds. false without a keyboard.
     @discardableResult
-    func tapSlot(_ slot: Slot) -> Bool {
+    func tapSlot(_ slot: Slot, settle: TimeInterval = 0.8) -> Bool {
         guard let row1 = rowOne() else {
             fail("no keyboard for a \(slot.name) slot tap")
             return false
         }
         let r = slotRect(slot, row1: row1)
         point(r.midX, row1 - Geo.barBottom - Geo.barHeight / 2).tap()
-        pause(0.8)
+        if settle > 0 { pause(settle) }
         log("tapped the \(slot.name) slot")
         return true
+    }
+
+    /// One key tap by coordinate (the protly key, delete).
+    func tapKey(_ tap: Tap) {
+        guard let row1 = rowOne() else {
+            fail("no keyboard for a \(tap) tap")
+            return
+        }
+        let (x, y) = position(of: tap, row1: row1)
+        point(x, y).tap()
+        pause(keyPause)
+        log("tapped \(tap)")
+    }
+
+    // MARK: The panel (ios-app/Sources/ProtlyKeyboard/Panel.swift)
+
+    /// The panel covers the key rows, from half a row gap above row 1 to the last row's key bottom (it is the
+    /// layout's height, bottom-aligned). Its buttons are one line at the bottom, inside 12 pt of padding.
+    func panelRect(row1: CGFloat) -> CGRect {
+        let gap = (Geo.rowPitch - Geo.keyHeight) / 2
+        return CGRect(x: Geo.sideInset + 2, y: row1 - gap, width: width - 2 * Geo.sideInset - 4,
+                      height: 3 * Geo.rowPitch + Geo.keyHeight + gap)
+    }
+
+    /// The band of the panel's button row (Cancel / Done on the left, Insert / Save / Retry on the right).
+    func panelButtonBand(row1: CGFloat) -> CGRect {
+        let r = panelRect(row1: row1)
+        return CGRect(x: r.minX, y: r.maxY - 45, width: r.width, height: 45)
+    }
+
+    // MARK: Full Access (plan Task 2.2)
+
+    /// Settings > General > Keyboard > Keyboards > Protly > Allow Full Access > Allow. Returns whether the switch
+    /// reads on afterwards and how it got there.
+    func fullAccessInSettings() -> (on: Bool, how: String) {
+        let s = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
+        s.launch()
+        defer { s.terminate() }
+        let toggle = s.switches.matching(NSPredicate(format: "label CONTAINS[c] 'Full Access'")).firstMatch
+        let steps: [(String, NSPredicate)] = [
+            ("General", NSPredicate(format: "label ==[c] 'General' OR identifier == 'com.apple.settings.general'")),
+            ("Keyboard", NSPredicate(format: "label ==[c] 'Keyboard'")),
+            ("Keyboards", NSPredicate(format: "identifier == 'KEYBOARDS' OR label BEGINSWITH[c] 'Keyboards,'")),
+            ("Protly", NSPredicate(format: "label BEGINSWITH[c] 'Protly'")),
+        ]
+        // Settings may come back on the page it showed last: start from the deepest step on screen. Rows only: on
+        // iOS 26 the General > Keyboard page is titled "Keyboards", like the row it holds (run 30).
+        _ = s.navigationBars.firstMatch.waitForExistence(timeout: 5)
+        var first = 0
+        for (i, step) in steps.enumerated().reversed() where row(in: s, step.1).exists {
+            first = i
+            break
+        }
+        if !toggle.exists {
+            for (name, predicate) in steps[first...] {
+                guard tapRow(in: s, predicate, cellsOnly: true) else {
+                    log("Settings: \(name) not found")
+                    dumpOnce("settings-full-access-\(name)", s)
+                    return (false, "Settings: \(name) not found")
+                }
+                log("Settings: \(name)")
+                pause(1)
+            }
+        }
+        guard toggle.waitForExistence(timeout: 3) else {
+            dumpOnce("settings-full-access-switch", s)
+            return (false, "Settings: no Allow Full Access switch")
+        }
+        func isOn() -> Bool { (toggle.value as? String) == "1" }
+        if isOn() {
+            dumpOnce("settings-full-access", s)
+            return (true, "already on")
+        }
+        var how = ""
+        let taps: [() -> Void] = [{ toggle.tap() }, { toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap() }]
+        for (i, tap) in taps.enumerated() {
+            tap()
+            let allow = s.alerts.buttons["Allow"]
+            if allow.waitForExistence(timeout: 3) {
+                allow.tap()
+                how = "switch tap \(i + 1), Allow in the alert"
+            } else {
+                how = "switch tap \(i + 1), no alert"
+            }
+            pause(1)
+            log("Settings: \(how), switch \(String(describing: toggle.value))")
+            if isOn() { break }
+        }
+        dumpOnce("settings-full-access", s)
+        return (isOn(), isOn() ? "turned on in Settings (\(how))" : "still off in Settings (\(how))")
     }
 
     // MARK: Output
