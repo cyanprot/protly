@@ -359,6 +359,21 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertTrue(insert.contains("lastInsert = (result, selected, !selected.isEmpty)"), "Read's Insert drops the selection")
     }
 
+    /// Tower decision D-B: the keys wait during the field read, so the read runs on FieldReadBudget's clock (2 s in all,
+    /// a started step always settles) instead of a fixed count of polls.
+    func testTheFieldReadIsCapped() throws {
+        guard let text = try sources().first(where: { $0.name == "FieldText.swift" })?.text else {
+            return XCTFail("FieldText.swift not found")
+        }
+        let ns = text as NSString
+        let read = body(of: "static func read(", in: ns).map { ns.substring(with: $0) } ?? ""
+        for needle in ["FieldReadBudget(start:", "for _ in 0..<FieldReadBudget.maxSteps", "budget.canStartStep(now:",
+                       "while budget.isWaiting(sentAt: sent,"] {
+            XCTAssertTrue(read.contains(needle), "FieldText.read: \(needle)")
+        }
+        XCTAssertTrue(matches(#"for _ in 0\.\.<\d"#, in: read).isEmpty, "FieldText.read: a fixed count of steps or polls")
+    }
+
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {
         let line = ns.lineRange(for: r)
         return "\(ns.substring(to: r.location).components(separatedBy: "\n").count): "

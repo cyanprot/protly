@@ -1,3 +1,4 @@
+import ProtlyCore
 import UIKit
 
 /// Reads and replaces the whole field through the text document proxy.
@@ -15,21 +16,27 @@ enum FieldText {
     /// The field text, or the selection when there is one. nil when the field is empty or the read was cancelled.
     /// `record` gets each cursor step as it is sent and then whether the host showed it. A cancel stops the read
     /// before its next step, never during one: a step on its way is always settled first, so Cancel moves back only
-    /// over steps that landed (CursorReturn).
+    /// over steps that landed (CursorReturn). The whole read ends within 2 s (FieldReadBudget, D-B): the keys wait
+    /// meanwhile. The cap, like a cancel, only stops the read before a step; text left after the cursor then makes it
+    /// a cut-short read.
     static func read(_ proxy: UITextDocumentProxy, record: (Move) -> Void) async -> (text: String, isSelection: Bool)? {
         if let sel = proxy.selectedText, !sel.isEmpty { return (sel, true) }
+        let budget = FieldReadBudget(start: ProcessInfo.processInfo.systemUptime)
         // The after-context often stops at a paragraph break, so one jump can land mid-text: repeat.
-        for _ in 0..<10 {
+        for _ in 0..<FieldReadBudget.maxSteps {
             guard !Task.isCancelled else { return nil }  // cancelled before a move: never start one
+            // The step's full wait no longer fits in the cap: stop here, the keys come back.
+            guard budget.canStartStep(now: ProcessInfo.processInfo.systemUptime) else { break }
             guard let after = proxy.documentContextAfterInput, !after.isEmpty else { break }
             let before = proxy.documentContextBeforeInput
             record(.sending(after))
             proxy.adjustTextPosition(byCharacterOffset: after.utf16.count)  // UTF-16 units
+            let sent = ProcessInfo.processInfo.systemUptime
             // Hosts apply the move asynchronously: poll until the context changes (max 1 s). Either side counts: the
             // next chunk can read the same as this one (blank lines, a repeated line), the text before never does.
-            // The wait ignores a cancel: the step settles first, then the loop stops before the next one.
+            // The wait ignores a cancel and the cap: the step settles first, then the loop stops before the next one.
             var moved = false
-            for _ in 0..<50 {
+            while budget.isWaiting(sentAt: sent, now: ProcessInfo.processInfo.systemUptime) {
                 await pause()
                 if proxy.documentContextAfterInput != after || proxy.documentContextBeforeInput != before {
                     moved = true

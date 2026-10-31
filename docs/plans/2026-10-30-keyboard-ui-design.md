@@ -24,6 +24,18 @@ These override the text below wherever they disagree.
 - **Open, not in this campaign:** Read translates someone else's text into Korean (`ActionMode.in`). An English
   speaker needs English; changing the target is logic, planned later with the other languages.
 
+## Tower decisions 2026-10-31 (review of #20, fixes from #22)
+
+The owner delegated these to the tower. They override the text below wherever they disagree.
+
+- **D4 deviation: the keys wait during the field read.** D4 keeps the keys live until the first text arrives. A key
+  typed while the field read walks the cursor to the end would land mid-text and join the text sent, so the keys
+  wait for the read (`ProtlyActionHandler`; a gesture's `.end` still passes); the network wait that follows keeps
+  them live, as D4 says. The whole read is capped at 2 s (`FieldReadBudget`): a new cursor step starts only while its
+  full 1 s settle wait still fits, so a step on its way always settles and Cancel's record stays exact. A read the
+  cap stops leaves text after the cursor and ends like any cut-short read ("Could not read the whole text. Select
+  all, then tap again.", with Retry); the keys come back. Phone check owed: whether 2 s feels OK.
+
 ## Goal
 
 The keyboard works but does not feel finished. This campaign makes the moments people touch many times a message
