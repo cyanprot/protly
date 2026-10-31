@@ -331,7 +331,7 @@ final class Driver {
     /// cellsOnly: a row, never a title with the same text (iOS 26 titles General > Keyboard "Keyboards", run 30).
     private func tapRow(in a: XCUIApplication, _ predicate: NSPredicate, cellsOnly: Bool = false) -> Bool {
         for _ in 0..<6 {
-            let e = (cellsOnly ? a.cells : a.descendants(matching: .any)).matching(predicate).firstMatch
+            let e = cellsOnly ? row(in: a, predicate) : a.descendants(matching: .any).matching(predicate).firstMatch
             if e.waitForExistence(timeout: 2) && e.isHittable {
                 e.tap()
                 return true
@@ -339,6 +339,13 @@ final class Driver {
             a.swipeUp()
         }
         return false
+    }
+
+    /// A Settings row: a cell labeled so (General > Keyboard, run 30) or a cell holding a button labeled so (the root
+    /// page's cells carry no label of their own, run 34).
+    private func row(in a: XCUIApplication, _ predicate: NSPredicate) -> XCUIElement {
+        let own = a.cells.matching(predicate).firstMatch
+        return own.exists ? own : a.cells.containing(predicate).firstMatch
     }
 
     // MARK: Host field (ios-app/CI/Host)
@@ -522,7 +529,7 @@ final class Driver {
         defer { s.terminate() }
         let toggle = s.switches.matching(NSPredicate(format: "label CONTAINS[c] 'Full Access'")).firstMatch
         let steps: [(String, NSPredicate)] = [
-            ("General", NSPredicate(format: "label ==[c] 'General'")),
+            ("General", NSPredicate(format: "label ==[c] 'General' OR identifier == 'com.apple.settings.general'")),
             ("Keyboard", NSPredicate(format: "label ==[c] 'Keyboard'")),
             ("Keyboards", NSPredicate(format: "identifier == 'KEYBOARDS' OR label BEGINSWITH[c] 'Keyboards,'")),
             ("Protly", NSPredicate(format: "label BEGINSWITH[c] 'Protly'")),
@@ -531,7 +538,7 @@ final class Driver {
         // iOS 26 the General > Keyboard page is titled "Keyboards", like the row it holds (run 30).
         _ = s.navigationBars.firstMatch.waitForExistence(timeout: 5)
         var first = 0
-        for (i, step) in steps.enumerated().reversed() where s.cells.matching(step.1).firstMatch.exists {
+        for (i, step) in steps.enumerated().reversed() where row(in: s, step.1).exists {
             first = i
             break
         }
