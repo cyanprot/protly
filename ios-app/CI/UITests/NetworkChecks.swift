@@ -376,7 +376,8 @@ extension PhoneRun {
         simple("8.5-6", Draft(code: "ok", text: "내일 봐 "), korean: true, passes: Rules.latin)
         simple("8.5-7", Draft(code: "ko", text: "낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 "), korean: true,
                center: "Polish", busy: "Polishing", needBusy: true) {
-            Rules.hangul($0) && $0.contains("ㅋㅋ") && $0.contains("돼") && $0.contains("말해줘") && !Rules.hasNoCase($0, "ko:")
+            Rules.hangul($0) && $0.contains("ㅋㅋ") && $0.contains("돼") && ($0.contains("말해 줘") || $0.contains("말해줘"))
+                && !Rules.hasNoCase($0, "ko:")
         }
         simple("8.5-8", Draft(code: "ko", text: "오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ "), korean: true,
                center: "Polish", busy: "Polishing", needBusy: true) {

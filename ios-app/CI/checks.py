@@ -225,6 +225,11 @@ def contains_word(word):
     return (f"contains the word {word!r}", lambda s: pattern.search(_nfc(s)) is not None)
 
 
+def contains_any(*subs):
+    """One of several spellings (8.5-7: the auxiliary verb spaced or joined)."""
+    return (f"contains one of {list(subs)!r}", lambda s: any(_nfc(sub) in _nfc(s) for sub in subs))
+
+
 def lacks(sub):
     """Case-insensitive: `KO:` and `Pottery` count."""
     return (f"no {sub!r}", lambda s: _nfc(sub).casefold() not in _nfc(s).casefold())
@@ -247,7 +252,8 @@ RULES = {
     "8.5-4": {"out": [contains("cansado", case=False), lacks("cansada"), NO_HANGUL]},
     "8.5-5": {"out": [LATIN]},
     "8.5-6": {"out": [LATIN]},
-    "8.5-7": {"out": [HANGUL, contains("ㅋㅋ"), contains("돼"), contains("말해줘"), lacks("ko:")]},
+    # 말해 줘 (spaced, the standard) or 말해줘 (joined): tower ruling 2026-10-31 after run 41.
+    "8.5-7": {"out": [HANGUL, contains("ㅋㅋ"), contains("돼"), contains_any("말해 줘", "말해줘"), lacks("ko:")]},
     "8.5-8": {"out": [HANGUL, lacks("ko:")]},
     "8.5-9": {"out": [contains("color", case=False), contains_word("compraste"), contains("jaja", case=False),
                       lacks("colour"), lacks("conprastes")]},

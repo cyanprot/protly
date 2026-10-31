@@ -409,6 +409,10 @@ class NetworkResolveTests(unittest.TestCase):
         self.assertEqual(resolve(good).status, "PASS")
         self.assertEqual(resolve(good.replace("ㅋㅋ ", "")).status, "FAIL")
         self.assertEqual(resolve(good.replace("말해줘", "말해죠")).status, "FAIL")
+        # Tower ruling (2026-10-31): the auxiliary verb spaced (the standard, run 41's output) or joined.
+        self.assertEqual(resolve(good.replace("말해줘", "말해 줘")).status, "PASS")
+        self.assertEqual(resolve(good.replace("말해줘", "말해  줘")).status, "FAIL")
+        self.assertEqual(resolve(good.replace("말해줘", "말해 죠")).status, "FAIL")
         self.assertEqual(resolve(good.replace('out#1="', 'out#1="ko: ')).status, "FAIL")
         self.assertEqual(resolve('CHECK 8.5-7 PENDING out#1="Are you free tomorrow? lol"').status, "FAIL")
 
