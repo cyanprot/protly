@@ -12,6 +12,8 @@ that types Korean and English on one QWERTY grid and offers Translate / Polish /
 - Security review and test hardening (cloud): `docs/plans/2026-10-29-security-review.md`.
 - Typing fixes (cloud): `docs/plans/2026-10-30-typing-fixes.md` (plain-text composition, Spanish flip, space
   trackpad, simulator proof; research in `docs/research/`).
+- Keyboard and app UI (Sprint 9, local campaign): `docs/plans/2026-10-30-keyboard-ui.md` (design:
+  `docs/plans/2026-10-30-keyboard-ui-design.md`).
 - Phone and simulator findings: `docs/ios-keyboard-notes.md`.
 
 ## Layout
