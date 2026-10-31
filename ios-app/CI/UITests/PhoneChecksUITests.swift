@@ -291,19 +291,26 @@ final class PhoneRun {
         return SlotRead(text: text, ink: ink, file: file + ".png")
     }
 
-    /// A slot read again from contrast-stretched crops (Reader.contrastTexts), for a dim label; the first variant whose
-    /// text passes `ok` wins. Every reading is noted, so the report shows which variant read it.
-    func rereadDim(_ slot: Slot, _ item: Item, _ first: SlotRead, _ ok: (String) -> Bool) -> SlotRead {
-        guard first.unreadable == nil, reader.works, !(first.text.map(ok) ?? false) else { return first }
-        let screen = XCUIScreen.main.screenshot()
-        guard let shot = d.screenshot(screen), let row1 = d.rowOne(shot) else { return first }
-        let reads = reader.contrastTexts(in: d.slotRect(slot, row1: row1), of: screen, points: d.width,
-                                         label: "\(item.id) \(slot.name)")
-        let texts = reads.map { (name: $0.name, text: $0.lines.map { Self.clean($0.joined(separator: " ")) }) }
-        let readings = texts.map { "\($0.name)=\(q($0.text))" }.joined(separator: " ")
-        item.note("\(slot.name)-plain=\(q(first.text)) \(readings)")
-        guard let hit = texts.first(where: { $0.text.map(ok) ?? false }) else { return first }
-        return SlotRead(text: hit.text, ink: first.ink, file: first.file)
+    /// OCR first; when it misses, the slot button's accessibility label, if the slot has ink (the keyboard's elements
+    /// are in the host's tree: tree-06). Once keyboard-ui 001 dropped the quotes around the flip, Vision read the
+    /// jamo-only "ㅗ디ㅣㅐ" as "-]T" (runs 49f47b2-62 and 394cf1a-66, also from contrast-stretched crops); the label is
+    /// the string the slot draws. Both readings are noted.
+    func labelFallback(_ slot: Slot, _ item: Item, _ first: SlotRead, _ ok: (String) -> Bool) -> SlotRead {
+        guard first.unreadable == nil, !(first.text.map(ok) ?? false) else { return first }
+        let label = slotLabel(slot)
+        item.note("\(slot.name)-ocr=\(q(first.text)) \(slot.name)-label=\(q(label)) ink \(first.ink)")
+        guard let label, ok(label), first.ink >= Self.inkEmpty else { return first }
+        return SlotRead(text: label, ink: first.ink, file: first.file)
+    }
+
+    /// The label of the button whose center is in `slot`'s rect, among buttons with a Hangul label.
+    func slotLabel(_ slot: Slot) -> String? {
+        guard let row1 = d.rowOne() else { return nil }
+        let rect = d.slotRect(slot, row1: row1)
+        let hangul = NSPredicate(format: "label MATCHES %@", ".*[\\u1100-\\u11FF\\u3130-\\u318F\\uAC00-\\uD7A3].*")
+        return d.app.buttons.matching(hangul).allElementsBoundByIndex
+            .first { rect.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) }?
+            .label
     }
 
     /// OCR text without the flip's curly quotes around it.
@@ -520,8 +527,8 @@ final class PhoneRun {
         var it = Item("ws-1")
         d.clearField()
         d.type("hello ")
-        // `ㅗ디ㅣㅐ` is not a word, so the slot dims it (keyboard-ui 001): read it again with more contrast if needed.
-        let left = rereadDim(.left, it, readSlot(.left, it)) { hasHangul($0) }
+        // Vision misreads the unquoted jamo `ㅗ디ㅣㅐ` (keyboard-ui 001): the slot's label stands in, with its ink.
+        let left = labelFallback(.left, it, readSlot(.left, it)) { hasHangul($0) }
         expectSlot(it, "left", left, "Hangul") { hasHangul($0) }
         d.tapSlot(.left)
         if let f = field() {

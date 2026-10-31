@@ -108,44 +108,6 @@ final class Reader {
         return recognize(c.image, label: label, languages: languages)
     }
 
-    /// The text in `rect` read again from contrast-stretched crops: the crop's luminance spread over the full range
-    /// at twice the size, light on dark ("dark") and inverted ("light"). For a dim label: keyboard-ui 001 dims a
-    /// flip that is not a listed word, and Vision read the dim jamo-only "ㅗ디ㅣㅐ" as "-]T" (run 49f47b2-62).
-    func contrastTexts(in rect: CGRect, of shot: XCUIScreenshot, points: CGFloat, label: String)
-        -> [(name: String, lines: [String]?)] {
-        guard let c = cropped(rect, of: shot, points: points, label: label) else { return [] }
-        var reads: [(name: String, lines: [String]?)] = []
-        for (name, invert) in [("dark", false), ("light", true)] {
-            let image = Self.stretched(c.image, invert: invert)
-            reads.append((name: name, lines: image.flatMap { recognize($0, label: "\(label) \(name)") }))
-        }
-        return reads
-    }
-
-    /// Gray, twice the size, luminance stretched from the crop's darkest to its lightest pixel (inverted on request).
-    static func stretched(_ image: CGImage, invert: Bool) -> CGImage? {
-        let w = image.width * 2, h = image.height * 2
-        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
-                                  space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)
-        else { return nil }
-        ctx.interpolationQuality = .high
-        ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
-        guard let data = ctx.data else { return nil }
-        let px = data.bindMemory(to: UInt8.self, capacity: w * h)
-        var lo: UInt8 = 255, hi: UInt8 = 0
-        for i in 0..<(w * h) {
-            lo = min(lo, px[i])
-            hi = max(hi, px[i])
-        }
-        guard hi > lo else { return nil }
-        let span = Double(hi - lo)
-        for i in 0..<(w * h) {
-            let v = UInt8((Double(px[i] - lo) / span * 255).rounded())
-            px[i] = invert ? 255 - v : v
-        }
-        return ctx.makeImage()
-    }
-
     /// Lines in reading order and word boxes (points) in `rect` of `shot`; nil when Vision failed.
     func read(in rect: CGRect, of shot: XCUIScreenshot, points: CGFloat, label: String, quiet: Bool = false) -> Seen? {
         guard let c = cropped(rect, of: shot, points: points, label: label),
