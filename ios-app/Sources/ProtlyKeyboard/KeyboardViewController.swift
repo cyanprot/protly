@@ -407,7 +407,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         // @Published fires on every write; an unchanged write would rebuild the keyboard on each key.
         let center = BarAction.center(text: text, canUndo: mode.canUndo, clipboardIsNew: isNew)
         if mode.center != center { mode.center = center }
-        let key = BarAction.protlyKey(text: text, canUndo: mode.canUndo, clipboardIsNew: isNew)
+        let key = center ?? .read  // BarAction.protlyKey, without a second scan of the field
         if mode.protlyKey != key { mode.protlyKey = key }
         if mode.fullAccess != hasFullAccess { mode.fullAccess = hasFullAccess }
     }
@@ -417,7 +417,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         let korean = session.keycapLanguage == .korean
         if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
-        if mode.alternativeIsWord != session.alternativeIsWord { mode.alternativeIsWord = session.alternativeIsWord }
+        let isWord = session.alternativeIsWord
+        if mode.alternativeIsWord != isWord { mode.alternativeIsWord = isWord }
         refreshWords()
         refreshField()
     }

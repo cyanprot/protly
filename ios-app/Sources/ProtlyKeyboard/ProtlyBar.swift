@@ -4,7 +4,7 @@ import SwiftUI
 /// The predictive bar: Apple's three equal slots (the protly key is in the bottom row), each a button the full third
 /// of the width and the whole band above row 1 (BarSlotStyle), with thin dividers between them like Apple's.
 /// Left: the other reading of the word being typed or just typed (tap flips), dimmed when it is not a listed word.
-/// Center: the action pill (BarAction: Undo after a Replace, else the action that fits the field, else Read when new
+/// Center: the action pill (BarAction: Undo after an Insert, else the action that fits the field, else Read when new
 /// text was copied). Right: a fix (typo, contraction, text replacement) or a completion for the word being typed.
 /// Every label comes from ProtlyMode; the decisions behind it live in ProtlyCore.
 struct ProtlyBar: View {
@@ -63,6 +63,8 @@ struct ProtlyBar: View {
     private var center: some View {
         if let action = mode.center {
             Button { run(action) } label: { pill(action) }
+                // Under Reduce Motion a new action is a new pill, so the capsule fades instead of resizing.
+                .id(reduceMotion ? action : nil)
                 .transition(pillTransition)
         }
     }
@@ -120,5 +122,6 @@ struct ProtlyBar: View {
             .frame(height: BarSlotStyle.rowHeight)
             .frame(maxHeight: .infinity, alignment: .top)
             .opacity(visible ? 1 : 0)
+            .animation(.easeOut(duration: 0.1), value: visible)
     }
 }
