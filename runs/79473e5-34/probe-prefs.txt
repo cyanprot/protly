@@ -1,0 +1,1204 @@
+Device data changes around test0_access (Full Access in Settings), each snapshot after simctl shutdown:
+full access: off, Settings: General not found
+snapshots: before 1033 plists, TCC.db, after 1105 plists, TCC.db
+new Containers/Data/Application/7930A9CC-024D-434D-9380-685C11292B6C/.com.apple.mobile_container_manager.metadata.plist
+  + MCMMetadataActiveDPClass: -1
+  + MCMMetadataContentClass: 2
+  + MCMMetadataCreator: 'com.apple.installd'
+  + MCMMetadataIdentifier: 'com.northprot.protly.cihost.uitests.xctrunner'
+  + MCMMetadataInfo.com.apple.MobileInstallation.ContentProtectionClass: -1
+  + MCMMetadataSchemaVersion: 1
+  + MCMMetadataUUID: 'D3ACACD7-0413-4E22-AF25-833F16B6C6F4'
+  + MCMMetadataUserIdentity.posixGID: 20
+  + MCMMetadataUserIdentity.posixUID: 501
+  + MCMMetadataUserIdentity.type: 2
+  + MCMMetadataUserIdentity.version: '2'
+  + MCMMetadataVersion: 8
+new Containers/Data/InternalDaemon/8F5043F7-FDB9-4B94-A99C-A01359A7B62B/.com.apple.mobile_container_manager.metadata.plist
+  + MCMMetadataActiveDPClass: -1
+  + MCMMetadataContentClass: 10
+  + MCMMetadataCreator: 'com.apple.jetpackassetd'
+  + MCMMetadataIdentifier: 'com.apple.jetpackassetd'
+  + MCMMetadataInfo.com.apple.MobileInstallation.ContentProtectionClass: -1
+  + MCMMetadataSchemaVersion: 1
+  + MCMMetadataUUID: 'FEEBB4A4-BAA2-4161-A6BA-61A1ADAB970A'
+  + MCMMetadataUserIdentity.posixGID: 20
+  + MCMMetadataUserIdentity.posixUID: 501
+  + MCMMetadataUserIdentity.type: 2
+  + MCMMetadataUserIdentity.version: '2'
+  + MCMMetadataVersion: 8
+new Containers/Data/InternalDaemon/AB34B4A1-531B-41AE-B192-06A93DB31168/.com.apple.mobile_container_manager.metadata.plist
+  + MCMMetadataActiveDPClass: -1
+  + MCMMetadataContentClass: 10
+  + MCMMetadataCreator: 'com.apple.testmanagerd'
+  + MCMMetadataIdentifier: 'com.apple.testmanagerd'
+  + MCMMetadataInfo.com.apple.MobileInstallation.ContentProtectionClass: -1
+  + MCMMetadataSchemaVersion: 1
+  + MCMMetadataUUID: '6515C8CA-BA98-4397-A896-00592AF1B9E4'
+  + MCMMetadataUserIdentity.posixGID: 20
+  + MCMMetadataUserIdentity.posixUID: 501
+  + MCMMetadataUserIdentity.type: 2
+  + MCMMetadataUserIdentity.version: '2'
+  + MCMMetadataVersion: 8
+new Containers/Shared/AppGroup/0A4AF1AD-B57F-425B-8E97-F239059F11B5/Library/Preferences/group.com.apple.accessibility.voicebanking.plist
+  + ttsvb_hasPerformVoiceDatastoreMigrationV1: True
+Containers/Shared/AppGroup/B6B075DC-DD4F-40DD-9D9D-ADB3AAAE8E1F/Library/Preferences/group.com.apple.mail.plist
+  - : {}
+  + BlackPearlBreakthroughVersion: 'BreakthroughBeta'
+  + BlackPearlExperimentDeploymentID: -1
+  + BlackPearlFinalRuleVersion: '1.4'
+  + BlackPearlModelVersion: '2.3'
+  + BlackPearlRolloutDeploymentID: -1
+  + BlackPearlSenderModelVersion: '1.4'
+  + BlackPearlTSModelVersion: '2.2'
+  + MFUserNotificationCenterUpgraderDefaultStatus: True
+  + blackPearlCategorizationVersion: '2.7.0'
+new Containers/Shared/AppGroup/C0A8C4F7-335B-4A01-9B7C-84E73C569D24/.com.apple.mobile_container_manager.metadata.plist
+  + MCMMetadataActiveDPClass: -1
+  + MCMMetadataContentClass: 7
+  + MCMMetadataCreator: 'com.apple.fileproviderd'
+  + MCMMetadataIdentifier: 'group.com.apple.FileProvider.DomainCaching'
+  + MCMMetadataInfo.com.apple.MobileInstallation.ContentProtectionClass: -1
+  + MCMMetadataSchemaVersion: 2
+  + MCMMetadataUUID: '6571C8BE-6AA0-4DA5-8DF4-A1C4A45878CC'
+  + MCMMetadataUserIdentity.posixGID: 20
+  + MCMMetadataUserIdentity.posixUID: 501
+  + MCMMetadataUserIdentity.type: 2
+  + MCMMetadataUserIdentity.version: '2'
+  + MCMMetadataVersion: 8
+new Containers/Shared/AppGroup/C0A8C4F7-335B-4A01-9B7C-84E73C569D24/.domainscache.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null', {'NS.keys': [UID(2), UID(3), UID(4)], 'NS.objects': [UID(5), UID(21), UID(29)], '$class': UID(10)}, 'com.apple.mobileslideshow.PhotosFileProvider', 'com.apple.CloudDocs.iCloudDriveFileProvider', 'com.apple.FileProvider.LocalStorage', {'_supportedFileTypes': UID(0), '_supportsEnumeration': ...
+  + $top.root: UID(1)
+  + $version: 100000
+new Containers/Shared/SystemGroup/3A0F0AEB-5CFB-47D7-9809-A93CE17F3EA7/.com.apple.mobile_container_manager.metadata.plist
+  + MCMMetadataActiveDPClass: -1
+  + MCMMetadataContentClass: 13
+  + MCMMetadataCreator: 'com.apple.UsageTrackingAgent'
+  + MCMMetadataIdentifier: 'systemgroup.com.apple.DeviceActivity'
+  + MCMMetadataInfo.com.apple.MobileInstallation.ContentProtectionClass: -1
+  + MCMMetadataSchemaVersion: 2
+  + MCMMetadataUUID: '04F9A523-8C21-40E6-A595-96C2B2E4B532'
+  + MCMMetadataUserIdentity.posixGID: 20
+  + MCMMetadataUserIdentity.posixUID: 501
+  + MCMMetadataUserIdentity.type: 3
+  + MCMMetadataUserIdentity.version: '2'
+  + MCMMetadataVersion: 8
+new Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/.com.apple.mobile_container_manager.metadata.plist
+  + MCMMetadataActiveDPClass: -1
+  + MCMMetadataContentClass: 13
+  + MCMMetadataCreator: 'com.apple.icloudmailagent'
+  + MCMMetadataIdentifier: 'systemgroup.com.apple.icloudMCCKit'
+  + MCMMetadataInfo.com.apple.MobileInstallation.ContentProtectionClass: -1
+  + MCMMetadataSchemaVersion: 2
+  + MCMMetadataUUID: '923E3D1A-446D-4958-8176-77EFD85A289F'
+  + MCMMetadataUserIdentity.posixGID: 20
+  + MCMMetadataUserIdentity.posixUID: 501
+  + MCMMetadataUserIdentity.type: 3
+  + MCMMetadataUserIdentity.version: '2'
+  + MCMMetadataVersion: 8
+Documents/com.apple.springboard.appLibrary/com.apple.springboardhome.categorymapcache.en_US.default.6.plist
+  ~ $objects: ['$null', {'_sortedApplicationIdentifiersByCategoryIdentifier': UID(13), '$class': UID(44), '_categoryIdentifiers': UID(2), '_localizedCategoryNameByCategoryIdentifier': UID(40), '_loadedFromDisk': True, '_uniqueIdentifier': UID(41), '_generatedDate': UID(42)}, {'NS.objects': [UID(3), UID(8)], '$cla... -> ['$null', {'_sortedApplicationIdentifiersByCategoryIdentifier': UID(13), '$class': UID(45), '_categoryIdentifiers': UID(2), '_localizedCategoryNameByCategoryIdentifier': UID(41), '_loadedFromDisk': True, '_uniqueIdentifier': UID(42), '_generatedDate': UID(43)}, {'NS.objects': [UID(3), UID(8)], '$cla...
+new Library/Application Support/com.apple.remotemanagementd/MigrationStatus.plist
+  + ProcessedActions: [{'Identifier': 'RMMigrationSystemContainer', 'Timestamp': datetime.datetime(2026, 10, 31, 2, 5, 17)}, {'Identifier': 'RMMigrationStatusPath', 'Timestamp': datetime.datetime(2026, 10, 31, 2, 5, 17)}, {'Identifier': 'RMMigrationExcludeFromBackup', 'Timestamp': datetime.datetime(2026, 10, 31, 2, 5, 17...
+Library/BulletinBoard/VersionedSectionInfo.plist
+  + sectionInfo.com.apple.Home: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xaf\x10\x0f\x0b\x0c:;dklpu\x81\x82\x86\x89&\x8dU$null\xdf\x10\x18\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !"#$%&%(%*(,-./...
+new Library/FinanceBackup/finance.plist
+  + permissions: []
+new Library/LanguageModeling/en-dynamic.lm/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.LanguageModeling.en'
+  + CFBundleInfoDictionaryVersion: 6
+  + CFBundleName: 'en-dynamic'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'dynamic-lexicon', 'Priority': 0, 'Type': 36}, {'Name': 'dynamic', 'Priority': 0, 'Type': 3}, {'Name': 'tags', 'Priority': 0, 'Type': 8}, {'Name': 'meta', 'Priority': 0, 'Type': 9}]
+  + LexiconMigrationStage: 1
+  + Locale: 'en'
+new Library/Photos/Libraries/Syndication.photoslibrary/private/com.apple.assetsd/appPrivateData.plist
+  + Library.Identifier.ContainerIdentifier: 'com.apple.photos'
+  + Library.Identifier.Name: 'Syndication'
+  + Library.Identifier.Path: '/Users/runner/Library/Developer/CoreSimulator/Devices/FD14EFE1-8A98-4E6B-B448-B0D25FC7B629/data/Library/Photos/Libraries/Syndication.photoslibrary'
+  + Library.Identifier.UUID: '3CF8661A-542E-4838-AF3B-DB3DBD1D4BEA'
+  + Library.Identifier.UserDescription: ''
+  + PLModelMigrator.CreateOptions.PLPhotoLibraryCreateOptions: 3
+new Library/Photos/Libraries/Syndication.photoslibrary/private/com.apple.assetsd/assetUUIDForPath.plist
+  + storeUUID: 'E068463F-7F16-4FC6-9A5E-CC76692FC0E4'
+new Library/Photos/Libraries/Syndication.photoslibrary/private/com.apple.mediaanalysisd/caches/vision/mediaAnalysisVersionState.plist
+  + FaceProcessingInternalVersion: 15
+new Library/Photos/Libraries/Syndication.photoslibrary/resources/journals/MigrationHistory.plist
+  + currentPayloadVersion: 1
+Library/Preferences/.GlobalPreferences.plist
+  + com.apple.gms.availability.key: [0]
+  + com.apple.gms.availability.unifiedReasons: b'{"com.apple.Settings.AppleIntelligence.Partner.ChatGPT":[{"unavailable":{"_0":{"partnerNotSelected":{}}}}]}'
+  + com.apple.gms.availability.useCaseReadiness: b'{}'
+new Library/Preferences/Logging/Subsystems/com.northprot.protly.plist
+  + DEFAULT-OPTIONS.Level.Enable: 'debug'
+  + DEFAULT-OPTIONS.Level.Persist: 'debug'
+Library/Preferences/TokenBucketRateLimiter.plist
+  - SKDUserDefaultsRoot.SKDUserDefaultsMap: {}
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Embedding.timestamp: 815105098.964113
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Embedding.timestampLastReplenished: 815105095.910622
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Embedding.tokenCount: 1500
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Keyphrase.timestamp: 815105098.797447
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Keyphrase.timestampLastReplenished: 815105095.8487431
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Keyphrase.tokenCount: 1500
+Library/Preferences/com.apple.Accessibility.Assets.plist
+  + InstalledAssets.com.apple.MobileAsset.AXIconVision: []
+  + InstalledAssets.com.apple.MobileAsset.MagnifierAsset: []
+  + RefreshEvents.com.apple.MobileAsset.AXIconVision: [datetime.datetime(2026, 10, 31, 2, 3, 10, 88503)]
+  + RefreshEvents.com.apple.MobileAsset.MagnifierAsset: [datetime.datetime(2026, 10, 31, 2, 3, 10, 103986)]
+  - StoreTasks.com.apple.MobileAsset.TTSAXResourceModelAssets.catalogUpdate.state.pending: {}
+  + StoreTasks.com.apple.MobileAsset.TTSAXResourceModelAssets.catalogUpdate.state.scheduled: {}
+  - StoreTasks.com.apple.accessibility.voices.upgrader.state.pending: {}
+  + StoreTasks.com.apple.accessibility.voices.upgrader.state.scheduled: {}
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.configuration.identifier: 'com.apple.voicedb.AXVoices.retry'
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.configuration.requiredConditions: 0
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.AXVoices.retry.state.running: {}
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.configuration.identifier: 'com.apple.voicedb.OnDisk.retry'
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.configuration.requiredConditions: 0
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.OnDisk.retry.state.scheduled: {}
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.configuration.identifier: 'com.apple.voicedb.Siri_gryphon.retry'
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.configuration.requiredConditions: 0
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.Siri_gryphon.retry.state.scheduled: {}
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.configuration.identifier: 'com.apple.voicedb.Siri_natural.retry'
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.configuration.requiredConditions: 0
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.Siri_natural.retry.state.running: {}
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.configuration.identifier: 'com.apple.voicedb.Siri_neural.retry'
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.configuration.requiredConditions: 0
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.state.scheduled: {}
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.configuration.identifier: 'com.apple.voicedb.Siri_neuralAX.retry'
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.configuration.requiredConditions: 0
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.failures: []
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.state.running: {}
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.identifier: 'com.apple.voicedb.TTSVBVoiceLoader.retry'
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.requiredConditions: 1
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.state.running: {}
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.configuration.identifier: 'com.apple.voicedb.ausp_axsr_appl.retry'
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.configuration.requiredConditions: 0
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.ausp_axsr_appl.retry.state.running: {}
+  ~ StoreTasks.com.apple.voicedb.ausp_crnc_appl.retry.failures: [] -> ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  - StoreTasks.com.apple.voicedb.ausp_crnc_appl.retry.state.pending: {}
+  + StoreTasks.com.apple.voicedb.ausp_crnc_appl.retry.state.running: {}
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.configuration.identifier: 'com.apple.voicedb.ausp_kona_appl.retry'
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.configuration.requiredConditions: 0
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.state.scheduled: {}
+  ~ StoreTasks.com.apple.voicedb.ausp_mctk_appl.retry.failures: [] -> ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  - StoreTasks.com.apple.voicedb.ausp_mctk_appl.retry.state.pending: {}
+  + StoreTasks.com.apple.voicedb.ausp_mctk_appl.retry.state.running: {}
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.identifier: 'com.apple.voicedb.firstUnlock'
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.requiredConditions: 1
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._0: 0.0
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._1.retry._0.exponential.max: 3600.0
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._1.retry._0.exponential.multiplier: 1.5
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._1.retry._0.exponential.start: 1.0
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._1.retry.maxAttempts: 5
+  + StoreTasks.com.apple.voicedb.firstUnlock.failures: []
+  + StoreTasks.com.apple.voicedb.firstUnlock.state.completed: {}
+  + UserInfo.com.apple.MobileAsset.AXIconVision.UpdateAsset_RestorationState.Date: datetime.datetime(2026, 10, 31, 2, 3, 33, 52494)
+  + UserInfo.com.apple.MobileAsset.AXIconVision.UpdateAsset_RestorationState.LastExitStatus: 'Failed'
+  + UserInfo.com.apple.MobileAsset.AXIconVision.UpdateAsset_RestorationState.Phase: 'Idle'
+  + UserInfo.com.apple.MobileAsset.MagnifierAsset.UpdateAsset_RestorationState.Date: datetime.datetime(2026, 10, 31, 2, 3, 25, 754890)
+  + UserInfo.com.apple.MobileAsset.MagnifierAsset.UpdateAsset_RestorationState.LastExitStatus: 'Success'
+  + UserInfo.com.apple.MobileAsset.MagnifierAsset.UpdateAsset_RestorationState.Phase: 'Idle'
+Library/Preferences/com.apple.Accessibility.plist
+  + AccessibilityEnabled: False
+  + ApplicationAccessibilityEnabled: 0
+  + AutomationEnabled: 0
+  + LocalizedStringLookupInfoEnabled: 0
+Library/Preferences/com.apple.AdPlatforms.plist
+  + LatestPAVersion: 1
+  + OSVersion: '26.5.0'
+Library/Preferences/com.apple.AuthKit.plist
+  ~ timeCfg: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c\x13U$null\xd3\r\x0e\x0f\x10\x11\x12_\x10\x16lastServerTimeInterval_\x10\x15lastLocalTimeIntervalV$class#A\xda\xb9R\xd2\x00\x00\x00#A\xda\xb9R\x... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c\x13U$null\xd3\r\x0e\x0f\x10\x11\x12_\x10\x16lastServerTimeInterval_\x10\x15lastLocalTimeIntervalV$class#A\xda\xb9R\xd2\x00\x00\x00#A\xda\xb9S\x...
+Library/Preferences/com.apple.CloudKit.plist
+  ~ AccountInfoValidationCounter: 30 -> 38
+new Library/Preferences/com.apple.CloudSubscriptionFeatures.config.plist
+  + subscriptionStatusRefresh: b'bplist00\xd1\x01\x02Uvalue\t\x08\x0b\x11\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x12'
+new Library/Preferences/com.apple.CloudSubscriptionFeatures.diagnostic.plist
+  + startFeatureRequest: b'{\n  "starts" : [\n    {\n      "triggerDate" : "2026-10-31T02:03:32Z",\n      "identifier" : "AC5753C8"\n    }\n  ]\n}'
+new Library/Preferences/com.apple.DiagnosticExtensions.extensionTracker.plist
+  + com.apple.DiagnosticExtensions.extensionTracker.XPCActivity.EarliestExpirationDate: datetime.datetime(4001, 1, 1, 0, 0)
+  + com.apple.DiagnosticExtensions.extensionTracker.XPCActivity.XPCActivityScheduledDate: datetime.datetime(4001, 1, 1, 2, 0)
+Library/Preferences/com.apple.FamilyControlsAgent.plist
+  ~ CloudKitAccountInfoCache.703ba8f63bdae00a37ff37317a821f69892b8aaac8adb38f53f614ab3b872520: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+new Library/Preferences/com.apple.FinanceKit.plist
+  + postInstallTaskVersions.clearTransactionIcons: 1
+  + postInstallTaskVersions.migrateAppPermissions: 1
+  + postInstallTaskVersions.populateAccountMatchEntities: 1
+  + postInstallTaskVersions.populateExtractedOrderMessageIDHash: 1
+  + postInstallTaskVersions.populateExtractedOrdersAutomaticIngestionLocalConsent: 1
+  + postInstallTaskVersions.populateFullyQualifiedAccountIdentifierInApplications: 1
+  + postInstallTaskVersions.populateMerchantNameFromBrand: 1
+  + postInstallTaskVersions.populateTransactionCategories: 2
+  + postInstallTaskVersions.populateTransactionsWithIsVisibleAndRemoveEmptyCurrencyCodes: 1
+  + postInstallTaskVersions.updateAccountsWithCurrentConsentID: 1
+new Library/Preferences/com.apple.HeartRate.notifications.plist
+  + MigrationVersion: 1
+new Library/Preferences/com.apple.Maps.mapssyncd.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793411441
+  + CloudKitAccountInfoCache.e30a6ddbb34dc219d5eec58a034494eef2e10a3ca6e5a93b1b3406c8da4cdfe6: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.MobileAsset.plist
+  + PallasUrlOverrideV2-com.apple.MobileAsset.Trial.Siri.SiriTextToSpeech: 'https://gdmf.apple.com/v2/assets'
+new Library/Preferences/com.apple.NanoUniverse.AegirProxyApp.AegirPoster.plist
+  + CalliopeRenderingReset: True
+Library/Preferences/com.apple.PosterBoard.unprotectedUserDefaults.plist
+  + PBFExecuteUpdateHistory: ['2026-10-31 02:03:56 | prewarm | 42.99s | PBFDescriptorRefreshStrategyRefreshIfEmpty | PBFPosterExtensionDataStoreGalleryConfigurationOptionsPersistAndUse | PBFPosterExtensionDataStoreGalleryConfigurationOptionsOnlyIfStale | SUCCESS']
+Library/Preferences/com.apple.Preferences.plist
+  + WebDatabaseDirectory: '/Users/runner/Library/Developer/CoreSimulator/Devices/FD14EFE1-8A98-4E6B-B448-B0D25FC7B629/data/Library/WebKit/Databases'
+  + WebKitLocalStorageDatabasePathPreferenceKey: '/Users/runner/Library/Developer/CoreSimulator/Devices/FD14EFE1-8A98-4E6B-B448-B0D25FC7B629/data/Library/WebKit/LocalStorage'
+  + com.apple.UIKit.UISplitViewController.Root.primaryEdgeSplitViewControllerColumn: 0
+  + com.apple.UIKit.UISplitViewController.Root.secondaryEdgeSplitViewControllerColumn: 999
+new Library/Preferences/com.apple.PridePoster.PridePosterExtension.plist
+  + grid-D3F1DEF5-97C2-4640-AF84-559A38B359CB,2E0594BE-FA70-40E8-9A69-F7621559696E-layoutIndex: 1
+  + lights-8604E92E-3681-4777-9917-BD1F58BF69C2,1851F757-5B63-40AA-8152-EF9637F42EF5-cameraIdentifier: 'angledFull2'
+Library/Preferences/com.apple.SafariBookmarksSyncAgent.plist
+  ~ CloudKitAccountInfoCache.2b3de799861e14b04addec7e2f751b30c50441f04acc2955c1af16d72e36d330: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.StatusKitAgent.plist
+  ~ CloudKitAccountInfoCache.3902b2981283e580a9da1ac08c3d62865213f45d1f05b9813a67ecb44fc70ae5: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.TelephonyUtilities.plist
+  ~ badge_count_data: b'{"legacyVoicemails":0,"carrierVoicemails":0,"missedFaceTimeGroupCalls":0,"faceTimeVideoMessages":0,"isAmbiguous":false,"missedFaceTimeCalls":0,"faceTimeAudioMessages":0,"missedTelephonyCalls":0}' -> b'{"missedFaceTimeCalls":0,"missedFaceTimeGroupCalls":0,"faceTimeAudioMessages":0,"faceTimeVideoMessages":0,"missedTelephonyCalls":0,"carrierVoicemails":0,"isAmbiguous":false,"legacyVoicemails":0}'
+Library/Preferences/com.apple.amsengagementd.plist
+  ~ AMSActivityObserverDateLastCheckedIn: 1793411913.478259 -> 1793412147.950794
+  + CloudKitAccountInfoCache.e5a393ccc7f7b509f52390698eee30a76c991d614aedd94780ff29061ebe3a9f: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.appstored.plist
+  ~ AdPlatformsStatusConditionSetDate: datetime.datetime(2026, 10, 31, 1, 59, 53, 993675) -> datetime.datetime(2026, 10, 31, 2, 2, 38, 771539)
+Library/Preferences/com.apple.apsd.plist
+  ~ APSLastFullHandshake: 1793412098.157085 -> 1793412360.7621012
+  + APSPersistentTopics.com.apple.aps.FamilyControlsAgent.darkWakeEnabled: False
+  + APSPersistentTopics.com.apple.aps.FamilyControlsAgent.enableStatusUpdates: True
+  + APSPersistentTopics.com.apple.aps.FamilyControlsAgent.enabled: ['com.apple.icloud-container.com.apple.FamilyControlsAgent']
+  + APSPersistentTopics.com.apple.aps.FamilyControlsAgent.environment: 'development'
+  + APSPersistentTopics.com.apple.aps.FamilyControlsAgent.processName: 'FamilyControlsAgent'
+  + APSPersistentTopics.com.apple.aps.FamilyControlsAgent.tokenAcked: False
+  + APSPersistentTopics.com.apple.aps.jetpackassetd.darkWakeEnabled: False
+  + APSPersistentTopics.com.apple.aps.jetpackassetd.environment: 'development'
+  + APSPersistentTopics.com.apple.aps.jetpackassetd.opportunistic: ['com.apple.jetpackassetd']
+  + APSPersistentTopics.com.apple.aps.jetpackassetd.processName: 'jetpackassetd'
+  + APSPersistentTopics.com.apple.aps.jetpackassetd.tokenAcked: False
+  + APSPersistentTopics.com.apple.aps.managedassetsd.darkWakeEnabled: False
+  + APSPersistentTopics.com.apple.aps.managedassetsd.enableStatusUpdates: True
+  + APSPersistentTopics.com.apple.aps.managedassetsd.enabled: ['com.apple.icloud-container.com.apple.managedassetsd']
+  + APSPersistentTopics.com.apple.aps.managedassetsd.environment: 'development'
+  + APSPersistentTopics.com.apple.aps.managedassetsd.processName: 'managedassetsd'
+  + APSPersistentTopics.com.apple.aps.managedassetsd.tokenAcked: False
+  + APSPersistentTopics.com.apple.aps.seymour.darkWakeEnabled: False
+  + APSPersistentTopics.com.apple.aps.seymour.enabled: ['com.apple.fitcored', 'com.apple.icloud-container.com.apple.fitcored']
+  + APSPersistentTopics.com.apple.aps.seymour.environment: 'development'
+  + APSPersistentTopics.com.apple.aps.seymour.processName: 'fitcored'
+  + APSPersistentTopics.com.apple.aps.seymour.tokenAcked: False
+Library/Preferences/com.apple.assetsd.plist
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeA: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeC: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeCD: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeD: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeDD: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeF: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeH: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeI: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeJ: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeM: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeN: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeP: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeR: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeS: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeSH: []
+  + PLBackgroundJobServiceBundleRecordsKeyWithShortCodeU: []
+  + PLBackgroundMigrationPaths./Users/runner/Library/Developer/CoreSimulator/Devices/FD14EFE1-8A98-4E6B-B448-B0D25FC7B629/data/Library/Photos/Libraries/Syndication.photoslibrary: 0
+  ~ PLSyndicationLastUpdateDate: datetime.datetime(2026, 10, 31, 1, 58, 35, 624670) -> datetime.datetime(2026, 10, 31, 2, 2, 34, 894964)
+Library/Preferences/com.apple.assistant.backedup.plist
+  ~ SiriAvailability.allCapabilities.saeCapabilities: 4 -> 52
+Library/Preferences/com.apple.assistant.plist
+  + Accounts.7CD69589-C88C-4A3C-8ACA-AC2AF790F9FC.Ace Host: 'or11sa'
+  + Accounts.7CD69589-C88C-4A3C-8ACA-AC2AF790F9FC.Last Assistant Data Anchor: '0db7b5864fb5961ebbe583ed494fa7937e68d5cc'
+  - Accounts.7CD69589-C88C-4A3C-8ACA-AC2AF790F9FC.Needs Creation: True
+  + Accounts.7CD69589-C88C-4A3C-8ACA-AC2AF790F9FC.Validation Expiration: datetime.datetime(2026, 11, 3, 3, 3, 41, 137090)
+  + Accounts.7CD69589-C88C-4A3C-8ACA-AC2AF790F9FC.Validation Version: 1
+  + Country Code: 'US'
+  + Experiment Identifierinvocation_feedback_experiment: '1A71AC0F-D032-40DC-A419-9FEAA0EDB3EA'
+  + Flush Session Tickets Cache: False
+  + Has ATV in the home: False
+  + Has ATV or HomePods in the home: False
+  + Has HomePod(s) in the home: False
+  + Initial Interstitial Delay: 3.5
+  + Initial Interstitial Delay - stark: 5.0
+  + Initial Interstitial Delay for VoiceTrigger One-Shot without Audio Ducking: 1.75
+  + Is user data sync needed for peer watch: False
+  + Last client experiment check date: datetime.datetime(2026, 10, 31, 2, 3, 4, 388921)
+  + Last server experiment check date: datetime.datetime(2026, 10, 31, 2, 3, 4, 381467)
+  + Myriad Device Adjust: 0.0
+  + Myriad Device Class: 0
+  + Myriad Device Delay: 0.0
+  + Myriad Device Trump Delay: 1.75
+  + Myriad VTEndtimeDistanceThreshold: 0.5
+  + Server Has Provisioned Myriad: True
+Library/Preferences/com.apple.assistant.support.plist
+  + Allow Explicit Content: True
+Library/Preferences/com.apple.bg.system.task.plist
+  + ActivityBaseDates.com.apple.accessibility.voices.upgrader: datetime.datetime(2026, 10, 31, 2, 3, 8, 723880)
+  + ActivityBaseDates.com.apple.activityawardsd.companion_scheduler: datetime.datetime(2026, 10, 31, 2, 3, 8, 766884)
+  + ActivityBaseDates.com.apple.ap.promotedcontentd.policy.biomedonation: datetime.datetime(2026, 10, 31, 2, 3, 4, 598782)
+  + ActivityBaseDates.com.apple.bird.memory-reclaimer: datetime.datetime(2026, 10, 31, 2, 3, 3, 958222)
+  + ActivityBaseDates.com.apple.dasd.enRelaunch: datetime.datetime(2026, 10, 31, 2, 3, 8, 783706)
+  + ActivityBaseDates.com.apple.email.searchIndexer.analytics: datetime.datetime(2026, 10, 31, 2, 5, 3, 59986)
+  + ActivityBaseDates.com.apple.email.searchIndexerBGTask: datetime.datetime(2026, 10, 31, 2, 5, 12, 407619)
+  + ActivityBaseDates.com.apple.healthd.HDWorkoutCondenser-activity: datetime.datetime(2026, 10, 31, 2, 3, 1, 686748)
+  + ActivityBaseDates.com.apple.healthd.healthrecords.ingestion: datetime.datetime(2026, 10, 31, 2, 3, 8, 800047)
+  + ActivityBaseDates.com.apple.medialibraryd.maintainence: datetime.datetime(2026, 10, 31, 2, 4, 56, 230506)
+  ~ ActivityBaseDates.com.apple.parsec-fbf.cleanup: datetime.datetime(2026, 10, 31, 2, 44, 57, 269884) -> datetime.datetime(2026, 10, 31, 2, 1, 53, 971138)
+  ~ ActivityBaseDates.com.apple.parsec-fbf.flush: datetime.datetime(2026, 10, 31, 2, 21, 7, 267496) -> datetime.datetime(2026, 10, 31, 2, 1, 53, 971138)
+  ~ ActivityBaseDates.com.apple.photoanalysisd.backgroundanalysis: datetime.datetime(2026, 10, 31, 2, 38, 18, 687755) -> datetime.datetime(2026, 10, 31, 2, 1, 53, 971138)
+  ~ ActivityBaseDates.com.apple.photoanalysisd.music: datetime.datetime(2026, 10, 31, 3, 26, 23, 740800) -> datetime.datetime(2026, 10, 31, 2, 1, 53, 971138)
+  + ActivityBaseDates.com.apple.private.home.hindsight.weeklyEventDigestTask: datetime.datetime(2026, 10, 31, 6, 42, 32, 577711)
+  + ActivityBaseDates.com.apple.siri.bg_system_task.speech-audio-sample-delete: datetime.datetime(2026, 10, 31, 2, 3, 4, 362003)
+  + ActivityBaseDates.com.apple.siri.inference.DailySignalRefresh: datetime.datetime(2026, 10, 31, 2, 3, 4, 368205)
+  + ActivityBaseDates.com.apple.spotlightknowledged.pipelines.all.reset.ab: datetime.datetime(2026, 10, 31, 2, 3, 3, 962142)
+  + ActivityBaseDates.com.apple.spotlightknowledged.pipelines.all.reset.c: datetime.datetime(2026, 10, 31, 2, 3, 4, 585073)
+  + ActivityBaseDates.com.apple.spotlightknowledged.pipelines.keyphrase.index-processing.ab: datetime.datetime(2026, 10, 31, 2, 3, 8, 789164)
+  + ActivityBaseDates.com.apple.spotlightknowledged.pipelines.keyphrase.index-processing.c: datetime.datetime(2026, 10, 31, 2, 3, 8, 733237)
+  + ActivityBaseDates.com.apple.springboard.posterboardupdate.overnight: datetime.datetime(2026, 10, 31, 2, 3, 3, 975421)
+  + FastPassActivitiesRun.com.apple.healthd.post-install-update.fastpass: 0
+  + VersionSpecificActivitiesRun: ['com.apple.siri.bg_system_task.post-install-speech-profile-migration', 'com.apple.financed.post-install', 'com.apple.healthd.post-install-update.fastpass', 'com.apple.family.osupdate.backgroundTask', 'com.apple.FitnessIntelligence.Scheduling.PostRestorePrivateDataActivity', 'com.apple.GenerativeFun...
+Library/Preferences/com.apple.chronod.plist
+  ~ lastKnownTimes.world: 1793411951.4884238 -> 1793412119.879356
+new Library/Preferences/com.apple.contacts.postersyncd.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793411441
+  + CloudKitAccountInfoCache.22d1a0538d856e09e254acd889f7e8accdfa8371053045bcdeda766ec7c9b687: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+new Library/Preferences/com.apple.contextsync.subscriptions.plist
+  + lastBootUUID: '0E6A1723-7024-43B3-9AE9-3E3FB696685B'
+  + rebootNotificationDelivered: True
+  + storageVersion: 1
+Library/Preferences/com.apple.coreaudio.plist
+  - : {}
+  + EnableHAELiveMonitor: True
+  + HAENKnownAccessoryExpiryDays: 14.0
+  + HAENSampleTransient: False
+  + HAENVolumeReductionDelta: 0.0625
+  + VolumeLimitEnabled: False
+  + VolumeLimitThreshold: 85
+new Library/Preferences/com.apple.coreidv.coreidvd.plist
+  + last-seen-coreidvd-version: '8.504'
+  + last-seen-region: 'US'
+Library/Preferences/com.apple.corespotlightui.plist
+  + CSReceiverBundleIdentifierState.com.apple.AppStore: True
+  + CSReceiverBundleIdentifierState.com.apple.Preferences: True
+  + CSReceiverBundleIdentifierState.com.apple.shortcuts: True
+  + CSReceiverBundleIdentifierState.com.apple.usernotificationsd: True
+Library/Preferences/com.apple.das.fairscheduling.plist
+  ~ lastResetDate: datetime.datetime(2026, 10, 31, 1, 58, 3, 513430) -> datetime.datetime(2026, 10, 31, 2, 1, 52, 923930)
+  + priorityQueue.com.apple.spotlightknowledged.pipelines.embedding.index-processing.ab: 19.977484941482544
+  + priorityQueue.com.apple.spotlightknowledged.pipelines.embedding.index-processing.c: 1.1108529567718506
+  + priorityQueue.com.apple.spotlightknowledged.task: 0.704042911529541
+  + priorityQueue.com.apple.spotlightknowledged.task.keyphrases: 5.613147020339966
+  + priorityQueue.com.apple.springboard.posterboardupdate.prewarm: 90.19296407699585
+Library/Preferences/com.apple.dasd.activityDurationTracker.plist
+  ~ FeatureDurationDict.600: 0 -> 5.762531995773315
+new Library/Preferences/com.apple.email.maild.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793411441
+  + CloudKitAccountInfoCache.a80927d7659fb869fab40b5e912e64d2622c282e8b53c91aceee98d0f35051e4: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  + EDLegacyKeychainCleanupCompleted: True
+  + ToCcMigrationCompleted: True
+  + set-initial-vip-flags: True
+Library/Preferences/com.apple.financed.plist
+  ~ CloudKitAccountInfoCache.41d1d24fb0315bd233ae8c8acef0b2a1cb04969fdd52aa2104ca1bc755acf80e: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.findmy.findmylocated.plist
+  ~ CloudKitAccountInfoCache.210c4646fe74acf7d8f0546ec3ecbe1eb0fff2d916e85e5b66b8adbaaadeedf3: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.fitcored.plist
+  ~ CloudKitAccountInfoCache.1ddd4ca09c9bee0c39bc4dc94c3ac97a791897eeb7ff140d0ffd46de0c665fe9: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  + RecentAPIAccessProcessBundles.com.apple.ActivityAwardsServices: datetime.datetime(2026, 10, 31, 2, 3, 11, 92008)
+  + RecentAPIAccessProcessBundles.com.apple.FitnessIntelligenceSnapshotService: datetime.datetime(2026, 10, 31, 2, 3, 11, 637673)
+  + notificationSettingsMigrated: True
+new Library/Preferences/com.apple.fitnesscoachingd.plist
+  + CoachingStartDate: datetime.datetime(2026, 10, 31, 2, 3, 1, 425115)
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierActiveEnergyBurned: 'Cal'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierBasalEnergyBurned: 'Cal'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceCrossCountrySkiing: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceCycling: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceDownhillSnowSports: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistancePaddleSports: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceRowing: 'km'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceSkatingSports: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceSwimming: 'yd'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceWalkingRunning: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierUnderwaterDepth: 'ft'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierWaterTemperature: 'degF'
+Library/Preferences/com.apple.gamed.plist
+  ~ GKURLPatternCacheExpirationDateUserDefaultsKey: datetime.datetime(2026, 10, 31, 2, 59, 17, 368120) -> datetime.datetime(2026, 10, 31, 2, 59, 17, 369882)
+new Library/Preferences/com.apple.generativeexperiences.corefollowup.plist
+  + DateOfLastAppleIntelligenceReadinessCFU: datetime.datetime(2026, 10, 31, 2, 3, 40, 799419)
+new Library/Preferences/com.apple.generativepartnerservicesettings.plist
+  + AllLLMUISettings.com.apple.openai.chatgpt.enablementCount: 0
+  + AllLLMUISettings.com.apple.openai.chatgpt.unavailable: False
+  + gatMigrationComplete2: True
+new Library/Preferences/com.apple.gms.availability.plist
+  + com.apple.gms.availability.reasons: []
+  + com.apple.gms.availability.updatedSinceBootUUID: '0E6A1723-7024-43B3-9AE9-3E3FB696685B'
+  + com.apple.gms.availability.wasAvailable: True
+new Library/Preferences/com.apple.health.shared.plist
+  + HealthExperience.healthKitDatabaseIdentifierKey: '76E7ED37-1F2D-400A-8A2B-AE10709DA25A'
+  + MaximumCompatibleSleepScoreAlgorithmVersion: 2
+  + MinimumCompatibleSleepScoreAlgorithmVersion: 1
+new Library/Preferences/com.apple.healthappd.plist
+  + com.apple.healthappd.generation.background.after_unlock_all: 815104994.465456
+Library/Preferences/com.apple.healthd.plist
+  - : {}
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793411441
+  + CloudKitAccountInfoCache.1f7c159e2c345e3e712195e1c664374cde99d78d53871c0ed30f4f7c7125cc9d: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  + DatabaseIdentifier-00000000-0000-0000-0000-000000000000: '76E7ED37-1F2D-400A-8A2B-AE10709DA25A'
+  + HDAuthorizationBackupSyncEntityRestoreIdentifier: '5A068825-75CF-4315-930C-25F974C09E95'
+  + HDClinicalHCEnvironment: 2
+  + HDCloudSyncAccountInfo: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  + HDPeriodicCountryMonitor_LastCheckAttemptDate: datetime.datetime(2026, 10, 31, 2, 3, 7, 743947)
+  + HDPeriodicCountryMonitor_LastFetchAttemptBuild: '23F77'
+  + HDPeriodicCountryMonitor_LastFetchAttemptDate: datetime.datetime(2026, 10, 31, 2, 3, 7, 776039)
+  + HKEnableWorkoutSeriesAggregation: True
+  + HKHRAFibBurdenSevenDayAnalysisStartingMinute: 24
+  + HKHRAFibBurdenSevenDayAnalysisStartingSecond: 8
+  + SyncIdentityHardwareIdentifier: b'\xe2\xf0\xb1E\x8b6F\xee\xb7\xcd\x8d`B\x95\xb8\xeb'
+Library/Preferences/com.apple.homed.plist
+  ~ CloudKitAccountInfoCache.16e5dd866e807589ee3bf28c038a0b7c234b01797f60a9f91ef1177310cbb8e8: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.68f88d50b86377fe9cf4499ffbf0ab85be05d3d3867ca003ac1a350634e025a4: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.6b3152cb5cb61325362e70273a2109e1894bfbe253ff5eea9cb1df461f4bea12: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.eaa60b397c3964a115f599077b8417e354f5c33c43f8ca7211e483489b664bc0: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ HMDHomeManagerGenerationCounter: 1 -> 4
+  ~ homedLaunchTime: datetime.datetime(2026, 10, 31, 1, 58, 21, 75580) -> datetime.datetime(2026, 10, 31, 2, 2, 25, 729617)
+new Library/Preferences/com.apple.homeeventsd.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793411441
+  + CloudKitAccountInfoCache.c72f6a314c31157ee9d33261b344002f6512d39bb24166e4c97881881d465623: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.identityservicesd.plist
+  ~ CloudKitAccountInfoCache.058f954dc58b7ee5aaa32162774998dd87a5fb4d7de2da441ab54103d038f9af: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ LastKeyGeneration: 1793411884.165143 -> 1793412112.526375
+  + activityTopics: ['com.apple.private.alloy.home-com.apple.HomeKit']
+new Library/Preferences/com.apple.ind.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793411441
+Library/Preferences/com.apple.itunesstored.plist
+  ~ TLSLastSampleDate: datetime.datetime(2026, 10, 31, 1, 59, 56, 417857) -> datetime.datetime(2026, 10, 31, 2, 2, 37, 256894)
+new Library/Preferences/com.apple.jetpackassetd.plist
+  + subscribedControlChannelID: '8Trk3gqBEfAAAMJxP4Ly2Q=='
+Library/Preferences/com.apple.liveactivitiesd.plist
+  ~ KnownClients: ['com.apple.springboard', 'com.apple.remindd', 'com.apple.chronod', 'com.apple.mobiletimerd', 'com.apple.routined'] -> ['com.apple.mobiletimerd', 'com.apple.routined', 'com.apple.springboard', 'com.apple.chronod', 'com.apple.remindd']
+new Library/Preferences/com.apple.managedassetsd.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793411441
+  + CloudKitAccountInfoCache.00338f103c19f03a31ef734773aa00e6b3b5e0907d4ffd17a990cabd5be240f8: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+new Library/Preferences/com.apple.mediaanalysisd.plist
+  + PhotoLibraries: ['/Users/runner/Library/Developer/CoreSimulator/Devices/FD14EFE1-8A98-4E6B-B448-B0D25FC7B629/data/Media', '/Users/runner/Library/Developer/CoreSimulator/Devices/FD14EFE1-8A98-4E6B-B448-B0D25FC7B629/data/Library/Photos/Libraries/Syndication.photoslibrary']
+Library/Preferences/com.apple.mediaremoted.plist
+  ~ ConnectedClientAuditTokens: [b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\x1f$\x00\x00\xae\x86\x01\x00XJ\x00\x00', b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\x03$\x00\x00\xae\x86\x01\x00"J\x00\x00', b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\... -> [b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xbd/\x00\x00\xae\x86\x01\x00!b\x00\x00', b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\x93/\x00\x00\xae\x86\x01\x00\xc8b\x00\x00', b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x...
+  ~ PersonalDeviceState.kMRDPersonalDeviceControllerPersonalDeviceStateDateKey: datetime.datetime(2026, 10, 31, 1, 58, 12, 778905) -> datetime.datetime(2026, 10, 31, 2, 2, 22, 142528)
+  ~ SystemEndpoint.Proactive.timesince: 1.990795135498047e-05 -> 249.3567008972168
+  ~ SystemEndpoint.UserSelected.selectionreason: 'No UserSelectedSystemEndpoint' -> "doesn't participate in idle reset"
+  ~ SystemEndpoint.UserSelected.timesince: 0.0006769895553588867 -> 249.35736298561096
+new Library/Preferences/com.apple.mobileslideshow.PhotosReliveWidget.plist
+  + scheduledReload_0: b"bplist00\xd3\x01\x02\x03\x04\x05\x06_\x10\x0fentryIdentifierUdelay]scheduledDateP#@\x92\xc0\x00\x00\x00\x00\x003A\xc8J\xc4\xd5\xf3\xee\x9f\x08\x0f!'56?\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00H"
+Library/Preferences/com.apple.mobiletimerd.plist
+  + MTAlarmStorageMigratedToCoreData: True
+  + MTNeedsSleepMigration: False
+  + MTTimerStorageMigratedToCoreData: True
+  + StopwatchStorageVersion: 1.0
+new Library/Preferences/com.apple.nanolifestyle.plist
+  + ActivityMoveMode: 1
+  + FitnessMode: 2
+  + IsStandalonePhoneFitnessMode: True
+  + cachedSleepUserDay: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa5\x0b\x0c\x15\x19\x1fU$null\xd4\r\x0e\x0f\x10\x11\x12\x12\x14\\creationDateXendOfDayZstartOfDayV$class\x80\x02\x80\x00\x80\x00\x80\x04\xd2\x16\x10\x17\x1...
+Library/Preferences/com.apple.parsecd.plist
+  ~ PARAppWhitelistSignatureLastModified: 815104718.500028 -> 815104954.452623
+Library/Preferences/com.apple.passd.plist
+  ~ CloudKitAccountInfoCache.1f99b032af56f07a23a4eb8361d1316f025dd9c59902e97cba3ffa577e19ec49: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.2240b37044c4d9970dd513fe0b775681988b55f48ce3163534312d41b95b9f6f: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.57a13b8d5696680caab58c7ecfbf2431d11cfde693bd68a9108872b3397d7dd4: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.98108dad9500c8a7a55c156827d53a674ba011397d590a6877b8a0e31d215a42: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+new Library/Preferences/com.apple.private.health.age-gating.plist
+  + EnableAFibBurdenAgeGating: False
+  + EnableBloodPressureClassificationAgeGating: False
+  + EnableCardioFitnessAgeGating: False
+  + EnableGAD7AssessmentsAgeGating: False
+  + EnableHeartAgeGating: False
+  + EnableOxygenSaturationRecordingAgeGating: False
+  + EnablePHQ9AssessmentsAgeGating: False
+  + EnableRespiratoryRateAgeGating: False
+  + EnableSleepApneaNotificationsAgeGating: False
+  + EnableSleepTrackingAgeGating: False
+  + EnableWalkingSteadinessAgeGating: False
+  + EnableWristTemperatureAgeGating: False
+new Library/Preferences/com.apple.private.health.bloodPressureJournal.plist
+  + BloodPressureJournalTimeZoneName: 'GMT'
+new Library/Preferences/com.apple.private.health.feature-availability.plist
+  + DisableOxygenSaturationRecording.ruleIdentifier: 'CompoundRule'
+  + DisableOxygenSaturationRecording.userInfo.grouping: 'OR'
+  + DisableOxygenSaturationRecording.userInfo.rules: [{'userInfo': {}, 'ruleIdentifier': 'AlwaysFalse'}, {'userInfo': {'RegionInfo': 'LM/A'}, 'ruleIdentifier': 'WatchRegionInfoEquals'}]
+new Library/Preferences/com.apple.private.health.feature-properties.AFibBurden.companion.plist
+  + AvailableRegions: [17269311791598796633, 10220918254805188497, 18419699894049044463, 9191688225708142516, 2]
+  + AvailableRegionsContentVersion: 14
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '1'
+  + UDIDeviceIdentifier: '(01)00194252456798(10)1.23F77'
+  + UpdateVersion: '1.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.CardioFitness.companion.plist
+  + AvailableRegions: [18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615, 0]
+  + AvailableRegionsContentVersion: 0
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 1
+  + FeatureVersion: '1'
+  + UpdateVersion: '1.23F77'
+new Library/Preferences/com.apple.private.health.feature-properties.ElectrocardiogramRecordingV1.companion.plist
+  + AvailableRegions: [729750816232120328, 54241623053437952, 17768589612285954, 1142409918489220, 0]
+  + AvailableRegionsContentVersion: 1
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '1'
+  + UDIDeviceIdentifier: '(01)00190198909541(10)1.23F77'
+  + UpdateVersion: '1.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.ElectrocardiogramV2Recording.companion.plist
+  + AvailableRegions: [17273832983412211545, 10220918254805188497, 18428707093303785455, 9191688225708142516, 3]
+  + AvailableRegionsContentVersion: 16
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '2'
+  + UDIDeviceIdentifier: '(01)00190199649293(10)2.23F77'
+  + UpdateVersion: '2.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.HypertensionNotifications.companion.plist
+  + AvailableRegions: [8045692913309773145, 9626281729186070417, 18419591849851664335, 9155376287114153760, 3]
+  + AvailableRegionsContentVersion: 4
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '1'
+  + UDIDeviceIdentifier: '(01)00195949001796(10)1.23F77'
+  + UpdateVersion: '1.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.IrregularRhythmNotificationsV2.companion.plist
+  + AvailableRegions: [17273832983412211545, 10220918254805188497, 18428707093303785455, 9191688225708142516, 3]
+  + AvailableRegionsContentVersion: 20
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '2'
+  + UDIDeviceIdentifier: '(01)00194252456781(10)2.23F77'
+  + UpdateVersion: '2.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.MenstrualCycles.companion.plist
+  + AvailableRegions: [0, 0, 0, 0, 0]
+  + AvailableRegionsContentVersion: 0
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '4'
+  + UDIDeviceIdentifier: '(01)00194253312529(10)4.23F77'
+  + UpdateVersion: '4.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.MenstrualCyclesHeartRateInput.companion.plist
+  + AvailableRegions: [18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615, 3]
+  + AvailableRegionsContentVersion: 7
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '4'
+  + UDIDeviceIdentifier: '(01)00194253312529(10)4.23F77'
+  + UpdateVersion: '4.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.MenstrualCyclesWristTemperatureInput.companion.plist
+  + AvailableRegions: [18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615, 3]
+  + AvailableRegionsContentVersion: 9
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '4'
+  + UDIDeviceIdentifier: '(01)00194253312529(10)4.23F77'
+  + UpdateVersion: '4.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.OxygenSaturationRecording.companion.plist
+  + AvailableRegions: [18427603772608872319, 18437735774943182847, 18446744073709551615, 9367487224930631679, 3]
+  + AvailableRegionsContentVersion: 11
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '1'
+  + UpdateVersion: '1.23F77'
+new Library/Preferences/com.apple.private.health.feature-properties.OxygenSaturationRecordingCompanionAnalysis.companion.plist
+  + AvailableRegions: [0, 0, 0, 0, 0]
+  + AvailableRegionsContentVersion: 0
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '1.1'
+  + UpdateVersion: '1.1.23F77'
+new Library/Preferences/com.apple.private.health.feature-properties.SleepApneaNotifications.companion.plist
+  + AvailableRegions: [17273674653737811801, 9626442829114376081, 18419629250426943471, 9155659428689178548, 3]
+  + AvailableRegionsContentVersion: 9
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '1'
+  + UDIDeviceIdentifier: '(01)00195949116209(10)1.23F77'
+  + UpdateVersion: '1.23F77'
+  + YearOfRelease: '2026'
+new Library/Preferences/com.apple.private.health.feature-properties.SleepingWristTemperatureMeasurements.companion.plist
+  + AvailableRegions: [18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615, 3]
+  + AvailableRegionsContentVersion: 3
+  + AvailableRegionsVersion: 1
+  + CountrySetProvenance: 3
+  + FeatureVersion: '1'
+  + UpdateVersion: '1.23F77'
+new Library/Preferences/com.apple.private.health.menstrual-cycles.plist
+  + HDMCSettingsMigrationManager_LastCompletedVersion: 17005
+new Library/Preferences/com.apple.private.health.mental-health.plist
+  + TypicalDayProviderCacheLastUpdatedDate: datetime.datetime(2026, 10, 31, 2, 3, 7, 889166)
+  + TypicalDayProviderUserEndOfDayCache: datetime.datetime(2026, 10, 31, 22, 30)
+new Library/Preferences/com.apple.private.health.settings-migration.plist
+  + HDSettingsMigrationManager_LastCompletedVersion_HealthMobilityDaemon: 18002
+  + HDSettingsMigrationManager_LastCompletedVersion_HeartHealthDaemon: 18002
+new Library/Preferences/com.apple.proactive.PersonalizationPortrait.plist
+  + BundleIdRedactor.lastRolloverDay: datetime.datetime(2026, 10, 31, 0, 0)
+  + BundleIdRedactor.salt: b'T=3oN\xbf\xce!b\xe1\x7f\x17\xac\x8b\xe2\x93f\xdb\x81\xec\xe6\xe8R~.\xff\xc3\x9cy\xd5\xd7\x0c'
+  + BundleIdRedactor.seenBundleIds: ['com.apple.Preferences']
+Library/Preferences/com.apple.routined.plist
+  ~ CloudKitAccountInfoCache.706b43cf149ca98c167ec1eed7a5ba0bfe3ebea6e47003577fe5566032177412: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ LastLaunchDate.routined: datetime.datetime(2026, 10, 31, 1, 58, 14, 282446) -> datetime.datetime(2026, 10, 31, 2, 2, 19, 978789)
+  + RTDefaultsPersistenceMirroringManagerMirroringAttemptsByBuildMap.23F77: False
+  ~ RTDefaultsSafetyCacheActiveSessionDetailsFetchFailureDateKey: datetime.datetime(2026, 10, 31, 1, 59, 53, 714393) -> datetime.datetime(2026, 10, 31, 2, 3, 2, 883151)
+  + XPCActivityLastAttemptDate.com.apple.routined.cloudkit.initializeSentinelZone: datetime.datetime(2026, 10, 31, 2, 2, 58, 713767)
+  ~ XPCActivityLastAttemptDate.com.apple.routined.persistence.mirroring.post-install: datetime.datetime(2026, 10, 31, 1, 59, 55, 315716) -> datetime.datetime(2026, 10, 31, 2, 3, 0, 773397)
+  + XPCActivityLastCompleteDate.com.apple.routined.cloudkit.initializeSentinelZone: datetime.datetime(2026, 10, 31, 2, 3, 34, 978701)
+  + XPCActivityLastCompleteDate.com.apple.routined.persistence.mirroring.post-install: datetime.datetime(2026, 10, 31, 2, 3, 1, 510295)
+new Library/Preferences/com.apple.searchd.plist
+  + meContactExists: -1
+  + meEmailAddresses: []
+Library/Preferences/com.apple.sharingd.plist
+  ~ HashManager-LastRebuiltDateKey: datetime.datetime(2026, 10, 31, 2, 1, 4, 726453) -> datetime.datetime(2026, 10, 31, 2, 2, 43, 292318)
+  ~ HashManager-LastUpdatedDateKey: datetime.datetime(2026, 10, 31, 2, 1, 4, 726453) -> datetime.datetime(2026, 10, 31, 2, 2, 43, 292318)
+new Library/Preferences/com.apple.siri.shortcuts.plist
+  + WFTriggerNotificationLevelMigrationPerformed: True
+Library/Preferences/com.apple.spotlightknowledged.pipeline.plist
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.enabledDate: datetime.datetime(2026, 10, 31, 2, 3, 41, 265460)
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.itemsInstantProcessed: 0
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.itemsInstantUnprocessed: 0
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.loggingVersion: '3-9'
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.timeSpentProcessing: 61
+  ~ SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.timestamp: 815104792.893881 -> 815105021.266259
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Keyphrase.timeSpentProcessing: 30
+Library/Preferences/com.apple.springboard.plist
+  + SBParentalControlsMCContentRestrictions.apps: 1000
+  + SBParentalControlsMCContentRestrictions.countryCode: ''
+  + SBParentalControlsMCContentRestrictions.movies: 1000
+  + SBParentalControlsMCContentRestrictions.tvshows: 1000
+  + last_label_cache_cleanup: '0E6A1723-7024-43B3-9AE9-3E3FB696685B'
+Library/Preferences/com.apple.suggestd.plist
+  ~ CloudKitAccountInfoCache.416a466e3d2dfde094e9f348b77e2011712c2c5a6086909782a5337f445c95e2: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.suggestions.plist
+  ~ CloudKitPersistedState: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c!U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x17\x19\x17\x17\x17\x17\x17\x17\x17_\x10\x0fhasDeferredSync_\x10\x1ehasDeferredProcessStat... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa4\x0b\x0c!"U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x17\x19\x17\x17\x1c\x17\x17\x17\x17_\x10\x0fhasDeferredSync_\x10\x1ehasDeferredProcessSta...
+  + findToShowMigrationPerformed: True
+Library/Preferences/com.apple.syncdefaultsd.plist
+  ~ CloudKitAccountInfoCache.3226a56d03b30d311f30ce6fd265432d7e365dcedb83750bc34d52d5df22deb1: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.80a6332a2fd40a10934c388220acea81007452de6054f39b496c0584575cf41e: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.900f5df007bb7e133dc9139c1682fe808f0e2c5f5c081fe785b3ead316b7ef7c: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+new Library/Preferences/com.apple.voicebankingd.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793411441
+  + CloudKitAccountInfoCache.3b7397e33ab178050f75735ff8c3fb8a91bb30ee90a98343396d55d227c9cf4a: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+new Library/Preferences/com.apple.voicetrigger.plist
+  + Accessory Alarm Playback Status: False
+  + Accessory Media Playback Status: False
+  + Accessory Timer Playback Status: False
+Library/Preferences/com.apple.xpc.activity2.plist
+  + ActivityBaseDates.PDAuxiliaryCapabilityManager.checkPassRegistrationState: datetime.datetime(2026, 11, 1, 2, 3, 22, 549949)
+  ~ ActivityBaseDates.PDCardFileManager.CacheMaintenance: datetime.datetime(2026, 10, 31, 1, 59, 2, 189785) -> datetime.datetime(2026, 11, 14, 1, 59, 2, 189785)
+  ~ ActivityBaseDates.PDCardFileManager.RevocationCheck: datetime.datetime(2026, 10, 31, 1, 59, 0, 438044) -> datetime.datetime(2026, 11, 1, 1, 59, 0, 438045)
+  + ActivityBaseDates.PDChangeRegistryScheduledClientIdentifier.PDChangeRegistryScheduledActivityIdentifier: datetime.datetime(2026, 11, 30, 2, 3, 22, 482909)
+  ~ ActivityBaseDates.PDCloudStoreClientID.PDPassChangesActivityIdentifier: datetime.datetime(2026, 10, 31, 1, 59, 49, 894062) -> datetime.datetime(2026, 10, 31, 2, 44, 49, 894062)
+  + ActivityBaseDates.PDCloudStoreClientID.PDPassSyncActivityIdentifier: datetime.datetime(2026, 10, 31, 14, 2, 57, 896721)
+  + ActivityBaseDates.PDIssuerBindingManager.checkAllPasses: datetime.datetime(2026, 11, 1, 2, 2, 57, 720600)
+  ~ ActivityBaseDates.PDMapsBrandAndMerchantUpdaterClientIdentifier.PDMapsBrandAndMerchantUpdaterActivityIdentifier: datetime.datetime(2026, 10, 31, 1, 59, 3, 333066) -> datetime.datetime(2026, 11, 1, 1, 59, 3, 333066)
+  + ActivityBaseDates.PDWalletUserNotificationManager.reportDeliveredReceipts: datetime.datetime(2026, 11, 1, 2, 3, 22, 554989)
+  + ActivityBaseDates.PDWalletUserNotificationManager.syncDeliveredNotifications: datetime.datetime(2026, 10, 31, 2, 33, 22, 481235)
+  + ActivityBaseDates.PredictedTransactionNotificationCoordinator.SchedulePredictedTransactionNotification: datetime.datetime(2026, 10, 31, 2, 3, 22, 536801)
+  ~ ActivityBaseDates.com.apple.ClipServices.clipserviced.xpc.cleanupActivity: datetime.datetime(2026, 10, 31, 1, 58, 40, 786732) -> datetime.datetime(2026, 11, 1, 1, 58, 40, 786732)
+  + ActivityBaseDates.com.apple.SafariBookmarksSyncAgent.XPC.TabCollectionMaintenance: datetime.datetime(2026, 10, 31, 2, 2, 58, 152039)
+  + ActivityBaseDates.com.apple.SafariBookmarksSyncAgent.XPC.ZoneSubscriptionRegistration: datetime.datetime(2026, 10, 31, 2, 2, 57, 2857)
+  ~ ActivityBaseDates.com.apple.Seymour.Scheduling.RandomPublicDataNetworkActivity: datetime.datetime(2026, 10, 31, 5, 18, 45, 800500) -> datetime.datetime(2026, 10, 31, 3, 25, 15, 327595)
+  ~ ActivityBaseDates.com.apple.Seymour.Scheduling.RandomizedDailyPublicDataNetworkActivity: datetime.datetime(2026, 10, 31, 12, 17, 42, 760801) -> datetime.datetime(2026, 10, 31, 23, 55, 49, 321084)
+  + ActivityBaseDates.com.apple.SplashBoard: datetime.datetime(2026, 10, 31, 2, 2, 49, 593562)
+  ~ ActivityBaseDates.com.apple.accounts.cleanup: datetime.datetime(2026, 10, 31, 1, 59, 0, 287079) -> datetime.datetime(2026, 10, 31, 2, 4, 0, 287080)
+  ~ ActivityBaseDates.com.apple.ap.promotedcontentd.timespent: datetime.datetime(2026, 10, 31, 2, 36, 46, 484343) -> datetime.datetime(2026, 10, 31, 2, 14, 39, 933209)
+  ~ ActivityBaseDates.com.apple.appleaccountd.postinstall: datetime.datetime(2026, 10, 31, 1, 59, 48, 785543) -> datetime.datetime(2026, 10, 31, 2, 2, 58, 813726)
+  ~ ActivityBaseDates.com.apple.appleaccountd.trustedContacts.healthCheck: datetime.datetime(2026, 10, 31, 1, 59, 6, 749503) -> datetime.datetime(2026, 10, 31, 2, 2, 59, 492174)
+  ~ ActivityBaseDates.com.apple.biomesyncd.cascade.periodic-sync: datetime.datetime(2026, 10, 31, 2, 28, 31, 498648) -> datetime.datetime(2026, 10, 31, 2, 29, 13, 971852)
+  ~ ActivityBaseDates.com.apple.biomesyncd.database-maintenance: datetime.datetime(2026, 10, 31, 2, 33, 28, 475188) -> datetime.datetime(2026, 10, 31, 2, 2, 49, 674772)
+  ~ ActivityBaseDates.com.apple.biomesyncd.periodic-sync: datetime.datetime(2026, 10, 31, 2, 47, 12, 650221) -> datetime.datetime(2026, 10, 31, 2, 15, 35, 159550)
+  + ActivityBaseDates.com.apple.email.ConversationDailyExporter: datetime.datetime(2026, 10, 31, 2, 5, 14, 220636)
+  + ActivityBaseDates.com.apple.email.ConversationPruning: datetime.datetime(2026, 10, 31, 2, 5, 15, 421252)
+  + ActivityBaseDates.com.apple.email.EMCoreAnalyticsCollector: datetime.datetime(2026, 10, 31, 2, 5, 14, 226156)
+  + ActivityBaseDates.com.apple.email.maild.suggestionsLostMessageProcessing: datetime.datetime(2026, 10, 31, 2, 5, 13, 129878)
+  + ActivityBaseDates.com.apple.email.searchableIndex.scheduler.budgeted: datetime.datetime(2026, 10, 31, 2, 5, 16, 330947)
+  + ActivityBaseDates.com.apple.email.searchableIndex.scheduler.maintenance: datetime.datetime(2026, 10, 31, 2, 5, 15, 783107)
+  + ActivityBaseDates.com.apple.emaildaemon.protecteddatabasepersistence.cleanup: datetime.datetime(2026, 10, 31, 2, 5, 54, 302682)
+  ~ ActivityBaseDates.com.apple.fitnesscoaching.Scheduling.InitialLaunchActivity: datetime.datetime(2026, 10, 31, 1, 58, 55, 719587) -> datetime.datetime(2026, 10, 31, 2, 2, 50, 802958)
+  ~ ActivityBaseDates.com.apple.followup.notify: datetime.datetime(2026, 10, 31, 1, 58, 55, 686952) -> datetime.datetime(2026, 10, 31, 2, 2, 50, 505696)
+  ~ ActivityBaseDates.com.apple.fontservicesd.subscription-support: datetime.datetime(2026, 10, 31, 1, 58, 23, 430719) -> datetime.datetime(2026, 10, 31, 2, 8, 23, 430719)
+  + ActivityBaseDates.com.apple.healthd.awd-submission-manager.heart-daily-analytics: datetime.datetime(2026, 10, 31, 2, 3, 7, 789654)
+  + ActivityBaseDates.com.apple.healthd.bloodPressureJournal.scheduler: datetime.datetime(2026, 10, 31, 2, 3, 8, 682778)
+  + ActivityBaseDates.com.apple.healthd.daily-report: datetime.datetime(2026, 10, 31, 2, 3, 8, 52860)
+  + ActivityBaseDates.com.apple.healthd.healthrecords-analytics-activity: datetime.datetime(2026, 10, 31, 2, 3, 20, 136920)
+  + ActivityBaseDates.com.apple.healthd.healthrecords.HDHealthRecordsAPIReminderRegistry-FirstUnlock: datetime.datetime(2026, 10, 31, 2, 3, 25, 229885)
+  + ActivityBaseDates.com.apple.healthd.healthrecords.opt-in-data-collection: datetime.datetime(2026, 10, 31, 2, 3, 20, 121034)
+  + ActivityBaseDates.com.apple.healthd.healthrecords.opt-in-data-upload: datetime.datetime(2026, 10, 31, 2, 3, 20, 102615)
+  + ActivityBaseDates.com.apple.healthd.heart.hypertension-measurement-analysis: datetime.datetime(2026, 10, 31, 2, 3, 20, 129368)
+  + ActivityBaseDates.com.apple.healthd.medications.scheduler: datetime.datetime(2026, 10, 31, 2, 3, 14, 540624)
+  + ActivityBaseDates.com.apple.healthd.ontology.update: datetime.datetime(2026, 10, 31, 2, 3, 20, 133720)
+  + ActivityBaseDates.com.apple.healthd.sleep.breathingdisturbanceanalysisactivity: datetime.datetime(2026, 10, 31, 2, 3, 8, 495709)
+  + ActivityBaseDates.com.apple.itunesstored.PurchaseActionManager.IAParamsClean: datetime.datetime(2026, 10, 31, 2, 2, 55, 916555)
+  + ActivityBaseDates.com.apple.itunesstored.PurchaseActionManager.IAPingbackRetry: datetime.datetime(2026, 10, 31, 2, 2, 56, 961181)
+  + ActivityBaseDates.com.apple.message.LibraryPurgeableMigrator: datetime.datetime(2026, 10, 31, 2, 5, 16, 459836)
+  + ActivityBaseDates.com.apple.message.db.vacuum: datetime.datetime(2026, 10, 31, 2, 5, 14, 223298)
+  + ActivityBaseDates.com.apple.message.libraryCompression: datetime.datetime(2026, 10, 31, 2, 5, 15, 566984)
+  + ActivityBaseDates.com.apple.mobilemail.activity.reset-device-activity-alarms: datetime.datetime(2026, 10, 31, 2, 5, 14, 400297)
+  + ActivityBaseDates.com.apple.mobilemail.compactingFetches: datetime.datetime(2026, 10, 31, 2, 5, 16, 177400)
+  + ActivityBaseDates.com.apple.mobilemail.powernapFetches: datetime.datetime(2026, 10, 31, 2, 5, 15, 750298)
+  ~ ActivityBaseDates.com.apple.nanotimekit.facesupport.dailyQuery: datetime.datetime(2026, 10, 31, 2, 13, 19, 342763) -> datetime.datetime(2026, 10, 31, 2, 5, 17, 131036)
+  + ActivityBaseDates.com.apple.proactive.PersonalIntelligence.PersonalIntelligenceMetrics: datetime.datetime(2026, 10, 31, 2, 2, 57, 695709)
+  + ActivityBaseDates.com.apple.proactive.PersonalizationPortrait.SpotlightScoringCache: datetime.datetime(2026, 10, 31, 2, 2, 56, 939137)
+  ~ ActivityBaseDates.com.apple.purplebuddy.backup: datetime.datetime(2026, 10, 31, 1, 58, 55, 693419) -> datetime.datetime(2026, 10, 31, 2, 2, 50, 550909)
+  ~ ActivityBaseDates.com.apple.purplebuddy.betaReEnrollment: datetime.datetime(2026, 10, 31, 1, 58, 55, 681666) -> datetime.datetime(2026, 10, 31, 2, 2, 50, 241526)
+  ~ ActivityBaseDates.com.apple.purplebuddy.finishsetup.firstreschedule: datetime.datetime(2026, 10, 31, 1, 58, 55, 712664) -> datetime.datetime(2026, 10, 31, 2, 2, 55, 840475)
+  ~ ActivityBaseDates.com.apple.purplebuddy.finishsetup.secondreschedule: datetime.datetime(2026, 10, 31, 1, 58, 55, 701002) -> datetime.datetime(2026, 10, 31, 2, 2, 56, 709261)
+  ~ ActivityBaseDates.com.apple.purplebuddy.finishsetup.wifiobserver: datetime.datetime(2026, 10, 31, 1, 58, 55, 714594) -> datetime.datetime(2026, 10, 31, 2, 2, 56, 781022)
+  ~ ActivityBaseDates.com.apple.routined.cloudkit.initializeSentinelZone: datetime.datetime(2026, 10, 31, 1, 59, 4, 685084) -> datetime.datetime(2026, 11, 1, 1, 59, 4, 685085)
+  ~ ActivityBaseDates.com.apple.siri.cdm.xpc_activity.maintenance: datetime.datetime(2026, 10, 31, 1, 58, 59, 680227) -> datetime.datetime(2026, 10, 31, 2, 2, 56, 914674)
+  ~ ActivityBaseDates.com.apple.siri.cdm.xpc_activity.post_install: datetime.datetime(2026, 10, 31, 1, 59, 1, 89166) -> datetime.datetime(2026, 10, 31, 2, 2, 55, 738270)
+  ~ ActivityBaseDates.com.apple.siri.inference.FirstBoot: datetime.datetime(2026, 10, 31, 1, 58, 59, 899390) -> datetime.datetime(2026, 10, 31, 2, 2, 56, 688259)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.announce-messages-eligibility: datetime.datetime(2026, 10, 31, 2, 2, 57, 333506)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.announce-notifications-enablement: datetime.datetime(2026, 10, 31, 2, 2, 57, 602692)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.context-collector-reelection: datetime.datetime(2026, 10, 31, 2, 2, 57, 718506)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.peer_fetch: datetime.datetime(2026, 10, 31, 2, 2, 56, 907840)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.refresh_validation: datetime.datetime(2026, 10, 31, 2, 3, 0, 831132)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.service_maintenance: datetime.datetime(2026, 10, 31, 2, 2, 57, 714427)
+  ~ ActivityBaseDates.com.apple.siriactionsd.RemoteQuarantineUpdate: datetime.datetime(2026, 10, 31, 2, 7, 12, 657750) -> datetime.datetime(2026, 10, 31, 2, 9, 19, 222557)
+  ~ ActivityBaseDates.com.apple.siriactionsd.ShortcutsDailyMetricCheckIn: datetime.datetime(2026, 10, 31, 2, 58, 10, 673855) -> datetime.datetime(2026, 10, 31, 2, 36, 13, 276599)
+  ~ ActivityBaseDates.com.apple.siriactionsd.ShortcutsWeeklyMetricCheckIn: datetime.datetime(2026, 10, 31, 5, 47, 0, 702461) -> datetime.datetime(2026, 10, 31, 3, 2, 18, 285698)
+  ~ ActivityBaseDates.com.apple.sirittsd.voiceUpdate: datetime.datetime(2026, 10, 31, 2, 24, 10, 99842) -> datetime.datetime(2026, 10, 31, 2, 43, 15, 5615)
+  ~ ActivityBaseDates.com.apple.triald.cellular: datetime.datetime(2026, 10, 31, 2, 14, 38, 319746) -> datetime.datetime(2026, 10, 31, 2, 4, 14, 797348)
+  ~ ActivityBaseDates.com.apple.triald.fetch-experiments: datetime.datetime(2026, 10, 31, 2, 2, 23, 70659) -> datetime.datetime(2026, 10, 31, 3, 0, 4, 502985)
+  ~ ActivityBaseDates.com.apple.triald.maintenance: datetime.datetime(2026, 10, 31, 2, 49, 48, 465707) -> datetime.datetime(2026, 10, 31, 2, 12, 7, 530788)
+  ~ ActivityBaseDates.com.apple.webkit.adattributiond.activity: datetime.datetime(2026, 10, 31, 23, 42, 55, 605271) -> datetime.datetime(2026, 10, 31, 16, 16, 11, 976085)
+  ~ VersionSpecificActivitiesRun: ['com.apple.findmy.findmylocated.post-install', 'com.apple.siri.xpc_activity.uaf-system-post-upgrade', 'com.apple.biomesyncd.post-install-immediate-sync', 'com.apple.ak.postinstall', 'com.apple.siri.inference.SiriRemembers.BackfillSuggestionsBiomeDonation', 'com.apple.siri.inference.SiriRemembers.Ba... -> ['com.apple.findmy.findmylocated.post-install', 'com.apple.siri.xpc_activity.uaf-system-post-upgrade', 'com.apple.biomesyncd.post-install-immediate-sync', 'com.apple.ak.postinstall', 'com.apple.siri.inference.SiriRemembers.BackfillSuggestionsBiomeDonation', 'com.apple.siri.inference.SiriRemembers.Ba...
+new Library/Spotlight/BundleInfo/InstalledApps.plist
+  + : ['com.apple.Passbook', 'com.northprot.protly.cihost', 'com.apple.MobileAddressBook', 'com.apple.Fitness', 'com.apple.DocumentsApp', 'com.apple.MobileSMS', 'com.apple.Maps', 'com.apple.Passwords', 'com.apple.mobilecal', 'com.apple.Bridge', 'com.apple.BarcodeScanner', 'com.apple.Preferences', 'com.app...
+new Library/SpringBoard/DesiredIconState.plist
+  + buttonBar: ['com.apple.mobilesafari', 'com.apple.MobileSMS']
+  + dockUtilities: []
+  + iconLists: [[{'widgetIdentifier': 'com.apple.Maps', 'elementType': 'widget', 'containerBundleIdentifier': 'com.apple.Maps', 'bundleIdentifier': 'com.apple.Maps.GeneralMapsWidget', 'displayIdentifier': '019E1BB5-7393-4F44-9C6A-DA41809D02BB', 'allowsExternalSuggestions': True, 'uniqueIdentifier': '6D327488-5D5A-...
+  + listUniqueIdentifiers: ['41B00F21-6D0F-4298-871D-F71B47B16AB9', 'D538406B-6182-47A1-ACBC-C81CFA848DA1']
+  + today: [{'widgetIdentifier': 'com.apple.CalendarWidget.CalendarUpNextWidget', 'elementType': 'widget', 'containerBundleIdentifier': 'com.apple.mobilecal', 'bundleIdentifier': 'com.apple.mobilecal.CalendarWidgetExtension', 'displayIdentifier': '0B43034B-F768-4884-9516-73038F06C384', 'allowsExternalSuggestio...
+Library/SpringBoard/IconState.plist
+  ~ iconLists: [[{'widgetIdentifier': 'com.apple.Maps', 'elementType': 'widget', 'containerBundleIdentifier': 'com.apple.Maps', 'bundleIdentifier': 'com.apple.Maps.GeneralMapsWidget', 'displayIdentifier': '019E1BB5-7393-4F44-9C6A-DA41809D02BB', 'allowsExternalSuggestions': True, 'uniqueIdentifier': '6D327488-5D5A-... -> [[{'widgetIdentifier': 'com.apple.Maps', 'elementType': 'widget', 'containerBundleIdentifier': 'com.apple.Maps', 'bundleIdentifier': 'com.apple.Maps.GeneralMapsWidget', 'displayIdentifier': '019E1BB5-7393-4F44-9C6A-DA41809D02BB', 'allowsExternalSuggestions': True, 'uniqueIdentifier': '6D327488-5D5A-...
+  ~ uniqueIdentifier: '732586E0-35DA-4655-9F4C-5B3B94A57DED' -> '87963E6C-C5C6-487B-BAAB-407BF31E167E'
+Library/UserNotifications/00DDAE01-E76B-4CC3-A78C-D701AFB1B504/Categories.plist
+  ~ $objects: ['$null', {'NS.objects': [UID(2), UID(39), UID(64), UID(79)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(2... -> ['$null', {'NS.objects': [UID(2), UID(39), UID(62), UID(77), UID(92), UID(102), UID(111)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID...
+new Library/UserNotifications/28FF445B-8CB7-4648-A3DA-9E1BAD8F9D85/Categories.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null', {'NS.objects': [UID(2), UID(53)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27)], 'NS....
+  + $top.root: UID(1)
+  + $version: 100000
+new Library/UserNotifications/28FF445B-8CB7-4648-A3DA-9E1BAD8F9D85/DeliveredNotifications.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null']
+  + $top.root: UID(0)
+  + $version: 100000
+new Library/UserNotifications/28FF445B-8CB7-4648-A3DA-9E1BAD8F9D85/Topics.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null', {'NS.objects': [], '$class': UID(2)}, {'$classname': 'NSMutableArray', '$classes': ['NSMutableArray', 'NSArray', 'NSObject']}]
+  + $top.root: UID(1)
+  + $version: 100000
+new Library/UserNotifications/72FB2EA8-9CAE-43EB-91F7-37E0BDDABCFA/DeliveredNotifications.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null']
+  + $top.root: UID(0)
+  + $version: 100000
+Library/UserNotifications/D1E1FE7E-2506-4910-BD1E-7CF11BF3527E/Categories.plist
+  ~ $objects: ['$null', {'NS.objects': [], '$class': UID(2)}, {'$classname': 'NSMutableArray', '$classes': ['NSMutableArray', 'NSArray', 'NSObject']}] -> ['$null', {'NS.objects': [UID(2)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27)], 'NS.objects':...
+Library/UserNotifications/D1E1FE7E-2506-4910-BD1E-7CF11BF3527E/DeliveredNotifications.plist
+  ~ $objects: ['$null'] -> ['$null', {'NS.objects': [UID(2)], '$class': UID(106)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27), UID(28), UID(...
+  ~ $top.root: UID(0) -> UID(1)
+new Library/UserNotifications/F868B024-090A-44E9-AA95-B24A540DC0EF/Categories.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null', {'NS.objects': [UID(2), UID(40), UID(63), UID(75), UID(85), UID(91), UID(97)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(2...
+  + $top.root: UID(1)
+  + $version: 100000
+new Library/UserNotifications/F868B024-090A-44E9-AA95-B24A540DC0EF/DeliveredNotifications.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null']
+  + $top.root: UID(0)
+  + $version: 100000
+Library/UserNotifications/Library.plist
+  ~ $objects: ['$null', {'NS.keys': [UID(2), UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27), UID(28), UID(29), UID(30), UID(31), UID(32), UID(33... -> ['$null', {'NS.keys': [UID(2), UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27), UID(28), UID(29), UID(30), UID(31), UID(32), UID(33...
+private/var/db/eligibilityd/eligibility_allowlists.plist
+  ~ Precise Locations: ['US-GU', 'US-TX', 'US-UM', 'CA-AB', 'US-UT', 'CA-NS', 'US-VI', 'US-AS', 'CA-NB', 'US-LA', 'US-MP', 'US-PR'] -> ['US-VI', 'US-LA', 'US-MP', 'US-GU', 'US-PR', 'US-UM', 'CA-NS', 'CA-AB', 'CA-NB', 'US-AS', 'US-UT', 'US-TX']
+new private/var/protected/trustd/AutoAsset.plist
+  + AssetPath: '/Users/runner/Library/Developer/CoreSimulator/Devices/FD14EFE1-8A98-4E6B-B448-B0D25FC7B629/data/private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_PKITrustStore/purpose_auto/d1b36c40ecf011c1a2dfeacc93215881ad4cf525.asset/AssetData'
+private/var/protected/trustd/SupplementalsAssets/OTAPKIContext.plist
+  + CTKillSwitch: 0
+  + CTKillSwitch_nonTLS: 0
+  ~ MobileAssetLastRequest-com.apple.MobileAsset.SecExperimentAssets: datetime.datetime(2001, 1, 1, 0, 0) -> datetime.datetime(2026, 10, 31, 2, 3, 35)
+var/run/launchd_bootstrap.plist
+  ~ Bootstrap.Child.SIMULATOR_BOOT_TIME: '1793411874' -> '1793412106'
+  ~ Bootstrap.Self.SIMULATOR_BOOT_TIME: '1793411874' -> '1793412106'
+Library/TCC/TCC.db: unreadable (no such table: access)
+other new or changed files: 1476
+  Containers/Data/Application/3BC89366-CA3F-46FE-B2D5-38F4383B4D73/Library/Safari/IgnoredSiriSuggestedSites.db-shm
+  Containers/Data/Application/7930A9CC-024D-434D-9380-685C11292B6C/Library/Saved Application State/com.northprot.protly.cihost.uitests.xctrunner.savedState/KnownSceneSessions/data.data
+  Containers/Data/InternalDaemon/2501618F-1836-44B1-9CD2-4FD5D383951D/Library/store.sqlite3-shm
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/ChangeTokens/EndToEndEncryption/maild/com.apple.mail
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/ChangeTokens/EndToEndEncryption/suggestd/com.apple.CoreSuggestions
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/ChangeTokens/EndToEndEncryption/weatherd/com.apple.weather
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/ChangeTokens/EndToEndEncryptionAllPlatforms/callservicesd/com.apple.telephonyutilities.callservicesd
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/ChangeTokens/NoEncryption/routined/com.apple.MobileSMS
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/ChangeTokens/NoEncryption/suggestd/com.apple.CoreSuggestions
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/ChangeTokens/NoEncryption/voicebankingd/com.apple.accessibility.livespeech
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/com.apple.KeyValueService-Production.sqlite-shm
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/com.apple.KeyValueService.EndToEndEncrypted-Production.sqlite-shm
+  Containers/Data/InternalDaemon/5C5B2548-5DA7-4F7A-8C4A-99C001EE998A/com.apple.kvs/com.apple.KeyValueService.EndToEndEncrypted.AllPlatforms-Production.sqlite-shm
+  Containers/Data/InternalDaemon/D048FC29-E53E-4391-A20C-FE807C304F4B/com.apple.SharedWebCredentials/swc.db
+  Containers/Data/PluginKitPlugin/16036808-594B-4B0B-B9B7-5B23AE1EE511/SystemData/com.apple.chrono/placeholders/BalanceOneDayWidgetKind/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/16036808-594B-4B0B-B9B7-5B23AE1EE511/SystemData/com.apple.chrono/placeholders/BalanceOneDayWidgetKind/accessoryRectangular----160.00w-72.00h-0.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/16036808-594B-4B0B-B9B7-5B23AE1EE511/SystemData/com.apple.chrono/placeholders/BalanceOneDayWidgetKind/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/16036808-594B-4B0B-B9B7-5B23AE1EE511/SystemData/com.apple.chrono/placeholders/BalanceOneDayWidgetKind/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/16036808-594B-4B0B-B9B7-5B23AE1EE511/SystemData/com.apple.chrono/relevance/BalanceOneDayWidgetKind.chrono-relevance
+  Containers/Data/PluginKitPlugin/341B0AE2-B1F7-4564-9DA6-25223BDC5496/SystemData/com.apple.chrono/placeholders/apple.AdaptiveMusic.AdaptiveMusicWidget.multi-mood/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/5B87B80F-B80A-435F-ADFA-E5B74D32DE2B/SystemData/com.apple.chrono/placeholders/NanoMedicationsWidgetExtension/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/5B87B80F-B80A-435F-ADFA-E5B74D32DE2B/SystemData/com.apple.chrono/placeholders/NanoMedicationsWidgetExtension/accessoryInline----336.00w--36.00h--0.00r--0f--0.00t-0.00l-0.00b0.00t.chrono-timeline
+  Containers/Data/PluginKitPlugin/5B87B80F-B80A-435F-ADFA-E5B74D32DE2B/SystemData/com.apple.chrono/placeholders/NanoMedicationsWidgetExtension/accessoryRectangular----160.00w-72.00h-0.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/5D2534E4-F30B-4B81-94BB-0DA7F34DC0B0/SystemData/com.apple.chrono/placeholders/com.apple.CalendarWidget.CalendarListWidget/systemLarge----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/5D2534E4-F30B-4B81-94BB-0DA7F34DC0B0/SystemData/com.apple.chrono/placeholders/com.apple.CalendarWidget.CalendarMonthWidget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/5D2534E4-F30B-4B81-94BB-0DA7F34DC0B0/SystemData/com.apple.chrono/placeholders/com.apple.CalendarWidget.CalendarMonthWidget/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/5D2534E4-F30B-4B81-94BB-0DA7F34DC0B0/SystemData/com.apple.chrono/placeholders/com.apple.CalendarWidget.CalendarUpNextWidget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/6C9031B8-121C-48E2-B537-2B45D29E412D/SystemData/com.apple.chrono/timelines/com.apple.Maps/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/6C9031B8-121C-48E2-B537-2B45D29E412D/SystemData/com.apple.chrono/timelines/com.apple.Maps/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/777D8909-D608-43C0-A779-E9FDDB4519AA/SystemData/com.apple.chrono/placeholders/MentalHealthLauncherComplication/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/77F58612-E22D-4A65-BDE7-F557D6466735/SystemData/com.apple.chrono/relevance/NanoMenstrualCyclesWidgetExtension.chrono-relevance
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/placeholders/com.apple.mobileslideshow.PhotosReliveWidget/systemLarge----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/placeholders/com.apple.mobileslideshow.PhotosReliveWidget/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/placeholders/com.apple.mobileslideshow.PhotosReliveWidget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/placeholders/com.apple.mobileslideshow.PhotosReliveWidget/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/placeholders/ple.mobileslideshow.PhotosReliveWidget.collections/systemLarge----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/placeholders/ple.mobileslideshow.PhotosReliveWidget.collections/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/placeholders/ple.mobileslideshow.PhotosReliveWidget.collections/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/placeholders/ple.mobileslideshow.PhotosReliveWidget.collections/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8483AA8D-874E-4A12-BF89-525535460503/SystemData/com.apple.chrono/timelines/com.apple.mobileslideshow.PhotosReliveWidget/systemSmall--9042110358117915459----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8FDEB19A-71F0-4985-81DC-CADFE7F2C4EB/SystemData/com.apple.chrono/placeholders/com.apple.health.SleepScoreWidget/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8FDEB19A-71F0-4985-81DC-CADFE7F2C4EB/SystemData/com.apple.chrono/placeholders/com.apple.health.SleepScoreWidget/accessoryRectangular----160.00w-72.00h-0.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8FDEB19A-71F0-4985-81DC-CADFE7F2C4EB/SystemData/com.apple.chrono/placeholders/com.apple.health.SleepScoreWidget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8FDEB19A-71F0-4985-81DC-CADFE7F2C4EB/SystemData/com.apple.chrono/placeholders/com.apple.health.SleepScoreWidget/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/ACB0AE61-365F-47F2-8AC5-7497D1608D7A/SystemData/com.apple.chrono/placeholders/today/accessoryRectangular----160.00w-72.00h-0.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/ACB0AE61-365F-47F2-8AC5-7497D1608D7A/SystemData/com.apple.chrono/placeholders/today/systemExtraLargePortrait----342.00w-554.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/ACB0AE61-365F-47F2-8AC5-7497D1608D7A/SystemData/com.apple.chrono/placeholders/today/systemLarge----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/ACB0AE61-365F-47F2-8AC5-7497D1608D7A/SystemData/com.apple.chrono/placeholders/today/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/ACB0AE61-365F-47F2-8AC5-7497D1608D7A/SystemData/com.apple.chrono/placeholders/today/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/ACB0AE61-365F-47F2-8AC5-7497D1608D7A/SystemData/com.apple.chrono/placeholders/today/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/D2C3B96B-4A7D-4166-850E-09C67B476935/SystemData/com.apple.chrono/placeholders/com.apple.passbook.cashDeviceTap.widget/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/EDDDFAF7-699D-43AD-AD8C-7C2033BD7CC7/SystemData/com.apple.chrono/timelines/com.apple.ScreenTimeWidgetApplication/systemLarge--7227504733474769685----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/System/2A538593-3621-41D8-81EE-383B5DCFDB82/database/linkd.metadatastore.sqlite3-shm
+  Containers/Data/System/2A538593-3621-41D8-81EE-383B5DCFDB82/database/linkd.metadatastore.sqlite3-wal
+  Containers/Data/System/DF6B515E-388C-4334-B725-F25E903C243E/Documents/Persistence/storeSystem.db-shm
+  Containers/Data/System/DF6B515E-388C-4334-B725-F25E903C243E/Documents/Persistence/storeSystem.db-wal
+  Containers/Shared/AppGroup/0A4AF1AD-B57F-425B-8E97-F239059F11B5/TTSVoiceBanking/PersonalVoiceLogs/2026-10-31-PersonalVoice.log
+  Containers/Shared/AppGroup/0A4AF1AD-B57F-425B-8E97-F239059F11B5/TTSVoiceBanking/TTSVoiceBanking.sqlite
+  Containers/Shared/AppGroup/0A4AF1AD-B57F-425B-8E97-F239059F11B5/TTSVoiceBanking/TTSVoiceBanking.sqlite-shm
+  Containers/Shared/AppGroup/0A4AF1AD-B57F-425B-8E97-F239059F11B5/TTSVoiceBanking/TTSVoiceBanking.sqlite-wal
+  Containers/Shared/AppGroup/0A4AF1AD-B57F-425B-8E97-F239059F11B5/TTSVoiceBanking/TTSVoiceBankingLocal.sqlite
+  Containers/Shared/AppGroup/0A4AF1AD-B57F-425B-8E97-F239059F11B5/TTSVoiceBanking/TTSVoiceBankingLocal.sqlite-shm
+  Containers/Shared/AppGroup/0A4AF1AD-B57F-425B-8E97-F239059F11B5/TTSVoiceBanking/TTSVoiceBankingLocal.sqlite-wal
+  Containers/Shared/AppGroup/13205DC9-5495-4BCB-AA41-ABF49D300B6A/replicatord/replicatord.sql
+  Containers/Shared/AppGroup/13205DC9-5495-4BCB-AA41-ABF49D300B6A/replicatord/replicatord.sql-shm
+  Containers/Shared/AppGroup/13205DC9-5495-4BCB-AA41-ABF49D300B6A/replicatord/replicatord.sql-wal
+  Containers/Shared/AppGroup/3BE5995C-DE77-4597-8D84-DB3949C53DB5/com.apple.Preferences/.tipkit/tips-store.db
+  Containers/Shared/AppGroup/3BE5995C-DE77-4597-8D84-DB3949C53DB5/com.apple.Preferences/.tipkit/tips-store.db-shm
+  Containers/Shared/AppGroup/3BE5995C-DE77-4597-8D84-DB3949C53DB5/com.apple.Preferences/.tipkit/tips-store.db-wal
+  Containers/Shared/SystemGroup/52CC48F0-257F-4BA0-885B-655F71DF25DE/com.apple.DeviceAccess/DAMessageStore.db-shm
+  Containers/Shared/SystemGroup/53299274-AB2C-4B6F-AA97-4F5DB6EC0233/Library/local.sqlite-shm
+  Containers/Shared/SystemGroup/53299274-AB2C-4B6F-AA97-4F5DB6EC0233/Library/local.sqlite-wal
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearlSender_1.4.mlmodelc/analytics/coremldata.bin
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearlSender_1.4.mlmodelc/coremldata.bin
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearlSender_1.4.mlmodelc/model.mil
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearlSender_1.4.mlmodelc/weights/weight.bin
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearlTS_2.7.0.mlmodelc/analytics/coremldata.bin
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearlTS_2.7.0.mlmodelc/coremldata.bin
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearlTS_2.7.0.mlmodelc/model.mil
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearlTS_2.7.0.mlmodelc/weights/weight.bin
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearl_2.7.0.mlmodelc/analytics/coremldata.bin
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearl_2.7.0.mlmodelc/coremldata.bin
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearl_2.7.0.mlmodelc/model.mil
+  Containers/Shared/SystemGroup/FA17D70C-BB66-467C-A325-66A96D018BF9/BlackPearl/mlmodelc/BlackPearl_2.7.0.mlmodelc/weights/weight.bin
+  Library/Accounts/Accounts3.sqlite-shm
+  Library/AddressBook/AddressBook.sqlitedb-shm
+  Library/AddressBook/AddressBookImages.sqlitedb-shm
+  Library/AppleMediaServices/Accounts/B7EBADB9-C62B-47DA-BE69-A93FC755B1F9/cookies.sqlitedb
+  Library/AppleMediaServices/Accounts/B7EBADB9-C62B-47DA-BE69-A93FC755B1F9/cookies.sqlitedb-shm
+  Library/AppleMediaServices/Accounts/B7EBADB9-C62B-47DA-BE69-A93FC755B1F9/cookies.sqlitedb-wal
+  Library/AppleMediaServices/Engagement/analytics/database/app.db-shm
+  Library/AppleMediaServices/Engagement/internal/database/app.db-shm
+  Library/AppleMediaServices/Engagement/journeys/database/app.db-shm
+  Library/AppleMediaServices/Engagement/recommendations/database/app.db-shm
+  Library/AppleMediaServices/Engagement/treatments-shm
+  Library/ApplePushService/aps.db-shm
+  Library/ApplePushService/aps.db-wal
+  Library/Application Support/CloudKitMailConversationsFlags/CloudKitMirroringDataModel
+  Library/Application Support/CloudKitMailConversationsFlags/CloudKitMirroringDataModel-shm
+  Library/Application Support/CloudKitMailConversationsFlags/CloudKitMirroringDataModel-wal
+  Library/Application Support/FaceTime/FaceTime.sqlite3-shm
+  Library/Application Support/FileProvider/LegacyEnabledStateHasBeenMigrated
+  Library/Application Support/UsageTrackingAgent/UsageTracking.sqlite
+  Library/Application Support/UsageTrackingAgent/UsageTracking.sqlite-shm
+  Library/Application Support/UsageTrackingAgent/UsageTracking.sqlite-wal
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS-T/Placements/SLP/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS.tar.gz
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/APAMSNetworkFacade/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/AdBatching/Accumulator/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Attribution/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Attribution/ErrorCodeBuckets/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Configuration/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/ClientMetrics/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/GroupRandomizer/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/Observability/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/Purposes/100/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/Purposes/101/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/Purposes/103/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/Purposes/8501/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/Purposes/8502/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventCollection/Purposes/8503/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/EventDatabase/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/FeatureFlag/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Identifiers/AnonymousSessionId/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Identifiers/BucketId/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Identifiers/RotatedAnonymousId/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Identifiers/SessionManagementIDsEnabled/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/JetService/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/ODCAFeatureFlag/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/OnDeviceAttribution/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/OnDeviceConversion/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Placements/Sponsorship/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Policy/AgeSensitiveEnforcement/EligibilityThreshold/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Policy/AgeSensitiveEnforcement/Noise/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Policy/AggregatedTimespent/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Policy/AppleSubscriptions/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Policy/Preferences/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Policy/Segments/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Proxy/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Reports/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Reports/Experimentation/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APCS-TEMP/APCS/Reports/Integrity/ConfigurationNode.json
+  Library/Application Support/com.apple.ap.promotedcontentd/APDB/APDatabase/APDatabase.sql3-shm
+  Library/Application Support/com.apple.ap.promotedcontentd/APDB/APDatabase/APDatabase.sql3-wal
+  Library/Application Support/com.apple.ap.promotedcontentd/SFS/s/s/919b71d74399ab0469d7620b970f3c234d52eb3e623f3d4da66d82a4da8cd3a4
+  Library/Application Support/com.apple.remotemanagementd/Database/RemoteManagement.sqlite
+  Library/Application Support/com.apple.remotemanagementd/Database/RemoteManagement.sqlite-shm
+  Library/Application Support/com.apple.remotemanagementd/Database/RemoteManagement.sqlite-wal
+  Library/Application Support/com.apple.remotemanagementd/RMAdminStore-Cloud.sqlite-shm
+  Library/Application Support/com.apple.remotemanagementd/RMAdminStore-Cloud.sqlite-wal
+  Library/Application Support/com.apple.remotemanagementd/RMAdminStore-Local.sqlite-shm
+  Library/Application Support/com.apple.remotemanagementd/RMAdminStore-Local.sqlite-wal
+  Library/Assistant/SiriVocabulary/Modules/CESR/Manager
+  Library/Assistant/SiriVocabulary/Modules/Task/Info
+  Library/Assistant/assistantdDidLaunch
+  Library/Assistant/session_did_finish_timestamp
+  Library/Assistant/sync_flagcom.apple.contact.people
+  Library/Assistant/sync_flagcom.apple.homekit.name
+  Library/Assistant/sync_flagcom.apple.maps
+  Library/Assistant/sync_flagcom.apple.media.entities
+  Library/Assistant/sync_flagcom.apple.siri.appIntentSupportPolicyAndVocab
+  Library/Assistant/sync_flagcom.apple.siri.appIntentSupportPolicyAndVocab.nano
+  Library/Assistant/sync_flagcom.apple.siri.applications
+  Library/Assistant/sync_flagcom.apple.siri.calendar.systemsetting
+  Library/Assistant/sync_flagcom.apple.siri.client.state.DynamiteClientState
+  Library/Assistant/sync_flagcom.apple.siri.corrections
+  Library/Assistant/sync_flagcom.apple.siri.parsecContext
+  Library/Assistant/sync_flagcom.apple.siri.vocabularyupdates
+  Library/Avatar/CoreDataBackend/avatars.db-shm
+  Library/Avatar/CoreDataBackend/avatars.db-wal
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/bookmarks/client/com.apple.modelcatalogd/com.apple.modelcatalog.availabilitysubscriptionevaluationtrigger
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/bookmarks/client/com.apple.modelcatalogd/com.apple.modelcatalog.subscriptionstreamchangelistener
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/bookmarks/server/com.apple.modelcatalogd/com.apple.modelcatalog.availabilitysubscriptionevaluationtrigger
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/bookmarks/server/com.apple.modelcatalogd/com.apple.modelcatalog.subscriptionstreamchangelistener
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/App.InFocus
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/App.Installation
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/App.Intent
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/AppleIntelligence.Availability
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Audio.Route
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/CarPlay.Connected
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Clock.Alarm
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Device.Display.Backlight
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Device.Metadata
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Device.Power.BatteryLevel
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Device.Power.PluggedIn
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Device.ScreenLocked
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Device.Wireless.Bluetooth
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Device.Wireless.WiFi
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Family.ScreenTime.Request
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/GenerativeExperiences.FailureTracking
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/IntelligenceEngine.Interaction.Donation
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/IntelligenceFlow.Telemetry
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/IntelligenceFlow.Transcript.Datastream
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/IntelligencePlatform.MessageTerms
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/IntelligencePlatform.Views.Updated
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Location.HashedCoordinates
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Location.MicrolocationVisit
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Location.Semantic
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Media.NowPlaying
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/ModelCatalog.Subscriptions.Decisions
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Motion.Activity
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/OSAnalytics.Hardware.Reliability
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Sage.Transcript
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Screen.Sharing
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Siri.FeedbackLearning.UserInteractions
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Siri.PostSiriEngagement
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Siri.Remembers.AssistantSuggestions
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Siri.Remembers.AudioHistory
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Siri.Remembers.CallHistory
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Siri.Remembers.InteractionHistory
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Siri.Remembers.MessageHistory
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/Siri.UI
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/UserFocus.ComputedMode
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/UserFocus.InferredMode
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/WalletPaymentsCommerce.FoundIn.ClassicOrder
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/WalletPaymentsCommerce.FoundIn.ExtractedOrder
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/WalletPaymentsCommerce.FoundIn.OrderEmail
+  Library/Biome/compute/sessions/0E6A1723-7024-43B3-9AE9-3E3FB696685B/subscriptions/WalletPaymentsCommerce.FoundIn.Transaction
+  Library/Biome/sets/Default/Health.Medication/Database/Set.db
+  Library/Biome/sets/Default/Health.Medication/Database/Set.db-shm
+  Library/Biome/sets/Default/Health.Medication/Database/Set.db-wal
+  Library/Biome/sets/Default/HomeKit.Home/Database/Set.db
+  Library/Biome/sets/Default/HomeKit.Home/Database/Set.db-shm
+  Library/Biome/sets/Default/HomeKit.Home/Database/Set.db-wal
+  Library/Biome/streams/restricted/AppleIntelligence.Availability/local/815104989046482
+  Library/Biome/streams/restricted/AppleIntelligence.Availability/lock
+  Library/Biome/streams/restricted/ModelCatalog.Subscriptions.Decisions/local/815105006759732
+  Library/Biome/streams/restricted/ModelCatalog.Subscriptions.Decisions/lock
+  Library/Calendar/Calendar.sqlitedb
+  Library/Calendar/Calendar.sqlitedb-shm
+  Library/Calendar/Calendar.sqlitedb-wal
+  Library/Calendar/Extras.db
+  Library/Calendar/Extras.db-shm
+  Library/Calendar/Extras.db-wal
+  Library/Calendar/Notifications.Calendar.TriggeredEvent.NotificationData.Unprotected
+  Library/Calendar/Notifications.Calendar.Unprotected
+  Library/ContactsMetadata/CNContactMetadata.db-shm
+  Library/ContactsMetadata/CNContactMetadata.db-wal
+  Library/CoreFollowUp/items.db
+  Library/DoNotDisturb/DB/Metrics.json
+  Library/DuetExpertCenter/CachedHomeScreenConfig/HomeScreenPages
+  Library/DuetExpertCenter/_ATXInfoSuggestionStore.db-shm
+  Library/DuetExpertCenter/_ATXInfoSuggestionStore.db-wal
+  Library/DuetExpertCenter/streams/blendingUIHomeScreen/local/815104807457913
+  Library/Finance/finance_cloud.db-shm
+  Library/Finance/finance_cloud.db-wal
+  Library/Finance/finance_local.db-shm
+  Library/Finance/finance_local.db-wal
+  Library/FrontBoard/applicationState.db
+  Library/FrontBoard/applicationState.db-shm
+  Library/FrontBoard/applicationState.db-wal
+  Library/HTTPStorages/com.apple.amsaccountsd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.amsaccountsd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.amsengagementd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.amsengagementd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.ap.PromotedContentJetService/httpstorages.sqlite
+  Library/HTTPStorages/com.apple.ap.PromotedContentJetService/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.ap.PromotedContentJetService/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.ap.promotedcontentd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.ap.promotedcontentd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.gamed/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.gamed/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.itunesstored/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.itunesstored/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.jetpackassetd/httpstorages.sqlite
+  Library/HTTPStorages/com.apple.jetpackassetd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.jetpackassetd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.mobileassetd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.mobileassetd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.nsurlsessiond/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.nsurlsessiond/httpstorages.sqlite-wal
+  Library/Health/Client/HealthApp.sqlite
+  Library/Health/Client/HealthApp.sqlite-shm
+  Library/Health/Client/HealthApp.sqlite-wal
+  Library/Health/Local/SyncIdentityHardwareIdentifier.uuid
+  Library/Health/NanoSync/com.apple.private.alloy.health.sync.db
+  Library/Health/NanoSync/com.apple.private.alloy.health.sync.db-shm
+  Library/Health/NanoSync/com.apple.private.alloy.health.sync.db-wal
+  Library/Health/healthdb.sqlite
+  Library/Health/healthdb.sqlite-shm
+  Library/Health/healthdb.sqlite-wal
+  Library/Health/healthdb_secure.sqlite
+  Library/Health/healthdb_secure.sqlite-shm
+  Library/Health/healthdb_secure.sqlite-wal
+  Library/Health/ontology/HealthOntology.db
+  Library/Health/ontology/HealthOntology.db-shm
+  Library/Health/ontology/HealthOntology.db-wal
+  Library/IdentityServices/PDS/PDSCDCache-shm
+  Library/IdentityServices/ids-firewall-identityservicesd.db-shm
+  Library/IdentityServices/ids-firewall-identityservicesd.db-wal
+  Library/IntelligencePlatform/eventLog.db-shm
+  Library/IntelligencePlatform/feedbackLog.db-shm
+  Library/IntelligencePlatform/globalKnowledge.db
+  Library/IntelligencePlatform/globalKnowledge.db-shm
+  Library/IntelligencePlatform/globalKnowledge.db-wal
+  Library/IntelligencePlatform/graph.db
+  Library/IntelligencePlatform/graph.db-shm
+  Library/IntelligencePlatform/graph.db-wal
+  Library/IntelligencePlatform/keyvalue.db
