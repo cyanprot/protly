@@ -563,3 +563,41 @@ Field text is read through XCUITest (exact); bar labels with Vision OCR in the U
   names) are the tower's.
 - The icon on the real home screen (the crop is the simulator's rendering of the same `AppIcon.png`).
 - Other host apps (Messages, KakaoTalk, Instagram), typing feel and haptics.
+
+## Plain-text composition (typing-fixes 001)
+
+Campaign 2026-10-30-typing-fixes, sprint 001 (`docs/plans/2026-10-30-typing-fixes.md`). The word being typed is
+plain text in the field, as with Apple's Korean keyboard: no `setMarkedText` or `unmarkText` is left in the
+keyboard (a source rule in `KeyboardSourceRulesTests` keeps it so). This removes the shared root of the Return,
+edit-menu and dark-screen reports (`docs/research/2026-10-30-*.md`).
+
+- **Writing.** `PlainWord.step` (ProtlyCore) turns each `FieldEdit` into proxy calls: delete the Characters after
+  the part that stays, insert the new tail. 안녕하세요 takes 21 proxy calls for 12 keys. A commit sends only the
+  difference (usually nothing), so Return after a word sends only `"\n"`.
+- **Watching the field.** `FieldWatch.decide` (ProtlyCore) runs at every key, host callback and before any write
+  over the word. It keeps a model of the text before the cursor from Protly's own writes (every state, including
+  the one between the deletes and the insert). A selection or a changed after-context abandons; a context that
+  ends with the model keeps (contexts are compared by their tails, so a cut field keeps); a context showing an
+  earlier state keeps only until 150 ms after Protly wrote past it (a lagging web view), older abandons (a field
+  that dropped the insert, a host undo); a context that matches nothing keeps only within 300 ms of the last write.
+  `hasText` is not used. U+00A0 compares as a space. With no word typed, a selection forgets the committed word so
+  a flip cannot delete it.
+- **Abandon at a key.** The word stays as typed; the key starts a new word (it is not lost), and a backspace falls
+  to KeyboardKit's normal delete. Hide and reopen mid-word: the half word stays as text and the next key starts a
+  new word.
+- **Host callbacks never write** (`textDidChange`, `selectionDidChange` and what they call; source rule).
+- **`textDidChangeAsync`.** Its composing guard is gone: with autocap off, `preferredKeyboardCase` keeps the case,
+  KeyboardKit's autocomplete service is disabled, and the context now includes the word.
+
+Simulator: `runs/d504f77-25` (`STATUS measured`, layout `RESULT PASS`), every phone check that passed in
+`runs/e301e04-15` passes, and 8.5-9o passes too (with sprint 002 merged). In `c-6.8-4-1-right.png` the word
+being typed (`안녀`) has no underline; the same shot in `runs/e301e04-15` shows the blue marked-text underline.
+`runs/28108ea-24` (same code) had every phone check pass but measured scenario 07 at a 69 pt band (top 495): the
+same +17 pt as the scenario 04 flake above, with the keyboard's height log identical to `runs/e301e04-15`; the
+re-run measured 52 pt. Scenario 07 can therefore show that flake too.
+
+Phone checks the tower still owes: type in Instagram DM (dark), Messages, KakaoTalk, Safari and Chrome: no
+underline, the word always visible, no split syllables while typing fast or slowly; Return after a word with no
+space keeps the message in Safari and Chrome; double-tap or long-press on the last word shows Copy; a flip from
+the bar after a word still works (also in a Safari contenteditable field); hide and reopen the keyboard mid-word,
+then keep typing; a field with a length limit at its limit loses no character while typing.
