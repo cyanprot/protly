@@ -4,7 +4,7 @@ import Foundation
 /// same rules the request uses (ActionAPI.mode(forDraft:), Languages.prefix(of:)), so the label always names the
 /// target the request sends. The view draws `symbol`, the arrow and `title` as separate views: a right-to-left
 /// endonym cannot reorder them, and a check that reads the label reads only the words.
-public enum BarAction: Equatable, Sendable {
+public enum BarAction: Hashable, Sendable {
     /// `target` is the language's own name (Languages.endonym), shown as the label.
     case translate(target: String)
     /// `korean`: a "ko:" draft, polished in Korean.

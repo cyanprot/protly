@@ -10,10 +10,16 @@ final class ProtlyMode: ObservableObject {
     /// Shift is on because the user pressed it (not auto-capitalization).
     @Published var manualShift = false
     @Published var alternative: String?
+    /// The alternative is a listed word in its language: drawn in the primary color, else dimmed (B4).
+    @Published var alternativeIsWord = true
     /// The panel in place of the keys, nil = keys.
     @Published var panel: PanelState?
-    /// The action that fits the field now (nil while typing or when the field is empty).
-    @Published var draftMode: ActionMode?
+    /// The bar's center slot (nil = empty) and what the protly key runs. ProtlyCore decides both from the field text
+    /// (BarAction), the same way the request is built, so a label never names another target.
+    @Published var center: BarAction?
+    @Published var protlyKey: BarAction = .read
+    /// Full Access is on: without it the pill is an outlined lock and a tap explains why.
+    @Published var fullAccess = true
     @Published var canUndo = false
     /// The clipboard holds text copied since protly last looked (checked without reading it).
     @Published var clipboardIsNew = false
@@ -257,7 +263,7 @@ final class KeyboardViewController: KeyboardInputViewController {
             return
         }
         // The panel shows at once: a second tap during the field read cannot start a second request.
-        mode.panel = .loading(requested ?? mode.draftMode ?? .in)
+        mode.panel = .loading(requested ?? mode.protlyKey.actionMode ?? .in)
         actionTask = Task { [weak self] in
             guard let self else { return }
             let field = await FieldText.read(textDocumentProxy)
@@ -349,6 +355,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         guard let l = lastInsert else { return }
         guard FieldGuard.canUndo(l.inserted, before: textDocumentProxy.documentContextBeforeInput ?? "") else {
             endUndo()  // the cursor moved or the text changed since Insert
+            refreshField()  // the bar stops offering Undo
             return
         }
         for _ in l.inserted { textDocumentProxy.deleteBackward() }
@@ -368,13 +375,12 @@ final class KeyboardViewController: KeyboardInputViewController {
         if mode.canUndo { mode.canUndo = false }
     }
 
-    /// Which action the bar offers for the field text around the cursor, and whether new text was copied.
+    /// Which action the bar and the protly key offer for the field text around the cursor, and whether new text was
+    /// copied. Since typing-fixes 001 the word being typed is plain text in the context, so the action stays
+    /// visible while a word is typed.
     private func refreshField() {
         let p = textDocumentProxy
         let text = (p.documentContextBeforeInput ?? "") + (p.documentContextAfterInput ?? "")
-        let next: ActionMode? = session.isComposing || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? nil : ActionAPI.mode(forDraft: text)
-        if mode.draftMode != next { mode.draftMode = next }
 
         // changeCount and hasStrings never show the Allow Paste prompt; reading the string does.
         // changeCount is cheap, so it goes first; hasStrings only runs after a change.
@@ -386,6 +392,13 @@ final class KeyboardViewController: KeyboardInputViewController {
             && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && pb.changeCount != d.integer(forKey: Self.clipboardKey) && pb.hasStrings
         if mode.clipboardIsNew != isNew { mode.clipboardIsNew = isNew }
+
+        // @Published fires on every write; an unchanged write would rebuild the keyboard on each key.
+        let center = BarAction.center(text: text, canUndo: mode.canUndo, clipboardIsNew: isNew)
+        if mode.center != center { mode.center = center }
+        let key = BarAction.protlyKey(text: text, canUndo: mode.canUndo, clipboardIsNew: isNew)
+        if mode.protlyKey != key { mode.protlyKey = key }
+        if mode.fullAccess != hasFullAccess { mode.fullAccess = hasFullAccess }
     }
 
     /// Not private: Words.swift calls it when the system lexicon arrives.
@@ -393,6 +406,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         let korean = session.keycapLanguage == .korean
         if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
+        if mode.alternativeIsWord != session.alternativeIsWord { mode.alternativeIsWord = session.alternativeIsWord }
         refreshWords()
         refreshField()
     }
@@ -549,6 +563,7 @@ struct ProtlyRoot: View {
             toolbar: { _ in
                 ProtlyBar(
                     mode: mode,
+                    scheme: context.colorScheme,
                     flip: { [unowned host] in host.flipWord() },
                     act: { [unowned host] in host.act($0) },
                     undo: { [unowned host] in host.undoInsert() },
