@@ -15,7 +15,9 @@ These override the text below wherever they disagree.
 - **Written for an English speaker, not Korean only.** Hero: "Polish and translate as you type." Try it has two
   chips, Polish first (the English sentence with mistakes, "Tap Polish in the bar.") and Translate Korean
   (`오늘 고마워`, "Tap → English in the bar."); the `ru:` chip is gone. Instruction rows: `teh`, then Undo, then
-  "Writing Korean? Type `dkssud`, then tap the left slot." Other languages come gradually, in later plans.
+  "Writing Korean? Type `dkssud`: it turns into 안녕 on its own. The left slot flips a word back." (2026-10-31:
+  replaced the earlier "Type `dkssud`, then tap the left slot.", because the bundled word lists turn `dkssud` into
+  안녕 by themselves, so there is nothing to flip; phone check owed.) Other languages come gradually, in later plans.
 - **Dictation follows the keycaps.** The keyboard reports `en-US` (Info.plist `PrimaryLanguage` and the
   `primaryLanguage` override), `ko-KR` only on Korean keycaps; before, dictation was Korean only. Phone check:
   dictation listens in English on English keycaps and in Korean on Korean keycaps.
