@@ -88,24 +88,34 @@ final class KeyboardSourceRulesTests: XCTestCase {
                       uses.joined())
     }
 
+    /// keyboard-ui 003: the one write, Copy on the result card, is an assignment inside copyResult().
     func testTheClipboardStringIsReadOnlyInReadClipboard() throws {
+        var writes: [String] = []
         for (name, text) in try sources() {
             let ns = text as NSString
-            let names = boundNames(#"UIPasteboard\.general\b"#, in: text)
+            let names = Set(boundNames(#"UIPasteboard\.general\b"#, in: text))
             let readers = [#"UIPasteboard\.general\.(string|strings|items|data|value)\b"#]
                 + names.map { #"\b\#($0)\.(string|strings|items|data|value)\b"# }
-            let reads = readers.flatMap { matches($0, in: text) }
-            guard !reads.isEmpty else { continue }
+            let uses = readers.flatMap { matches($0, in: text) }
+            guard !uses.isEmpty else { continue }
             XCTAssertEqual(name, "KeyboardViewController.swift")
-            let body = ns.range(of: "private func readClipboard()")
-            guard body.location != NSNotFound else { XCTFail("\(name): readClipboard not found"); continue }
-            let end = ns.range(of: "\n    }\n", range: NSRange(location: body.location, length: ns.length - body.location))
-            guard end.location != NSNotFound else { XCTFail("\(name): end of readClipboard not found"); continue }
-            for r in reads {
-                XCTAssertTrue(r.location > body.location && r.location < end.location,
-                              "\(name): clipboard read outside readClipboard: \(lineText(ns, r))")
+            guard let read = body(of: "private func readClipboard()", in: ns) else {
+                XCTFail("\(name): readClipboard not found"); continue
+            }
+            let copy = body(of: "func copyResult()", in: ns)
+            for r in uses {
+                let rest = ns.substring(from: r.location + r.length)
+                if rest.range(of: #"^\s*=(?!=)"#, options: .regularExpression) != nil {
+                    XCTAssertTrue(copy.map { NSLocationInRange(r.location, $0) } == true,
+                                  "\(name): clipboard write outside copyResult: \(lineText(ns, r))")
+                    writes.append("\(name): \(lineText(ns, r))")
+                } else {
+                    XCTAssertTrue(NSLocationInRange(r.location, read),
+                                  "\(name): clipboard read outside readClipboard: \(lineText(ns, r))")
+                }
             }
         }
+        XCTAssertEqual(writes.count, 1, writes.joined(separator: "\n"))
     }
 
     /// The range of a function's body: from its declaration to the first line that is only `    }`.
