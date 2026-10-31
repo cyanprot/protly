@@ -572,22 +572,27 @@ workflow writes `Secrets.swift` from the Actions secret `PROTLY_API_KEY` (a CI-o
 (CI key); DerivedData cache: restore only, not saved in this run` in each report), and the leak guard writes
 `LEAK-GUARD pass: no key prefix in N files` before publishing. Runs: `runs/8a801d5-30` (probe 1),
 `runs/79473e5-34`, run 35 (cancelled by a push), run 36 (hung, hit the 80-minute job limit, nothing published),
-`runs/c6d83a1-40` (probe 2), `runs/067c1cd-41`, `runs/30a1fbf-44` (RUN8_PLACEHOLDER). The table is from
-`runs/30a1fbf-44` (`CHECKS pass 25 fail 1 record 8 skip 2`); its one FAIL is 8.5-7 under the rule before the
-tower's ruling.
+`runs/c6d83a1-40` (probe 2), `runs/067c1cd-41`, `runs/30a1fbf-44` (the full run of record), run 48 (cancelled by
+a push) and the closing run `runs/ec69307-50`. Under the tower's closing rule (TOWER-CLOSE-RULE-2), `runs/30a1fbf-44`
+(`CHECKS pass 25 fail 1 record 8 skip 2`; its one FAIL is 8.5-7 under the rule before the tower's ruling, and its
+layout test stopped at launch) is the record for every check it measured, and the filtered closing run
+`runs/ec69307-50` (`[shots:KeyboardShotsUITests,PhoneChecksUITests/test6_85net]`, `STATUS measured`, layout
+`RESULT PASS` with every band at +0, `CHECKS pass 8 fail 0 record 1 skip 0 not-run 27`, leak guard on 63 files)
+proves the layout and the 8.5 network IDs. 8.5-3 to 8.5-9 passed in both runs with the same outputs or
+near ones; the evidence quotes run 44 unless it names run 50.
 
 | ID | Result | Evidence |
 |---|---|---|
 | 6.8-11 | PASS | `내일 봐` typed as `ghk` + flip, center Translate: `Translating`, Insert after 4.0 s: `Thanks so much for today` (Latin) |
-| 8.5-1 | PASS | `ru: 누나 노트 고마워 누나 덕분에 살았다` (`ru` came out `겨`, flipped): `Translating`, 4.5 s, inserted `Спасибо за конспекты! Ты меня реально спасла`; the panel showed a Hangul back translation (RECORD); Undo: the field equals the draft again |
+| 8.5-1 | PASS | `ru: 누나 노트 고마워 누나 덕분에 살았다` (`ru` came out `겨`, flipped): `Translating`; run 50's first try inserted `Спасибо за конспект! Ты меня спасла.ㅋ` (a Hangul `ㅋ`: rule fail), the retry `Спасибо за конспект! Ты меня спасла` after 3.3 s with a Hangul back translation in the panel (RECORD); Undo: the field equals the draft again (run 44: first try, 4.5 s) |
 | 8.5-3 | PASS | `ja:`: `明日ひま？一緒にご飯行こうよw` (kana and kanji, no `ㅋ`, no `lol`), 3.4 s |
 | 8.5-4 | PASS | `es:`: `Hoy estoy muy cansado`, 4.6 s |
 | 8.5-5 | PASS | `내일 3시에 봐`: `See you tomorrow at 3`, 3.0 s |
 | 8.5-6 | PASS | `ok: 내일 봐`: `ok, see you tomorrow`, 3.0 s |
-| 8.5-7 | FAIL then ruled PASS | `Polishing`, 4.0 s: `내일 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘`; retry: `낼 시간 돼? ...말해 줘`. The model always writes the spaced `말해 줘` (runs 41 and 44); the tower ruled both spellings correct (plan row updated). Change lines (RECORD): `되? -> 돼? (맞춤법)`, `밥먹자 -> 밥 먹자 (띄어쓰기)`, `말해죠 -> 말해 줘 (맞춤법)` |
+| 8.5-7 | PASS | run 50: `Polishing`, 3.4 s: `내일 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘`. The model always writes the spaced `말해 줘` (runs 41, 44, 50); the tower ruled both spellings correct (plan row updated), and run 44's FAIL was under the earlier rule. Change lines (RECORD): `되? -> 돼? (맞춤법)`, `말해죠 -> 말해 줘 (맞춤법)`, `낼 -> 내일, 밥먹자 -> 밥 먹자 (띄어쓰기)` |
 | 8.5-8 | PASS | three-paragraph `ko:` draft: `Polishing`, 3.4 s, `오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ` (paragraphs kept, no `ko:`); panel: `고칠 부분이 거의 없어서 그대로 뒀어요.` |
 | 8.5-9 | PASS | Spanish polish: `Me encanta el color de tu chaqueta, ¿dónde la compraste? jaja` (no `colour`, no `conprastes`), 4.1 s |
-| 8.5-10 | RECORD | 8.5-1 tap to `Insert`: 4.5 s and 4.2 s (runs 41: 3.6 s, 3.2 s) |
+| 8.5-10 | RECORD | 8.5-1 tap to `Insert`: 4.0 s and 3.3 s in run 50 (run 44: 4.5 s, 4.2 s; run 41: 3.6 s, 3.2 s) |
 | 7.7-1 | PASS | `ProtlyCIApp`: in-app Paste of the test note, counter `58 / 1,000` = 58; `Copy for the keyboard`: `Copied`; Read clipboard in the app's Test field, Allow Paste: `Save as your About me note (58 characters)?`; Save: `About me saved: 58 characters.`; Done: keys back, no panel text |
 | 7.7-2 | PASS | `우리 문빔 킬른 다음 주에 오픈해` -> `Moonbeam Kiln opens next week` (no `pottery`, no `Victoria`), 2.7 s |
 | 7.7-3 | PASS | `Can you send me the photos from yesterday?`, Read clipboard: `어제 찍은 사진 나한테 보내줄 수 있어?`; `protly about me v1` + `test`: `Save as your About me note (4 characters)?`, Cancel; 7.7-2 again: `Moonbeam Kiln opens next week`, 3.2 s |
@@ -616,9 +621,10 @@ and 44 (the simulator's text replacements are not stable; RECORD either way).
   x 22, Insert at x 321, y 741 pt), and the label match ignores case (Vision reads `Insert` as `insert`).
 - Model output: 8.5-1's wording changes from run to run (`ты меня спасла` / `Ты меня реально спасла`) and 8.5-7's
   polish sometimes keeps `낼` (run 44's retry); the rules check what the plan asks, not one wording.
-- The layout test is not stable when it runs first after boot: `runs/30a1fbf-44` stopped in `app.launch()` 17 s
-  in, before any shot, and the 200-line log tail did not say why; `test-failures.txt` now keeps xcodebuild's error
-  lines. Runs 30, 34, 40 and 41 measured the +17 pt band flake on one shot or two adjacent shots with `top-edge`
+- The layout test once stopped at launch: `runs/30a1fbf-44` stopped in `app.launch()` 17 s in, before any shot,
+  and the 200-line log tail did not say why. The same code passed in runs 41 and 50 (run 50 with every band at
+  +0), so it counts as a flake until shown otherwise (tower ruling); `test-failures.txt` now keeps xcodebuild's
+  error lines for the next one. Runs 30, 34, 40 and 41 measured the +17 pt band flake on one shot or two adjacent shots with `top-edge`
   495..512 pt, which the tower counts as layout PASS.
 
 ## Plain-text composition (typing-fixes 001)
