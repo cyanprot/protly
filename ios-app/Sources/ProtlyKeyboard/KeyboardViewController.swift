@@ -61,6 +61,10 @@ final class KeyboardViewController: KeyboardInputViewController {
         state.feedbackContext.settings.isHapticFeedbackEnabled = false
         state.feedbackContext.hapticConfiguration = .disabled
         (services.calloutService as? Callouts.StandardCalloutService)?.feedbackService = nil
+        // Space trackpad (typing-fixes 003): ProtlyActionHandler moves the cursor with SpaceTrackpad, so KeyboardKit's
+        // drag handler runs only if that path has no host. Even then a thumb drifting up must never freeze the
+        // cursor (R1): KeyboardKit dropped every step 50 pt above or below the start.
+        services.spaceDragGestureHandler.verticalThreshold = .greatestFiniteMagnitude
         // Autocap off: the user keeps it off, and a keyboard cannot read the system switch either.
         state.keyboardContext.settings.isAutocapitalizationEnabled = false
 
@@ -198,11 +202,15 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     private var now: Double { ProcessInfo.processInfo.systemUptime }
 
-    /// End the word being typed before KeyboardKit touches the field.
-    private func commitWord() {
-        guard let edit = session.commit() else { return }
-        apply(edit)
+    /// End the word being typed before KeyboardKit touches the field. Returns the word as the commit left it in the
+    /// field, nil when nothing was committed (no word, or the field moved under it and it was abandoned).
+    @discardableResult
+    private func commitWord() -> String? {
+        guard let edit = session.commit() else { return nil }
+        let wrote = apply(edit)
         savePrevious()
+        guard wrote, case .commit(let text) = edit else { return nil }
+        return text
     }
 
     /// Writes the edit as plain text: the word changes by deleting the characters after the part that stays and
@@ -459,6 +467,23 @@ final class KeyboardViewController: KeyboardInputViewController {
         refreshMode()
     }
 
+    /// Space became the trackpad (typing-fixes 003): end the word being typed (the commit can change its reading),
+    /// then snapshot the text around the cursor for SpaceTrackpad. The text before the cursor is read before the
+    /// commit and the commit applied to it, because a read right after the commit may not show it yet. As at any
+    /// cursor move, the bar's flip and Undo end here; the moves themselves go through adjustTextPosition below.
+    func beginSpaceDrag() -> SpaceTrackpad {
+        let p = textDocumentProxy
+        let context = p.documentContextBeforeInput ?? ""
+        let after = p.documentContextAfterInput ?? ""
+        let word = written
+        let committed = commitWord()
+        session.forgetLast()
+        endUndo()
+        refreshMode()
+        return SpaceTrackpad(
+            before: SpaceTrackpad.textBefore(context: context, written: word, committed: committed), after: after)
+    }
+
     override func endSentence(withText text: String) {
         commitWord()
         session.forgetLast()
@@ -514,7 +539,11 @@ struct ProtlyRoot: View {
                     params.view
                 }
             },
-            buttonView: { $0.view },
+            // The space trackpad starts after a shorter hold (R3); other keys keep KeyboardKit's 0.5 s.
+            buttonView: {
+                $0.view.keyboardButtonGestureConfiguration(
+                    $0.item.action == .space ? .init(longPressDelay: SpaceTrackpad.longPressDelay) : .standard)
+            },
             collapsedView: { $0.view },
             emojiKeyboard: { _ in EmptyView() },  // not KeyboardKit's placeholder: keeps the emoji key
             toolbar: { _ in
