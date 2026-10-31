@@ -1,0 +1,263 @@
+STATUS test-failed
+source e014ba80cd55952e308f3c5561ce03d83277a271
+xcode Xcode 26.6 Build version 17F113 
+runtime iOS 26.5 (com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+device iPhone-13-Pro (270CC5E6-D739-43AF-9199-ABBECB6C7B79), 390 pt wide
+build ok
+AppleKeyboards ("com.northprot.protly.cihost.keyboard","emoji@sw=Emoji","en_US@sw=QWERTY;hw=Automatic")
+appearance dark
+memory sampler pid 11958, probe 0
+tests failed (xcodebuild exit 65)
+screen 1170x2532 px, 390 pt wide, scale 3.00
+01-apple: top 509.00 row1 561.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 65.00(85) 194.83(14) 325.00(41)
+02-first-open: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+03-after-emoji: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+04-after-background: top 495.00 row1 564.00 band 69.00 pitch 54.00 key 43.00 bar-text-centers none
+05-after-second-emoji: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+06-word-typed: top 509.00 row1 561.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+07-empty-left-slot: top 769.00, no key row found
+CHECK top-edge FAIL range 495.00..769.00 (274.00 pt)
+CHECK band-02-first-open PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-03-after-emoji PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-04-after-background FAIL 69.00 vs apple 52.00 (+17.00)
+CHECK band-05-after-second-emoji PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-06-word-typed PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-07-empty-left-slot FAIL n/a vs apple 52.00
+CHECK pitch-02-first-open PASS 54.00 vs 54.00
+CHECK key-02-first-open PASS 43.00 vs 43.00
+CHECK pitch-03-after-emoji PASS 54.00 vs 54.00
+CHECK key-03-after-emoji PASS 43.00 vs 43.00
+CHECK pitch-04-after-background PASS 54.00 vs 54.00
+CHECK key-04-after-background PASS 43.00 vs 43.00
+CHECK pitch-05-after-second-emoji PASS 54.00 vs 54.00
+CHECK key-05-after-second-emoji PASS 43.00 vs 43.00
+CHECK pitch-06-word-typed PASS 54.00 vs 54.00
+CHECK key-06-word-typed PASS 43.00 vs 43.00
+CHECK pitch-07-empty-left-slot FAIL n/a vs 54.00
+CHECK key-07-empty-left-slot FAIL n/a vs 43.00
+CHECK bar-center-07 FAIL no bar text found
+RESULT FAIL
+CHECKS
+CHECK 6.8-1 PASS field="i dont think its ok teh." right="the" want "the" after-tap="the "
+CHECK 6.8-2 PASS right="receive" want "receive" field="recieve."
+CHECK 6.8-3 PASS right="tomorrow" want "tomorrow" after-tap="tomorrow "
+CHECK 6.8-4 PASS right="안녕" want starts with "안녕" typed="안녕ㅎ" after-tap="안녕하세요 "
+CHECK 6.8-5 RECORD right="" ink 0 after-space="omw "
+CHECK 6.8-6 SKIP no contacts in the simulator
+CHECK 6.8-7 PASS context="안녕" field="걍 가자 " field="걔 진짜 웃겨 " field="얘 뭐야 " field="꽤 좋다 " field="I need to get rid of it "
+CHECK 6.8-8 PASS typed="죵" after-flip="wyd" again="wyd "
+CHECK 6.8-9 RECORD same process: field='wyd ' pid 15046 -> 15046
+CHECK 6.8-10 RECORD start 59.0 MB end 60.0 MB growth +1.0 MB over presentations=30/30 (footprint, pid 15046; macOS-side, not the phone's limit; footprint prints whole MB, so growth under 1 MB reads as zero)
+CHECK 6.8-11 PASS left="ghk" ink 1434 after-flip="내일 qhk"
+CHECK 8.5-1o PASS ru=latin field="ru: 누나 노트 고마워 누나 덕분에 살았다 " center="Translate" want "Translate"
+CHECK 8.5-2o RECORD ru-again="겨" zh="코" flip zh-after-flip="zh" taught="zh: 안녕 " zh-space="zh "
+CHECK 8.5-6o PASS ok=latin field="ok: 내일 봐 " center="Translate" want "Translate"
+CHECK 8.5-7o PASS ko=latin field="ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 " center="Polish" want "Polish"
+CHECK 8.5-8o RECORD ko=latin field="ko: 오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ" center="" ink 0
+CHECK 8.5-9o PASS context="솓" flip context-after-flip="the" field="me encanta el color de tu chaqueta, donde la conprastes? jaja " center="Polish" want "Polish"
+CHECK icon RECORD {296.0,163.0,68.0,90.7} found on page 1 (c-icon.png, c-icon-home.png)
+CHECK ws-1 PASS left="ㅗ디 |ㅐ" want Hangul after-tap="ㅗ디ㅣㅐ " want the Korean reading plus a space
+CHECK ws-2 PASS field="hello. " left=ocr "" ink 0 (c-ws-2-1-left.png)
+CHECK ws-3 PASS field="hello\n" left=ocr "" ink 0 (c-ws-3-1-left.png)
+CHECKS pass 14 fail 0 record 6 skip 1
+--- last 200 lines of test.log
+    t =   178.05s     Wait for com.northprot.protly.cihost to idle
+    t =   178.05s     Find the "field" Any
+    t =   178.08s     Check for interrupting elements affecting "field" TextField
+    t =   178.09s     Synthesize event
+    t =   178.39s     Wait for com.northprot.protly.cihost to idle
+    t =   178.65s Checking existence of `"q" Key`
+    t =   178.72s Checking existence of `"Q" Key`
+    t =   178.76s Checking existence of `Any (First Match)`
+    t =   178.86s Checking existence of `Key (First Match)`
+    t =   180.07s Waiting 2.0s for "dismiss" Button to exist
+    t =   181.12s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   181.12s         Checking existence of `"dismiss" Button`
+    t =   181.17s Tap "dismiss" Button
+    t =   181.17s     Wait for com.northprot.protly.cihost to idle
+    t =   181.17s     Find the "dismiss" Button
+    t =   181.22s     Check for interrupting elements affecting "dismiss" Button
+    t =   181.27s     Synthesize event
+    t =   181.56s     Wait for com.northprot.protly.cihost to idle
+    t =   182.82s Checking existence of `"q" Key`
+    t =   182.83s Checking existence of `"Q" Key`
+    t =   182.84s Checking existence of `Any (First Match)`
+    t =   182.88s Checking existence of `Key (First Match)`
+    t =   183.04s Waiting 2.0s for "field" Any to exist
+    t =   184.07s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   184.07s         Checking existence of `"field" Any`
+    t =   184.09s Tap "field" Any
+    t =   184.09s     Wait for com.northprot.protly.cihost to idle
+    t =   184.09s     Find the "field" Any
+    t =   184.11s     Check for interrupting elements affecting "field" TextField
+    t =   184.12s     Synthesize event
+    t =   184.41s     Wait for com.northprot.protly.cihost to idle
+    t =   184.67s Checking existence of `"q" Key`
+    t =   184.74s Checking existence of `"Q" Key`
+    t =   184.78s Checking existence of `Any (First Match)`
+    t =   184.87s Checking existence of `Key (First Match)`
+    t =   186.08s Waiting 2.0s for "dismiss" Button to exist
+    t =   187.14s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   187.14s         Checking existence of `"dismiss" Button`
+    t =   187.19s Tap "dismiss" Button
+    t =   187.19s     Wait for com.northprot.protly.cihost to idle
+    t =   187.19s     Find the "dismiss" Button
+    t =   187.24s     Check for interrupting elements affecting "dismiss" Button
+    t =   187.28s     Synthesize event
+    t =   187.58s     Wait for com.northprot.protly.cihost to idle
+    t =   188.85s Checking existence of `"q" Key`
+    t =   188.86s Checking existence of `"Q" Key`
+    t =   188.88s Checking existence of `Any (First Match)`
+    t =   188.91s Checking existence of `Key (First Match)`
+    t =   189.06s Waiting 2.0s for "field" Any to exist
+    t =   190.12s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   190.12s         Checking existence of `"field" Any`
+    t =   190.14s Tap "field" Any
+    t =   190.14s     Wait for com.northprot.protly.cihost to idle
+    t =   190.14s     Find the "field" Any
+    t =   190.15s     Check for interrupting elements affecting "field" TextField
+    t =   190.17s     Synthesize event
+    t =   190.48s     Wait for com.northprot.protly.cihost to idle
+    t =   190.75s Checking existence of `"q" Key`
+    t =   190.82s Checking existence of `"Q" Key`
+    t =   190.87s Checking existence of `Any (First Match)`
+    t =   190.98s Checking existence of `Key (First Match)`
+    t =   192.19s Waiting 2.0s for "dismiss" Button to exist
+    t =   193.25s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   193.25s         Checking existence of `"dismiss" Button`
+    t =   193.30s Tap "dismiss" Button
+    t =   193.30s     Wait for com.northprot.protly.cihost to idle
+    t =   193.30s     Find the "dismiss" Button
+    t =   193.35s     Check for interrupting elements affecting "dismiss" Button
+    t =   193.40s     Synthesize event
+    t =   193.69s     Wait for com.northprot.protly.cihost to idle
+    t =   194.94s Checking existence of `"q" Key`
+    t =   194.95s Checking existence of `"Q" Key`
+    t =   194.96s Checking existence of `Any (First Match)`
+    t =   195.00s Checking existence of `Key (First Match)`
+    t =   195.15s Waiting 2.0s for "field" Any to exist
+    t =   196.19s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   196.19s         Checking existence of `"field" Any`
+    t =   196.20s Tap "field" Any
+    t =   196.20s     Wait for com.northprot.protly.cihost to idle
+    t =   196.20s     Find the "field" Any
+    t =   196.22s     Check for interrupting elements affecting "field" TextField
+    t =   196.23s     Synthesize event
+    t =   196.54s     Wait for com.northprot.protly.cihost to idle
+    t =   196.80s Checking existence of `"q" Key`
+    t =   196.86s Checking existence of `"Q" Key`
+    t =   196.90s Checking existence of `Any (First Match)`
+    t =   196.99s Checking existence of `Key (First Match)`
+    t =   198.22s Waiting 2.0s for "dismiss" Button to exist
+    t =   199.28s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   199.28s         Checking existence of `"dismiss" Button`
+    t =   199.37s Tap "dismiss" Button
+    t =   199.37s     Wait for com.northprot.protly.cihost to idle
+    t =   199.38s     Find the "dismiss" Button
+    t =   199.48s     Check for interrupting elements affecting "dismiss" Button
+    t =   199.53s     Synthesize event
+    t =   199.83s     Wait for com.northprot.protly.cihost to idle
+    t =   201.13s Checking existence of `"q" Key`
+    t =   201.18s Checking existence of `"Q" Key`
+    t =   201.19s Checking existence of `Any (First Match)`
+    t =   201.22s Checking existence of `Key (First Match)`
+    t =   201.43s Waiting 2.0s for "field" Any to exist
+    t =   202.47s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   202.47s         Checking existence of `"field" Any`
+    t =   202.50s Tap "field" Any
+    t =   202.50s     Wait for com.northprot.protly.cihost to idle
+    t =   202.50s     Find the "field" Any
+    t =   202.51s     Check for interrupting elements affecting "field" TextField
+    t =   202.53s     Synthesize event
+    t =   202.83s     Wait for com.northprot.protly.cihost to idle
+    t =   203.11s Checking existence of `"q" Key`
+    t =   203.17s Checking existence of `"Q" Key`
+    t =   203.21s Checking existence of `Any (First Match)`
+    t =   203.32s Checking existence of `Key (First Match)`
+    t =   204.54s Waiting 2.0s for "dismiss" Button to exist
+    t =   205.60s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   205.60s         Checking existence of `"dismiss" Button`
+    t =   205.67s Tap "dismiss" Button
+    t =   205.67s     Wait for com.northprot.protly.cihost to idle
+    t =   205.67s     Find the "dismiss" Button
+    t =   205.72s     Check for interrupting elements affecting "dismiss" Button
+    t =   205.76s     Synthesize event
+    t =   206.06s     Wait for com.northprot.protly.cihost to idle
+    t =   207.30s Checking existence of `"q" Key`
+    t =   207.31s Checking existence of `"Q" Key`
+    t =   207.32s Checking existence of `Any (First Match)`
+    t =   207.36s Checking existence of `Key (First Match)`
+    t =   207.51s Waiting 2.0s for "field" Any to exist
+    t =   208.54s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   208.54s         Checking existence of `"field" Any`
+    t =   208.56s Tap "field" Any
+    t =   208.56s     Wait for com.northprot.protly.cihost to idle
+    t =   208.57s     Find the "field" Any
+    t =   208.58s     Check for interrupting elements affecting "field" TextField
+    t =   208.60s     Synthesize event
+    t =   208.89s     Wait for com.northprot.protly.cihost to idle
+    t =   209.15s Checking existence of `"q" Key`
+    t =   209.21s Checking existence of `"Q" Key`
+    t =   209.25s Checking existence of `Any (First Match)`
+    t =   209.35s Checking existence of `Key (First Match)`
+    t =   210.53s Waiting 2.0s for "dismiss" Button to exist
+    t =   211.59s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   211.59s         Checking existence of `"dismiss" Button`
+    t =   211.65s Tap "dismiss" Button
+    t =   211.65s     Wait for com.northprot.protly.cihost to idle
+    t =   211.66s     Find the "dismiss" Button
+    t =   211.70s     Check for interrupting elements affecting "dismiss" Button
+    t =   211.74s     Synthesize event
+    t =   212.04s     Wait for com.northprot.protly.cihost to idle
+    t =   213.30s Checking existence of `"q" Key`
+    t =   213.34s Checking existence of `"Q" Key`
+    t =   213.35s Checking existence of `Any (First Match)`
+    t =   213.39s Checking existence of `Key (First Match)`
+    t =   213.54s Waiting 2.0s for "field" Any to exist
+    t =   214.59s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   214.59s         Checking existence of `"field" Any`
+    t =   214.60s Tap "field" Any
+    t =   214.60s     Wait for com.northprot.protly.cihost to idle
+    t =   214.61s     Find the "field" Any
+    t =   214.62s     Check for interrupting elements affecting "field" TextField
+    t =   214.64s     Synthesize event
+    t =   214.93s     Wait for com.northprot.protly.cihost to idle
+    t =   215.21s Checking existence of `"q" Key`
+    t =   215.30s Checking existence of `"Q" Key`
+    t =   215.34s Checking existence of `Any (First Match)`
+    t =   215.48s Checking existence of `Key (First Match)`
+    t =   219.81s Tear Down
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test4_memory]' passed (220.143 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test5_icon]' started.
+    t =     0.00s Start Test at 2026-10-31 04:24:06.115
+    t =     0.04s Set Up
+    t =     0.65s Pressing Home button
+    t =     3.16s Checking existence of `"Protly" Icon`
+    t =     3.72s Find the "Protly" Icon
+    t =     3.98s Checking existence of `"Protly" Icon`
+    t =     4.02s Find the "Protly" Icon
+    t =     4.06s Find the "Protly" Icon
+    t =     4.10s Checking existence of `"Protly" Icon`
+    t =     4.13s Find the "Protly" Icon
+    t =     4.18s Checking existence of `"Protly" Icon`
+    t =     4.22s Tear Down
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test5_icon]' passed (4.237 seconds).
+Test Suite 'PhoneChecksUITests' passed at 2026-10-31 04:24:10.352.
+	 Executed 6 tests, with 1 test skipped and 0 failures (0 unexpected) in 954.245 (954.251) seconds
+Test Suite 'ProtlyCIUITests.xctest' failed at 2026-10-31 04:24:10.355.
+	 Executed 7 tests, with 1 test skipped and 1 failure (0 unexpected) in 1058.070 (1058.081) seconds
+Test Suite 'All tests' failed at 2026-10-31 04:24:10.355.
+	 Executed 7 tests, with 1 test skipped and 1 failure (0 unexpected) in 1058.070 (1058.083) seconds
+2026-10-31 04:24:36.841 xcodebuild[11960:44437] [MT] IDETestOperationsObserverDebug: 1193.657 elapsed -- Testing started completed.
+2026-10-31 04:24:36.841 xcodebuild[11960:44437] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-31 04:24:36.841 xcodebuild[11960:44437] [MT] IDETestOperationsObserverDebug: 1193.657 sec, +1193.657 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/_temp/protly-shots-work/Tests.xcresult
+
+Failing tests:
+	KeyboardShotsUITests.testScenarios()
+
+** TEST EXECUTE FAILED **
+
+Testing started
