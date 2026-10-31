@@ -1,0 +1,108 @@
+Attributes: Application, 0x12dcd8c80, pid: 34288, label: 'Protly'
+Element subtree:
+ →Application, 0x12dcd8c80, pid: 34288, label: 'Protly'
+    Window (Main), 0x12dcda440, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x12dcd9180, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x12dcda6c0, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x12dcd8f00, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x12dcd8280, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, 0x12dcdb980, {{0.0, 0.0}, {390.0, 844.0}}
+                NavigationBar, 0x12dcd9400, {{0.0, 47.0}, {390.0, 106.0}}, identifier: 'Protly'
+                  StaticText, 0x12dcd8dc0, {{16.0, 104.7}, {93.3, 40.7}}, label: 'Protly'
+                Other, 0x12dcdad00, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, 0x12dcd9a40, {{0.0, 0.0}, {390.0, 844.0}}
+                    Other, 0x12dcd8140, {{0.0, 0.0}, {390.0, 844.0}}
+                      Other, 0x12dcdbc00, {{0.0, 0.0}, {390.0, 844.0}}
+                        CollectionView, 0x12dcdabc0, {{0.0, 0.0}, {390.0, 844.0}}
+                          Other, 0x12dcd88c0, {{-16.0, -1535.0}, {422.0, 1922.3}}
+                          Other, 0x12dcd92c0, {{0.0, 0.0}, {390.0, 844.0}}
+                          Other, 0x12dcdbe80, {{0.0, 0.0}, {390.0, 844.0}}
+                          Cell, 0x12dcda300, {{16.0, 153.0}, {358.0, 40.3}}
+                            Other, 0x12dcd9f40, {{16.0, 153.0}, {358.0, 40.3}}
+                            Other, 0x12dcda1c0, {{16.0, 153.0}, {358.0, 40.3}}
+                              Other, 0x12dcd9900, {{16.0, 153.0}, {358.0, 40.3}}
+                                Other, 0x12dcdaf80, {{16.0, 153.0}, {358.0, 40.3}}
+                                  StaticText, 0x12dcd8640, {{16.0, 153.0}, {358.0, 40.3}}, label: 'Setup'
+                          Cell, 0x12dcd9540, {{16.0, 193.3}, {358.0, 72.3}}
+                            Other, 0x12dcd8500, {{16.0, 193.3}, {358.0, 72.3}}
+                              Other, 0x12dcdaa80, {{16.0, 193.3}, {358.0, 72.3}}
+                            Other, 0x12dcd83c0, {{16.0, 193.3}, {358.0, 72.3}}
+                              Other, 0x12dcdae40, {{16.0, 193.3}, {358.0, 72.3}}
+                                Other, 0x12dcdb700, {{16.0, 193.3}, {358.0, 72.3}}
+                                  StaticText, 0x12dcd8000, {{16.0, 193.3}, {358.0, 72.3}}, label: '1. Settings > General > Keyboard > Keyboards > Add New Keyboard > Protly'
+                          Cell, 0x12dcd8a00, {{16.0, 265.7}, {358.0, 52.0}}
+                            Other, 0x12dcd9cc0, {{16.0, 265.7}, {358.0, 52.0}}
+                              Other, 0x12dcdbac0, {{16.0, 265.7}, {358.0, 52.0}}
+                            Other, 0x12dcdb5c0, {{16.0, 265.7}, {358.0, 52.0}}
+                              Other, 0x12dcdb840, {{16.0, 265.7}, {358.0, 52.0}}
+                                Other, 0x12dcdbd40, {{16.0, 265.7}, {358.0, 52.0}}
+                                  StaticText, 0x1181c92c0, {{16.0, 265.7}, {358.0, 52.0}}, label: '2. Tap Protly and turn on Allow Full Access'
+                          Other, 0x1181c9f40, {{32.0, 264.7}, {326.0, 1.0}}
+                          Cell, 0x1181ca080, {{16.0, 317.7}, {358.0, 52.0}}
+                            Other, 0x1181ca300, {{16.0, 317.7}, {358.0, 52.0}}
+                              Other, 0x1181ca580, {{16.0, 317.7}, {358.0, 52.0}}
+                            Other, 0x1181c9680, {{16.0, 317.7}, {358.0, 52.0}}
+                              Other, 0x1181c9a40, {{16.0, 317.7}, {358.0, 52.0}}
+                                Other, 0x1181c9cc0, {{16.0, 317.7}, {358.0, 52.0}}
+                                  StaticText, 0x1181c9540, {{16.0, 317.7}, {358.0, 52.0}}, label: '3. Keep the Emoji keyboard'
+                          Other, 0x1181c9e00, {{32.0, 316.7}, {326.0, 1.0}}
+                          Other, 0x1181c97c0, {{-16.0, 387.3}, {422.0, 302.3}}
+                          Cell, 0x1181c9180, {{16.0, 387.3}, {358.0, 40.3}}
+                            Other, 0x1181c9400, {{16.0, 387.3}, {358.0, 40.3}}
+                            Other, 0x1181c8f00, {{16.0, 387.3}, {358.0, 40.3}}
+                              Other, 0x1181c9040, {{16.0, 387.3}, {358.0, 40.3}}
+                                Other, 0x1181ca440, {{16.0, 387.3}, {358.0, 40.3}}
+                                  StaticText, 0x1181c9900, {{16.0, 387.3}, {358.0, 40.3}}, label: 'About me'
+                          Cell, 0x1181c9b80, {{16.0, 427.7}, {358.0, 116.3}}
+                            Other, 0x17ba166c0, {{16.0, 427.7}, {358.0, 116.3}}
+                              Other, 0x17ba14280, {{16.0, 427.7}, {358.0, 116.3}}
+                            Other, 0x17ba15e00, {{16.0, 427.7}, {358.0, 116.3}}
+                              Other, 0x17ba15680, {{16.0, 427.7}, {358.0, 116.3}}
+                                Other, 0x17ba143c0, {{16.0, 427.7}, {358.0, 116.3}}
+                                  TextField, 0x17ba15540, {{32.0, 442.7}, {326.0, 86.3}}, value: I run Moonbeam Kil...
+                                    Other, 0x17ba14a00, {{32.0, 496.0}, {326.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                      Other, 0x17ba14c80, {{35.0, 523.0}, {320.0, 3.0}}
+                          Cell, 0x17ba15b80, {{16.0, 544.0}, {358.0, 52.0}}
+                            Other, 0x17ba14780, {{16.0, 544.0}, {358.0, 52.0}}
+                              Other, 0x17ba15400, {{16.0, 544.0}, {358.0, 52.0}}
+                            Other, 0x17ba15cc0, {{16.0, 544.0}, {358.0, 52.0}}
+                              Other, 0x17ba16080, {{16.0, 544.0}, {358.0, 52.0}}
+                                Other, 0x17ba14dc0, {{16.0, 544.0}, {358.0, 52.0}}
+                                  StaticText, 0x17ba148c0, {{32.0, 559.8}, {76.0, 20.3}}, label: '58 / 1,000'
+                                  Button, 0x17ba15a40, {{188.7, 559.8}, {169.3, 20.3}}, label: 'Copy for the keyboard'
+                          Other, 0x17ba14b40, {{32.0, 543.0}, {326.0, 1.0}}
+                          Cell, 0x17ba152c0, {{16.0, 596.0}, {358.0, 93.7}}
+                            Other, 0x17ba15900, {{16.0, 596.0}, {358.0, 93.7}}
+                            Other, 0x17ba170c0, {{16.0, 596.0}, {358.0, 93.7}}
+                              Other, 0x17ba14f00, {{16.0, 596.0}, {358.0, 93.7}}
+                                Other, 0x17ba14000, {{16.0, 596.0}, {358.0, 93.7}}
+                                  StaticText, 0x17ba161c0, {{16.0, 596.0}, {358.0, 93.7}}, label: 'Translate and Polish send this note with your draft. To update the keyboard: tap Copy for the keyboard, tap the Test field below, tap Read clipboard in the protly bar, Allow Paste, then Save. Copy an empty note to clear it.'
+                          Other, 0x17ba15040, {{-16.0, 689.7}, {422.0, 1800.3}}
+                          Cell, 0x17ba16300, {{16.0, 689.7}, {358.0, 40.3}}
+                            Other, 0x17ba14640, {{16.0, 689.7}, {358.0, 40.3}}
+                            Other, 0x17ba15f40, {{16.0, 689.7}, {358.0, 40.3}}
+                              Other, 0x17ba16580, {{16.0, 689.7}, {358.0, 40.3}}
+                                Other, 0x17ba15180, {{16.0, 689.7}, {358.0, 40.3}}
+                                  StaticText, 0x17ba157c0, {{16.0, 689.7}, {358.0, 40.3}}, label: 'Test'
+                          Cell, 0x17ba16440, {{16.0, 730.0}, {358.0, 52.0}}
+                            Other, 0x17ba14500, {{16.0, 730.0}, {358.0, 52.0}}
+                              Other, 0x17ba14140, {{16.0, 730.0}, {358.0, 52.0}}
+                            Other, 0x17ba16800, {{16.0, 730.0}, {358.0, 52.0}}
+                              Other, 0x12dce0140, {{16.0, 730.0}, {358.0, 52.0}}
+                                Other, 0x12dce0a00, {{16.0, 730.0}, {358.0, 52.0}}
+                                  TextField, 0x12dce0780, {{32.0, 745.0}, {326.0, 22.0}}, placeholderValue: 'Type here'
+                                    Other, 0x12dce3d40, {{42.0, 753.0}, {306.0, 11.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                      Other, 0x12dcd2a80, {{45.0, 761.0}, {300.0, 3.0}}
+                          Other, 0x12dcd3c00, {{357.0, 101.0}, {30.0, 695.7}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                            Other, 0x12dcd2300, {{384.0, 786.7}, {3.0, 7.0}}
+                          Other, 0x12dcd2940, {{357.0, 101.0}, {30.0, 695.7}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                            Other, 0x12dcd26c0, {{384.0, 786.7}, {3.0, 7.0}}
+                Other, 0x12dcd2d00, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, 0x12dcd30c0, {{0.0, 0.0}, {390.0, 844.0}}
+Path to element:
+ →Application, 0x12dcd8c80, pid: 34288, label: 'Protly'
+Query chain:
+ →Find: Application 'com.northprot.protly.ciapp'
+  Output: {
+    Application, 0x12dcd1e00, pid: 34288, label: 'Protly'
+  }
