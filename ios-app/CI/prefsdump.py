@@ -7,7 +7,8 @@ Usage:
 
 run-shots.sh takes a snapshot before and after Full Access is turned on in Settings (plan Task 2.2 step 1), each
 after `simctl shutdown` so the preference daemon has written to disk, and writes the difference to probe-prefs.txt.
-A snapshot copies every .plist (binary or XML; up to 2 MB) and Library/TCC/TCC.db, and keeps an index of every
+A snapshot copies every .plist (binary or XML; up to 2 MB) and Library/TCC/TCC.db with its -wal and -shm files (WAL mode
+keeps the newest rows there), and keeps an index of every
 other file's size and mtime. The difference lists, per changed plist, every added, removed or changed key path
 with its value; the TCC rows that were added or changed (and the access table's schema); and other new or changed
 files by path only. Values are cut at 300 characters.
@@ -47,7 +48,7 @@ def snapshot(data, dest):
         except OSError:
             continue
         index[rel] = [st.st_size, st.st_mtime]
-        if (rel.endswith(".plist") and st.st_size <= MAX_PLIST) or rel == TCC:
+        if (rel.endswith(".plist") and st.st_size <= MAX_PLIST) or rel in (TCC, TCC + "-wal", TCC + "-shm"):
             target = os.path.join(files, rel)
             os.makedirs(os.path.dirname(target), exist_ok=True)
             try:
@@ -149,7 +150,7 @@ def diff(before, after):
             index_b = json.load(f)
         with open(os.path.join(after, "index.json"), encoding="utf-8") as f:
             index_a = json.load(f)
-        other = [rel for rel in sorted(index_a) if not rel.endswith(".plist") and rel != TCC
+        other = [rel for rel in sorted(index_a) if not rel.endswith(".plist") and not rel.startswith(TCC)
                  and index_a[rel] != index_b.get(rel)]
         out.append(f"other new or changed files: {len(other)}")
         out += [f"  {rel}" for rel in other[:300]]

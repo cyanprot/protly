@@ -669,6 +669,16 @@ class PrefsDumpTests(unittest.TestCase):
         self.assertNotIn("com.apple.other.plist", text)
         self.assertIn("create table access", text.lower())
 
+    def test_tcc_wal_files_are_copied(self):
+        # A TCC.db in WAL mode keeps its newest rows in TCC.db-wal; without it the copy reads as empty (run 40).
+        tcc = os.path.join(self.data, "Library", "TCC")
+        for suffix in ("-wal", "-shm"):
+            with open(os.path.join(tcc, "TCC.db" + suffix), "wb") as f:
+                f.write(b"x")
+        dest = self.snap("before")
+        for suffix in ("-wal", "-shm"):
+            self.assertTrue(os.path.exists(os.path.join(dest, "files", "Library", "TCC", "TCC.db" + suffix)))
+
     def test_nothing_changed(self):
         before = self.snap("before")
         after = self.snap("after")

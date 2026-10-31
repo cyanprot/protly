@@ -85,14 +85,27 @@ and the container app's about-me note: 6.8-11 (its Translate part runs inside `t
 - **The leak guard** still runs before every publish (the build log tail is inside the guarded folder) and adds
   `LEAK-GUARD pass: ...` to the published report. Nothing prints a request, a header or a response body: the panel
   shows protly's fixed error messages only.
-- **Full Access.** `test0_access` opens Settings > General > Keyboard > Keyboards > Protly, turns on Allow Full
-  Access and taps Allow; the outcome is in `network.txt`. With `[probe]`, `run-shots.sh` runs `test0_access` alone
-  between two snapshots of the shut-down device (`prefsdump.py`) and writes what changed to `probe-prefs.txt`.
+- **Full Access: the Settings UI way works** (run 40: "switch tap 2, Allow in the alert"). `test0_access` opens
+  Settings > General > Keyboard > Keyboards > Protly, turns on Allow Full Access and taps Allow; the outcome is in
+  `network.txt` and `full-access.txt`. iOS 26 Settings: rows are matched as cells by their own label or a labeled
+  button inside them (root rows have no label of their own; General > Keyboard is titled "Keyboards", like its row),
+  and scrolled into view either way. The probe found no preference key for it: `probe-prefs.txt` (a lone
+  `test0_access` between two snapshots of the shut-down device, `prefsdump.py`) shows no plist change naming
+  Protly or Full Access, and run 40 read TCC.db without its `-wal` file (copied since), so nothing is written
+  before boot.
 - **Panel buttons** (Insert, Undo is the bar's center, Save, Cancel, Done, Retry) are inside the keyboard: the test
   polls Vision OCR of the panel every 0.5 s (up to 30 s) and taps the label's word box from the same screenshot,
-  in the panel's bottom 45 pt so the same word in the panel's text does not count. The poll time is the timing.
-- **Allow Paste.** A `Read clipboard` tap is followed by an interruption monitor (the next interaction is a tap on
-  the host's empty background), then the `Allow Paste` button in the app or SpringBoard; `network.txt` logs which.
+  in the panel's bottom 45 pt so the same word in the panel's text does not count, and case-insensitively (Vision
+  reads the semibold `Insert` as `insert`). Polls read only that band (a whole-panel reading takes seconds); the poll
+  time is the timing.
+- **Deadlines.** Each method has an XCTest time allowance (`PhoneChecksUITests.allowance`, `-test-timeouts-enabled`),
+  the network groups stop starting items two minutes before theirs, `run-shots.sh` stops the main test run after
+  50 minutes (`with_deadline`), and the build step's 72-minute timeout leaves the publish steps time to run. The
+  step log prints each method, each CHECK's ID and status, request counts and a heartbeat.
+- **Allow Paste.** The prompt is a SpringBoard alert (run 40's probe); the interruption monitor answers it on the
+  next interaction (a tap on the host's empty background), else the test taps `Allow Paste` in the app or
+  SpringBoard; `network.txt` logs which. A read that shows no panel relaunches the app, so a keyboard blocked on an
+  unanswered prompt is freed.
   The test runner sets the clipboard with `UIPasteboard.general.string` with the keyboard down, then brings it back
   on the empty field, so the bar's center offers `Read clipboard`.
 - **The container app** (`ProtlyCIApp`): the note is pasted into About me from the edit menu (no `typeText`), the

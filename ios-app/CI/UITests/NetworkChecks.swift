@@ -731,11 +731,16 @@ extension PhoneRun {
             .matching(NSPredicate(format: "elementType IN %@", types as NSArray)).element(boundBy: index)
     }
 
-    /// The About me counter, `N / 1000`.
+    /// The About me counter, `N / 1,000`: SwiftUI's Text formats both numbers for the locale (run 40 looked for
+    /// "/ 1000" and found nothing).
     func counter(_ a: Driver) -> Int? {
-        let t = a.app.staticTexts.matching(NSPredicate(format: "label ENDSWITH %@", " / 1000")).firstMatch
-        guard t.waitForExistence(timeout: 2) else { return nil }
-        return Int(t.label.components(separatedBy: " / ").first?.trimmingCharacters(in: .whitespaces) ?? "")
+        let t = a.app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "^[0-9,.\\s]+ / 1[,.\\s]?000$")).firstMatch
+        guard t.waitForExistence(timeout: 3) else {
+            a.dumpOnce("app-counter", a.app)
+            return nil
+        }
+        let digits = (t.label.components(separatedBy: " / ").first ?? "").filter { $0.isNumber }
+        return Int(digits)
     }
 
     /// An in-app paste from the edit menu: no Allow Paste prompt, and no typeText (it fails with Protly active).

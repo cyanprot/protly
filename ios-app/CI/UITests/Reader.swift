@@ -17,9 +17,12 @@ struct Seen {
         text.contains(phrase.split(whereSeparator: { $0.isWhitespace }).joined(separator: " "))
     }
 
-    /// The lowest word equal to `label` inside `band`: a button, not the same word in the panel's text.
+    /// The lowest word equal to `label` inside `band`: a button, not the same word in the panel's text. Case does
+    /// not count: Vision reads the semibold Insert as "insert" (run 40).
     func word(_ label: String, in band: CGRect) -> CGRect? {
-        words.filter { $0.text == label && band.contains(CGPoint(x: $0.rect.midX, y: $0.rect.midY)) }
+        words.filter {
+            $0.text.caseInsensitiveCompare(label) == .orderedSame && band.contains(CGPoint(x: $0.rect.midX, y: $0.rect.midY))
+        }
             .max { $0.rect.midY < $1.rect.midY }?.rect
     }
 }
