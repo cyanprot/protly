@@ -2,9 +2,9 @@
 // The keyboard owns no text logic: it feeds keys in and applies the returned edits.
 
 public enum FieldEdit: Sendable, Equatable {
-    /// Show this as marked (composing) text, replacing the current marked text. "" clears it.
+    /// The word being typed is now this text, replacing what was written for it. "" removes it.
     case mark(String)
-    /// The word is final: replace the marked text with this plain text.
+    /// The word is final: it becomes this text.
     case commit(String)
     /// Delete this many characters before the cursor, then insert the text (flipping a committed word).
     case replace(deleting: Int, inserting: String)

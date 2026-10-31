@@ -55,8 +55,11 @@ simulator check harness this campaign extends.
 - **Known flake:** `band-04-after-background` sometimes measures 69 instead of 52 (runs `b390712-8`,
   `307483a-12`). A run whose only failing layout check is that one counts as layout PASS for this campaign. If a
   run fails for a reason unrelated to your change (a simulator boot or XCTest harness failure, not a check your
-  code affects), push one empty `[shots]` commit to re-run it; that re-run does not count against the budget. Say
-  so in the report.
+  code affects), re-run it once; that re-run does not count against the budget. Say so in the report.
+  Amended 2026-10-30 after sprint 001: the same flake hit `band-07-empty-left-slot` (run `28108ea-24`, 69 vs 52,
+  keys unchanged, re-run `d504f77-25` passed). Any single `band-*` check failing by exactly +17 pt with the keys
+  in place counts as this flake. An empty commit never runs the job (the workflow's `paths` filter): re-run with a
+  commit that touches `ios-app/**`, or ask the tower, which starts it with `gh workflow run`.
 - Put logic in ProtlyCore wherever possible, as pure functions or value types, so it is unit tested on Linux. Keep
   the keyboard-target change thin: it calls ProtlyCore and talks to `textDocumentProxy`.
 - Never break the phone build: do not edit `ios-app/Package.swift`, `ios-app/xtool.yml` or anything under

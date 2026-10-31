@@ -26,11 +26,10 @@ final class KeyboardViewController: KeyboardInputViewController {
     let mode = ProtlyMode()
     /// Not private(set): Words.swift fills its suggester.
     var session = TypingSession()
-    /// Marked text currently in the field, mirrored here because the proxy's context excludes it.
-    private var marked = ""
-    /// The text before the word being typed, taken at its first key. The proxy's context excludes the mark,
-    /// so it stays equal while the word is in the field; a change means the host moved or cleared the field.
-    private var wordStartBefore = ""
+    /// The word being typed as Protly wrote it into the field (plain text, no marked text), "" between words.
+    private var written = ""
+    /// Protly's model of the text before the cursor from its own writes: whether the field still holds the word.
+    private var watch = FieldWatch(known: false)
 
     let english = ProtlyLayoutService(alphabeticInputSet: .qwerty, numericInputSet: .numeric, symbolicInputSet: .symbolic)
     let korean = ProtlyLayoutService(alphabeticInputSet: .dubeolsik, numericInputSet: .numeric, symbolicInputSet: .symbolic)
@@ -98,10 +97,9 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        // The host keeps the marked word as text; forget it so the next key does not replace it.
-        session.abandon()
-        savePrevious()  // the abandoned word's language carries to the next message
-        marked = ""
+        // The word is already plain text in the field: only the session state goes, so the next key starts a new
+        // word. The abandoned word's language carries to the next message.
+        abandonWord()
         actionTask?.cancel()
         mode.panel = nil
         endUndo()
@@ -113,10 +111,16 @@ final class KeyboardViewController: KeyboardInputViewController {
     func typeLetter(_ letter: Character) {
         endUndo()
         noticeFieldMoved()
-        if !session.isComposing { wordStartBefore = textDocumentProxy.documentContextBeforeInput ?? "" }
         let kc = state.keyboardContext.keyboardCase
         let shift: Shift = kc.isUppercasedOrCapslocked ? (mode.manualShift || kc == .capsLocked ? .manual : .automatic) : .none
-        apply(session.type(KeyEvent(letter, shift)))
+        let key = KeyEvent(letter, shift)
+        if !session.isComposing { beginWord() }
+        if !apply(session.type(key)) {
+            // The field moved under the word: it stays as typed, and this key (already taken by the abandoned
+            // word) starts a new one, so it is not lost.
+            beginWord()
+            apply(session.type(key))
+        }
         if kc == .uppercased {
             setKeyboardCase(.lowercased)  // one-shot shift, like Apple
             mode.manualShift = false
@@ -124,10 +128,11 @@ final class KeyboardViewController: KeyboardInputViewController {
         refreshMode()
     }
 
-    /// true when the key was inside a word being typed.
+    /// true when the key was inside a word being typed. false when no word is typed, or the field moved under the
+    /// word (it is abandoned): KeyboardKit then deletes one character normally.
     func backspaceInWord() -> Bool {
         guard let edit = session.backspace() else { return false }
-        apply(edit)
+        guard apply(edit) else { return false }
         // Shift is spent, as on KeyboardKit's own path (this gesture skips its case change).
         if state.keyboardContext.keyboardCase == .uppercased { setKeyboardCase(.lowercased) }
         refreshMode()
@@ -148,30 +153,50 @@ final class KeyboardViewController: KeyboardInputViewController {
         noticeFieldMoved()
         // If the suggestion changed since the bar showed it, do nothing.
         guard session.suggestion == shown, let edit = session.accept() else { return }
-        apply(edit)
+        guard apply(edit) else {
+            refreshMode()  // the field moved: the word was abandoned, nothing written
+            return
+        }
         savePrevious()
         insertText(" ")
     }
 
     /// The host changed the field under protly (a chat app sent the message and cleared the field with the
-    /// keyboard still up; the user tapped elsewhere in the text): drop the word being typed without editing the
-    /// field, and stop a flip from deleting at a moved cursor.
-    /// `!p.hasText` holds with only marked text in the field: Sprint 4 item 1 typed a first word whole.
+    /// keyboard still up; the user tapped into the word or selected it): drop the word being typed without
+    /// editing the field, and stop a flip from deleting at a moved cursor. The rules are FieldWatch's.
+    /// hasText is not used: it was for marked text, which the context excluded (Sprint 4 item 1). The word is plain
+    /// text now, and WebKit reports hasText false right after each edit, which would split every word.
+    /// Called from host callbacks: it only reads the field and decides, never writes (KeyboardSourceRulesTests).
     private func noticeFieldMoved() {
-        let p = textDocumentProxy
-        let before = p.documentContextBeforeInput ?? ""
-        if session.isComposing {
-            guard !p.hasText || before != wordStartBefore else { return }
-            session.abandon()
-            savePrevious()
-            marked = ""
-        } else if let tail = session.lastTail, !before.hasSuffix(tail) {
-            session.forgetLast()
-        } else {
-            return
+        switch watch.decide(observed(), composing: session.isComposing, lastTail: session.lastTail, now: now) {
+        case .keep: return
+        case .abandon: abandonWord()
+        case .forgetLast: session.forgetLast()
         }
         refreshMode()
     }
+
+    /// The word stays in the field as typed; Protly stops changing it and no longer trusts its model of the field.
+    private func abandonWord() {
+        session.abandon()
+        savePrevious()
+        written = ""
+        watch.forget()
+    }
+
+    /// The word's first key, before anything is written: where the word starts.
+    private func beginWord() {
+        watch.begin(observed(), now: now)
+    }
+
+    private func observed() -> FieldWatch.Observed {
+        let p = textDocumentProxy
+        return FieldWatch.Observed(
+            before: p.documentContextBeforeInput ?? "", after: p.documentContextAfterInput ?? "",
+            selected: p.selectedText ?? "", hasText: p.hasText)
+    }
+
+    private var now: Double { ProcessInfo.processInfo.systemUptime }
 
     /// End the word being typed before KeyboardKit touches the field.
     private func commitWord() {
@@ -180,28 +205,29 @@ final class KeyboardViewController: KeyboardInputViewController {
         savePrevious()
     }
 
-    private func apply(_ edit: FieldEdit) {
-        let proxy = textDocumentProxy
-        let none = NSRange(location: 0, length: 0)
-        switch edit {
-        case .mark(""):
-            // Clearing a mark makes hosts swallow the next delete: settle the jamo as text, then delete it.
-            proxy.setMarkedText("", selectedRange: none)
-            proxy.insertText(marked)
-            for _ in marked { proxy.deleteBackward() }
-            marked = ""
-        case .mark(let text):
-            proxy.setMarkedText(text, selectedRange: NSRange(location: (text as NSString).length, length: 0))
-            marked = text
-        case .commit(let text):
-            // unmarkText() followed by another edit in the same run-loop turn loses the word in every host tested.
-            proxy.setMarkedText("", selectedRange: none)
-            proxy.insertText(text)
-            marked = ""
-        case .replace(let count, let text):
-            for _ in 0..<count { proxy.deleteBackward() }
-            proxy.insertText(text)
+    /// Writes the edit as plain text: the word changes by deleting the characters after the part that stays and
+    /// inserting the new tail (PlainWord). Always the proxy's own calls, never this controller's insertText or
+    /// deleteBackward overrides, which commit first. false when the field moved under the word: nothing is
+    /// written and the word is abandoned.
+    @discardableResult
+    private func apply(_ edit: FieldEdit) -> Bool {
+        let step = PlainWord.step(edit, written: written)
+        guard step.deleting > 0 || !step.inserting.isEmpty else {
+            written = step.written  // a commit that reads as typed: nothing to send
+            return true
         }
+        // Before any write over the word: the field must still hold it.
+        if !written.isEmpty,
+           watch.decide(observed(), composing: true, lastTail: nil, now: now) == .abandon {
+            abandonWord()
+            return false
+        }
+        let proxy = textDocumentProxy
+        for _ in 0..<step.deleting { proxy.deleteBackward() }
+        if !step.inserting.isEmpty { proxy.insertText(step.inserting) }
+        watch.wrote(deleting: step.deleting, inserting: step.inserting, at: now)
+        written = step.written
+        return true
     }
 
     // MARK: Actions (Translate / Polish / Read clipboard)
@@ -210,6 +236,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     func act(_ requested: ActionMode?) {
         commitWord()
         session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
+        watch.forget()  // reading the field moves the cursor
         refreshMode()
         // Every path below shows its own panel: a request still running must not replace it later.
         actionTask?.cancel()
@@ -303,6 +330,7 @@ final class KeyboardViewController: KeyboardInputViewController {
             return
         }
         FieldText.replace(original, isSelection: isSelection, with: r.translation, p)
+        watch.forget()
         lastInsert = (r.translation, original, isSelection)
         mode.canUndo = true
         mode.panel = nil
@@ -317,6 +345,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         }
         for _ in l.inserted { textDocumentProxy.deleteBackward() }
         textDocumentProxy.insertText(l.original)
+        watch.forget()
         endUndo()
         refreshField()
     }
@@ -376,8 +405,10 @@ final class KeyboardViewController: KeyboardInputViewController {
     // MARK: KeyboardKit text calls: commit the word first
 
     override func insertText(_ text: String) {
-        commitWord()
+        commitWord()  // Return after a word: the word is already in the field, so only "\n" follows it
+        let overSelection = proxyHasSelection
         super.insertText(text)
+        noteKeyboardKitWrite(deleting: 0, inserting: text, overSelection: overSelection)
         session.noteInserted(text)
         endUndo()
         refreshMode()
@@ -387,7 +418,14 @@ final class KeyboardViewController: KeyboardInputViewController {
         commitWord()
         session.forgetLast()
         endUndo()
+        let overSelection = proxyHasSelection
         super.deleteBackward()
+        // One Character, unless KeyboardKit deletes a word or a sentence at a time: then the model is lost.
+        if services.keyboardBehavior.backspaceRange == .character {
+            noteKeyboardKitWrite(deleting: 1, inserting: "", overSelection: overSelection)
+        } else {
+            watch.forget()
+        }
         refreshMode()
     }
 
@@ -395,8 +433,21 @@ final class KeyboardViewController: KeyboardInputViewController {
         commitWord()
         session.forgetLast()
         endUndo()
+        let overSelection = proxyHasSelection
         super.deleteBackward(times: times)
+        noteKeyboardKitWrite(deleting: times, inserting: "", overSelection: overSelection)
         refreshMode()
+    }
+
+    private var proxyHasSelection: Bool { !(textDocumentProxy.selectedText ?? "").isEmpty }
+
+    /// A write through KeyboardKit, outside a word. Over a selection it replaced text the model never saw.
+    private func noteKeyboardKitWrite(deleting: Int, inserting: String, overSelection: Bool) {
+        if overSelection {
+            watch.forget()
+            return
+        }
+        watch.wrote(deleting: deleting, inserting: inserting, at: now)
     }
 
     override func adjustTextPosition(by offset: Int) {
@@ -404,6 +455,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         session.forgetLast()
         endUndo()
         super.adjustTextPosition(by: offset)
+        watch.forget()  // the cursor moved
         refreshMode()
     }
 
@@ -411,6 +463,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         commitWord()
         session.forgetLast()
         super.endSentence(withText: text)
+        watch.forget()  // KeyboardKit may delete a space first
         refreshMode()
     }
 
@@ -434,12 +487,6 @@ final class KeyboardViewController: KeyboardInputViewController {
         super.selectionDidChange(textInput)
         noticeFieldMoved()
         refreshField()
-    }
-
-    override func textDidChangeAsync(_ textInput: UITextInput?) {
-        // The proxy context excludes marked text, so autocap would see a sentence start mid-word.
-        if session.isComposing { return }
-        super.textDidChangeAsync(textInput)
     }
 }
 

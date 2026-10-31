@@ -179,6 +179,55 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertTrue(calls.first?.contains("insert: { [unowned host] in host.insertResult() }") == true, calls.joined())
     }
 
+    /// typing-fixes 001: the word being typed is plain text. Marked text made hosts hide the word on dark screens,
+    /// drop it on Return in web views and hold back the edit menu (docs/research/2026-10-30-*.md).
+    func testNoMarkedTextInTheKeyboard() throws {
+        for (name, text) in try sources() {
+            let ns = text as NSString
+            for call in [#"\bsetMarkedText\b"#, #"\bunmarkText\b"#, #"\bmarkedText\w*"#] {
+                for r in matches(call, in: text) {
+                    XCTFail("\(name): marked text: \(lineText(ns, r))")
+                }
+            }
+        }
+    }
+
+    /// Host callbacks only read the field and decide; they never write to it (edit-menu-missing.md 4.2). A write
+    /// there would land wherever the user just put the cursor or selection. Checked: the callbacks and every
+    /// function they call on the way (refreshMode, refreshWords, savePrevious ...), in whichever file it lives.
+    func testHostCallbacksNeverWrite() throws {
+        let files = try sources().map { (name: $0.name, ns: $0.text as NSString) }
+        let writes = [#"\binsertText\b"#, #"\bdeleteBackward\b"#, #"\badjustTextPosition\b"#, #"\bsetMarkedText\b"#,
+                      #"\bunmarkText\b"#, #"\bapply\("#, #"\bcommitWord\("#, #"\bFieldText\.replace\b"#,
+                      // The typing and action entry points all write.
+                      #"\btypeLetter\("#, #"\bbackspaceInWord\("#, #"\bflipWord\("#, #"\bpickSuggestion\("#,
+                      #"\bact\("#, #"\binsertResult\("#, #"\bundoInsert\("#]
+        let required = ["override func textDidChange(", "override func selectionDidChange(", "func refreshField()",
+                        "func noticeFieldMoved()", "func abandonWord()", "func refreshMode()", "func refreshWords()",
+                        "func savePrevious()", "func observed()"]
+        // Callbacks Protly may override later fall under the same rule.
+        let optional = ["override func selectionWillChange(", "override func textWillChange(",
+                        "override func textDidChangeAsync("]
+        for declaration in required + optional {
+            var found: (name: String, body: NSString)?
+            for f in files {
+                if let range = body(of: declaration, in: f.ns) {
+                    found = (f.name, f.ns.substring(with: range) as NSString)
+                    break
+                }
+            }
+            guard let found else {
+                if required.contains(declaration) { XCTFail("\(declaration) not found in the keyboard sources") }
+                continue
+            }
+            for write in writes {
+                for r in matches(write, in: found.body as String) {
+                    XCTFail("\(found.name): \(declaration) writes: \(lineText(found.body, r))")
+                }
+            }
+        }
+    }
+
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {
         let line = ns.lineRange(for: r)
         return "\(ns.substring(to: r.location).components(separatedBy: "\n").count): "
