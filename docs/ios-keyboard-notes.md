@@ -564,6 +564,63 @@ Field text is read through XCUITest (exact); bar labels with Vision OCR in the U
 - The icon on the real home screen (the crop is the simulator's rendering of the same `AppIcon.png`).
 - Other host apps (Messages, KakaoTalk, Instagram), typing feel and haptics.
 
+### Sprint 002: network checks (Full Access, CI key, container app)
+
+Campaign 2026-10-30-sim-phone-checks, sprint 002. Same runner, Xcode, runtime and device as sprint 001. The
+workflow writes `Secrets.swift` from the Actions secret `PROTLY_API_KEY` (a CI-only key) through
+`make-secrets.sh`; a run with the key only restores the DerivedData cache, never saves it (`network key: present
+(CI key); DerivedData cache: restore only, not saved in this run` in each report), and the leak guard writes
+`LEAK-GUARD pass: no key prefix in N files` before publishing. Runs: `runs/8a801d5-30` (probe 1),
+`runs/79473e5-34`, run 35 (cancelled by a push), run 36 (hung, hit the 80-minute job limit, nothing published),
+`runs/c6d83a1-40` (probe 2), `runs/067c1cd-41`, `runs/30a1fbf-44` (RUN8_PLACEHOLDER). The table is from
+`runs/30a1fbf-44` (`CHECKS pass 25 fail 1 record 8 skip 2`); its one FAIL is 8.5-7 under the rule before the
+tower's ruling.
+
+| ID | Result | Evidence |
+|---|---|---|
+| 6.8-11 | PASS | `내일 봐` typed as `ghk` + flip, center Translate: `Translating`, Insert after 4.0 s: `Thanks so much for today` (Latin) |
+| 8.5-1 | PASS | `ru: 누나 노트 고마워 누나 덕분에 살았다` (`ru` came out `겨`, flipped): `Translating`, 4.5 s, inserted `Спасибо за конспекты! Ты меня реально спасла`; the panel showed a Hangul back translation (RECORD); Undo: the field equals the draft again |
+| 8.5-3 | PASS | `ja:`: `明日ひま？一緒にご飯行こうよw` (kana and kanji, no `ㅋ`, no `lol`), 3.4 s |
+| 8.5-4 | PASS | `es:`: `Hoy estoy muy cansado`, 4.6 s |
+| 8.5-5 | PASS | `내일 3시에 봐`: `See you tomorrow at 3`, 3.0 s |
+| 8.5-6 | PASS | `ok: 내일 봐`: `ok, see you tomorrow`, 3.0 s |
+| 8.5-7 | FAIL then ruled PASS | `Polishing`, 4.0 s: `내일 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘`; retry: `낼 시간 돼? ...말해 줘`. The model always writes the spaced `말해 줘` (runs 41 and 44); the tower ruled both spellings correct (plan row updated). Change lines (RECORD): `되? -> 돼? (맞춤법)`, `밥먹자 -> 밥 먹자 (띄어쓰기)`, `말해죠 -> 말해 줘 (맞춤법)` |
+| 8.5-8 | PASS | three-paragraph `ko:` draft: `Polishing`, 3.4 s, `오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ` (paragraphs kept, no `ko:`); panel: `고칠 부분이 거의 없어서 그대로 뒀어요.` |
+| 8.5-9 | PASS | Spanish polish: `Me encanta el color de tu chaqueta, ¿dónde la compraste? jaja` (no `colour`, no `conprastes`), 4.1 s |
+| 8.5-10 | RECORD | 8.5-1 tap to `Insert`: 4.5 s and 4.2 s (runs 41: 3.6 s, 3.2 s) |
+| 7.7-1 | PASS | `ProtlyCIApp`: in-app Paste of the test note, counter `58 / 1,000` = 58; `Copy for the keyboard`: `Copied`; Read clipboard in the app's Test field, Allow Paste: `Save as your About me note (58 characters)?`; Save: `About me saved: 58 characters.`; Done: keys back, no panel text |
+| 7.7-2 | PASS | `우리 문빔 킬른 다음 주에 오픈해` -> `Moonbeam Kiln opens next week` (no `pottery`, no `Victoria`), 2.7 s |
+| 7.7-3 | PASS | `Can you send me the photos from yesterday?`, Read clipboard: `어제 찍은 사진 나한테 보내줄 수 있어?`; `protly about me v1` + `test`: `Save as your About me note (4 characters)?`, Cancel; 7.7-2 again: `Moonbeam Kiln opens next week`, 3.2 s |
+| 7.7-4 | RECORD | 7.7-2 tap to `Insert`: 2.7 s and 3.2 s (7.7-2 and 7.7-3's repeat) |
+| 7.7-5 | PASS | Select All, Cut: counter 0; Copy: `Copied`; Read clipboard: `Clear your About me note?`; Save: `About me cleared.`; the 7.7-1 copy and save again: 58 characters |
+| 7.7-6 | SKIP | needs a phone reinstall |
+
+Each run sends at most 14 requests (cap 60). Sprint 001's rows did not change in these runs; 8.5-9o now PASSes
+(the Spanish flip fix on main) and 6.8-5 reads `On my way!` in the right slot in run 40 but nothing in runs 41
+and 44 (the simulator's text replacements are not stable; RECORD either way).
+
+### Sprint 002 findings
+
+- Full Access: the Settings UI path works on iOS 26.5 (General > Keyboard > Keyboards > Protly > Allow Full Access
+  > Allow; the switch takes two taps). The root list's rows are unlabeled cells around labeled buttons with
+  identifiers like `com.apple.settings.general`, and the list may open scrolled to the bottom, so the test scrolls
+  both ways until the row is on screen. Probe 2 (`runs/c6d83a1-40`) diffed the device's data folder around the
+  switch (1068 and 1088 plists, each snapshot after `simctl shutdown`): no plist key for Full Access changed. TCC.db
+  could not be read there (its rows were still in the -wal file, now copied too); this was not probed again, so
+  the Settings UI stays the way.
+- Allow Paste: the prompt is a SpringBoard alert, not the host's. In probe 2 the interruption monitor answered it;
+  the phone checks tap `Allow Paste` in SpringBoard directly. While the prompt is up the keyboard is blocked in its
+  clipboard read and the host does not answer accessibility queries (run 41: three 60 s snapshot timeouts on one
+  tap), so nothing touches the host until the prompt is gone.
+- The panel's buttons are found by OCR word boxes in the bottom 45 pt of the panel each time (probe 2: Cancel at
+  x 22, Insert at x 321, y 741 pt), and the label match ignores case (Vision reads `Insert` as `insert`).
+- Model output: 8.5-1's wording changes from run to run (`ты меня спасла` / `Ты меня реально спасла`) and 8.5-7's
+  polish sometimes keeps `낼` (run 44's retry); the rules check what the plan asks, not one wording.
+- The layout test is not stable when it runs first after boot: `runs/30a1fbf-44` stopped in `app.launch()` 17 s
+  in, before any shot, and the 200-line log tail did not say why; `test-failures.txt` now keeps xcodebuild's error
+  lines. Runs 30, 34, 40 and 41 measured the +17 pt band flake on one shot or two adjacent shots with `top-edge`
+  495..512 pt, which the tower counts as layout PASS.
+
 ## Plain-text composition (typing-fixes 001)
 
 Campaign 2026-10-30-typing-fixes, sprint 001 (`docs/plans/2026-10-30-typing-fixes.md`). The word being typed is
