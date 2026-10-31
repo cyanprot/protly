@@ -155,6 +155,8 @@ extension PhoneRun {
         /// The panel failed (Retry) or no result came: one retry.
         var transient = false
         var capped = false
+        /// The action was tapped (a request went out).
+        var tapped = false
     }
 
     /// One try: clear, type the draft (the flip rule for its code), check the field and the center's label, tap it,
@@ -193,6 +195,7 @@ extension PhoneRun {
         }
         let t0 = Date()
         d.tapSlot(.center, settle: 0)
+        a.tapped = true
         a.busy = readPanel(row1, item, save: saveBusy ? "busy" : nil).seen?.contains(busy)
         let w = waitPanel(row1, item, for: ["Insert", "Retry"], name: "result")
         a.panel = w.read.seen?.text
@@ -201,12 +204,12 @@ extension PhoneRun {
             a.transient = true
             return a
         }
-        a.seconds = w.at.timeIntervalSince(t0)
         if hit == "Retry" {
             a.problem = "the panel failed: \(q(a.panel))"
             a.transient = true
             return a
         }
+        a.seconds = w.at.timeIntervalSince(t0)  // only a result counts as a timing
         if !insert {
             tapPanelButton("Cancel", row1, item)
             return a
@@ -234,7 +237,9 @@ extension PhoneRun {
                 if n == 1 { item.skip("request cap") } else { item.note("retry=request cap") }
                 break
             }
-            if let seen = a.busy {
+            if needBusy && a.tapped && a.busy == nil {
+                item.markUnreadable("busy#\(n)=unreadable (no OCR of the panel right after the tap)")
+            } else if let seen = a.busy {
                 if needBusy {
                     item.require("busy#\(n)", seen, seen ? q(busy) : "no \(q(busy)) at once")
                 } else {
@@ -262,7 +267,7 @@ extension PhoneRun {
     /// 6.8-11's Translate part, after the flip part (test1_68): a Korean draft, center Translate, Insert: Latin.
     func translate68(_ it: Item) {
         guard Self.network else {
-            it.note("translate=skipped (no network key)")
+            it.skip("no network key")  // the Translate part is the item's half: no PASS on the flip alone
             return
         }
         guard Self.fullAccess == true else {
@@ -288,7 +293,7 @@ extension PhoneRun {
             Rules.cyrillic($0) && !Rules.hangul($0) && !Rules.hasNoCase($0, "ru:") && $0.contains("спасла")
         }
         for (i, a) in tries.enumerated() {
-            if let p = a.panel { it.note("back#\(i + 1)=\(Rules.hangul(p) ? "hangul" : "none")") }
+            if a.tapped { it.note("back#\(i + 1)=\(a.panel.map { Rules.hangul($0) ? "hangul" : "none" } ?? "unreadable")") }
         }
         if tries.last?.output != nil {
             noteSlot(it, "undo-slot", readSlot(.center, it))
@@ -331,9 +336,10 @@ extension PhoneRun {
             if let p = a.problem { it.note("try#2=\(p)") }
             resetKeyboard()
         }
-        if times.isEmpty {
-            it.markUnreadable("no timing: no result came")
-        } else {
+        if times.count < 2 {
+            it.markUnreadable("\(times.count) of 2 timings")
+        }
+        if !times.isEmpty {
             let list = times.enumerated().map { String(format: "try%d=%.1fs", $0.offset + 1, $0.element) }
             it.note(list.joined(separator: " ") + " (tap to Insert shown; OCR poll every 0.5 s)")
         }
@@ -348,7 +354,7 @@ extension PhoneRun {
         context(korean: korean, it)
         let tries = tryAction(it, draft, center: center, busy: busy, needBusy: needBusy, passes: passes)
         for (i, a) in tries.enumerated() {
-            if let p = a.panel { it.note("shown#\(i + 1)=\(q(p))") }
+            if a.tapped { it.note("shown#\(i + 1)=\(q(a.panel))") }
         }
         finish(it)
         resetKeyboard()
@@ -371,7 +377,7 @@ extension PhoneRun {
     /// container app): its Copy button has set it. Taps the center's `Read clipboard` (the protly key when the
     /// center does not offer it, noted), answers Allow Paste and waits for one of `labels`. nil: it did not start.
     func readClipboard(_ item: Item, _ text: String?, waitFor labels: [String], sends: Bool, name: String = "clipboard",
-                       probe: ((String) -> Void)? = nil) -> ClipRead? {
+                       markTimeout: Bool = true, probe: ((String) -> Void)? = nil) -> ClipRead? {
         let inHost = text != nil
         if let text {
             d.clearField()
@@ -419,7 +425,7 @@ extension PhoneRun {
         probe?("allow paste: \(how)")
         d.append("allow paste (\(item.id) \(name)): \(how)", to: "network.txt")
         let w = waitPanel(row1, item, for: labels, timeout: sends ? 30 : 10, name: name)
-        if w.label == nil { item.markUnreadable("\(name): none of \(labels) on the panel, \(q(w.read.seen?.text))") }
+        if w.label == nil && markTimeout { item.markUnreadable("\(name): none of \(labels) on the panel, \(q(w.read.seen?.text))") }
         return ClipRead(label: w.label, seen: w.read.seen, rect: w.rect, row1: row1)
     }
 
@@ -437,8 +443,8 @@ extension PhoneRun {
                 let b = a.buttons["Allow Paste"]
                 if b.exists {
                     b.tap()
-                    d.pause(0.5)
-                    return "tapped Allow Paste in the \(where_)"
+                    let gone = b.waitForNonExistence(timeout: 3)
+                    return "tapped Allow Paste in the \(where_)" + (gone ? "" : ", but the prompt stayed")
                 }
             }
             if PasteMonitor.fired > before { return "interruption monitor" }
@@ -481,7 +487,7 @@ extension PhoneRun {
             context(korean: true, it)
             let tries = tryAction(it, Self.kiln, center: "Translate", busy: "Translating", needBusy: false,
                                   passes: Rules.aboutMe)
-            if let s = tries.first?.seconds { times.append(s) }
+            if let s = tries.compactMap({ $0.seconds }).first { times.append(s) }
             finish(it)
             resetKeyboard()
         } else {
@@ -499,7 +505,7 @@ extension PhoneRun {
             context(korean: true, it)
             let tries = tryAction(it, Self.kiln, center: "Translate", busy: "Translating", needBusy: false,
                                   passes: Rules.aboutMe)
-            if let s = tries.first?.seconds { times.append(s) }
+            if let s = tries.compactMap({ $0.seconds }).first { times.append(s) }
             finish(it)
             resetKeyboard()
         } else {
@@ -511,7 +517,7 @@ extension PhoneRun {
         if !Self.network {
             write("7.7-4", "SKIP", "no network key")
         } else {
-            if times.isEmpty { it.markUnreadable("no timing: no result came") }
+            if times.count < 2 { it.markUnreadable("\(times.count) of 2 timings") }
             let list = times.enumerated().map { String(format: "try%d=%.1fs", $0.offset + 1, $0.element) }
             it.note(list.joined(separator: " ") + " (7.7-2 and 7.7-3's repeat; tap to Insert shown, OCR poll every 0.5 s)")
             finish(it, record: true)
@@ -540,7 +546,7 @@ extension PhoneRun {
     private func readEnglish(_ it: Item) {
         for n in 1...2 {
             guard let r = readClipboard(it, "Can you send me the photos from yesterday?", waitFor: ["Done", "Retry"],
-                                        sends: true, name: "read") else { return }
+                                        sends: true, name: "read", markTimeout: false) else { return }
             if r.label == "Retry" || r.label == nil {
                 it.note("read#\(n) failed: \(q(r.text))")
                 resetKeyboard()
@@ -630,7 +636,10 @@ extension PhoneRun {
         a.point(done.midX, done.midY).tap()
         a.pause(1)
         let after = readPanel(r.row1, it, save: "after\(tag)")
-        let leftover = after.seen.map { $0.contains("About me") } ?? true
+        let band = a.panelButtonBand(row1: r.row1)
+        let leftover = after.seen.map { seen in
+            seen.contains("About me") || ["Done", "Save", "Cancel"].contains { seen.word($0, in: band) != nil }
+        } ?? true
         it.require("bar\(tag)", !leftover, "keys back, panel region \(q(after.seen?.text))")
         noteSlot(it, "bar-center\(tag)", readSlot(.center, it))
     }

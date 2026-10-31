@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Assembles the phone checks of one CI run (docs/plans/2026-10-30-sim-phone-checks.md, Tasks 1.2-1.6 and 2.3).
 
-Usage: checks.py <dir>
+Usage: checks.py <dir> [--network-key]
+
+--network-key: the run had the CI key (run-shots.sh passes it with HAS_KEY=true), so a `SKIP no network key` line
+means the key did not reach the tests and is FAIL unreadable.
 
 Reads from <dir>:
 - checks.txt: `CHECK <id> PASS|FAIL|RECORD|SKIP|PENDING <evidence>` lines written by UITests/PhoneChecksUITests.swift.
@@ -277,7 +280,19 @@ def resolve_rules(check, marks, samples):
 RESOLVERS = {"6.8-9": resolve_relaunch, "6.8-10": resolve_memory, **{i: resolve_rules for i in RULES}}
 
 
-def assemble(checks_text, log_text, mem_text):
+NO_KEY = "no network key"
+
+
+def guard_network(c, network_key):
+    """A RULES item passes only through its model output; with the key a missing key is the CI's failure."""
+    if c.id in RULES and c.status == "PASS":
+        return unreadable(c.id, f"PASS without model output to judge: {c.evidence[:200]!r}")
+    if network_key and c.status == "SKIP" and c.evidence.startswith(NO_KEY):
+        return unreadable(c.id, f"the run had the key but the test wrote {c.evidence[:120]!r}")
+    return c
+
+
+def assemble(checks_text, log_text, mem_text, network_key=False):
     """The final, sorted lines. None for checks_text means the test wrote no checks.txt."""
     by_id = {}
     extra = []
@@ -303,6 +318,13 @@ def assemble(checks_text, log_text, mem_text):
             continue
         resolver = RESOLVERS.get(check_id)
         by_id[check_id] = resolver(c, marks, samples) if resolver else unreadable(check_id, f"unresolved PENDING {c.evidence}")
+    for check_id, c in list(by_id.items()):
+        if c.evidence.startswith("unreadable") or c.status not in ("PASS", "SKIP"):
+            continue
+        # Lines the test wrote PASS directly; resolved PENDING lines carry their verdict after " => ".
+        if c.status == "PASS" and " => " in c.evidence:
+            continue
+        by_id[check_id] = guard_network(c, network_key)
     for check_id in EXPECTED_IDS:
         if check_id not in by_id:
             why = "no checks.txt" if checks_text is None else "no CHECK line"
@@ -320,12 +342,14 @@ def read(path):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    network_key = "--network-key" in argv
+    argv = [a for a in argv if a != "--network-key"]
     if len(argv) != 1:
         print(__doc__, file=sys.stderr)
         return 2
     d = argv[0]
     raw = read(os.path.join(d, "checks.txt"))
-    final = assemble(raw, read(os.path.join(d, "ui-log.txt")), read(os.path.join(d, "mem.txt")))
+    final = assemble(raw, read(os.path.join(d, "ui-log.txt")), read(os.path.join(d, "mem.txt")), network_key)
     raw_copy = os.path.join(d, "checks-raw.txt")
     if raw is not None and not os.path.exists(raw_copy):
         with open(raw_copy, "w", encoding="utf-8") as f:

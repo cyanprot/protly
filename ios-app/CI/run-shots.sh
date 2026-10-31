@@ -60,6 +60,12 @@ if [ "${HAS_KEY:-}" = "true" ]; then
   network=1
   note "network key: present (CI key); DerivedData cache: restore only, not saved in this run"
 else
+  # A key-shaped Secrets.swift in a run without the key would be compiled into a DerivedData that gets cached.
+  if grep -q 'sk-ant-' "$secrets" 2> /dev/null; then
+    note "Secrets.swift holds a key but HAS_KEY is not true: refusing (the cache would keep it)"
+    status="build-failed"
+    finish
+  fi
   if [ ! -f "$secrets" ]; then
     printf '// CI stand-in written by ios-app/CI/run-shots.sh: no key.\nenum Secrets {\n    static let apiKey = ""\n}\n' > "$secrets"
   fi
@@ -156,12 +162,14 @@ devdata="$HOME/Library/Developer/CoreSimulator/Devices/$udid/data"
 if [ "${PROBE:-0}" = "1" ]; then
   # Plan Task 2.2 step 1: where Full Access is kept. Snapshots of the shut-down device before and after test0_access
   # turns it on in Settings; the difference goes to probe-prefs.txt.
-  python3 "$here/prefsdump.py" snapshot "$devdata" "$work/prefs-before" > /dev/null 2>&1
+  python3 "$here/prefsdump.py" snapshot "$devdata" "$work/prefs-before" > "$work/prefsdump.log" 2>&1 \
+    || note "probe: snapshot before failed ($(tail -n 1 "$work/prefsdump.log"))"
   boot
   run_one ProtlyCIUITests/PhoneChecksUITests/test0_access "$work/test-access.log"
   note "probe: test0_access alone, xcodebuild exit $?"
   xcrun simctl shutdown "$udid"
-  python3 "$here/prefsdump.py" snapshot "$devdata" "$work/prefs-after" > /dev/null 2>&1
+  python3 "$here/prefsdump.py" snapshot "$devdata" "$work/prefs-after" > "$work/prefsdump.log" 2>&1 \
+    || note "probe: snapshot after failed ($(tail -n 1 "$work/prefsdump.log"))"
   {
     echo "Device data changes around test0_access (Full Access in Settings), each snapshot after simctl shutdown:"
     echo "$(grep -h 'full access' "$out/network.txt" 2> /dev/null)"
@@ -227,5 +235,7 @@ if [ $test_code -ne 0 ]; then
 fi
 
 python3 "$here/measure.py" "$out" --points "$points" > "$out/measure.txt" 2>&1
-python3 "$here/checks.py" "$out" > "$work/checks-section.txt" 2>&1
+key_flag=""
+if [ "$network" = 1 ]; then key_flag="--network-key"; fi  # a SKIP for want of the key is then the CI's FAIL
+python3 "$here/checks.py" "$out" $key_flag > "$work/checks-section.txt" 2>&1
 finish

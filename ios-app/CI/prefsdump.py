@@ -34,6 +34,9 @@ def _walk(root):
 
 
 def snapshot(data, dest):
+    """Exits non-zero (SystemExit) when `data` is missing or holds no plist: an empty snapshot shows no change."""
+    if not os.path.isdir(data):
+        sys.exit(f"prefsdump: no device data folder {data}")
     files = os.path.join(dest, "files")
     os.makedirs(files, exist_ok=True)
     index = {}
@@ -52,6 +55,8 @@ def snapshot(data, dest):
                 pass
     with open(os.path.join(dest, "index.json"), "w", encoding="utf-8") as f:
         json.dump(index, f)
+    if not any(rel.endswith(".plist") for rel in index):
+        sys.exit(f"prefsdump: no plist under {data}")
 
 
 def _short(value):
@@ -107,8 +112,14 @@ def _tcc_rows(path):
     return (schema[0] if schema else None), rows
 
 
+def _count(snap):
+    files = os.path.join(snap, "files")
+    rels = [rel for rel, _ in _walk(files)] if os.path.isdir(files) else []
+    return f"{sum(r.endswith('.plist') for r in rels)} plists{', TCC.db' if TCC in rels else ''}"
+
+
 def diff(before, after):
-    out = []
+    out = [f"snapshots: before {_count(before)}, after {_count(after)}"]
     files_b, files_a = os.path.join(before, "files"), os.path.join(after, "files")
     for rel, path in sorted(_walk(files_a)):
         if not rel.endswith(".plist"):
@@ -130,7 +141,7 @@ def diff(before, after):
             out += [f"  + {_short(r)}" for r in added]
     except sqlite3.Error as e:
         out.append(f"{TCC}: unreadable ({e})")
-    if not out:
+    if len(out) == 1:
         out.append("no plist or TCC change")
     try:
         with open(os.path.join(before, "index.json"), encoding="utf-8") as f:

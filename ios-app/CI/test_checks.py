@@ -19,7 +19,9 @@ FAKE_KEY = "sk-" + "ant-test"
 
 
 def every_id_but(*skip, status="PASS"):
-    return "".join(f"CHECK {i} {status} ok\n" for i in checks.EXPECTED_IDS if i not in skip)
+    """A line per expected ID; the IDs checks.py judges by model output (RULES) as a key-less run writes them."""
+    return "".join(f"CHECK {i} SKIP no network key\n" if i in checks.RULES else f"CHECK {i} {status} ok\n"
+                   for i in checks.EXPECTED_IDS if i not in skip)
 
 
 class ParseTests(unittest.TestCase):
@@ -214,7 +216,8 @@ class MainTests(unittest.TestCase):
             self.assertEqual(out.returncode, 0, out.stderr)
             lines = out.stdout.splitlines()
             self.assertEqual(lines[0], "CHECKS")
-            self.assertEqual(lines[-1], f"CHECKS pass {len(checks.EXPECTED_IDS) - 1} fail 0 record 1 skip 0")
+            ruled = len(checks.RULES)
+            self.assertEqual(lines[-1], f"CHECKS pass {len(checks.EXPECTED_IDS) - 1 - ruled} fail 0 record 1 skip {ruled}")
             with open(os.path.join(d, "checks.txt"), encoding="utf-8") as f:
                 self.assertEqual(f.read().splitlines(), lines[1:-1])
             self.assertTrue(os.path.exists(os.path.join(d, "checks-raw.txt")))
@@ -442,6 +445,35 @@ class NetworkResolveTests(unittest.TestCase):
         self.assertEqual(resolve("CHECK 8.5-3 SKIP no network key").status, "SKIP")
 
 
+class NetworkGuardTests(unittest.TestCase):
+    """A network item can PASS only through its model output, and a run with the key cannot SKIP for want of one."""
+
+    def test_pass_without_model_output_is_fail_unreadable(self):
+        c = resolve("CHECK 8.5-5 PASS field looked fine")
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("unreadable", c.evidence)
+
+    def test_no_key_skip_is_kept_without_the_key(self):
+        c = {x.id: x for x in checks.assemble("CHECK 8.5-5 SKIP no network key\n", "", "")}["8.5-5"]
+        self.assertEqual(c.status, "SKIP")
+
+    def test_no_key_skip_with_the_key_is_fail_unreadable(self):
+        lines = checks.assemble("CHECK 8.5-5 SKIP no network key\nCHECK 7.7-6 SKIP needs a phone reinstall\n",
+                                "", "", network_key=True)
+        by_id = {c.id: c for c in lines}
+        self.assertEqual(by_id["8.5-5"].status, "FAIL")
+        self.assertIn("unreadable", by_id["8.5-5"].evidence)
+        self.assertEqual(by_id["7.7-6"].status, "SKIP")
+
+    def test_main_takes_the_network_key_flag(self):
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "checks.txt"), "w", encoding="utf-8") as f:
+                f.write("CHECK 8.5-5 SKIP no network key\n")
+            out = subprocess.run([sys.executable, os.path.join(HERE, "checks.py"), d, "--network-key"],
+                                 capture_output=True, text=True)
+            self.assertIn("CHECK 8.5-5 FAIL unreadable", out.stdout)
+
+
 class WriteSecretsTests(unittest.TestCase):
     """write-secrets.sh: the key reaches Secrets.swift through make-secrets.sh in a temporary HOME, never output."""
 
@@ -610,6 +642,19 @@ class PrefsDumpTests(unittest.TestCase):
             f.write(b"not a plist")
         after = self.snap("after")
         self.assertIn("unreadable", prefsdump.diff(before, after))
+
+    def test_snapshot_of_a_missing_folder_fails(self):
+        with self.assertRaises(SystemExit):
+            prefsdump.snapshot(os.path.join(self.tmp.name, "nope"), os.path.join(self.tmp.name, "x"))
+        code = subprocess.run([sys.executable, os.path.join(HERE, "prefsdump.py"), "snapshot",
+                               os.path.join(self.tmp.name, "nope"), os.path.join(self.tmp.name, "y")],
+                              capture_output=True).returncode
+        self.assertNotEqual(code, 0)
+
+    def test_diff_states_how_much_each_snapshot_held(self):
+        before = self.snap("before")
+        after = self.snap("after")
+        self.assertIn("snapshots: before 2 plists", prefsdump.diff(before, after))
 
     def test_main_writes_the_diff(self):
         before = self.snap("before")
