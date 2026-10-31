@@ -1,0 +1,3 @@
+2026-10-31 21:44:25.997085+0000 ProtlyCIUITests-Runner[13381:49658] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+2026-10-31 21:44:26.041511+0000 ProtlyCIUITests-Runner[13381:49658] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics
+/Users/runner/work/protly/protly/ios-app/CI/UITests/Driver.swift:155: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : failed - 05-after-second-emoji: expected protly, found system-keyboard

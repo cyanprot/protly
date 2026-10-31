@@ -1,0 +1,59 @@
+Attributes: Application, 0x11fb92580, pid: 23010, label: 'Protly'
+Element subtree:
+ →Application, 0x11fb92580, pid: 23010, label: 'Protly'
+    Window (Main), 0x11fb91680, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x11fb935c0, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x11fb92800, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x11fb90a00, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x11fb92a80, {{0.0, 0.0}, {390.0, 844.0}}
+              ScrollView, 0x11fb93ac0, {{0.0, 0.0}, {390.3, 844.0}}
+                Other, 0x11fb903c0, {{0.0, 47.0}, {390.2, 1414.7}}
+                  StaticText, 0x11fb93980, {{16.0, 79.0}, {126.3, 40.7}}, label: 'protly'
+                  StaticText, 0x11fb93840, {{16.0, 127.7}, {281.3, 24.0}}, label: 'Polish and translate as you type.'
+                  StaticText, 0x11fb90b40, {{16.0, 191.7}, {190.7, 26.3}}, label: 'Turn on Protly'
+                  StaticText, 0x11fb93e80, {{16.0, 234.0}, {21.3, 20.3}}, label: '1.'
+                  StaticText, 0x11fb90dc0, {{45.3, 234.0}, {191.7, 20.3}}, label: 'Add the Protly keyboard'
+                  StaticText, 0x11fb92440, {{45.3, 258.4}, {300.0, 42.3}}, label: 'In Settings, tap Keyboards and turn on Protly, so the globe key can switch to it.'
+                  StaticText, 0x11fb90c80, {{16.0, 316.7}, {21.3, 20.3}}, label: '2.'
+                  StaticText, 0x11fba8140, {{45.3, 316.7}, {201.3, 20.3}}, label: 'Turn on Allow Full Access'
+                  StaticText, 0x11fbaa940, {{45.3, 341.0}, {275.7, 42.3}}, label: 'Translate, Polish and Read need the network and the clipboard.'
+                  StaticText, 0x11fba8780, {{45.3, 395.4}, {145.3, 20.3}}, label: 'What Protly sends'
+                  StaticText, 0x11fbab700, {{45.3, 419.7}, {329.0, 130.3}}, label: 'Only when you tap an action, and only to the model API: Translate and Polish send the field's text and your About me note; Read sends the copied text. Keystrokes are never sent. Words the keyboard learns stay on this phone.'
+                  StaticText, 0x11fbaabc0, {{16.0, 566.0}, {21.3, 20.3}}, label: '3.'
+                  StaticText, 0x11fbaa440, {{45.3, 566.0}, {230.3, 20.3}}, label: 'Keep Apple's Emoji keyboard'
+                  StaticText, 0x11fba83c0, {{45.3, 590.4}, {326.7, 42.3}}, label: 'Protly has no emoji keys: switch to Apple's Emoji with the key under the keyboard.'
+                  Button, 0x11fbabd40, {{16.2, 648.7}, {183.0, 44.0}}, label: 'Open Settings'
+                    Image, 0x11fba9400, {{37.5, 661.3}, {19.0, 19.0}}, identifier: 'gear', label: 'Settings'
+                    StaticText, 0x11fba8f00, {{16.2, 648.7}, {183.0, 44.0}}, label: 'Open Settings'
+                  StaticText, 0x11fbabc00, {{16.0, 732.7}, {81.7, 26.3}}, label: 'Try it'
+                  StaticText, 0x11fbaa1c0, {{16.0, 775.0}, {354.7, 64.3}}, label: 'Switch to Protly with the key under the keyboard (, or  when Protly and Emoji are your only keyboards), and back the same way.'
+                  Button, 0x11fbabe80, {{16.2, 855.3}, {77.7, 44.0}}, label: 'Polish'
+                  Button, 0x11fbaaf80, {{101.8, 855.3}, {159.7, 44.0}}, label: 'Translate Korean'
+                  TextField, 0x11fbab0c0, {{28.0, 927.3}, {334.3, 22.0}}, placeholderValue: 'Type here'
+                    Other, 0x11fbab840, {{28.0, 935.3}, {334.3, 11.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                      Other, 0x11fba97c0, {{31.0, 943.3}, {328.3, 3.0}}
+                  StaticText, 0x113a47ac0, {{16.0, 977.4}, {21.3, 20.3}}, label: '1.'
+                  StaticText, 0x11fa66080, {{45.3, 977.4}, {250.3, 20.3}}, label: 'Type teh, then tap the right slot.'
+                  StaticText, 0x11fa65540, {{16.0, 1005.7}, {21.3, 20.3}}, label: '2.'
+                  StaticText, 0x11fa64f00, {{45.3, 1005.7}, {224.0, 20.3}}, label: 'After a Replace, tap  Undo.'
+                  StaticText, 0x11fa66300, {{16.0, 1034.0}, {21.3, 20.3}}, label: '3.'
+                  StaticText, 0x11fa64640, {{45.3, 1034.0}, {305.7, 42.3}}, label: 'Writing Korean? Type dkssud, then tap the left slot.'
+                  StaticText, 0x11fa65cc0, {{16.0, 1116.4}, {109.0, 26.3}}, label: 'About me'
+                  StaticText, 0x11fa66bc0, {{16.0, 1158.7}, {305.0, 42.3}}, label: 'Translate and Polish send this note with your draft.'
+                  TextField, 0x11fa67840, {{28.0, 1229.0}, {334.3, 86.3}}, value: I run Moonbeam Kil...
+                    Other, 0x11fa67480, {{28.0, 1282.3}, {334.3, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                      Other, 0x11fa65180, {{31.0, 1309.3}, {328.3, 3.0}}
+                  StaticText, 0x11fa64dc0, {{16.0, 1355.1}, {80.0, 20.3}}, label: '58 / 1,000'
+                  Button, 0x11fa65900, {{158.2, 1343.3}, {216.3, 44.0}}, label: 'Copy for the keyboard'
+                  StaticText, 0x11fa64280, {{16.0, 1403.3}, {272.7, 42.3}}, label: 'Copy an empty note to clear it from the keyboard.'
+                Other, 0x11fa64c80, {{357.0, 47.3}, {30.0, 749.3}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                  Other, 0x11fa66580, {{384.0, 50.3}, {3.0, 419.3}}
+                Other, 0x11fa66800, {{357.0, 47.3}, {30.0, 749.3}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                  Other, 0x11fa64000, {{384.0, 50.3}, {3.0, 419.3}}
+Path to element:
+ →Application, 0x11fb92580, pid: 23010, label: 'Protly'
+Query chain:
+ →Find: Application 'com.northprot.protly.ciapp'
+  Output: {
+    Application, 0x11fa66f80, pid: 23010, label: 'Protly'
+  }
