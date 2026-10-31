@@ -328,15 +328,34 @@ final class Driver {
         s.terminate()
     }
 
+    /// Taps a row once it is on screen, scrolling either way to get it there: Settings can open scrolled anywhere
+    /// (it keeps its position), and run 34 swiped past General with up-swipes only. A row that exists is scrolled
+    /// toward by its frame; one not loaded yet is looked for toward the top first, then toward the bottom.
     /// cellsOnly: a row, never a title with the same text (iOS 26 titles General > Keyboard "Keyboards", run 30).
     private func tapRow(in a: XCUIApplication, _ predicate: NSPredicate, cellsOnly: Bool = false) -> Bool {
-        for _ in 0..<6 {
+        let window = a.windows.firstMatch.frame
+        let top: CGFloat = 110, bottom = (window.height > 0 ? window.height : 844) - 40
+        var towardTop = 4  // swipes down (content toward the top) before looking further down
+        for _ in 0..<14 {
             let e = cellsOnly ? row(in: a, predicate) : a.descendants(matching: .any).matching(predicate).firstMatch
-            if e.waitForExistence(timeout: 2) && e.isHittable {
-                e.tap()
-                return true
+            if e.waitForExistence(timeout: 2) {
+                let f = e.frame
+                if f.minY >= top && f.maxY <= bottom && e.isHittable {
+                    e.tap()
+                    return true
+                }
+                // A third of the screen with no fling, so the list cannot overshoot the row.
+                let from = a.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: f.minY < top ? 0.35 : 0.65))
+                let to = a.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: f.minY < top ? 0.65 : 0.35))
+                from.press(forDuration: 0.05, thenDragTo: to)
+                log(String(format: "Settings: row at y %.0f..%.0f, scrolling %@", f.minY, f.maxY, f.minY < top ? "up" : "down"))
+            } else if towardTop > 0 {
+                towardTop -= 1
+                a.swipeDown()
+            } else {
+                a.swipeUp()
             }
-            a.swipeUp()
+            pause(0.6)
         }
         return false
     }
