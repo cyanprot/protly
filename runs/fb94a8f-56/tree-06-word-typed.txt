@@ -1,0 +1,30 @@
+Attributes: Application, 0x117f2ae40, pid: 9569, label: 'ProtlyCIHost'
+Element subtree:
+ →Application, 0x117f2ae40, pid: 9569, label: 'ProtlyCIHost'
+    Window (Main), 0x117f2a800, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x117f28c80, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x117f2b980, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x117f2a940, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x117f2abc0, {{0.0, 0.0}, {390.0, 844.0}}
+              TextField, 0x117744500, {{16.0, 71.0}, {200.0, 22.0}}, identifier: 'field'
+                Other, 0x117747700, {{16.0, 71.0}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                  Other, 0x117747980, {{16.0, 71.0}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                    Other, 0x117745e00, {{8.8, 57.5}, {16.5, 16.5}}
+                    Other, 0x117746e40, {{16.0, 71.0}, {2.0, 0.0}}
+                  Other, 0x117746580, {{16.0, 71.0}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                    Other, 0x117746440, {{8.8, 57.5}, {16.5, 16.5}}
+                    Other, 0x117744a00, {{16.0, 71.0}, {2.0, 0.0}}
+                Other, 0x1177448c0, {{16.0, 79.0}, {200.0, 11.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                  Other, 0x117745040, {{19.0, 87.0}, {194.0, 3.0}}
+              Button, 0x117744280, {{334.0, 71.0}, {40.0, 20.3}}, identifier: 'clear', label: 'Clear'
+              Button, 0x117744b40, {{314.7, 107.3}, {59.3, 20.3}}, identifier: 'dismiss', label: 'Dismiss'
+    Window, 0x117744000, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x117744780, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x117744f00, {{0.0, 0.0}, {390.0, 844.0}}
+Path to element:
+ →Application, 0x117f2ae40, pid: 9569, label: 'ProtlyCIHost'
+Query chain:
+ →Find: Target Application 'com.northprot.protly.cihost'
+  Output: {
+    Application, 0x117744dc0, pid: 9569, label: 'ProtlyCIHost'
+  }
