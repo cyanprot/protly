@@ -287,6 +287,23 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertTrue(controller.contains("hapticConfiguration = .disabled"), "haptics must stay off")
     }
 
+    /// keyboard-ui 001: the bar and the protly key read their labels only through BarAction (ProtlyCore), so a label
+    /// cannot drift from the request again. Longer strings (the Full Access notice, the panel's "Polishing") stay
+    /// allowed; the container app has its own copy. The pill's motion has a Reduce Motion form.
+    func testBarLabelsComeOnlyFromBarAction() throws {
+        let all = try sources()
+        for (name, text) in all where name != "ProtlyApp.swift" {
+            let ns = text as NSString
+            for r in matches(#""(Translate|Polish|Read clipboard)""#, in: text) {
+                XCTFail("\(name): a bar label outside BarAction: \(lineText(ns, r))")
+            }
+        }
+        guard let bar = all.first(where: { $0.name == "ProtlyBar.swift" })?.text else {
+            return XCTFail("ProtlyBar.swift not found")
+        }
+        XCTAssertTrue(bar.contains("accessibilityReduceMotion"), "ProtlyBar.swift has no Reduce Motion form")
+    }
+
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {
         let line = ns.lineRange(for: r)
         return "\(ns.substring(to: r.location).components(separatedBy: "\n").count): "

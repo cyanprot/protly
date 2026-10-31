@@ -10,10 +10,16 @@ final class ProtlyMode: ObservableObject {
     /// Shift is on because the user pressed it (not auto-capitalization).
     @Published var manualShift = false
     @Published var alternative: String?
+    /// The alternative is a listed word in its language: drawn in the primary color, else dimmed (B4).
+    @Published var alternativeIsWord = true
     /// The panel in place of the keys, nil = keys.
     @Published var panel: PanelState?
-    /// The action that fits the field now (nil while typing or when the field is empty).
-    @Published var draftMode: ActionMode?
+    /// The bar's center slot (nil = empty) and what the protly key runs. ProtlyCore decides both from the field text
+    /// (BarAction), the same way the request is built, so a label never names another target.
+    @Published var center: BarAction?
+    @Published var protlyKey: BarAction = .read
+    /// Full Access is on: without it the pill is an outlined lock and a tap explains why.
+    @Published var fullAccess = true
     @Published var canUndo = false
     /// The clipboard holds text copied since protly last looked (checked without reading it).
     @Published var clipboardIsNew = false
@@ -43,8 +49,10 @@ final class KeyboardViewController: KeyboardInputViewController {
     /// LearnedWords.changes at the last save (Words.swift). Per controller: each one loads its own copy.
     var savedChanges = 0
 
+    /// Follows the keycaps, so dictation listens in the language on the keys (it stayed Korean before).
+    /// KeyboardKit's setter is ignored: it would report its own locale.
     override var primaryLanguage: String? {
-        get { "ko-KR" }  // KeyboardKit would report its English locale; protly is mainly Korean
+        get { session.keycapLanguage == .korean ? "ko-KR" : "en-US" }
         set {}
     }
 
@@ -249,7 +257,9 @@ final class KeyboardViewController: KeyboardInputViewController {
         // Every path below shows its own panel: a request still running must not replace it later.
         actionTask?.cancel()
         guard hasFullAccess else {
-            mode.panel = .failed("Turn on Full Access in Settings to use protly actions", retry: requested ?? .in)
+            // F1: say why instead of a failed call (the bar shows the outlined lock pill).
+            mode.panel = .notice(
+                "Translate, Polish and Read need Full Access: Settings > General > Keyboard > Keyboards > Protly > Allow Full Access")
             return
         }
         if requested == .in {
@@ -257,7 +267,7 @@ final class KeyboardViewController: KeyboardInputViewController {
             return
         }
         // The panel shows at once: a second tap during the field read cannot start a second request.
-        mode.panel = .loading(requested ?? mode.draftMode ?? .in)
+        mode.panel = .loading(requested ?? mode.protlyKey.actionMode ?? .in)
         actionTask = Task { [weak self] in
             guard let self else { return }
             let field = await FieldText.read(textDocumentProxy)
@@ -345,10 +355,20 @@ final class KeyboardViewController: KeyboardInputViewController {
         refreshField()
     }
 
+    /// The protly key runs exactly what its symbol shows (K1): symbol and action are the same BarAction value.
+    func runProtlyKey() {
+        if mode.protlyKey == .undo {
+            undoInsert()
+        } else {
+            act(nil)
+        }
+    }
+
     func undoInsert() {
         guard let l = lastInsert else { return }
         guard FieldGuard.canUndo(l.inserted, before: textDocumentProxy.documentContextBeforeInput ?? "") else {
             endUndo()  // the cursor moved or the text changed since Insert
+            refreshField()  // the bar stops offering Undo
             return
         }
         for _ in l.inserted { textDocumentProxy.deleteBackward() }
@@ -368,13 +388,12 @@ final class KeyboardViewController: KeyboardInputViewController {
         if mode.canUndo { mode.canUndo = false }
     }
 
-    /// Which action the bar offers for the field text around the cursor, and whether new text was copied.
+    /// Which action the bar and the protly key offer for the field text around the cursor, and whether new text was
+    /// copied. Since typing-fixes 001 the word being typed is plain text in the context, so the action stays
+    /// visible while a word is typed.
     private func refreshField() {
         let p = textDocumentProxy
         let text = (p.documentContextBeforeInput ?? "") + (p.documentContextAfterInput ?? "")
-        let next: ActionMode? = session.isComposing || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? nil : ActionAPI.mode(forDraft: text)
-        if mode.draftMode != next { mode.draftMode = next }
 
         // changeCount and hasStrings never show the Allow Paste prompt; reading the string does.
         // changeCount is cheap, so it goes first; hasStrings only runs after a change.
@@ -386,6 +405,13 @@ final class KeyboardViewController: KeyboardInputViewController {
             && text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && pb.changeCount != d.integer(forKey: Self.clipboardKey) && pb.hasStrings
         if mode.clipboardIsNew != isNew { mode.clipboardIsNew = isNew }
+
+        // @Published fires on every write; an unchanged write would rebuild the keyboard on each key.
+        let center = BarAction.center(text: text, canUndo: mode.canUndo, clipboardIsNew: isNew)
+        if mode.center != center { mode.center = center }
+        let key = center ?? .read  // BarAction.protlyKey, without a second scan of the field
+        if mode.protlyKey != key { mode.protlyKey = key }
+        if mode.fullAccess != hasFullAccess { mode.fullAccess = hasFullAccess }
     }
 
     /// Not private: Words.swift calls it when the system lexicon arrives.
@@ -393,6 +419,8 @@ final class KeyboardViewController: KeyboardInputViewController {
         let korean = session.keycapLanguage == .korean
         if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
+        let isWord = session.alternativeIsWord
+        if mode.alternativeIsWord != isWord { mode.alternativeIsWord = isWord }
         refreshWords()
         refreshField()
     }
@@ -494,7 +522,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     override func setKeyboardType(_ type: Keyboard.KeyboardType) {
         if case .emojis = type {
-            act(nil)  // the protly key; iOS's own bottom-left key opens Emoji
+            runProtlyKey()  // the protly key; iOS's own bottom-left key opens Emoji
             return
         }
         super.setKeyboardType(type)
@@ -534,21 +562,34 @@ struct ProtlyRoot: View {
                 if params.item.action == .space {
                     Color.clear  // Apple's space bar has no label
                 } else if params.item.action == .keyboardType(.emojis) {
-                    Image(systemName: "character.bubble").font(.system(size: 21))  // the protly key
+                    // The protly key: the symbol of what a tap runs, in the pill's accent (keyboardButtonStyle below).
+                    Image(systemName: mode.protlyKey.keySymbol).font(.system(size: 21))
                 } else {
                     params.view
                 }
             },
             // The space trackpad starts after a shorter hold (R3); other keys keep KeyboardKit's 0.5 s.
-            buttonView: {
-                $0.view.keyboardButtonGestureConfiguration(
-                    $0.item.action == .space ? .init(longPressDelay: SpaceTrackpad.longPressDelay) : .standard)
+            buttonView: { params in
+                let view = params.view.keyboardButtonGestureConfiguration(
+                    params.item.action == .space ? .init(longPressDelay: SpaceTrackpad.longPressDelay) : .standard)
+                if params.item.action == .keyboardType(.emojis) {
+                    // The protly key's spoken name is its action (D6 exception; KeyboardKit says "Keyboard Type -
+                    // emojis"). KeyboardKit makes each key one element that ignores its content's labels, and its own
+                    // label sits inside, so the key's accessibility is replaced, not relabeled. Drawing and gestures
+                    // stay KeyboardKit's.
+                    view.accessibilityRepresentation {
+                        Button(mode.protlyKey.spokenLabel) { [unowned host] in host.runProtlyKey() }
+                    }
+                } else {
+                    view
+                }
             },
             collapsedView: { $0.view },
             emojiKeyboard: { _ in EmptyView() },  // not KeyboardKit's placeholder: keeps the emoji key
             toolbar: { _ in
                 ProtlyBar(
                     mode: mode,
+                    scheme: context.colorScheme,
                     flip: { [unowned host] in host.flipWord() },
                     act: { [unowned host] in host.act($0) },
                     undo: { [unowned host] in host.undoInsert() },
@@ -579,6 +620,10 @@ struct ProtlyRoot: View {
                 // Apple iOS 26: an active shift is the same gray key with the letters' arrow color.
                 // KeyboardKit draws it black, for its older white key.
                 style.foregroundColor = KeyboardAction.character("a").standardButtonForegroundColor(for: context)
+            }
+            if case .keyboardType(.emojis) = params.action {
+                // The protly key in the pill's accent (K1): tint only, Apple's key shape, size and pressed look stay.
+                style.foregroundColor = Brand.pillFill(context.colorScheme)
             }
             return style
         })

@@ -41,6 +41,17 @@ public struct LanguageDetector: Sendable {
         )
     }
 
+    /// Whether the keys read in `language` are a word in that language's bundled list, keyed as `decide` keys it
+    /// (English lowercased, Korean by its key string). With `prefix`, whether some listed word starts with them.
+    /// The lists only: learned words are not consulted.
+    public func lists(_ keys: [KeyEvent], as language: Language, prefix: Bool) -> Bool {
+        guard !keys.isEmpty else { return false }
+        let (list, key) = language == .english
+            ? (english, Dubeolsik.latin(keys).lowercased())
+            : (korean, Dubeolsik.koreanKeyString(keys))
+        return prefix ? list.hasPrefix(key) : list.frequency(of: key) > 0
+    }
+
     public func decide(_ keys: [KeyEvent], complete: Bool, previous: Language?,
                        learned: LearnedWords = LearnedWords()) -> Language {
         let hangul = Hangul.compose(keys)
