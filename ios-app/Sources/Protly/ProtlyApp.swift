@@ -158,7 +158,7 @@ private struct Hero: View {
     }
 }
 
-/// F2: the two switches in Settings, why each is needed, and what leaves the phone. The app cannot read whether the
+/// F2: the two switches in Settings and the Emoji keyboard to keep, why each is needed, and what leaves the phone. The app cannot read whether the
 /// keyboard or Full Access is on (no App Group), so it shows no status.
 private struct TurnOnSection: View {
     @Environment(\.colorScheme) private var scheme
@@ -176,11 +176,15 @@ private struct TurnOnSection: View {
                 Text("Turn on Allow Full Access").font(.headline)
                 Text("Translate, Polish and Read need the network and the clipboard.")
                     .foregroundStyle(Brand.secondary(scheme))
-            }
-            // Right after Full Access, where iOS shows its warning.
-            VStack(alignment: .leading, spacing: 4) {
-                Text("What Protly sends").font(.headline)
+                // Right after the Full Access reason, where iOS shows its warning.
+                Text("What Protly sends").font(.headline).padding(.top, 8)
                 Text("Only when you tap an action, and only to the model API: Translate and Polish send the field's text and your About me note; Read sends the copied text. Keystrokes are never sent. Words the keyboard learns stay on this phone.")
+                    .foregroundStyle(Brand.secondary(scheme))
+            }
+            // The in-row emoji key is the protly key; iOS's own key under the keyboard opens Emoji.
+            NumberedRow(number: 3) {
+                Text("Keep Apple's Emoji keyboard").font(.headline)
+                Text("Protly has no emoji keys: the key under the keyboard opens Apple's Emoji.")
                     .foregroundStyle(Brand.secondary(scheme))
             }
             Button("Open Settings", systemImage: "gear", action: openSettings)
@@ -206,7 +210,7 @@ private struct TryItSection: View {
         VStack(alignment: .leading, spacing: Brand.groupSpacing) {
             SectionTitle("Try it")
             // Without the switch the field opens with Apple's keyboard and nothing below works.
-            Text("Switch to Protly with the \(Image(systemName: "globe")) key under the keyboard, and back the same way.")
+            Text("Switch to Protly with the key under the keyboard (\(Image(systemName: "globe")), or \(Image(systemName: "face.smiling")) when Protly and Emoji are your only keyboards), and back the same way.")
             // iOS 17 has no wrapping stack: the chips go in a column when a row does not fit.
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 8) { SampleChips(fill: fill) }
