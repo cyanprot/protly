@@ -93,21 +93,22 @@ private struct StripGlow: View {
     let color: Color
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var sweep = false
 
     var body: some View {
-        LinearGradient(colors: [color.opacity(0), color.opacity(0.9), color.opacity(0)],
-                       startPoint: .leading, endPoint: .trailing)
-            // From off the left edge to off the right; centered and still under Reduce Motion.
-            .visualEffect { [sweep, reduceMotion] content, proxy in
-                content.offset(x: reduceMotion ? 0 : (sweep ? proxy.size.width : -proxy.size.width))
-            }
-            .frame(height: 2)
-            .clipped()
-            .allowsHitTesting(false)
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.linear(duration: 1.8).repeatForever(autoreverses: false)) { sweep = true }
-            }
+        // Driven by the clock, not withAnimation(.repeatForever): a forever animation started in onAppear joined
+        // other transactions and kept the result card's removal from ever finishing, so a ghost card sat over the keys.
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            let phase = reduceMotion ? 0.5 : t.truncatingRemainder(dividingBy: 1.8) / 1.8
+            LinearGradient(colors: [color.opacity(0), color.opacity(0.9), color.opacity(0)],
+                           startPoint: .leading, endPoint: .trailing)
+                // From off the left edge to off the right; centered and still under Reduce Motion.
+                .visualEffect { content, proxy in
+                    content.offset(x: (phase * 2 - 1) * proxy.size.width)
+                }
+        }
+        .frame(height: 2)
+        .clipped()
+        .allowsHitTesting(false)
     }
 }

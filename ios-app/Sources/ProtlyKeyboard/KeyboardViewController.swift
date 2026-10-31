@@ -388,9 +388,7 @@ final class KeyboardViewController: KeyboardInputViewController {
             card.copyOnly = card.action != .in && !fieldHolds(card.original, isSelection: card.isSelection)
             mode.strip = nil
             mode.panel = .card(card)
-            announce(result.translation)
         case .failed(let error):
-            announce(error.message)
             guard var card = openCard else {
                 // No text yet: the error replaces the strip's label, the keys stay, no card opens.
                 mode.strip?.error = error
@@ -402,11 +400,6 @@ final class KeyboardViewController: KeyboardInputViewController {
             mode.strip = nil
             mode.panel = .card(card)
         }
-    }
-
-    /// VoiceOver hears the end of a call; the strip and the card change without moving its focus.
-    private func announce(_ text: String) {
-        UIAccessibility.post(notification: .announcement, argument: text)
     }
 
     private var openCard: CardState? {
@@ -758,6 +751,8 @@ struct ProtlyRoot: View {
                 }
             }
             .animation(reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.3, bounce: 0), value: mode.panel == nil)
+            // A card on its way out never takes a tap meant for the keys.
+            .allowsHitTesting(mode.panel != nil)
         }
         // Outside the view: KeyboardKit sizes keys from the width it is given, and its own edgeInsets
         // only pad inside a fixed frame, which moves nothing.
