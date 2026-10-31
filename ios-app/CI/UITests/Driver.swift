@@ -328,9 +328,10 @@ final class Driver {
         s.terminate()
     }
 
-    private func tapRow(in a: XCUIApplication, _ predicate: NSPredicate) -> Bool {
+    /// cellsOnly: a row, never a title with the same text (iOS 26 titles General > Keyboard "Keyboards", run 30).
+    private func tapRow(in a: XCUIApplication, _ predicate: NSPredicate, cellsOnly: Bool = false) -> Bool {
         for _ in 0..<6 {
-            let e = a.descendants(matching: .any).matching(predicate).firstMatch
+            let e = (cellsOnly ? a.cells : a.descendants(matching: .any)).matching(predicate).firstMatch
             if e.waitForExistence(timeout: 2) && e.isHittable {
                 e.tap()
                 return true
@@ -523,19 +524,20 @@ final class Driver {
         let steps: [(String, NSPredicate)] = [
             ("General", NSPredicate(format: "label ==[c] 'General'")),
             ("Keyboard", NSPredicate(format: "label ==[c] 'Keyboard'")),
-            ("Keyboards", NSPredicate(format: "label BEGINSWITH[c] 'Keyboards'")),
+            ("Keyboards", NSPredicate(format: "identifier == 'KEYBOARDS' OR label BEGINSWITH[c] 'Keyboards,'")),
             ("Protly", NSPredicate(format: "label BEGINSWITH[c] 'Protly'")),
         ]
-        // Settings may come back on the page it showed last: start from the deepest step on screen.
+        // Settings may come back on the page it showed last: start from the deepest step on screen. Rows only: on
+        // iOS 26 the General > Keyboard page is titled "Keyboards", like the row it holds (run 30).
         _ = s.navigationBars.firstMatch.waitForExistence(timeout: 5)
         var first = 0
-        for (i, step) in steps.enumerated().reversed() where s.descendants(matching: .any).matching(step.1).firstMatch.exists {
+        for (i, step) in steps.enumerated().reversed() where s.cells.matching(step.1).firstMatch.exists {
             first = i
             break
         }
         if !toggle.exists {
             for (name, predicate) in steps[first...] {
-                guard tapRow(in: s, predicate) else {
+                guard tapRow(in: s, predicate, cellsOnly: true) else {
                     log("Settings: \(name) not found")
                     dumpOnce("settings-full-access-\(name)", s)
                     return (false, "Settings: \(name) not found")

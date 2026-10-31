@@ -20,7 +20,8 @@ import shutil
 import sqlite3
 import sys
 
-SKIP_DIRS = {"Caches", "Logs", "Bundle", "tmp"}
+# PRBPosterExtensionDataStore: wallpaper posters, rewritten on every boot (run 30's diff was mostly these).
+SKIP_DIRS = {"Caches", "Logs", "Bundle", "tmp", "PRBPosterExtensionDataStore"}
 MAX_PLIST = 2 * 1024 * 1024
 TCC = os.path.join("Library", "TCC", "TCC.db")
 

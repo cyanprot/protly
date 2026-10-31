@@ -82,37 +82,42 @@ extension PhoneRun {
     }
 
     /// Screenshot and OCR of the panel region; saved as c-<id>-<n>-<name>.png when `save` names it.
-    func readPanel(_ row1: CGFloat, _ item: Item, save name: String?) -> PanelRead {
-        let screen = XCUIScreen.main.screenshot()
+    /// `only`: OCR just that region (the button band, a few times faster than the whole panel: run 30 needed
+    /// seconds per whole-panel reading). `screen`: read an earlier screenshot instead of taking one.
+    func readPanel(_ row1: CGFloat, _ item: Item, save name: String?, only region: CGRect? = nil,
+                   screen given: XCUIScreenshot? = nil) -> PanelRead {
+        let screen = given ?? XCUIScreen.main.screenshot()
         var file: String?
         if let name {
             let f = item.nextShot(name)
             if d.savePNG(f, screen) { file = f + ".png" }
         }
-        let seen = reader.read(in: d.panelRect(row1: row1), of: screen, points: d.width,
+        let seen = reader.read(in: region ?? d.panelRect(row1: row1), of: screen, points: d.width,
                                label: "\(item.id) \(name ?? "poll")", quiet: name == nil)
         return PanelRead(screen: screen, seen: seen, file: file)
     }
 
-    /// Polls the panel every 0.5 s, up to `timeout`, until its button row shows one of `labels`. Returns the reading
-    /// (saved), the label, its word box and when its screenshot was taken.
+    /// Polls the panel's button band every 0.5 s, up to `timeout`, until it shows one of `labels`. Returns the whole
+    /// panel's reading of that screenshot (saved), the label, its word box and when the screenshot was taken.
     func waitPanel(_ row1: CGFloat, _ item: Item, for labels: [String], timeout: TimeInterval = 30,
                    name: String = "panel") -> (read: PanelRead, label: String?, rect: CGRect?, at: Date) {
         let band = d.panelButtonBand(row1: row1)
         let end = Date().addingTimeInterval(timeout)
         while true {
             let at = Date()
-            let r = readPanel(row1, item, save: nil)
+            let r = readPanel(row1, item, save: nil, only: band)
             if let seen = r.seen {
                 for label in labels {
                     if let rect = seen.word(label, in: band) {
-                        return (savePanel(r, item, name), label, rect, at)
+                        let whole = readPanel(row1, item, save: nil, screen: r.screen)
+                        return (savePanel(whole, item, name), label, rect, at)
                     }
                 }
             }
             if Date() >= end {
-                d.log("\(item.id): none of \(labels) on the panel in \(Int(timeout)) s: \(q(r.seen?.text))")
-                return (savePanel(r, item, name), nil, nil, at)
+                let whole = readPanel(row1, item, save: nil, screen: r.screen)
+                d.log("\(item.id): none of \(labels) on the panel in \(Int(timeout)) s: \(q(whole.seen?.text))")
+                return (savePanel(whole, item, name), nil, nil, at)
             }
             d.pause(0.5)
         }
