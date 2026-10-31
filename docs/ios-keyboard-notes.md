@@ -622,6 +622,9 @@ character, no acceleration, every step dropped 50 pt above or below the start).
   show it yet. It also ends the bar's flip and Undo. That first event only sets the start, as in KeyboardKit. Every
   move goes through the controller's `adjustTextPosition` override, which forgets the `FieldWatch` model (source
   rule `testSpaceTrackpadWiring`). A hold with no drag event after it leaves the word as it was and types no space.
+  The handler keeps the drag in `SpaceDrag` (ProtlyCore): a space press, release or end resets it, and so does a
+  new touch start location, because a touch the system cancels mid-drag (a notification, Control Center) may send
+  no release; without that the next drag would move from the old snapshot.
 - **R1.** `SpaceTrackpad` ignores the finger's height, so a thumb drifting up or down keeps moving the cursor.
   KeyboardKit's handler is unused for space while the handler has its host; its `verticalThreshold` is set to
   `.greatestFiniteMagnitude` anyway, so the fallback never freezes either.

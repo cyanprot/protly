@@ -6,14 +6,14 @@ import UIKit
 /// whose text calls the controller intercepts to commit the word first.
 final class ProtlyActionHandler: KeyboardAction.StandardActionHandler {
     weak var host: KeyboardViewController?
-    /// The space bar trackpad of the drag in progress (typing-fixes 003), nil between drags.
-    private var trackpad: SpaceTrackpad?
+    /// The space bar trackpad of the drag in progress (typing-fixes 003).
+    private var drag = SpaceDrag()
 
     override func handle(_ gesture: Keyboard.Gesture, on action: KeyboardAction, replaced: Bool) {
         // KeyboardKit calls this from button gestures, always on the main thread.
         MainActor.assumeIsolated {
             if action == .space, gesture == .press || gesture == .release || gesture == .end {
-                trackpad = nil  // a new press or the end of a drag: the next trackpad takes a new snapshot
+                drag.reset()  // a new press or the end of a drag: the next trackpad takes a new snapshot
             }
             if case .shift = action, gesture == .release, let host, host.mode.korean, !host.mode.manualShift,
                keyboardContext.keyboardCase == .uppercased {
@@ -55,14 +55,16 @@ final class ProtlyActionHandler: KeyboardAction.StandardActionHandler {
             }
             guard keyboardContext.settings.spaceLongPressBehavior.shouldMoveInputCursor,
                   keyboardContext.isSpaceDragGestureActive else {
-                trackpad = nil  // still holding, or the drag ended: no trackpad yet
+                drag.reset()  // still holding, or the drag ended: no trackpad yet
                 return
             }
             // Read before the commit below, so its work is not counted as drag time (the next move would read fast).
             let now = ProcessInfo.processInfo.systemUptime
-            // The first event commits the word and takes the snapshot; it only sets the start, as in KeyboardKit.
-            if trackpad == nil { trackpad = host.beginSpaceDrag() }
-            let offset = trackpad?.track(x: Double(currentLocation.x), y: Double(currentLocation.y), time: now) ?? 0
+            // The first event of a touch commits the word and takes the snapshot; it only sets the start, as in
+            // KeyboardKit. A new start location is a new touch, even if a cancelled one sent no release.
+            let offset = drag.move(startX: Double(startLocation.x), startY: Double(startLocation.y),
+                                   x: Double(currentLocation.x), y: Double(currentLocation.y), time: now,
+                                   snapshot: { host.beginSpaceDrag() })
             if offset != 0 { host.adjustTextPosition(by: offset) }
         }
     }

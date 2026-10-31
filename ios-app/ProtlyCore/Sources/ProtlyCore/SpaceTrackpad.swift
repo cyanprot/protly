@@ -135,3 +135,35 @@ public struct SpaceTrackpad: Sendable {
         return String(context.dropLast(written.count)) + committed
     }
 }
+
+/// One space drag at a time: the trackpad of the drag in progress and the start location of the touch that made
+/// it. The keyboard resets it on a space press, release or end; a touch the system cancels mid-drag (a notification,
+/// Control Center, a system gesture) may send none of them, so a new start location resets it too. Otherwise the
+/// next drag would move from the old text and the old finger position.
+public struct SpaceDrag: Sendable {
+    private var trackpad: SpaceTrackpad?
+    private var start: (x: Double, y: Double)?
+
+    public init() {}
+
+    /// A trackpad is in use.
+    public var isActive: Bool { trackpad != nil }
+
+    public mutating func reset() {
+        trackpad = nil
+        start = nil
+    }
+
+    /// A drag event while space is the trackpad. `startX`, `startY`: where the touch began (the same for every event
+    /// of one touch). `snapshot` is called once per drag, on its first event, which only sets the start. Returns the
+    /// caret move in UTF-16 units.
+    public mutating func move(startX: Double, startY: Double, x: Double, y: Double, time: Double,
+                              snapshot: () -> SpaceTrackpad) -> Int {
+        if let s = start, s.x != startX || s.y != startY { reset() }
+        var pad = trackpad ?? snapshot()
+        if trackpad == nil { start = (startX, startY) }
+        let offset = pad.track(x: x, y: y, time: time)
+        trackpad = pad
+        return offset
+    }
+}
