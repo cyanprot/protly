@@ -601,3 +601,38 @@ underline, the word always visible, no split syllables while typing fast or slow
 space keeps the message in Safari and Chrome; double-tap or long-press on the last word shows Copy; a flip from
 the bar after a word still works (also in a Safari contenteditable field); hide and reopen the keyboard mid-word,
 then keep typing; a field with a length limit at its limit loses no character while typing.
+
+## Space trackpad (typing-fixes 003)
+
+Campaign 2026-10-30-typing-fixes, sprint 003 (`docs/plans/2026-10-30-typing-fixes.md`, research
+`docs/research/2026-10-30-space-trackpad.md`). Protly's own drag math replaces KeyboardKit's (a fixed 5 pt per
+character, no acceleration, every step dropped 50 pt above or below the start).
+
+- **Math (R4).** `SpaceTrackpad` (ProtlyCore). Cost per grapheme by width: 6 pt narrow, 12 pt for Hangul (syllables
+  and jamo), CJK, kana, fullwidth forms and emoji. The remainder carries between events. Speed gain: 1x up to
+  100 pt/s, linear to 3x at 600 pt/s, capped there (two events at the same instant count as 3x). Offsets are UTF-16
+  units of whole graphemes (❤️ 2, 👨‍👩‍👧 8, 🇰🇷 4, 가 1), so the caret never lands inside an emoji. The caret stops at the
+  ends of the snapshot and a push past an end is dropped, so the way back starts at once. A slow 60 pt drag moves 10
+  Latin letters or 5 syllables; a 60 pt flick in 0.1 s moves 30 or 15.
+- **Wiring.** `ProtlyActionHandler.handleDrag` takes `.space` while `isSpaceDragGestureActive`; other drags keep
+  KeyboardKit's. The first drag event after the long press calls `beginSpaceDrag`: it reads the proxy, commits the
+  word (the commit can change its reading), and builds the text before the cursor as that read with the written
+  word swapped for the committed one (`SpaceTrackpad.textBefore`), because a read right after the commit may not
+  show it yet. It also ends the bar's flip and Undo. That first event only sets the start, as in KeyboardKit. Every
+  move goes through the controller's `adjustTextPosition` override, which forgets the `FieldWatch` model (source
+  rule `testSpaceTrackpadWiring`). A hold with no drag event after it leaves the word as it was and types no space.
+- **R1.** `SpaceTrackpad` ignores the finger's height, so a thumb drifting up or down keeps moving the cursor.
+  KeyboardKit's handler is unused for space while the handler has its host; its `verticalThreshold` is set to
+  `.greatestFiniteMagnitude` anyway, so the fallback never freezes either.
+- **R3.** Space starts the trackpad after 0.4 s (`SpaceTrackpad.longPressDelay`, through
+  `keyboardButtonGestureConfiguration` in `ProtlyRoot`'s `buttonView`); every other key keeps KeyboardKit's 0.5 s.
+- **Not built.** R2 (haptic at trackpad start): haptics stay off in this campaign. R5 (skip refreshes during a
+  drag): the simulator cannot show drag lag; build it only if phone check P6 finds a step costs more than ~4 ms.
+  R6 (vertical movement): out of scope.
+- **Simulator.** XCUITest can press and drag on space by coordinate in the existing harness: `Driver.point(x, y)`
+  is an `XCUICoordinate`, `position(of: .space)` gives the key, and `press(forDuration:thenDragTo:)` holds then
+  drags in a straight line (a rising finger is a diagonal target). The drag scenarios are sprint 004's.
+
+Phone checks the tower still owes (`space-trackpad.md` P3 to P5): drag left across the keyboard while the thumb
+rises, the cursor never stops; slow drags are precise and a flick reaches about 40 characters; Korean and English
+feel equally fast on screen; `안녕` with no space, hold space, one step left gives `안|녕` with nothing lost.
