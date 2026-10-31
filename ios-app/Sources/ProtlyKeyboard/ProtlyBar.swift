@@ -62,12 +62,16 @@ struct ProtlyBar: View {
     @ViewBuilder
     private var center: some View {
         if let action = mode.center {
-            Button {
-                if action == .undo { undo() } else { act(action.actionMode) }
-            } label: {
-                pill(action)
-            }
-            .transition(pillTransition)
+            Button { run(action) } label: { pill(action) }
+                .transition(pillTransition)
+        }
+    }
+
+    private func run(_ action: BarAction) {
+        if action == .undo {
+            undo()
+        } else {
+            act(action.actionMode)
         }
     }
 
@@ -90,9 +94,10 @@ struct ProtlyBar: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .foregroundStyle(locked ? AnyShapeStyle(.primary) : AnyShapeStyle(Brand.pillText(scheme)))
-        .background(locked ? AnyShapeStyle(.clear) : AnyShapeStyle(Brand.pillFill(scheme)), in: .capsule)
-        .overlay {
-            Capsule().strokeBorder(locked ? AnyShapeStyle(.primary) : AnyShapeStyle(.clear), lineWidth: 1)
+        .background {
+            Capsule()
+                .fill(locked ? AnyShapeStyle(.clear) : AnyShapeStyle(Brand.pillFill(scheme)))
+                .strokeBorder(locked ? AnyShapeStyle(.primary) : AnyShapeStyle(.clear), lineWidth: 1)
         }
         .padding(.horizontal, 6)
     }
@@ -109,7 +114,7 @@ struct ProtlyBar: View {
     /// empty slot with opacity, so the slots keep their identity and width.
     private func divider(visible: Bool) -> some View {
         Rectangle()
-            .fill(Color(.separator))
+            .fill(.separator)
             .frame(width: 0.5)
             .padding(.vertical, 10)
             .frame(height: BarSlotStyle.rowHeight)
