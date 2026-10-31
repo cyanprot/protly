@@ -58,11 +58,11 @@ final class ProtlyActionHandler: KeyboardAction.StandardActionHandler {
                 trackpad = nil  // still holding, or the drag ended: no trackpad yet
                 return
             }
+            // Read before the commit below, so its work is not counted as drag time (the next move would read fast).
+            let now = ProcessInfo.processInfo.systemUptime
             // The first event commits the word and takes the snapshot; it only sets the start, as in KeyboardKit.
             if trackpad == nil { trackpad = host.beginSpaceDrag() }
-            let offset = trackpad?.track(
-                x: Double(currentLocation.x), y: Double(currentLocation.y),
-                time: ProcessInfo.processInfo.systemUptime) ?? 0
+            let offset = trackpad?.track(x: Double(currentLocation.x), y: Double(currentLocation.y), time: now) ?? 0
             if offset != 0 { host.adjustTextPosition(by: offset) }
         }
     }

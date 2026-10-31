@@ -630,6 +630,9 @@ character, no acceleration, every step dropped 50 pt above or below the start).
 - **Not built.** R2 (haptic at trackpad start): haptics stay off in this campaign. R5 (skip refreshes during a
   drag): the simulator cannot show drag lag; build it only if phone check P6 finds a step costs more than ~4 ms.
   R6 (vertical movement): out of scope.
+- **Limit.** The caret stops at the snapshot's ends (R4). A host whose after-context stops at a paragraph break
+  (`FieldText.swift`) stops a rightward drag there; the before-context was whole in the hosts tested so far. If
+  phone check P4 shows it, extend the snapshot with one more proxy read at the end.
 - **Simulator.** XCUITest can press and drag on space by coordinate in the existing harness: `Driver.point(x, y)`
   is an `XCUICoordinate`, `position(of: .space)` gives the key, and `press(forDuration:thenDragTo:)` holds then
   drags in a straight line (a rising finger is a diagonal target). The drag scenarios are sprint 004's.
