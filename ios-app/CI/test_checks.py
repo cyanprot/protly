@@ -646,6 +646,24 @@ class WorkflowTests(unittest.TestCase):
         publish = next(s for s in self.steps if "bash ios-app/CI/publish-shots.sh" in s.get("run", ""))
         self.assertIn("!cancelled()", publish["if"])
 
+    def test_filtered_tag_starts_the_job(self):
+        job = next(iter(__import__("yaml").safe_load(self.text)["jobs"].values()))
+        self.assertIn("contains(github.event.head_commit.message, '[shots]')", job["if"])
+        self.assertIn("contains(github.event.head_commit.message, '[shots:')", job["if"])
+
+    def test_commit_message_reaches_run_shots_through_env_only(self):
+        # A commit message inside a run: script would be shell code; in env it is data.
+        for s in self.steps:
+            self.assertNotIn("head_commit.message", s.get("run", ""), s.get("name"))
+        build = next(s for s in self.steps if "run-shots.sh" in s.get("run", ""))
+        self.assertEqual(build["env"]["SHOTS_MESSAGE"], "${{ github.event.head_commit.message }}")
+
+    def test_judge_takes_not_run_layout_only_in_a_filtered_run(self):
+        judge = next(s for s in self.steps if "RESULT PASS" in s.get("run", ""))["run"]
+        self.assertIn("grep -q '^FILTER ' \"$report\"", judge)
+        self.assertIn("grep -qE '^RESULT (PASS|NOT-RUN)'", judge)
+        self.assertIn("grep -qx 'RESULT PASS' \"$report\"", judge)
+
     def test_publish_goes_through_the_leak_guard(self):
         publish = [s for s in self.steps if "bash ios-app/CI/publish-shots.sh" in s.get("run", "")]
         self.assertEqual(len(publish), 1)

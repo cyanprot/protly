@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Builds the CI host with the Protly keyboard, runs the screenshot scenarios and the phone checks in an iOS
-# Simulator, measures them and writes <out>/report.txt (line 1: STATUS build-failed | test-failed | measured; the
-# layout RESULT line; a CHECKS section from checks.py). Always exits 0 once the report is written; the workflow
+# Simulator, measures them and writes <out>/report.txt (line 1: STATUS build-failed | bad-filter | test-failed |
+# measured; a FILTER line in a debug run; the layout RESULT line; a CHECKS section from checks.py). Always exits 0 once the report is written; the workflow
 # fails the job unless the report says RESULT PASS and no CHECK is FAIL. macOS only (bash 3.2 compatible).
 #
 # Usage: ios-app/CI/run-shots.sh <out-dir>
 # Env: SOURCE_SHA (for the report), PROBE=1 (the phone checks' probe, plan Task 2.2: the preferences dump around
 # Full Access and test0_probe), OCR_FALLBACK=1 (label checks RECORD a crop when Vision fails its self-test; off: they
-# FAIL unreadable), HAS_KEY=true (write-secrets.sh wrote Secrets.swift with the CI key: the network checks run).
+# FAIL unreadable), HAS_KEY=true (write-secrets.sh wrote Secrets.swift with the CI key: the network checks run),
+# SHOTS_MESSAGE (the head commit message: a `[shots:...]` tag runs only those tests, shotsfilter.py).
 # Nothing here reads or prints Secrets.swift's key; the run folder goes through leak-guard.sh before any publish.
 set -uo pipefail
 
@@ -71,6 +72,28 @@ else
   fi
   note "network key: none (network checks SKIP); DerivedData cache: saved after the run"
 fi
+
+# A debug run (`[shots:<class>[/<method>],...]` in the head commit, shotsfilter.py): only the selected tests run,
+# the report says FILTER, the layout RESULT is NOT-RUN unless KeyboardShotsUITests is selected and checks.py marks
+# the IDs of other methods NOT-RUN. The message reaches shotsfilter.py through the environment only.
+filter=""
+if ! filter="$(python3 "$here/shotsfilter.py" 2> "$work/filter.err")"; then
+  note "bad [shots:...] filter: $(tail -n 1 "$work/filter.err")"
+  status="bad-filter"
+  finish
+fi
+only_args=()
+layout=1
+if [ -n "$filter" ]; then
+  layout=0
+  while IFS= read -r entry; do
+    only_args+=("-only-testing:ProtlyCIUITests/$entry")
+    case "$entry" in KeyboardShotsUITests*) layout=1 ;; esac
+  done <<< "$filter"
+  note "FILTER $(printf '%s' "$filter" | tr '\n' ' ') (a debug run, outside the run budget; other IDs are NOT-RUN)"
+fi
+mem_wait="$(python3 "$here/shotsfilter.py" mem-wait 2> /dev/null)"
+[ -n "$mem_wait" ] || mem_wait="== PhoneChecksUITests.test1"  # no phone method: the sampler never starts
 
 # Newest iOS 26 runtime, then iPhone 13 Pro or the first 390 pt wide iPhone that the runtime takes.
 runtime="$(xcrun simctl list runtimes -j | python3 -c '
@@ -245,7 +268,7 @@ note "appearance $(xcrun simctl ui "$udid" appearance 2>&1)"
 # probe-mem.txt. It starts at test1_68 (test0_access and the probe come first and need no samples): in run 8, with
 # the sampler attached from the start, scenario 04 lost the host-active notification (band 69).
 python3 "$here/memsample.py" "$out/mem.txt" "$out/probe-mem.txt" --name ProtlyCIKeyboard --interval 2 \
-  --wait-for "$out/ui-log.txt" "== PhoneChecksUITests.test1" > "$work/memsample.log" 2>&1 &
+  --wait-for "$out/ui-log.txt" "$mem_wait" > "$work/memsample.log" 2>&1 &
 sampler=$!
 note "memory sampler pid $sampler, probe ${PROBE:-0}, network $network"
 
@@ -261,7 +284,8 @@ with_deadline "$main_deadline" env TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROB
   xcodebuild test-without-building \
   -project "$here/ProtlyCI.xcodeproj" -scheme ProtlyCI \
   -destination "platform=iOS Simulator,id=$udid" \
-  -derivedDataPath "$dd" -test-timeouts-enabled YES -resultBundlePath "$work/Tests.xcresult" > "$work/test.log" 2>&1
+  -derivedDataPath "$dd" -test-timeouts-enabled YES -resultBundlePath "$work/Tests.xcresult" \
+  ${only_args[@]+"${only_args[@]}"} > "$work/test.log" 2>&1
 test_code=$?
 pkill -P "$progress_pid" > /dev/null 2>&1  # its sleep, which holds the step's output
 kill "$progress_pid" > /dev/null 2>&1
@@ -282,7 +306,7 @@ else
 fi
 
 # The runner writes the PNGs straight to $out; if it could not, take them from the result bundle.
-if ! ls "$out"/0*.png > /dev/null 2>&1 && [ -d "$work/Tests.xcresult" ]; then
+if [ "$layout" = 1 ] && ! ls "$out"/0*.png > /dev/null 2>&1 && [ -d "$work/Tests.xcresult" ]; then
   note "no PNGs in the output folder: exporting attachments from the result bundle"
   xcrun xcresulttool export attachments --path "$work/Tests.xcresult" --output-path "$work/attachments" > /dev/null 2>&1
   python3 - "$work/attachments" "$out" <<'EOF'
@@ -311,8 +335,13 @@ if [ $test_code -ne 0 ]; then
   status="test-failed"; failing_log="$work/test.log"
 fi
 
-python3 "$here/measure.py" "$out" --points "$points" > "$out/measure.txt" 2>&1
-key_flag=""
-if [ "$network" = 1 ]; then key_flag="--network-key"; fi  # a SKIP for want of the key is then the CI's FAIL
-python3 "$here/checks.py" "$out" $key_flag > "$work/checks-section.txt" 2>&1
+if [ "$layout" = 1 ]; then
+  python3 "$here/measure.py" "$out" --points "$points" > "$out/measure.txt" 2>&1
+else
+  echo "RESULT NOT-RUN (filtered run: KeyboardShotsUITests not selected)" > "$out/measure.txt"
+fi
+check_args=()
+if [ "$network" = 1 ]; then check_args+=(--network-key); fi  # a SKIP for want of the key is then the CI's FAIL
+if [ -n "$filter" ]; then check_args+=(--ran "$(printf '%s' "$filter" | tr '\n' ',')"); fi
+python3 "$here/checks.py" "$out" ${check_args[@]+"${check_args[@]}"} > "$work/checks-section.txt" 2>&1
 finish

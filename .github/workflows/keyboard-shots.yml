@@ -3,6 +3,8 @@
 # [probe] in the same message also runs the phone checks' probe (PhoneChecksUITests.test0_probe and the
 # preferences dump around Full Access). The secret PROTLY_API_KEY (a CI-only key) reaches only the Write Secrets.swift
 # step; without it every network check is SKIP. A run with the key never saves the DerivedData cache.
+# [shots:<class>[/<method>],...] instead runs only those tests (a debug run; shotsfilter.py, README "Debug runs"):
+# the report says FILTER and the IDs of other methods are NOT-RUN. The run that closes a sprint is a full [shots] run.
 # Every outcome is published to the orphan branch ci-shots under runs/<sha7>-<run_number>/.
 name: keyboard-shots
 
@@ -19,7 +21,9 @@ permissions:
 
 jobs:
   shots:
-    if: contains(github.event.head_commit.message, '[shots]') || github.event_name == 'workflow_dispatch'
+    if: >-
+      contains(github.event.head_commit.message, '[shots]') || contains(github.event.head_commit.message, '[shots:')
+      || github.event_name == 'workflow_dispatch'
     # On the job, not the workflow: a push without [shots] skips the job and so cannot cancel a running one.
     concurrency:
       group: keyboard-shots-${{ github.ref }}
@@ -71,6 +75,8 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
           PROBE: ${{ contains(github.event.head_commit.message, '[probe]') && '1' || '0' }}
+          # Data for shotsfilter.py, never interpolated into a script.
+          SHOTS_MESSAGE: ${{ github.event.head_commit.message }}
         run: bash ios-app/CI/run-shots.sh "$RUNNER_TEMP/shots"
 
       - name: Save SwiftPM and DerivedData (runs without the key only)
@@ -100,6 +106,11 @@ jobs:
             grep -E '^CHECKS (pass|$)|^CHECK .* FAIL' "$report" || true
           fi
           [ "$(head -n 1 "$report")" = "STATUS measured" ]
-          grep -qx 'RESULT PASS' "$report"
+          # A filtered run (FILTER line) may leave the layout out: RESULT NOT-RUN. A full run needs RESULT PASS.
+          if grep -q '^FILTER ' "$report"; then
+            grep -qE '^RESULT (PASS|NOT-RUN)' "$report"
+          else
+            grep -qx 'RESULT PASS' "$report"
+          fi
           grep -qE '^CHECKS pass [0-9]+ fail 0 ' "$report"
           if grep -qE '^CHECK [^ ]+ FAIL' "$report"; then exit 1; fi

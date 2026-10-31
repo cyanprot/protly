@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Assembles the phone checks of one CI run (docs/plans/2026-10-30-sim-phone-checks.md, Tasks 1.2-1.6 and 2.3).
 
-Usage: checks.py <dir> [--network-key]
+Usage: checks.py <dir> [--network-key] [--ran <entry>,<entry>...]
 
 --network-key: the run had the CI key (run-shots.sh passes it with HAS_KEY=true), so a `SKIP no network key` line
 means the key did not reach the tests and is FAIL unreadable.
+--ran: a filtered run's -only-testing entries (shotsfilter.py); the IDs of methods outside them are NOT-RUN.
 
 Reads from <dir>:
 - checks.txt: `CHECK <id> PASS|FAIL|RECORD|SKIP|PENDING <evidence>` lines written by UITests/PhoneChecksUITests.swift.
@@ -15,7 +16,7 @@ Resolves the PENDING lines (6.8-9 relaunch, 6.8-10 memory) from the marks and th
 PENDING lines (model output as `<group>#<try>="..."`) with the script rules in RULES; adds a FAIL `unreadable`
 line for every expected ID without a line (and for every malformed line), sorts by ID, keeps the test's own lines in
 checks-raw.txt and rewrites checks.txt with the final lines. Prints `CHECKS`, the lines and
-`CHECKS pass N fail N record N skip N`. Exit 1 when any line is FAIL.
+`CHECKS pass N fail N record N skip N` (plus ` not-run N` in a filtered run). Exit 1 when any line is FAIL.
 """
 
 import os
@@ -29,6 +30,21 @@ OFFLINE_IDS = [f"6.8-{i}" for i in range(1, 12)] + ["ws-1", "ws-2", "ws-3"] + [
     "8.5-1o", "8.5-2o", "8.5-6o", "8.5-7o", "8.5-8o", "8.5-9o", "icon"]
 NETWORK_IDS = ["6.8-11"] + [f"8.5-{i}" for i in (1, 3, 4, 5, 6, 7, 8, 9, 10)] + [f"7.7-{i}" for i in range(1, 7)]
 EXPECTED_IDS = OFFLINE_IDS + [i for i in NETWORK_IDS if i not in OFFLINE_IDS]
+# The PhoneChecksUITests method that writes each ID. A filtered run (`[shots:...]`, shotsfilter.py) marks the IDs of
+# methods it did not select NOT-RUN. Items inside one method depend on each other (6.8-9 on 6.8-8's learned word,
+# 8.5-10 and 7.7-4 on earlier timings), so a method is the smallest unit a filter selects.
+METHOD_IDS = {
+    "test1_68": [f"6.8-{i}" for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 11)],
+    "test2_ws": ["ws-1", "ws-2", "ws-3"],
+    "test3_85offline": ["8.5-1o", "8.5-2o", "8.5-6o", "8.5-7o", "8.5-8o", "8.5-9o"],
+    "test4_memory": ["6.8-10"],
+    "test5_icon": ["icon"],
+    "test6_85net": [f"8.5-{i}" for i in (1, 3, 4, 5, 6, 7, 8, 9, 10)],
+    "test7_77": [f"7.7-{i}" for i in range(1, 7)],
+}
+# Methods that write no ID of their own (Full Access, the probe) and the layout test.
+OTHER_METHODS = {"PhoneChecksUITests": ("test0_access", "test0_probe"), "KeyboardShotsUITests": ("testScenarios",)}
+NOT_RUN = "NOT-RUN"
 
 STATUSES = ("PASS", "FAIL", "RECORD", "SKIP", "PENDING")
 # Preferred memory method first (memsample.py writes these names).
@@ -91,8 +107,23 @@ def sort_key(check_id):
 
 
 def summary(lines):
-    n = {s: sum(1 for c in lines if c.status == s) for s in ("PASS", "FAIL", "RECORD", "SKIP")}
-    return f"CHECKS pass {n['PASS']} fail {n['FAIL']} record {n['RECORD']} skip {n['SKIP']}"
+    n = {s: sum(1 for c in lines if c.status == s) for s in ("PASS", "FAIL", "RECORD", "SKIP", NOT_RUN)}
+    text = f"CHECKS pass {n['PASS']} fail {n['FAIL']} record {n['RECORD']} skip {n['SKIP']}"
+    return text + (f" not-run {n[NOT_RUN]}" if n[NOT_RUN] else "")
+
+
+def covered_ids(entries):
+    """The IDs (and "layout") a run with these -only-testing entries writes; None is the full run."""
+    if entries is None:
+        return set(EXPECTED_IDS) | {"layout"}
+    ids = set()
+    for entry in entries:
+        cls, _, method = entry.partition("/")
+        if cls == "KeyboardShotsUITests":
+            ids.add("layout")
+        elif cls == "PhoneChecksUITests":
+            ids.update(i for m, v in METHOD_IDS.items() if not method or m == method for i in v)
+    return ids
 
 
 def parse_marks(text):
@@ -304,8 +335,9 @@ def guard_network(c, network_key):
     return c
 
 
-def assemble(checks_text, log_text, mem_text, network_key=False):
-    """The final, sorted lines. None for checks_text means the test wrote no checks.txt."""
+def assemble(checks_text, log_text, mem_text, network_key=False, ran=None):
+    """The final, sorted lines. None for checks_text means the test wrote no checks.txt. `ran` (covered_ids) is the
+    set of IDs a filtered run selected: an expected ID outside it without a line is NOT-RUN, not FAIL."""
     by_id = {}
     extra = []
     if checks_text is None:
@@ -338,7 +370,9 @@ def assemble(checks_text, log_text, mem_text, network_key=False):
             continue
         by_id[check_id] = guard_network(c, network_key)
     for check_id in EXPECTED_IDS:
-        if check_id not in by_id:
+        if check_id not in by_id and ran is not None and check_id not in ran:
+            by_id[check_id] = Check(check_id, NOT_RUN, "filtered run: its test method was not selected")
+        elif check_id not in by_id:
             why = "no checks.txt" if checks_text is None else "no CHECK line"
             by_id[check_id] = unreadable(check_id, why)
     return sorted(by_id.values(), key=lambda c: sort_key(c.id))
@@ -356,12 +390,20 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     network_key = "--network-key" in argv
     argv = [a for a in argv if a != "--network-key"]
+    ran = None
+    if "--ran" in argv:
+        i = argv.index("--ran")
+        if i + 1 >= len(argv):
+            print(__doc__, file=sys.stderr)
+            return 2
+        ran = covered_ids([e for e in argv[i + 1].split(",") if e])
+        del argv[i:i + 2]
     if len(argv) != 1:
         print(__doc__, file=sys.stderr)
         return 2
     d = argv[0]
     raw = read(os.path.join(d, "checks.txt"))
-    final = assemble(raw, read(os.path.join(d, "ui-log.txt")), read(os.path.join(d, "mem.txt")), network_key)
+    final = assemble(raw, read(os.path.join(d, "ui-log.txt")), read(os.path.join(d, "mem.txt")), network_key, ran)
     raw_copy = os.path.join(d, "checks-raw.txt")
     if raw is not None and not os.path.exists(raw_copy):
         with open(raw_copy, "w", encoding="utf-8") as f:

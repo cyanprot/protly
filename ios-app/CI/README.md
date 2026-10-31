@@ -7,7 +7,27 @@ that broke on the phone, and measures the screenshots against Apple's keyboard i
 ## When it runs
 
 On a push to any branch but `main` and `ci-shots` that touches `ios-app/**` or the workflow, and only when the head
-commit message contains `[shots]`; or by hand (`workflow_dispatch`). macOS minutes are scarce: batch changes.
+commit message contains `[shots]` or `[shots:...]`; or by hand (`workflow_dispatch`). macOS minutes are scarce:
+batch changes. Put the tag on every fix push that should be tested: a push without it runs nothing.
+
+### Debug runs: `[shots:...]`
+
+`[shots:<entry>,<entry>...]` runs only those tests (`xcodebuild -only-testing`). An entry is a class
+(`KeyboardShotsUITests`, `PhoneChecksUITests`) or a class and method (`PhoneChecksUITests/test7_77`).
+`shotsfilter.py` checks every entry against the known methods and refuses a typo (`STATUS bad-filter`, before the
+build). A selected `PhoneChecksUITests` method always brings `test0_access` first, since the network and clipboard
+methods need the Full Access it sets. The report's second block has a `FILTER ...` line; the layout `RESULT` is
+`NOT-RUN` unless `KeyboardShotsUITests` is selected, and every ID of an unselected method is `CHECK <id> NOT-RUN`
+(`checks.py --ran`, counted as `not-run N` on the `CHECKS` line), not FAIL. A selected method that writes no line
+still FAILs. Filtered runs are outside the sprint's run budget. The run that closes a sprint stays a full `[shots]`
+run with the key. `[shots:...]` wins when a message carries both tags.
+
+A method is the smallest unit: items inside one depend on each other (6.8-9 on the word 6.8-8 teaches, 8.5-10 and
+7.7-4 on earlier timings, 7.7-3 repeats 7.7-2). Across methods, each phone method sets its own context (6.8-7 and
+8.5-9o type a Korean or English word first; the `ru`/`ko` flips accept either first outcome), so a method run alone
+checks the same thing, but the keyboard has not learned the words earlier methods taught: compare a filtered
+result with a full run before calling it fixed. The memory sampler starts at the first selected phone method. A new
+push with either tag cancels a run in progress on the branch.
 
 Runner image `macos-26` (GitHub-hosted, arm64): Xcode 26.6 by default and iOS 26.x simulator runtimes. The
 script takes the newest iOS 26 runtime and an iPhone 13 Pro (else the first 390 pt wide iPhone it can create).
