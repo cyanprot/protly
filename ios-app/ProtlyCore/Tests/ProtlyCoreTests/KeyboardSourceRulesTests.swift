@@ -228,6 +228,65 @@ final class KeyboardSourceRulesTests: XCTestCase {
         }
     }
 
+    /// typing-fixes 003: the space bar trackpad is Protly's own (SpaceTrackpad in ProtlyCore). Every move goes
+    /// through the controller's adjustTextPosition override, which forgets the field model (FieldWatch); a finger
+    /// drifting up or down never drops a move (R1); only space gets the shorter hold (R3); haptics stay off (R2 is
+    /// out of scope).
+    func testSpaceTrackpadWiring() throws {
+        let all = try sources()
+        guard let handler = all.first(where: { $0.name == "ProtlyActionHandler.swift" })?.text,
+              let controller = all.first(where: { $0.name == "KeyboardViewController.swift" })?.text else {
+            return XCTFail("ProtlyActionHandler.swift or KeyboardViewController.swift not found")
+        }
+        let hns = handler as NSString
+        guard let drag = body(of: "override func handleDrag(", in: hns).map({ hns.substring(with: $0) }) else {
+            return XCTFail("ProtlyActionHandler does not override handleDrag")
+        }
+        for (needle, why) in [
+            ("guard action == .space else", "only space takes the trackpad path"),
+            ("keyboardContext.isSpaceDragGestureActive", "nothing may move before the hold starts the trackpad"),
+            ("host.beginSpaceDrag()", "the first event must commit the word and take the snapshot"),
+            ("drag.move(startX: Double(startLocation.x), startY: Double(startLocation.y)",
+             "the space drag does not go through SpaceDrag with the touch's start (a new touch must reset it)"),
+            ("host.adjustTextPosition(by: offset)", "the drag does not move through the controller's override"),
+        ] {
+            XCTAssertTrue(drag.contains(needle), "handleDrag: \(why) (\(needle))")
+        }
+        // A new press or the end of a drag drops the trackpad: otherwise the next drag would start from the last
+        // drag's finger position and jump. A cancelled touch sends neither: SpaceDrag resets on a new start location.
+        XCTAssertEqual(matches(#"gesture == \.press \|\| gesture == \.release \|\| gesture == \.end\s*\{\s*drag\.reset\(\)"#,
+                               in: handler).count, 1, "the trackpad is not reset on press, release and end")
+        XCTAssertFalse(handler.contains("SpaceTrackpad?"), "the handler keeps its own trackpad instead of SpaceDrag")
+        XCTAssertFalse(handler.contains("textDocumentProxy"), "ProtlyActionHandler touches the proxy itself")
+        // The snapshot reads the field before the commit (a read after it may not show it yet) and ends the flip
+        // and Undo, as any cursor move does.
+        let cns = controller as NSString
+        if let begin = body(of: "func beginSpaceDrag()", in: cns).map({ cns.substring(with: $0) }) {
+            let read = (begin as NSString).range(of: "documentContextBeforeInput")
+            let commit = (begin as NSString).range(of: "commitWord()")
+            XCTAssertTrue(read.location != NSNotFound && commit.location != NSNotFound && read.location < commit.location,
+                          "beginSpaceDrag must read the context before it commits the word")
+            XCTAssertTrue(begin.contains("session.forgetLast()") && begin.contains("endUndo()"),
+                          "beginSpaceDrag must end the flip and Undo")
+        } else {
+            XCTFail("KeyboardViewController.beginSpaceDrag not found")
+        }
+        // Only FieldText's whole-field read moves the cursor on the proxy directly (act() forgets the model after).
+        for (name, text) in all where name != "FieldText.swift" {
+            let ns = text as NSString
+            for r in matches(#"\badjustTextPosition\(byCharacterOffset"#, in: text) {
+                XCTFail("\(name): cursor move outside the controller's override: \(lineText(ns, r))")
+            }
+        }
+        XCTAssertEqual(matches(#"spaceDragGestureHandler\.verticalThreshold\s*=\s*\.greatestFiniteMagnitude"#,
+                               in: controller).count, 1, "R1: KeyboardKit's vertical threshold is not lifted")
+        let delays = matches(#"\blongPressDelay:"#, in: controller)
+        XCTAssertEqual(delays.count, 1, "one long-press delay, for space only")
+        XCTAssertEqual(matches(#"action == \.space\s*\?\s*\.init\(longPressDelay:\s*SpaceTrackpad\.longPressDelay\)\s*:\s*\.standard\b"#,
+                               in: controller).count, 1, "R3: the shorter hold is not limited to space")
+        XCTAssertTrue(controller.contains("hapticConfiguration = .disabled"), "haptics must stay off")
+    }
+
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {
         let line = ns.lineRange(for: r)
         return "\(ns.substring(to: r.location).components(separatedBy: "\n").count): "
