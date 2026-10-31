@@ -100,6 +100,28 @@ private struct Endless: AsyncSequence, Sendable {
     func makeAsyncIterator() -> AsyncIterator { AsyncIterator(prefix: prefix, gate: gate, cancelled: cancelled) }
 }
 
+/// The bytes, then a lost connection when `throwing`.
+private struct ThenThrow: AsyncSequence, Sendable {
+    typealias Element = UInt8
+    let bytes: [UInt8]
+    let throwing: Bool
+    init(_ bytes: [UInt8], throwing: Bool) { (self.bytes, self.throwing) = (bytes, throwing) }
+    func makeAsyncIterator() -> AsyncIterator { AsyncIterator(bytes: bytes, throwing: throwing) }
+    struct AsyncIterator: AsyncIteratorProtocol {
+        let bytes: [UInt8]
+        let throwing: Bool
+        var index = 0
+        mutating func next() async throws -> UInt8? {
+            guard index < bytes.count else {
+                if throwing { throw URLError(.networkConnectionLost) }
+                return nil
+            }
+            defer { index += 1 }
+            return bytes[index]
+        }
+    }
+}
+
 private final class Counter: @unchecked Sendable {
     private let lock = NSLock()
     private var n = 0
@@ -167,8 +189,12 @@ final class ActionStreamingTests: XCTestCase {
     func testAStreamThatEndsWithoutAStopReason() async {
         let whole = await drive(Chunks(SSE.start + SSE.text(#"{"translation": "Hi", "back_translation": ""}"#)))
         XCTAssertEqual(whole, [.partial("Hi"), .done(ActionResult(translation: "Hi", backTranslation: ""))])
+        // Cut off on the way (no stop reason, no whole reply): a network failure, which offers Retry.
         let cut = await drive(Chunks(SSE.start + SSE.text(#"{"translation": "Hi"#)))
-        XCTAssertEqual(cut, [.partial("Hi"), .failed(ActionError(.parse))])
+        XCTAssertEqual(cut, [.partial("Hi"), .failed(ActionError(.network))])
+        // A reply that ended (a stop reason) but is not readable stays a parse failure.
+        let ended = await drive(Chunks(SSE.start + SSE.text(#"{"translation": "Hi"#) + SSE.stop("end_turn")))
+        XCTAssertEqual(ended, [.partial("Hi"), .failed(ActionError(.parse))])
     }
 
     func testAnErrorEventMidStream() async {
@@ -269,8 +295,22 @@ final class ActionStreamingTests: XCTestCase {
         let stream = ActionAPI.updates { (200, Chunks(SSE.reply(SSE.pieces)), { produced.fulfill() }) }
         await fulfillment(of: [produced], timeout: 10)
         let updates = await consume(stream)
-        XCTAssertEqual(updates.last, .done(ok))
-        XCTAssertEqual(updates.count, 1, "only the newest update is kept")
+        XCTAssertEqual(updates, [.partial("Thanks for today"), .done(ok)], "the newest partial, then the result")
+    }
+
+    /// A consumer that paces itself still gets the newest text before a failure, which carries none: an error event,
+    /// or the bytes throwing (the connection lost mid-reply).
+    func testASlowConsumerKeepsTheNewestTextBeforeAFailure() async {
+        let s = SSE.start + SSE.text(#"{"translation": "A"#) + SSE.text("B")
+        let event = s + SSE.event("error", #"{"type": "error", "error": {"type": "api_error"}}"#)
+        for (bytes, error) in [(Array(event.utf8), ActionError(.server)), (Array(s.utf8), ActionError(.network))] {
+            let produced = expectation(description: "the producer is done")
+            let throwing = error.kind == .network
+            let stream = ActionAPI.updates { (200, ThenThrow(bytes, throwing: throwing), { produced.fulfill() }) }
+            await fulfillment(of: [produced], timeout: 10)
+            let updates = await consume(stream)
+            XCTAssertEqual(updates, [.partial("AB"), .failed(error)])
+        }
     }
 
     /// A request that cannot be built fails through the same stream (open throws the ActionError).

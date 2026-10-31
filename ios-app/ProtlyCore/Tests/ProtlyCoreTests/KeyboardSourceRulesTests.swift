@@ -324,6 +324,41 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertTrue(client.contains("ActionAPI.updates"), "ActionClient.swift must read the reply through ActionAPI.updates")
     }
 
+    /// keyboard-ui 003 review fixes, on the keyboard's source text (it needs the iOS SDK to build).
+    func testResultCardWiring() throws {
+        let all = try sources()
+        func file(_ name: String) -> String {
+            let text = all.first(where: { $0.name == name })?.text ?? ""
+            XCTAssertFalse(text.isEmpty, "\(name) not found")
+            return text
+        }
+        let controller = file("KeyboardViewController.swift"), handler = file("ProtlyActionHandler.swift")
+        // The panel layer is always mounted and animates its own opacity: no view leaves with a transition (the ghost
+        // card), and a hidden layer takes no taps and is hidden from VoiceOver.
+        for name in ["KeyboardViewController.swift", "Panel.swift", "ResultCard.swift"] {
+            XCTAssertFalse(file(name).contains(".transition("), "\(name): a panel view removed with a transition")
+        }
+        for needle in [".allowsHitTesting(visible)", ".accessibilityHidden(!visible)", "completionCriteria: .removed"] {
+            XCTAssertTrue(controller.contains(needle), "the panel layer: \(needle)")
+        }
+        // The keys wait while the field read walks the cursor: a key then would land mid-text.
+        let hns = handler as NSString
+        for declaration in ["override func handle(", "override func handleDrag("] {
+            let fn = body(of: declaration, in: hns).map { hns.substring(with: $0) } ?? ""
+            XCTAssertTrue(fn.contains("host?.isReadingField == true"), "\(declaration) runs during the read")
+        }
+        // Cancel mid-step waits for the step to settle, and no new call starts while it does.
+        XCTAssertTrue(controller.contains("if isReadingField, cursorReturn.isMoving {"), "restoreCursor moves back mid-step")
+        XCTAssertTrue(controller.contains("if isReadingField { return false }"), "a call can start while a read settles")
+        // Every Retry goes through retry(_:), which sends Read's own text again instead of reading the clipboard.
+        XCTAssertEqual(matches(#"retry: \{ \[unowned host\] in host\.retry\(\$0\) \}"#, in: controller).count, 2)
+        XCTAssertEqual(matches(#"retry: \{ \[unowned host\] in host\.act\("#, in: controller).count, 0)
+        // Read's Insert keeps what it typed over, so Undo can put a selection back.
+        let cns = controller as NSString
+        let insert = body(of: "func insertResult()", in: cns).map { cns.substring(with: $0) } ?? ""
+        XCTAssertTrue(insert.contains("lastInsert = (result, selected, !selected.isEmpty)"), "Read's Insert drops the selection")
+    }
+
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {
         let line = ns.lineRange(for: r)
         return "\(ns.substring(to: r.location).components(separatedBy: "\n").count): "

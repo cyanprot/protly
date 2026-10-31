@@ -24,10 +24,11 @@ public struct ActionError: Error, Sendable, Equatable {
         case tooLong, noKey, setup
     }
     public let kind: Kind
-    /// Trying again can work: the network, a timeout, an overloaded API or a rate limit (P4).
+    /// Trying again can work: the network, a timeout, an overloaded API, a rate limit (P4), a server error or a reply
+    /// that was not readable. Exactly these kinds tell the user to try again (ActionAPITests).
     public var canRetry: Bool {
         switch kind {
-        case .network, .timeout, .overloaded, .rate: return true
+        case .network, .timeout, .overloaded, .rate, .server, .parse: return true
         default: return false
         }
     }
@@ -42,7 +43,7 @@ public struct ActionError: Error, Sendable, Equatable {
         case .badRequest: return "The API rejected the request. Try a shorter text, or rebuild protly."
         case .network: return "Network error. Check the connection and try again."
         case .timeout: return "The model took too long. Try again."
-        case .refused: return "The model declined this text. Edit it and try again."
+        case .refused: return "The model declined this text. Edit it first."
         case .truncated: return "The reply was cut off. Try a shorter text."
         case .parse: return "The reply was not readable. Try again."
         case .tooLong: return "The text is too long. Try a shorter text."
@@ -228,18 +229,15 @@ public enum ActionAPI {
         return .success(ActionResult(translation: translation, backTranslation: back))
     }
 
-    /// The HTTP status a stream's `error` event type stands for, so it maps through `kind(status:body:)` like an
-    /// error body. An unknown type is a server error.
-    static func status(forStreamError type: String) -> Int {
+    /// A stream's `error` event type -> the kind to show. The spend limit is read from the body, as for a 429.
+    static func kind(streamError type: String, body: Data) -> ActionError.Kind {
         switch type {
-        case "invalid_request_error": return 400
-        case "authentication_error": return 401
-        case "permission_error": return 403
-        case "not_found_error": return 404
-        case "request_too_large": return 413
-        case "rate_limit_error": return 429
-        case "overloaded_error": return 529
-        default: return 500  // api_error and anything new
+        case "authentication_error", "permission_error": return .auth
+        case "rate_limit_error": return kind(status: 429, body: body)
+        case "overloaded_error": return .overloaded
+        case "timeout_error": return .timeout
+        case "invalid_request_error", "not_found_error", "request_too_large": return .badRequest
+        default: return .server  // api_error and anything new
         }
     }
 

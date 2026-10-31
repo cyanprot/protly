@@ -95,8 +95,10 @@ private struct StripGlow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        // Driven by the clock, not withAnimation(.repeatForever): a forever animation started in onAppear joined
-        // other transactions and kept the result card's removal from ever finishing, so a ghost card sat over the keys.
+        // Driven by the clock, not withAnimation(.repeatForever) in onAppear: a forever animation can join other
+        // transactions in the same update. It was the first suspect for the ghost card, but the strip is already gone
+        // when Replace runs; the panel layer no longer removes views with a transition (ProtlyRoot), which ends the
+        // ghost whatever its cause.
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let phase = reduceMotion ? 0.5 : t.truncatingRemainder(dividingBy: 1.8) / 1.8

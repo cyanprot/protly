@@ -64,6 +64,10 @@ public struct ActionStream: Sendable {
         return nil
     }
 
+    /// The event names that can carry an Event.
+    private static let kept: Set<String> = ["content_block_delta", "message_delta", "error"]
+    private static let textDelta = Data("text_delta".utf8)
+
     private mutating func dispatch() -> Event? {
         defer {
             name = nil
@@ -71,7 +75,11 @@ public struct ActionStream: Sendable {
             hasData = false
         }
         guard hasData else { return nil }
+        // Pings, thinking and the block and message framing are named: they are dropped without parsing.
+        if let name, !Self.kept.contains(name) { return nil }
         let body = Data(data)
+        // Thinking and signature deltas share the text deltas' event name: a byte search skips most of them.
+        if name == "content_block_delta", body.range(of: Self.textDelta) == nil { return nil }
         guard let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else { return nil }
         switch name ?? obj["type"] as? String {
         case "content_block_delta":
