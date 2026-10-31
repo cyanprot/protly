@@ -483,7 +483,7 @@ extension PhoneRun {
             probe("paste prompt: springboard alerts \(springboard.alerts.count), "
                   + "Allow Paste in springboard \(springboard.buttons["Allow Paste"].exists)")
         }
-        let how = allowPaste(trigger: inHost)
+        let how = allowPaste()
         item.note("\(name)-paste=\(q(how))")
         probe?("allow paste: \(how)")
         d.append("allow paste (\(item.id) \(name)): \(how)", to: "network.txt")
@@ -502,25 +502,24 @@ extension PhoneRun {
         return ClipRead(label: w.label, seen: w.read.seen, rect: w.rect, row1: row1)
     }
 
-    /// The Allow Paste prompt of a clipboard read: an interruption monitor first (it runs on the next interaction,
-    /// a tap on the host's empty background), then the button itself in the app under test or SpringBoard.
-    func allowPaste(trigger: Bool, timeout: TimeInterval = 6) -> String {
+    /// The Allow Paste prompt of a clipboard read is a SpringBoard alert (run 40). While it is up the keyboard is
+    /// blocked in its clipboard read, and any query of the host walks the keyboard's view: run 41's tap on the host
+    /// waited 3 x 60 s for a snapshot and XCTest failed test7_77. So nothing here touches the app under test: the
+    /// button is tapped in SpringBoard, and the interruption monitor (registerPasteMonitor) counts if it answered
+    /// first on some other interaction.
+    func allowPaste(timeout: TimeInterval = 8) -> String {
         let before = PasteMonitor.fired
-        d.pause(1)
-        if trigger { d.point(d.width / 2, 150).tap() }  // the host's background, away from its field and buttons
-        if PasteMonitor.fired > before { return "interruption monitor" }
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let end = Date().addingTimeInterval(timeout)
+        d.pause(0.5)
         repeat {
-            for (where_, a) in [("app", d.app), ("springboard", springboard)] {
-                let b = a.buttons["Allow Paste"]
-                if b.exists {
-                    b.tap()
-                    let gone = b.waitForNonExistence(timeout: 3)
-                    return "tapped Allow Paste in the \(where_)" + (gone ? "" : ", but the prompt stayed")
-                }
-            }
             if PasteMonitor.fired > before { return "interruption monitor" }
+            let b = springboard.buttons["Allow Paste"]
+            if b.exists {
+                b.tap()
+                let gone = b.waitForNonExistence(timeout: 3)
+                return "tapped Allow Paste in SpringBoard" + (gone ? "" : ", but the prompt stayed")
+            }
             d.pause(0.5)
         } while Date() < end
         return "no Allow Paste prompt in \(Int(timeout)) s"

@@ -612,7 +612,8 @@ final class PhoneRun {
             let after = d.current()
             if after == .none { hidden += 1 } else { d.log("round \(i): \(after.rawValue) after Dismiss") }
             if d.field.waitForExistence(timeout: 2) { d.field.tap() }
-            if d.wait(for: .protly, timeout: 4) { shown += 1 } else { d.log("round \(i): no Protly after the tap") }
+            // 8 s: run 41 had one round of 30 where Protly took just over 4 s to come back.
+            if d.wait(for: .protly, timeout: 8) { shown += 1 } else { d.log("round \(i): no Protly after the tap") }
             d.pause(1)
         }
         d.mark("mem-end")

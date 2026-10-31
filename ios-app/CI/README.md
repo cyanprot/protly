@@ -102,10 +102,11 @@ and the container app's about-me note: 6.8-11 (its Translate part runs inside `t
   the network groups stop starting items two minutes before theirs, `run-shots.sh` stops the main test run after
   50 minutes (`with_deadline`), and the build step's 72-minute timeout leaves the publish steps time to run. The
   step log prints each method, each CHECK's ID and status, request counts and a heartbeat.
-- **Allow Paste.** The prompt is a SpringBoard alert (run 40's probe); the interruption monitor answers it on the
-  next interaction (a tap on the host's empty background), else the test taps `Allow Paste` in the app or
-  SpringBoard; `network.txt` logs which. A read that shows no panel relaunches the app, so a keyboard blocked on an
-  unanswered prompt is freed.
+- **Allow Paste.** The prompt is a SpringBoard alert. The test taps `Allow Paste` in SpringBoard and touches nothing
+  of the app under test meanwhile: the keyboard is blocked in its clipboard read until the prompt is answered, and a
+  query of the host then waits on the keyboard's view (run 41: 3 x 60 s, and XCTest failed the method). The
+  interruption monitor counts when it answers first (run 40's probe). `network.txt` logs which. A read that shows no
+  panel relaunches the app, so a keyboard blocked on an unanswered prompt is freed.
   The test runner sets the clipboard with `UIPasteboard.general.string` with the keyboard down, then brings it back
   on the empty field, so the bar's center offers `Read clipboard`.
 - **The container app** (`ProtlyCIApp`): the note is pasted into About me from the edit menu (no `typeText`), the
