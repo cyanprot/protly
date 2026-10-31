@@ -228,6 +228,38 @@ final class KeyboardSourceRulesTests: XCTestCase {
         }
     }
 
+    /// typing-fixes 003: the space bar trackpad is Protly's own (SpaceTrackpad in ProtlyCore). Every move goes
+    /// through the controller's adjustTextPosition override, which forgets the field model (FieldWatch); a finger
+    /// drifting up or down never drops a move (R1); only space gets the shorter hold (R3); haptics stay off (R2 is
+    /// out of scope).
+    func testSpaceTrackpadWiring() throws {
+        let all = try sources()
+        guard let handler = all.first(where: { $0.name == "ProtlyActionHandler.swift" })?.text,
+              let controller = all.first(where: { $0.name == "KeyboardViewController.swift" })?.text else {
+            return XCTFail("ProtlyActionHandler.swift or KeyboardViewController.swift not found")
+        }
+        XCTAssertTrue(handler.contains("override func handleDrag("), "ProtlyActionHandler does not override handleDrag")
+        XCTAssertTrue(handler.contains("SpaceTrackpad"), "the space drag does not use SpaceTrackpad")
+        XCTAssertTrue(handler.contains("host.adjustTextPosition(by: offset)"),
+                      "the space drag does not move through the controller's adjustTextPosition")
+        XCTAssertFalse(handler.contains("textDocumentProxy"), "ProtlyActionHandler touches the proxy itself")
+        // Only FieldText's whole-field read moves the cursor on the proxy directly (act() forgets the model after).
+        for (name, text) in all where name != "FieldText.swift" {
+            let ns = text as NSString
+            for r in matches(#"\badjustTextPosition\(byCharacterOffset"#, in: text) {
+                XCTFail("\(name): cursor move outside the controller's override: \(lineText(ns, r))")
+            }
+        }
+        XCTAssertTrue(controller.contains("spaceDragGestureHandler.verticalThreshold = .greatestFiniteMagnitude"),
+                      "R1: KeyboardKit's vertical threshold is not lifted")
+        let delays = matches(#"\blongPressDelay\b"#, in: controller)
+        XCTAssertEqual(delays.count, 1, "one long-press delay, for space only")
+        XCTAssertTrue(controller.contains(
+            "$0.item.action == .space ? .init(longPressDelay: SpaceTrackpad.longPressDelay) : .standard"),
+            "R3: the shorter hold is not limited to space")
+        XCTAssertTrue(controller.contains("hapticConfiguration = .disabled"), "haptics must stay off")
+    }
+
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {
         let line = ns.lineRange(for: r)
         return "\(ns.substring(to: r.location).components(separatedBy: "\n").count): "
