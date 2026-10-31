@@ -27,7 +27,9 @@ A method is the smallest unit: items inside one depend on each other (6.8-9 on t
 8.5-9o type a Korean or English word first; the `ru`/`ko` flips accept either first outcome), so a method run alone
 checks the same thing, but the keyboard has not learned the words earlier methods taught: compare a filtered
 result with a full run before calling it fixed. The memory sampler starts at the first selected phone method. A new
-push with either tag cancels a run in progress on the branch.
+push with either tag cancels a run in progress on the branch, and the workflow sees a tag anywhere in the head
+commit message: a message that only describes the syntax starts a run too (b784f28 did: `bad-filter`, and it
+cancelled the full run in progress). Name the syntax in a commit message without its opening bracket.
 
 Runner image `macos-26` (GitHub-hosted, arm64): Xcode 26.6 by default and iOS 26.x simulator runtimes. The
 script takes the newest iOS 26 runtime and an iPhone 13 Pro (else the first 390 pt wide iPhone it can create).
