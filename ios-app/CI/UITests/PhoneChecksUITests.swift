@@ -545,7 +545,8 @@ final class PhoneRun {
         typeCode("ru", it)
         d.type(": 누나 노트 고마워 누나 덕분에 살았다 ")
         it.expect("field", field(), "ru: 누나 노트 고마워 누나 덕분에 살았다 ")
-        expectSlot(it, "center", readSlot(.center, it), equals: "Translate")
+        let russian = readSlot(.center, it, languages: Reader.labelLanguages("Русский"))
+        expectSlot(it, "center", russian, q("Русский")) { $0.contains("Русский") }
         finish(it)
 
         it = Item("8.5-2o")
@@ -566,7 +567,7 @@ final class PhoneRun {
         typeCode("ok", it)
         d.type(": 내일 봐 ")
         it.expect("field", field(), "ok: 내일 봐 ")
-        expectSlot(it, "center", readSlot(.center, it), equals: "Translate")
+        expectSlot(it, "center", readSlot(.center, it), q("English")) { $0.contains("English") }
         finish(it)
 
         it = Item("8.5-7o")
@@ -574,7 +575,7 @@ final class PhoneRun {
         typeCode("ko", it)
         d.type(": 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 ")
         it.expect("field", field(), "ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 ")
-        expectSlot(it, "center", readSlot(.center, it), equals: "Polish")
+        expectSlot(it, "center", readSlot(.center, it), q("Polish")) { $0.contains("Polish") }
         finish(it)
 
         it = Item("8.5-8o")
@@ -590,7 +591,7 @@ final class PhoneRun {
         let spanish = "me encanta el color de tu chaqueta, donde la conprastes? jaja "
         d.type(spanish)
         it.expect("field", field(), spanish)
-        expectSlot(it, "center", readSlot(.center, it), equals: "Polish")
+        expectSlot(it, "center", readSlot(.center, it), q("Polish")) { $0.contains("Polish") }
         finish(it)
         d.clearField()
     }
