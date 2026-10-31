@@ -1,0 +1,278 @@
+Attributes: Application, 0x11684b980, pid: 7041, label: 'ProtlyCIHost'
+Element subtree:
+ →Application, 0x11684b980, pid: 7041, label: 'ProtlyCIHost'
+    Window (Main), 0x11684b700, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x11684b840, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x11684b480, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x11684b5c0, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x11684b200, {{0.0, 0.0}, {390.0, 844.0}}
+              TextField, 0x11684b340, {{16.0, 71.0}, {200.0, 22.0}}, identifier: 'field', Keyboard Focused
+                Other, 0x11684a440, {{16.0, 71.0}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                  Other, 0x11684af80, {{16.0, 71.0}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                    Other, 0x11684ae40, {{8.8, 57.5}, {16.5, 16.5}}
+                    Other, 0x11684ad00, {{16.0, 71.0}, {2.0, 0.0}}
+                  Other, 0x11684abc0, {{16.0, 71.0}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                    Other, 0x11684aa80, {{8.8, 57.5}, {16.5, 16.5}}
+                    Other, 0x11684a940, {{16.0, 71.0}, {2.0, 0.0}}
+                Other, 0x11684a800, {{16.0, 79.0}, {200.0, 11.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                  Other, 0x11684a6c0, {{19.0, 87.0}, {194.0, 3.0}}
+              Button, 0x11684a580, {{334.0, 71.0}, {40.0, 20.3}}, identifier: 'clear', label: 'Clear'
+              Button, 0x11684a300, {{314.7, 107.3}, {59.3, 20.3}}, identifier: 'dismiss', label: 'Dismiss'
+    Window, 0x11684a1c0, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x116849cc0, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x116849e00, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x116849f40, {{0.0, 456.0}, {390.0, 388.0}}
+          Other, 0x11684a080, {{0.0, 456.0}, {390.0, 388.0}}, identifier: 'inputView'
+    Window, 0x1168497c0, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x116849900, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x116849a40, {{0.0, 0.0}, {390.0, 844.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+        Other, 0x116849b80, {{0.0, 456.0}, {390.0, 388.0}}
+          Other, 0x1168492c0, {{0.0, 456.0}, {390.0, 53.0}}, identifier: 'SystemInputAssistantView'
+            Other, 0x116849400, {{0.0, 456.0}, {390.0, 53.0}}
+              Other, 0x116849540, {{0.0, 456.0}, {390.0, 53.0}}, identifier: 'CenterPageView'
+                Other, 0x116849680, {{0.0, -144.0}, {390.0, 1253.0}}
+                  ScrollView, 0x116848dc0, {{0.0, 456.0}, {390.0, 53.0}}
+                Other, 0x116848f00, {{0.0, 456.0}, {390.0, 53.0}}
+                  Other, 0x116849040, {{0.0, 456.0}, {390.0, 53.0}}
+                    Other, 0x116849180, {{0.0, 456.0}, {390.0, 53.0}}
+                      Other, 0x1168488c0, {{9.0, 466.0}, {372.0, 40.0}}
+                        TextField, 0x116848a00, {{9.0, 466.0}, {372.0, 40.0}}, placeholderValue: 'Search Emoji'
+                          Image, 0x116848b40, {{22.0, 476.7}, {30.3, 18.7}}, identifier: 'magnifyingglass', label: 'Search'
+          Other, 0x116848c80, {{0.0, 456.0}, {390.0, 388.0}}
+            Other, 0x1168483c0, {{0.0, 456.0}, {390.0, 388.0}}
+              Other, 0x116848500, {{0.0, 456.0}, {390.0, 388.0}}
+          Other, 0x116848640, {{0.0, 509.0}, {390.0, 277.0}}
+            Keyboard, 0x116848780, {{0.0, 509.0}, {390.0, 277.0}}
+              Other, 0x116848000, {{0.0, 509.0}, {390.0, 277.0}}
+                Other, 0x116848140, {{0.0, 509.0}, {390.0, 277.0}}, identifier: 'UIKeyboardLayoutStar Preview'
+                  Other, 0x116848280, {{0.0, 509.0}, {390.0, 216.0}}
+                    CollectionView, 0x11684bac0, {{0.0, 509.0}, {390.0, 216.0}}
+                      Other, 0x11684bc00, {{12.0, 509.0}, {116.0, 30.0}}, label: 'FREQUENTLY USED'
+                      Other, 0x11684bd40, {{302.0, 509.0}, {115.0, 30.0}}, label: 'SMILEYS & PEOPLE'
+                      Key, 0x11684be80, {{10.0, 539.0}, {32.0, 32.0}}, identifier: '😂', label: '😂'
+                        Other, 0x113688780, {{10.0, 539.0}, {32.0, 32.0}}
+                          Other, 0x113688140, {{10.0, 539.0}, {32.0, 32.0}}, label: '😂'
+                            StaticText, 0x113688640, {{10.0, 539.0}, {32.0, 32.0}}, label: '😂'
+                      Key, 0x113689cc0, {{56.0, 539.0}, {32.0, 32.0}}, identifier: '☺️', label: '☺️'
+                        Other, 0x113689900, {{56.0, 539.0}, {32.0, 32.0}}
+                          Other, 0x113689b80, {{56.0, 539.0}, {32.0, 32.0}}, label: '☺️'
+                            StaticText, 0x113689a40, {{56.0, 539.0}, {32.0, 32.0}}, label: '☺️'
+                      Key, 0x113689f40, {{102.0, 539.0}, {32.0, 32.0}}, identifier: '💕', label: '💕'
+                        Other, 0x11368a300, {{102.0, 539.0}, {32.0, 32.0}}
+                          Other, 0x11368b5c0, {{102.0, 539.0}, {32.0, 32.0}}, label: '💕'
+                            StaticText, 0x11368b980, {{102.0, 539.0}, {32.0, 32.0}}, label: '💕'
+                      Key, 0x11368b200, {{148.0, 539.0}, {32.0, 32.0}}, identifier: '👍', label: '👍'
+                        Other, 0x11368b700, {{148.0, 539.0}, {32.0, 32.0}}
+                          Other, 0x11368b480, {{148.0, 539.0}, {32.0, 32.0}}, label: '👍'
+                            StaticText, 0x11368b340, {{148.0, 539.0}, {32.0, 32.0}}, label: '👍'
+                      Key, 0x11368b840, {{194.0, 539.0}, {32.0, 32.0}}, identifier: '🙈', label: '🙈'
+                        Other, 0x11368abc0, {{194.0, 539.0}, {32.0, 32.0}}
+                          Other, 0x11368ae40, {{194.0, 539.0}, {32.0, 32.0}}, label: '🙈'
+                            StaticText, 0x11368b0c0, {{194.0, 539.0}, {32.0, 32.0}}, label: '🙈'
+                      Key, 0x11368af80, {{240.0, 539.0}, {32.0, 32.0}}, identifier: '😴', label: '😴'
+                        Other, 0x11368a580, {{240.0, 539.0}, {32.0, 32.0}}
+                          Other, 0x11368a940, {{240.0, 539.0}, {32.0, 32.0}}, label: '😴'
+                            StaticText, 0x11368ad00, {{240.0, 539.0}, {32.0, 32.0}}, label: '😴'
+                      Key, 0x11368a800, {{300.0, 539.0}, {32.0, 32.0}}, identifier: '😀', label: '😀'
+                        Other, 0x11368a6c0, {{300.0, 539.0}, {32.0, 32.0}}
+                          Other, 0x11368a440, {{300.0, 539.0}, {32.0, 32.0}}, label: '😀'
+                            StaticText, 0x11368a1c0, {{300.0, 539.0}, {32.0, 32.0}}, label: '😀'
+                      Key, 0x11368aa80, {{346.0, 539.0}, {32.0, 32.0}}, identifier: '🥹', label: '🥹'
+                        Other, 0x113689e00, {{346.0, 539.0}, {32.0, 32.0}}
+                          Other, 0x11368a080, {{346.0, 539.0}, {32.0, 32.0}}, label: '🥹'
+                            StaticText, 0x113689540, {{346.0, 539.0}, {32.0, 32.0}}, label: '🥹'
+                      Key, 0x113689400, {{10.0, 577.7}, {32.0, 32.0}}, identifier: '❤️', label: '❤️'
+                        Other, 0x1136897c0, {{10.0, 577.7}, {32.0, 32.0}}
+                          Other, 0x113688b40, {{10.0, 577.7}, {32.0, 32.0}}, label: '❤️'
+                            StaticText, 0x113688500, {{10.0, 577.7}, {32.0, 32.0}}, label: '❤️'
+                      Key, 0x113688a00, {{56.0, 577.7}, {32.0, 32.0}}, identifier: '😊', label: '😊'
+                        Other, 0x113688dc0, {{56.0, 577.7}, {32.0, 32.0}}
+                          Other, 0x1136892c0, {{56.0, 577.7}, {32.0, 32.0}}, label: '😊'
+                            StaticText, 0x113688c80, {{56.0, 577.7}, {32.0, 32.0}}, label: '😊'
+                      Key, 0x113689180, {{102.0, 577.7}, {32.0, 32.0}}, identifier: '😔', label: '😔'
+                        Other, 0x113689680, {{102.0, 577.7}, {32.0, 32.0}}
+                          Other, 0x113689040, {{102.0, 577.7}, {32.0, 32.0}}, label: '😔'
+                            StaticText, 0x113688f00, {{102.0, 577.7}, {32.0, 32.0}}, label: '😔'
+                      Key, 0x1136888c0, {{148.0, 577.7}, {32.0, 32.0}}, identifier: '✌️', label: '✌️'
+                        Other, 0x11368bd40, {{148.0, 577.7}, {32.0, 32.0}}
+                          Other, 0x11368be80, {{148.0, 577.7}, {32.0, 32.0}}, label: '✌️'
+                            StaticText, 0x113688000, {{148.0, 577.7}, {32.0, 32.0}}, label: '✌️'
+                      Key, 0x113688280, {{194.0, 577.7}, {32.0, 32.0}}, identifier: '😎', label: '😎'
+                        Other, 0x1136883c0, {{194.0, 577.7}, {32.0, 32.0}}
+                          Other, 0x1025f7e80, {{194.0, 577.7}, {32.0, 32.0}}, label: '😎'
+                            StaticText, 0x1025f7d40, {{194.0, 577.7}, {32.0, 32.0}}, label: '😎'
+                      Key, 0x113df4000, {{240.0, 577.7}, {32.0, 32.0}}, identifier: '😄', label: '😄'
+                        Other, 0x113df4140, {{240.0, 577.7}, {32.0, 32.0}}
+                          Other, 0x113df4280, {{240.0, 577.7}, {32.0, 32.0}}, label: '😄'
+                            StaticText, 0x113df43c0, {{240.0, 577.7}, {32.0, 32.0}}, label: '😄'
+                      Key, 0x113df4500, {{300.0, 577.7}, {32.0, 32.0}}, identifier: '😃', label: '😃'
+                        Other, 0x113df4640, {{300.0, 577.7}, {32.0, 32.0}}
+                          Other, 0x113df4780, {{300.0, 577.7}, {32.0, 32.0}}, label: '😃'
+                            StaticText, 0x113df48c0, {{300.0, 577.7}, {32.0, 32.0}}, label: '😃'
+                      Key, 0x113df4a00, {{346.0, 577.7}, {32.0, 32.0}}, identifier: '😅', label: '😅'
+                        Other, 0x113df4b40, {{346.0, 577.7}, {32.0, 32.0}}
+                          Other, 0x113df4c80, {{346.0, 577.7}, {32.0, 32.0}}, label: '😅'
+                            StaticText, 0x113df4dc0, {{346.0, 577.7}, {32.0, 32.0}}, label: '😅'
+                      Key, 0x113df4f00, {{10.0, 616.0}, {32.0, 32.0}}, identifier: '😍', label: '😍'
+                        Other, 0x113df5040, {{10.0, 616.0}, {32.0, 32.0}}
+                          Other, 0x113df5180, {{10.0, 616.0}, {32.0, 32.0}}, label: '😍'
+                            StaticText, 0x113df52c0, {{10.0, 616.0}, {32.0, 32.0}}, label: '😍'
+                      Key, 0x113df5400, {{56.0, 616.0}, {32.0, 32.0}}, identifier: '😘', label: '😘'
+                        Other, 0x113df5540, {{56.0, 616.0}, {32.0, 32.0}}
+                          Other, 0x113df5680, {{56.0, 616.0}, {32.0, 32.0}}, label: '😘'
+                            StaticText, 0x113df57c0, {{56.0, 616.0}, {32.0, 32.0}}, label: '😘'
+                      Key, 0x113df5900, {{102.0, 616.0}, {32.0, 32.0}}, identifier: '😏', label: '😏'
+                        Other, 0x113df5a40, {{102.0, 616.0}, {32.0, 32.0}}
+                          Other, 0x113df5b80, {{102.0, 616.0}, {32.0, 32.0}}, label: '😏'
+                            StaticText, 0x113df5cc0, {{102.0, 616.0}, {32.0, 32.0}}, label: '😏'
+                      Key, 0x113df5e00, {{148.0, 616.0}, {32.0, 32.0}}, identifier: '😉', label: '😉'
+                        Other, 0x113df5f40, {{148.0, 616.0}, {32.0, 32.0}}
+                          Other, 0x113df6080, {{148.0, 616.0}, {32.0, 32.0}}, label: '😉'
+                            StaticText, 0x113df61c0, {{148.0, 616.0}, {32.0, 32.0}}, label: '😉'
+                      Key, 0x113df6300, {{194.0, 616.0}, {32.0, 32.0}}, identifier: '🎶', label: '🎶'
+                        Other, 0x113df6440, {{194.0, 616.0}, {32.0, 32.0}}
+                          Other, 0x113df6580, {{194.0, 616.0}, {32.0, 32.0}}, label: '🎶'
+                            StaticText, 0x113df66c0, {{194.0, 616.0}, {32.0, 32.0}}, label: '🎶'
+                      Key, 0x113df6800, {{240.0, 616.0}, {32.0, 32.0}}, identifier: '😜', label: '😜'
+                        Other, 0x113df6940, {{240.0, 616.0}, {32.0, 32.0}}
+                          Other, 0x113df6a80, {{240.0, 616.0}, {32.0, 32.0}}, label: '😜'
+                            StaticText, 0x113df6bc0, {{240.0, 616.0}, {32.0, 32.0}}, label: '😜'
+                      Key, 0x113df6d00, {{300.0, 616.0}, {32.0, 32.0}}, identifier: '😄', label: '😄'
+                        Other, 0x113df6e40, {{300.0, 616.0}, {32.0, 32.0}}
+                          Other, 0x113df6f80, {{300.0, 616.0}, {32.0, 32.0}}, label: '😄'
+                            StaticText, 0x113df70c0, {{300.0, 616.0}, {32.0, 32.0}}, label: '😄'
+                      Key, 0x113df7200, {{346.0, 616.0}, {32.0, 32.0}}, identifier: '😂', label: '😂'
+                        Other, 0x113df7340, {{346.0, 616.0}, {32.0, 32.0}}
+                          Other, 0x113df7480, {{346.0, 616.0}, {32.0, 32.0}}, label: '😂'
+                            StaticText, 0x113df75c0, {{346.0, 616.0}, {32.0, 32.0}}, label: '😂'
+                      Key, 0x113df7700, {{10.0, 654.7}, {32.0, 32.0}}, identifier: '😒', label: '😒'
+                        Other, 0x113df7840, {{10.0, 654.7}, {32.0, 32.0}}
+                          Other, 0x113df7980, {{10.0, 654.7}, {32.0, 32.0}}, label: '😒'
+                            StaticText, 0x113df7ac0, {{10.0, 654.7}, {32.0, 32.0}}, label: '😒'
+                      Key, 0x113df7c00, {{56.0, 654.7}, {32.0, 32.0}}, identifier: '😭', label: '😭'
+                        Other, 0x113df7d40, {{56.0, 654.7}, {32.0, 32.0}}
+                          Other, 0x113df7e80, {{56.0, 654.7}, {32.0, 32.0}}, label: '😭'
+                            StaticText, 0x113dec000, {{56.0, 654.7}, {32.0, 32.0}}, label: '😭'
+                      Key, 0x113dec140, {{102.0, 654.7}, {32.0, 32.0}}, identifier: '😁', label: '😁'
+                        Other, 0x113dec280, {{102.0, 654.7}, {32.0, 32.0}}
+                          Other, 0x113dec3c0, {{102.0, 654.7}, {32.0, 32.0}}, label: '😁'
+                            StaticText, 0x113dec500, {{102.0, 654.7}, {32.0, 32.0}}, label: '😁'
+                      Key, 0x113dec640, {{148.0, 654.7}, {32.0, 32.0}}, identifier: '😌', label: '😌'
+                        Other, 0x113dec780, {{148.0, 654.7}, {32.0, 32.0}}
+                          Other, 0x113dec8c0, {{148.0, 654.7}, {32.0, 32.0}}, label: '😌'
+                            StaticText, 0x113deca00, {{148.0, 654.7}, {32.0, 32.0}}, label: '😌'
+                      Key, 0x113decb40, {{194.0, 654.7}, {32.0, 32.0}}, identifier: '👀', label: '👀'
+                        Other, 0x113decc80, {{194.0, 654.7}, {32.0, 32.0}}
+                          Other, 0x113decdc0, {{194.0, 654.7}, {32.0, 32.0}}, label: '👀'
+                            StaticText, 0x113decf00, {{194.0, 654.7}, {32.0, 32.0}}, label: '👀'
+                      Key, 0x113ded040, {{240.0, 654.7}, {32.0, 32.0}}, identifier: '😋', label: '😋'
+                        Other, 0x113ded180, {{240.0, 654.7}, {32.0, 32.0}}
+                          Other, 0x113ded2c0, {{240.0, 654.7}, {32.0, 32.0}}, label: '😋'
+                            StaticText, 0x113ded400, {{240.0, 654.7}, {32.0, 32.0}}, label: '😋'
+                      Key, 0x113ded540, {{300.0, 654.7}, {32.0, 32.0}}, identifier: '😁', label: '😁'
+                        Other, 0x113ded680, {{300.0, 654.7}, {32.0, 32.0}}
+                          Other, 0x113ded7c0, {{300.0, 654.7}, {32.0, 32.0}}, label: '😁'
+                            StaticText, 0x113ded900, {{300.0, 654.7}, {32.0, 32.0}}, label: '😁'
+                      Key, 0x113deda40, {{346.0, 654.7}, {32.0, 32.0}}, identifier: '🤣', label: '🤣'
+                        Other, 0x113dedb80, {{346.0, 654.7}, {32.0, 32.0}}
+                          Other, 0x113dedcc0, {{346.0, 654.7}, {32.0, 32.0}}, label: '🤣'
+                            StaticText, 0x113dede00, {{346.0, 654.7}, {32.0, 32.0}}, label: '🤣'
+                      Key, 0x113dedf40, {{10.0, 693.0}, {32.0, 32.0}}, identifier: '👌', label: '👌'
+                        Other, 0x113dee080, {{10.0, 693.0}, {32.0, 32.0}}
+                          Other, 0x113dee1c0, {{10.0, 693.0}, {32.0, 32.0}}, label: '👌'
+                            StaticText, 0x113dee300, {{10.0, 693.0}, {32.0, 32.0}}, label: '👌'
+                      Key, 0x113dee440, {{56.0, 693.0}, {32.0, 32.0}}, identifier: '😩', label: '😩'
+                        Other, 0x113dee580, {{56.0, 693.0}, {32.0, 32.0}}
+                          Other, 0x113dee6c0, {{56.0, 693.0}, {32.0, 32.0}}, label: '😩'
+                            StaticText, 0x113dee800, {{56.0, 693.0}, {32.0, 32.0}}, label: '😩'
+                      Key, 0x113dee940, {{102.0, 693.0}, {32.0, 32.0}}, identifier: '😳', label: '😳'
+                        Other, 0x113deea80, {{102.0, 693.0}, {32.0, 32.0}}
+                          Other, 0x113deebc0, {{102.0, 693.0}, {32.0, 32.0}}, label: '😳'
+                            StaticText, 0x113deed00, {{102.0, 693.0}, {32.0, 32.0}}, label: '😳'
+                      Key, 0x113deee40, {{148.0, 693.0}, {32.0, 32.0}}, identifier: '💁', label: '💁'
+                        Other, 0x113deef80, {{148.0, 693.0}, {32.0, 32.0}}
+                          Other, 0x113def0c0, {{148.0, 693.0}, {32.0, 32.0}}, label: '💁'
+                            StaticText, 0x113def200, {{148.0, 693.0}, {32.0, 32.0}}, label: '💁'
+                      Key, 0x113def340, {{194.0, 693.0}, {32.0, 32.0}}, identifier: '😑', label: '😑'
+                        Other, 0x113def480, {{194.0, 693.0}, {32.0, 32.0}}
+                          Other, 0x113def5c0, {{194.0, 693.0}, {32.0, 32.0}}, label: '😑'
+                            StaticText, 0x113def700, {{194.0, 693.0}, {32.0, 32.0}}, label: '😑'
+                      Key, 0x113def840, {{240.0, 693.0}, {32.0, 32.0}}, identifier: '👏', label: '👏'
+                        Other, 0x113def980, {{240.0, 693.0}, {32.0, 32.0}}
+                          Other, 0x113defac0, {{240.0, 693.0}, {32.0, 32.0}}, label: '👏'
+                            StaticText, 0x113defc00, {{240.0, 693.0}, {32.0, 32.0}}, label: '👏'
+                      Key, 0x113defd40, {{300.0, 693.0}, {32.0, 32.0}}, identifier: '😆', label: '😆'
+                        Other, 0x113defe80, {{300.0, 693.0}, {32.0, 32.0}}
+                          Other, 0x113df0000, {{300.0, 693.0}, {32.0, 32.0}}, label: '😆'
+                            StaticText, 0x113df0140, {{300.0, 693.0}, {32.0, 32.0}}, label: '😆'
+                      Key, 0x113df0280, {{346.0, 693.0}, {32.0, 32.0}}, identifier: '🥲', label: '🥲'
+                        Other, 0x113df03c0, {{346.0, 693.0}, {32.0, 32.0}}
+                          Other, 0x113df0500, {{346.0, 693.0}, {32.0, 32.0}}, label: '🥲'
+                            StaticText, 0x113df0640, {{346.0, 693.0}, {32.0, 32.0}}, label: '🥲'
+                  Button, 0x113df0780, {{0.0, 729.0}, {49.0, 40.0}}, label: 'Next keyboard', value: English (US)
+                  Key, 0x113df08c0, {{342.3, 729.0}, {48.0, 40.0}}, identifier: 'delete', label: 'delete'
+                  Other, 0x113df0a00, {{50.0, 733.0}, {290.0, 32.0}}
+                    Other, 0x113df0b40, {{54.0, 738.0}, {32.0, 19.0}}, label: 'Frequently Used category', Selected
+                    Other, 0x113df0c80, {{85.0, 738.0}, {32.0, 19.0}}, label: 'Smileys & People category'
+                    Other, 0x113df0dc0, {{116.0, 738.0}, {33.0, 19.0}}, label: 'Animals & Nature category'
+                    Other, 0x113df0f00, {{148.0, 738.0}, {32.0, 19.0}}, label: 'Food & Drink category'
+                    Other, 0x113df1040, {{179.0, 738.0}, {32.0, 19.0}}, label: 'Activity category'
+                    Other, 0x113df1180, {{210.0, 738.0}, {32.0, 19.0}}, label: 'Travel & Places category'
+                    Other, 0x113df12c0, {{241.0, 738.0}, {33.0, 19.0}}, label: 'Objects category'
+                    Other, 0x113df1400, {{273.0, 738.0}, {32.0, 19.0}}, label: 'Symbols category'
+                    Other, 0x113df1540, {{304.0, 738.0}, {32.0, 19.0}}, label: 'Flags category'
+          Other, 0x113df1680, {{0.0, 509.0}, {390.0, 335.0}}
+            Button, 0x113df17c0, {{8.5, 775.7}, {68.1, 68.7}}, label: 'Next keyboard', value: English (US)
+              StaticText, 0x113df1900, {{8.5, 775.7}, {0.0, 0.0}}
+            Button, 0x113df1a40, {{313.4, 775.4}, {68.1, 68.7}}, identifier: 'dictation', label: 'Dictate'
+              StaticText, 0x113df1b80, {{313.4, 775.4}, {0.0, 0.0}}
+            Button, 0x113df1cc0, {{313.4, 775.4}, {68.1, 68.7}}, identifier: 'dictation', label: 'Dictate'
+              StaticText, 0x113df1e00, {{313.4, 775.4}, {0.0, 0.0}}
+        Other, 0x113df1f40, {{5.0, 495.0}, {228.0, 275.0}}, identifier: 'InputSwitcherView'
+          Table, 0x113df2080, {{5.0, 495.0}, {228.0, 274.0}}, identifier: 'InputSwitcherTable'
+            Cell, 0x113df21c0, {{5.0, 505.0}, {228.0, 50.0}}, label: 'Keyboard Settings…'
+              StaticText, 0x113df2300, {{5.0, 505.0}, {0.0, 0.0}}
+              Other, 0x113df2440, {{5.0, 505.0}, {228.0, 50.0}}
+              StaticText, 0x113df2580, {{31.0, 505.0}, {176.0, 50.0}}, label: 'Keyboard Settings…'
+            Cell, 0x113df26c0, {{5.0, 555.0}, {228.0, 50.0}}, label: 'Protly, Korean'
+              Other, 0x113df2800, {{5.0, 555.0}, {228.0, 50.0}}
+              StaticText, 0x113df2940, {{31.0, 537.0}, {176.0, 68.0}}, label: 'Protly'
+              StaticText, 0x113df2a80, {{31.0, 577.0}, {176.0, 28.0}}, label: 'Korean'
+            Cell, 0x113df2bc0, {{5.0, 605.0}, {228.0, 50.0}}, label: 'Emoji', Selected
+              Other, 0x113df2d00, {{5.0, 605.0}, {228.0, 50.0}}
+              StaticText, 0x113df2e40, {{31.0, 605.0}, {176.0, 50.0}}, label: 'Emoji'
+            Cell, 0x113df2f80, {{5.0, 655.0}, {228.0, 50.0}}, label: 'English (US)'
+              StaticText, 0x113df30c0, {{5.0, 655.0}, {0.0, 0.0}}
+              Other, 0x113df3200, {{5.0, 655.0}, {228.0, 50.0}}
+              StaticText, 0x113df3340, {{31.0, 655.0}, {176.0, 50.0}}, label: 'English (US)'
+            Cell, 0x113df3480, {{5.0, 705.0}, {228.0, 50.0}}
+              StaticText, 0x113df35c0, {{5.0, 705.0}, {0.0, 0.0}}
+              StaticText, 0x113df3700, {{5.0, 705.0}, {0.0, 0.0}}
+              Other, 0x113df3840, {{5.0, 705.0}, {0.0, 0.0}}
+              Other, 0x113df3980, {{14.0, 705.0}, {210.0, 50.0}}
+                Other, 0x113df3ac0, {{14.0, 705.0}, {210.0, 50.0}}
+                  Button, 0x113df3c00, {{14.0, 705.0}, {64.0, 50.0}}, label: 'left handed layout'
+                    Image, 0x113df3d40, {{27.0, 718.0}, {38.7, 23.7}}, identifier: 'keyboard.onehanded.left', label: 'keyboard.onehanded.left'
+                  Button, 0x113df3e80, {{87.0, 705.0}, {64.0, 50.0}}, label: 'default layout', Selected
+                    Image, 0x11366c000, {{100.0, 718.0}, {38.7, 23.7}}, identifier: 'keyboard', label: 'Keyboard'
+                  Button, 0x11366c140, {{160.0, 705.0}, {64.0, 50.0}}, label: 'right handed layout'
+                    Image, 0x11366c280, {{173.0, 718.0}, {38.7, 23.7}}, identifier: 'keyboard.onehanded.right', label: 'keyboard.onehanded.right'
+            Other, 0x11366c3c0, {{200.0, 507.0}, {30.0, 250.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+              Other, 0x11366c500, {{227.0, 510.0}, {3.0, 238.7}}
+            Other, 0x11366c640, {{5.0, 724.0}, {228.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+              Other, 0x11366c780, {{8.0, 751.0}, {219.0, 3.0}}
+          Other, 0x11366c8c0, {{5.0, 495.0}, {228.0, 275.0}}
+            Other, 0x11366ca00, {{5.0, 495.0}, {228.0, 275.0}}
+              Other, 0x11366cb40, {{5.0, 495.0}, {228.0, 275.0}}
+                Other, 0x11366cc80, {{5.0, 495.0}, {228.0, 275.0}}
+                  Other, 0x11366cdc0, {{5.0, 495.0}, {228.0, 275.0}}
+                    Other, 0x11366cf00, {{5.0, 495.0}, {228.0, 275.0}}
+                Other, 0x11366d040, {{5.0, 495.0}, {228.0, 275.0}}
+                  Other, 0x11366d180, {{5.0, 495.0}, {228.0, 275.0}}
+Path to element:
+ →Application, 0x11684b980, pid: 7041, label: 'ProtlyCIHost'
+Query chain:
+ →Find: Target Application 'com.northprot.protly.cihost'
+  Output: {
+    Application, 0x11366d2c0, pid: 7041, label: 'ProtlyCIHost'
+  }
