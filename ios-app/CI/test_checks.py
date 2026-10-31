@@ -578,6 +578,39 @@ class DeadlineTests(unittest.TestCase):
         self.assertIn("code=0", self.run_fn("with_deadline 5 true; echo code=$?").stdout)
 
 
+class TestFailureLinesTests(unittest.TestCase):
+    """run-shots.sh copies xcodebuild's error lines to test-failures.txt (the log tail missed run 44's reason)."""
+
+    def run_block(self, log_text):
+        with open(os.path.join(HERE, "run-shots.sh"), encoding="utf-8") as f:
+            src = f.read()
+        block = src[src.index("grep -E ': error: "):]
+        block = block[:block.index("\nfi\n") + 4]
+        with tempfile.TemporaryDirectory() as tmp:
+            work, out = os.path.join(tmp, "work"), os.path.join(tmp, "out")
+            os.makedirs(work)
+            os.makedirs(out)
+            with open(os.path.join(work, "test.log"), "w", encoding="utf-8") as f:
+                f.write(log_text)
+            script = f'work={work}; out={out}\nnote() {{ echo "$1"; }}\n{block}\nls "$out"\n'
+            return subprocess.run(["bash", "-c", script], capture_output=True, text=True, timeout=30).stdout
+
+    def test_error_lines_are_kept(self):
+        log = ("t = 1.00s Launch com.northprot.protly.cihost\n"
+               "/x/KeyboardShotsUITests.swift:18: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : "
+               "Failed to launch com.northprot.protly.cihost\n"
+               "t = 2.00s Ignoring failure to get hierarchy for remote element\n")
+        out = self.run_block(log)
+        self.assertIn("test failures (1 lines, test-failures.txt):", out)
+        self.assertIn("  /x/KeyboardShotsUITests.swift:18: error:", out)
+        self.assertIn("test-failures.txt", out.splitlines()[-1])
+        self.assertNotIn("Ignoring", out)
+
+    def test_no_file_without_errors(self):
+        out = self.run_block("Test Case '-[A b]' passed (1.0 seconds).\n")
+        self.assertEqual("", out.strip())
+
+
 class WorkflowTests(unittest.TestCase):
     """keyboard-shots.yml (plan Task 2.1): the key reaches one step, and a run with the key never saves the cache."""
 

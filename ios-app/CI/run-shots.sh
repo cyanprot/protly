@@ -271,6 +271,15 @@ kill "$sampler" > /dev/null 2>&1
 wait "$sampler" > /dev/null 2>&1
 if [ -s "$work/memsample.log" ]; then note "memsample: $(tail -n 3 "$work/memsample.log" | tr '\n' ' ')"; fi
 grep -E '^Test Case .*(passed|failed|skipped)' "$work/test.log" > "$out/test-cases.txt" 2>/dev/null
+# The reason a test failed sits far above the log tail (run 44: testScenarios stopped in app.launch() and the tail
+# did not say why), so the error lines go to their own file and the report.
+grep -E ': error: |Failed to |failed - ' "$work/test.log" 2>/dev/null | cut -c1-400 | head -n 40 > "$out/test-failures.txt"
+if [ -s "$out/test-failures.txt" ]; then
+  note "test failures ($(wc -l < "$out/test-failures.txt" | tr -d ' ') lines, test-failures.txt):"
+  while IFS= read -r line; do note "  $line"; done < <(head -n 8 "$out/test-failures.txt")
+else
+  rm -f "$out/test-failures.txt"
+fi
 
 # The runner writes the PNGs straight to $out; if it could not, take them from the result bundle.
 if ! ls "$out"/0*.png > /dev/null 2>&1 && [ -d "$work/Tests.xcresult" ]; then
