@@ -599,7 +599,7 @@ extension PhoneRun {
 
         it = Item("7.7-5")
         inApp(it) { a in
-            let field = self.appInput(a, placeholder: "Who you are, in a few facts", index: 0)
+            let field = self.appInput(a, placeholder: "Who you are, in a few facts", index: 1)
             it.note("clear=\(q(self.clearAboutMe(a, field, count: count)))")
             if let c = self.counter(a) {
                 it.require("counter-clear", c == 0, "\(c) want 0")
@@ -664,7 +664,7 @@ extension PhoneRun {
     /// 7.7-1 (and the redo in 7.7-5): paste the note into About me, the counter, Copy for the keyboard, then Read
     /// clipboard in the app's Test field: the confirm panel with the counter's number, Save, Done.
     private func saveNote(_ it: Item, _ a: Driver, count: Int, tag: String) {
-        let field = appInput(a, placeholder: "Who you are, in a few facts", index: 0)
+        let field = appInput(a, placeholder: "Who you are, in a few facts", index: 1)
         guard field.waitForExistence(timeout: 5) else {
             it.markUnreadable("about-me\(tag)=no field")
             return
@@ -684,7 +684,7 @@ extension PhoneRun {
     /// In the app's Test field: Read clipboard, the confirm panel's text, Save (after AboutMe.saveDelay), the
     /// notice, Done, and the bar back without panel text.
     private func confirmInApp(_ it: Item, _ a: Driver, confirm: [String], saved: [String], tag: String) {
-        let test = appInput(a, placeholder: "Type here", index: 1)
+        let test = appInput(a, placeholder: "Type here", index: 0)
         guard test.waitForExistence(timeout: 3) else {
             it.markUnreadable("test-field\(tag)=missing")
             return
