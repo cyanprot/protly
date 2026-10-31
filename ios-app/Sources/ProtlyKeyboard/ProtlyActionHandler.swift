@@ -13,8 +13,9 @@ final class ProtlyActionHandler: KeyboardAction.StandardActionHandler {
         // KeyboardKit calls this from button gestures, always on the main thread.
         MainActor.assumeIsolated {
             // The field read is walking the cursor through the text (a few steps, usually well under a second): a key
-            // now would land mid-text and join the text sent, so the keys wait.
-            if host?.isReadingField == true { return }
+            // now would land mid-text and join the text sent, so the keys wait. A gesture's end still goes through,
+            // so KeyboardKit's drag state and the shift tracking below never keep a press that began before the read.
+            if host?.isReadingField == true, gesture != .end { return }
             if action == .space, gesture == .press || gesture == .release || gesture == .end {
                 drag.reset()  // a new press or the end of a drag: the next trackpad takes a new snapshot
             }

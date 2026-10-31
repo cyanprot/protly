@@ -6,9 +6,11 @@ final class CursorReturnTests: XCTestCase {
     /// One read from a cursor whose before-context is `before`, over `chunks`, each shown by the host.
     private func read(_ c: inout CursorReturn, before: String, _ chunks: [String]) {
         c.begin(before: before)
+        var now = before
         for chunk in chunks {
             c.sending(chunk)
-            c.applied()
+            now += chunk
+            c.applied(before: now)
         }
     }
 
@@ -19,32 +21,25 @@ final class CursorReturnTests: XCTestCase {
         XCTAssertEqual(c.back(before: "hello world\nagain😀"), 0, "the field changed: stay")
     }
 
-    /// Cancel while the host has not shown the last move yet: it still counts, because a move back lands after it.
-    func testACancelWithAMoveInFlightGoesBackOverItToo() {
+    /// A step on its way is not counted until it settles: the keyboard waits for it (isMoving) before moving back.
+    func testAStepOnItsWayCountsOnlyOnceShown() {
         var c = CursorReturn()
         c.begin(before: "hello")
         c.sending(" world")
-        c.applied()
-        c.sending("\nagain")
-        XCTAssertEqual(c.back(before: "hello world"), 12, "not shown yet: the context still ends at the first move")
-        XCTAssertEqual(c.back(before: "hello world\nagain"), 12, "already shown")
-        XCTAssertEqual(c.back(before: "hello world!"), 0, "the field changed: stay")
+        XCTAssertTrue(c.isMoving)
+        XCTAssertEqual(c.back(before: "hello"), 0)
+        c.applied(before: "hello world")
+        XCTAssertFalse(c.isMoving)
+        XCTAssertEqual(c.back(before: "hello world"), 6)
     }
 
-    /// The first move still in flight: nothing to check against yet, and the move back lands after it.
-    func testACancelBeforeTheFirstMoveShows() {
-        var c = CursorReturn()
-        c.begin(before: "hello")
-        c.sending(" world")
-        XCTAssertEqual(c.back(before: "hello"), 6)
-    }
-
-    /// A move the host never showed (the read gave up) is not counted: the cursor never went there.
-    func testAMoveTheHostNeverShowedDoesNotCount() {
+    /// A step the host never showed (the read gave up) is not counted: the cursor never went there.
+    func testAStepTheHostNeverShowedDoesNotCount() {
         var c = CursorReturn()
         c.begin(before: "ok")
         c.sending("ok")
         c.notApplied()
+        XCTAssertFalse(c.isMoving)
         XCTAssertEqual(c.back(before: "ok"), 0)
     }
 
@@ -70,6 +65,14 @@ final class CursorReturnTests: XCTestCase {
         read(&c, before: "hello", [" world"])
         read(&c, before: "hello wor", ["ld"])
         XCTAssertEqual(c.back(before: "hello world"), 2)
+    }
+
+    /// The cursor moved to another spot that also ends with the recorded text: a new record, not an added one.
+    func testARetryElsewhereAfterTheSameTextStartsANewRecord() {
+        var c = CursorReturn()
+        read(&c, before: "one", ["\n"])
+        read(&c, before: "one\ntwo\n", ["three"])
+        XCTAssertEqual(c.back(before: "one\ntwo\nthree"), 5)
     }
 
     func testClearAndNoMove() {

@@ -327,7 +327,11 @@ final class KeyboardSourceRulesTests: XCTestCase {
     /// keyboard-ui 003 review fixes, on the keyboard's source text (it needs the iOS SDK to build).
     func testResultCardWiring() throws {
         let all = try sources()
-        func file(_ name: String) -> String { all.first(where: { $0.name == name })?.text ?? "" }
+        func file(_ name: String) -> String {
+            let text = all.first(where: { $0.name == name })?.text ?? ""
+            XCTAssertFalse(text.isEmpty, "\(name) not found")
+            return text
+        }
         let controller = file("KeyboardViewController.swift"), handler = file("ProtlyActionHandler.swift")
         // The panel layer is always mounted and animates its own opacity: no view leaves with a transition (the ghost
         // card), and a hidden layer takes no taps and is hidden from VoiceOver.
@@ -341,8 +345,11 @@ final class KeyboardSourceRulesTests: XCTestCase {
         let hns = handler as NSString
         for declaration in ["override func handle(", "override func handleDrag("] {
             let fn = body(of: declaration, in: hns).map { hns.substring(with: $0) } ?? ""
-            XCTAssertTrue(fn.contains("host?.isReadingField == true { return }"), "\(declaration) runs during the read")
+            XCTAssertTrue(fn.contains("host?.isReadingField == true"), "\(declaration) runs during the read")
         }
+        // Cancel mid-step waits for the step to settle, and no new call starts while it does.
+        XCTAssertTrue(controller.contains("if isReadingField, cursorReturn.isMoving {"), "restoreCursor moves back mid-step")
+        XCTAssertTrue(controller.contains("if isReadingField { return false }"), "a call can start while a read settles")
         // Every Retry goes through retry(_:), which sends Read's own text again instead of reading the clipboard.
         XCTAssertEqual(matches(#"retry: \{ \[unowned host\] in host\.retry\(\$0\) \}"#, in: controller).count, 2)
         XCTAssertEqual(matches(#"retry: \{ \[unowned host\] in host\.act\("#, in: controller).count, 0)

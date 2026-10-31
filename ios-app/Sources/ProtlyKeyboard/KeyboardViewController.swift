@@ -54,6 +54,8 @@ final class KeyboardViewController: KeyboardInputViewController {
     /// would land mid-text and join the text sent.
     private var readingCall: Int?
     var isReadingField: Bool { readingCall != nil }
+    /// Cancel or a hide came while a read step was on its way: the read lets it settle, then puts the cursor back.
+    private var restoreWhenReadEnds = false
     /// Read clipboard's text for the call on screen: Retry sends it again instead of reading the clipboard, which may
     /// hold protly's own Copy by then.
     private var readInput: String?
@@ -293,7 +295,14 @@ final class KeyboardViewController: KeyboardInputViewController {
             guard !Task.isCancelled else { return }  // Cancel or a hide came first: never move the cursor
             cursorReturn.begin(before: textDocumentProxy.documentContextBeforeInput ?? "")
             let field = await FieldText.read(textDocumentProxy) { [weak self] move in self?.record(move) }
-            guard !Task.isCancelled else { return }  // restoreCursor already took the record
+            guard !Task.isCancelled else {
+                // Cancelled mid-step: the step has settled now, so the cursor can go back over exactly what landed.
+                if restoreWhenReadEnds {
+                    restoreWhenReadEnds = false
+                    putCursorBack()
+                }
+                return
+            }
             guard let field else {
                 // Nothing to send: put back what the read moved over (whitespace) at once, no Cancel will.
                 restoreCursor()
@@ -327,6 +336,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     /// live), or without Full Access, which gets its own notice.
     private func beginCall() -> Bool {
         if let strip = mode.strip, strip.error == nil { return false }
+        if isReadingField { return false }  // a cancelled read still settling its last step
         commitWord()
         session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
         watch.forget()  // reading the field moves the cursor
@@ -348,7 +358,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     private func record(_ move: FieldText.Move) {
         switch move {
         case .sending(let chunk): cursorReturn.sending(chunk)
-        case .applied: cursorReturn.applied()
+        case .applied(let before): cursorReturn.applied(before: before)
         case .notApplied: cursorReturn.notApplied()
         }
     }
@@ -412,6 +422,9 @@ final class KeyboardViewController: KeyboardInputViewController {
                 guard let self, !Task.isCancelled else { return }
                 show(update, feed: callFeed, card: CardState(call: call, action: action, label: label, original: original,
                                                          isSelection: isSelection, shownAt: now))
+                // At most 20 redraws of the card's text a second: meanwhile the stream keeps only the newest partial
+                // and the result, so nothing is lost and the text is never more than 50 ms behind.
+                if case .partial = update { try? await Task.sleep(nanoseconds: 50_000_000) }
             }
             // The stream ended with no result (the system cancelled the download): never leave the call hanging.
             guard let self, !Task.isCancelled, let strip = mode.strip, strip.call == call, strip.error == nil else { return }
@@ -515,6 +528,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     /// The protly key runs exactly what its symbol shows (K1): symbol and action are the same BarAction value.
     func runProtlyKey() {
+        guard !isReadingField else { return }  // VoiceOver's action reaches here without ProtlyActionHandler
         if mode.protlyKey == .undo {
             undoInsert()
         } else {
@@ -550,7 +564,18 @@ final class KeyboardViewController: KeyboardInputViewController {
     private func restoreCursor() {
         actionTask?.cancel()
         actionTask = nil
-        readingCall = nil  // the read stops at its next step; the keys are live again
+        if isReadingField, cursorReturn.isMoving {
+            // A step is on its way: moving back now could count a step the host drops, or miss one it applies late.
+            // The read settles it (at most 1 s, the keys still wait) and then puts the cursor back.
+            restoreWhenReadEnds = true
+            return
+        }
+        readingCall = nil
+        putCursorBack()
+    }
+
+    /// Back over the read's settled steps, while the text they moved over is still just before the cursor.
+    private func putCursorBack() {
         let back = cursorReturn.back(before: textDocumentProxy.documentContextBeforeInput ?? "")
         cursorReturn.clear()
         guard back > 0 else { return }

@@ -100,6 +100,28 @@ private struct Endless: AsyncSequence, Sendable {
     func makeAsyncIterator() -> AsyncIterator { AsyncIterator(prefix: prefix, gate: gate, cancelled: cancelled) }
 }
 
+/// The bytes, then a lost connection when `throwing`.
+private struct ThenThrow: AsyncSequence, Sendable {
+    typealias Element = UInt8
+    let bytes: [UInt8]
+    let throwing: Bool
+    init(_ bytes: [UInt8], throwing: Bool) { (self.bytes, self.throwing) = (bytes, throwing) }
+    func makeAsyncIterator() -> AsyncIterator { AsyncIterator(bytes: bytes, throwing: throwing) }
+    struct AsyncIterator: AsyncIteratorProtocol {
+        let bytes: [UInt8]
+        let throwing: Bool
+        var index = 0
+        mutating func next() async throws -> UInt8? {
+            guard index < bytes.count else {
+                if throwing { throw URLError(.networkConnectionLost) }
+                return nil
+            }
+            defer { index += 1 }
+            return bytes[index]
+        }
+    }
+}
+
 private final class Counter: @unchecked Sendable {
     private let lock = NSLock()
     private var n = 0
@@ -111,11 +133,10 @@ final class ActionStreamingTests: XCTestCase {
     private let ok = ActionResult(translation: "Thanks for today", backTranslation: "오늘 고마워")
 
     /// Every update the driver yields, in order (no buffer in between).
-    private func drive(_ bytes: Chunks, status: Int = 200, limit: Int = ActionAPI.maxResponseBytes,
-                       interval: Duration = .zero) async -> [ActionUpdate] {
+    private func drive(_ bytes: Chunks, status: Int = 200, limit: Int = ActionAPI.maxResponseBytes) async -> [ActionUpdate] {
         var out: [ActionUpdate] = []
         do {
-            try await ActionAPI.drive(status: status, bytes: bytes, limit: limit, partialInterval: interval) { out.append($0) }
+            try await ActionAPI.drive(status: status, bytes: bytes, limit: limit) { out.append($0) }
         } catch {
             if let e = ActionAPI.failure(for: error) { out.append(.failed(e)) }
         }
@@ -141,22 +162,6 @@ final class ActionStreamingTests: XCTestCase {
             let got = await drive(Chunks(s, chunk: size))
             XCTAssertEqual(got, expected, "chunks of \(size)")
         }
-    }
-
-    /// At most one partial per interval: the rest wait, and the result still carries the whole text.
-    func testPartialsAreSpacedByTheInterval() async {
-        let updates = await drive(Chunks(SSE.reply(SSE.pieces)), interval: .seconds(60))
-        XCTAssertEqual(updates, [.partial("Thanks "), .done(ok)])
-    }
-
-    /// A failure carries no text: the newest held partial goes out right before it, so the card keeps all of it.
-    func testAHeldPartialGoesOutBeforeAFailure() async {
-        let s = SSE.start + SSE.text(#"{"translation": "A"#) + SSE.text("B")
-            + SSE.event("error", #"{"type": "error", "error": {"type": "api_error"}}"#)
-        let failed = await drive(Chunks(s), interval: .seconds(60))
-        XCTAssertEqual(failed, [.partial("A"), .partial("AB"), .failed(ActionError(.server))])
-        let cut = await drive(Chunks(SSE.start + SSE.text(#"{"translation": "A"#) + SSE.text("B")), interval: .seconds(60))
-        XCTAssertEqual(cut, [.partial("A"), .partial("AB"), .failed(ActionError(.network))])
     }
 
     /// The card opens at the first word: the opening quote alone yields nothing.
@@ -290,8 +295,22 @@ final class ActionStreamingTests: XCTestCase {
         let stream = ActionAPI.updates { (200, Chunks(SSE.reply(SSE.pieces)), { produced.fulfill() }) }
         await fulfillment(of: [produced], timeout: 10)
         let updates = await consume(stream)
-        XCTAssertEqual(updates.last, .done(ok))
-        XCTAssertEqual(updates.count, 1, "only the newest update is kept")
+        XCTAssertEqual(updates, [.partial("Thanks for today"), .done(ok)], "the newest partial, then the result")
+    }
+
+    /// A consumer that paces itself still gets the newest text before a failure, which carries none: an error event,
+    /// or the bytes throwing (the connection lost mid-reply).
+    func testASlowConsumerKeepsTheNewestTextBeforeAFailure() async {
+        let s = SSE.start + SSE.text(#"{"translation": "A"#) + SSE.text("B")
+        let event = s + SSE.event("error", #"{"type": "error", "error": {"type": "api_error"}}"#)
+        for (bytes, error) in [(Array(event.utf8), ActionError(.server)), (Array(s.utf8), ActionError(.network))] {
+            let produced = expectation(description: "the producer is done")
+            let throwing = error.kind == .network
+            let stream = ActionAPI.updates { (200, ThenThrow(bytes, throwing: throwing), { produced.fulfill() }) }
+            await fulfillment(of: [produced], timeout: 10)
+            let updates = await consume(stream)
+            XCTAssertEqual(updates, [.partial("AB"), .failed(error)])
+        }
     }
 
     /// A request that cannot be built fails through the same stream (open throws the ActionError).
