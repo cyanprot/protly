@@ -1,6 +1,7 @@
 """Offline tests for checks.py, memsample.py and leak-guard.sh (python3 -m unittest discover -s ios-app/CI)."""
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -643,7 +644,13 @@ class WorkflowTests(unittest.TestCase):
         job = next(iter(__import__("yaml").safe_load(self.text)["jobs"].values()))
         build = next(s for s in self.steps if "run-shots.sh" in s.get("run", ""))
         self.assertLess(build["timeout-minutes"] + 5, job["timeout-minutes"])
-        publish = next(s for s in self.steps if "bash ios-app/CI/publish-shots.sh" in s.get("run", ""))
+        # run-shots.sh stops the tests itself, leaving the step time for a cold build and boot (about 12 min in run
+        # 53) before them and for measuring after them.
+        script = open(os.path.join(HERE, "run-shots.sh"), encoding="utf-8").read()
+        deadline = int(re.search(r'main_deadline="\$\{MAIN_TEST_DEADLINE:-(\d+)\}"', script).group(1))
+        self.assertGreaterEqual(deadline, 3900)  # run 53's full suite ran past 3000 s on a slow runner
+        self.assertLessEqual(deadline / 60 + 15, build["timeout-minutes"])
+        publish =next(s for s in self.steps if "bash ios-app/CI/publish-shots.sh" in s.get("run", ""))
         self.assertIn("!cancelled()", publish["if"])
 
     def test_filtered_tag_starts_the_job(self):

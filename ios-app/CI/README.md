@@ -125,7 +125,8 @@ and the container app's about-me note: 6.8-11 (its Translate part runs inside `t
   time is the timing.
 - **Deadlines.** Each method has an XCTest time allowance (`PhoneChecksUITests.allowance`, `-test-timeouts-enabled`),
   the network groups stop starting items two minutes before theirs, `run-shots.sh` stops the main test run after
-  50 minutes (`with_deadline`), and the build step's 72-minute timeout leaves the publish steps time to run. The
+  65 minutes (`with_deadline`; run 53, on a slow runner, ran past the earlier 50 in test7_77), and the build
+  step's 85-minute timeout (job: 95) leaves the publish steps time to run. The
   step log prints each method, each CHECK's ID and status, request counts and a heartbeat.
 - **Allow Paste.** The prompt is a SpringBoard alert. The test taps `Allow Paste` in SpringBoard and touches nothing
   of the app under test meanwhile: the keyboard is blocked in its clipboard read until the prompt is answered, and a

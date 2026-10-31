@@ -277,11 +277,12 @@ note "memory sampler pid $sampler, probe ${PROBE:-0}, network $network"
 
 # Layout scenarios (KeyboardShotsUITests), then the phone checks (PhoneChecksUITests). Each method has an XCTest
 # time allowance (PhoneChecksUITests.allowance, -test-timeouts-enabled), and the whole run a deadline
-# (MAIN_TEST_DEADLINE, 50 minutes) that leaves the 72-minute step time to measure and the job time to publish.
+# (MAIN_TEST_DEADLINE, 65 minutes: run 53, a slow runner, ran past 50 in test7_77) that leaves the 85-minute step
+# time to build, measure and publish.
 rm -rf "$work/Tests.xcresult"
 progress &
 progress_pid=$!
-main_deadline="${MAIN_TEST_DEADLINE:-3000}"
+main_deadline="${MAIN_TEST_DEADLINE:-3900}"
 with_deadline "$main_deadline" env TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" \
   TEST_RUNNER_OCR_FALLBACK="${OCR_FALLBACK:-0}" TEST_RUNNER_NETWORK="$network" \
   xcodebuild test-without-building \
