@@ -6,7 +6,8 @@
 // - Cost per grapheme by its width on screen: 6 pt for a narrow one, 12 pt for Hangul, CJK and emoji, so Korean and
 //   English move the caret about equally fast.
 // - The remainder carries between events: ten 1 pt moves make one 6 pt step.
-// - Speed gain: 1x up to 100 pt/s, rising linearly to 3x at 600 pt/s and capped there.
+// - Speed gain: 1x up to 100 pt/s, rising linearly to 3x at 600 pt/s and capped there. The gain scales each move,
+//   not the remainder carried from earlier ones.
 // - Offsets are UTF-16 units of whole graphemes (what adjustTextPosition takes), so the caret never lands inside
 //   an emoji.
 // - The text is a snapshot taken at drag start; the caret stops at its ends, and a push past an end is dropped so
@@ -22,8 +23,9 @@ public struct SpaceTrackpad: Sendable {
     public static let maxGain = 3.0
     /// The hold before space becomes the trackpad (R3). Other keys keep KeyboardKit's 0.5 s.
     public static let longPressDelay = 0.4
-    /// The shortest time between two events used for the speed: two events at the same time count as fast.
-    static let minInterval = 0.001
+    /// The shortest time between two events used for the speed: one frame at 120 Hz. Events that arrive closer
+    /// together (late main-thread callbacks) would otherwise read as a flick and speed up a slow drag.
+    static let minInterval = 1.0 / 120
 
     private struct Glyph: Sendable {
         let cost: Double
@@ -49,7 +51,7 @@ public struct SpaceTrackpad: Sendable {
     /// A move of `dx` points (positive: right) over `dt` seconds. Returns the caret move in UTF-16 units.
     public mutating func move(dx: Double, dt: Double) -> Int {
         guard dx != 0, dx.isFinite else { return 0 }
-        let interval = dt.isFinite ? max(dt, Self.minInterval) : Self.minInterval
+        let interval = max(dt.isNaN ? .infinity : dt, Self.minInterval)  // no usable time: slow
         remainder += dx * Self.gain(speed: abs(dx) / interval)
         var offset = 0
         while remainder > 0 {

@@ -39,6 +39,30 @@ final class SpaceTrackpadTests: XCTestCase {
         XCTAssertEqual(slow(&pad, -6), -1)  // back at zero: one full step left is one character
     }
 
+    func testReversalCarriesTheRemainder() {
+        var pad = SpaceTrackpad(before: "abc", after: "def")
+        XCTAssertEqual([5, -2, 3].map { slow(&pad, Double($0)) }, [0, 0, 1])  // 5 - 2 + 3 = 6 pt
+        var flick = SpaceTrackpad(before: String(repeating: "a", count: 20), after: String(repeating: "a", count: 20))
+        XCTAssertEqual(flick.move(dx: 8, dt: 0.001), 4)  // 24 pt at 3x
+        XCTAssertEqual(slow(&flick, -5), 0)  // the slow way back is not scaled by the flick
+        XCTAssertEqual(slow(&flick, -1), -1)
+    }
+
+    func testGainDoesNotScaleTheCarriedRemainder() {
+        var pad = SpaceTrackpad(before: "", after: String(repeating: "a", count: 200))
+        XCTAssertEqual(slow(&pad, 5), 0)
+        XCTAssertEqual(pad.move(dx: 60, dt: 0.05), 30)  // 5 + 180, not (5 + 60) x 3
+        XCTAssertEqual(slow(&pad, 1), 1)
+    }
+
+    /// Callbacks that arrive bunched (a busy main thread) must not read as a flick.
+    func testUnevenEventTimingDoesNotSpeedUpASlowDrag() {
+        var pad = SpaceTrackpad(before: "", after: String(repeating: "a", count: 200))
+        var total = 0
+        for i in 0..<24 { total += pad.move(dx: 0.5, dt: i % 2 == 0 ? 0.001 : 0.0157) }  // about 60 pt/s
+        XCTAssertEqual(total, 2)
+    }
+
     func testFastFlickIsCappedAtMaxGain() {
         let text = String(repeating: "a", count: 200)
         var fast = SpaceTrackpad(before: "", after: text)
@@ -70,6 +94,30 @@ final class SpaceTrackpadTests: XCTestCase {
         XCTAssertEqual(slow(&empty, -100), 0)
     }
 
+    func testRemainderCarriesAcrossWidthChange() {
+        var pad = SpaceTrackpad(before: "", after: "a가a")
+        XCTAssertEqual([10, 7, 1].map { slow(&pad, Double($0)) }, [1, 0, 1])  // 4 + 7 < 12, 4 + 8 = 12
+    }
+
+    func testMultiScalarGraphemesMoveAsOne() {
+        var accent = SpaceTrackpad(before: "xe\u{0301}", after: "")
+        XCTAssertEqual(slow(&accent, -6), -2)
+        var crlf = SpaceTrackpad(before: "x\r\n", after: "")
+        XCTAssertEqual(slow(&crlf, -6), -2)
+        var jamo = SpaceTrackpad(before: "\u{1100}\u{1161}", after: "")  // conjoining jamo: one wide syllable
+        XCTAssertEqual(slow(&jamo, -12), -2)
+    }
+
+    func testNonFiniteInputs() {
+        var pad = SpaceTrackpad(before: "", after: String(repeating: "a", count: 20))
+        XCTAssertEqual(pad.move(dx: .nan, dt: 0.1), 0)
+        XCTAssertEqual(pad.move(dx: .infinity, dt: 0.1), 0)
+        XCTAssertEqual(slow(&pad, 6), 1)  // the remainder was not poisoned
+        XCTAssertEqual(pad.move(dx: 6, dt: .infinity), 1)  // no usable time: slow
+        XCTAssertEqual(pad.move(dx: 6, dt: .nan), 1)
+        XCTAssertEqual(pad.move(dx: 6, dt: -1), 3)  // time went backwards: the shortest interval, 3x
+    }
+
     func testWholeGraphemesInUTF16() {
         let text = "❤️👨‍👩‍👧🇰🇷가a"
         var right = SpaceTrackpad(before: "", after: text)
@@ -97,6 +145,8 @@ final class SpaceTrackpadTests: XCTestCase {
     }
 
     /// R1: KeyboardKit dropped every step while the finger was 50 pt above or below the start (the "stall").
+    /// SpaceTrackpad ignores y by design; this guards against a later change starting to use it. The keyboard side
+    /// (KeyboardKit's threshold lifted) is a source rule, and phone check P3 is the real proof.
     func testVerticalDriftKeepsHorizontal() {
         let text = String(repeating: "word ", count: 20)
         var level = SpaceTrackpad(before: text, after: "")
@@ -122,6 +172,7 @@ final class SpaceTrackpadTests: XCTestCase {
         let before = SpaceTrackpad.textBefore(context: "오늘 진짜", written: "진짜", committed: "진짜")
         XCTAssertEqual(before, "오늘 진짜")
         var pad = SpaceTrackpad(before: before, after: "")
+        XCTAssertEqual(slow(&pad, 6), 0)  // the caret is after the word: nothing to its right
         XCTAssertEqual(slow(&pad, -12), -1)  // 오늘 진|짜
     }
 
@@ -143,14 +194,10 @@ final class SpaceTrackpadTests: XCTestCase {
     func testNoCommitLeavesTheContext() {
         // No word being typed.
         XCTAssertEqual(SpaceTrackpad.textBefore(context: "hi ", written: "", committed: nil), "hi ")
+        XCTAssertEqual(SpaceTrackpad.textBefore(context: "hi ", written: "", committed: "x"), "hi ")
         // The field moved under the word: it was abandoned, nothing written.
         XCTAssertEqual(SpaceTrackpad.textBefore(context: "hi rk", written: "rk", committed: nil), "hi rk")
         // The context does not show the word: there is nothing to swap, so it is taken as it is.
         XCTAssertEqual(SpaceTrackpad.textBefore(context: "hi r", written: "rk", committed: "가"), "hi r")
-    }
-
-    /// R3: the trackpad starts sooner than KeyboardKit's 0.5 s hold, which other keys keep.
-    func testSpaceLongPressDelay() {
-        XCTAssertEqual(SpaceTrackpad.longPressDelay, 0.4)
     }
 }

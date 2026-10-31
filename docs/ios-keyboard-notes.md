@@ -610,7 +610,8 @@ character, no acceleration, every step dropped 50 pt above or below the start).
 
 - **Math (R4).** `SpaceTrackpad` (ProtlyCore). Cost per grapheme by width: 6 pt narrow, 12 pt for Hangul (syllables
   and jamo), CJK, kana, fullwidth forms and emoji. The remainder carries between events. Speed gain: 1x up to
-  100 pt/s, linear to 3x at 600 pt/s, capped there (two events at the same instant count as 3x). Offsets are UTF-16
+  100 pt/s, linear to 3x at 600 pt/s, capped there; the speed uses at least 1/120 s between events, so bunched
+  callbacks do not read as a flick, and the gain never scales the carried remainder. Offsets are UTF-16
   units of whole graphemes (❤️ 2, 👨‍👩‍👧 8, 🇰🇷 4, 가 1), so the caret never lands inside an emoji. The caret stops at the
   ends of the snapshot and a push past an end is dropped, so the way back starts at once. A slow 60 pt drag moves 10
   Latin letters or 5 syllables; a 60 pt flick in 0.1 s moves 30 or 15.
