@@ -2,8 +2,10 @@ import ProtlyCore
 import UIKit
 import XCTest
 
-/// The phone checks of docs/plans/2026-10-30-sim-phone-checks.md, Sprint 001 (no network): checklist items of the
-/// feature plan's Tasks 6.8 and 8.5, the flip-over-whitespace rule (997f108), memory and the app icon.
+/// The phone checks of docs/plans/2026-10-30-sim-phone-checks.md. Sprint 001 (no network): checklist items of the
+/// feature plan's Tasks 6.8 and 8.5, the flip-over-whitespace rule (997f108), memory and the app icon. Sprint 002
+/// (NetworkChecks.swift): Full Access, Translate / Polish / Read clipboard with the CI key, and the container app's
+/// about-me note (Tasks 6.8 item 11, 7.7 and 8.5).
 ///
 /// Each item appends `CHECK <id> PASS|FAIL|RECORD|SKIP|PENDING <evidence>` to $SHOTS_DIR/checks.txt and saves
 /// c-<id>.png; checks.py resolves PENDING and assembles the report. An item never fails the test itself (a FAIL on
@@ -14,7 +16,15 @@ final class PhoneChecksUITests: XCTestCase {
         continueAfterFailure = true
     }
 
-    /// Plan Task 1.0. Only with PROBE=1 (run-shots.sh passes it on a `[probe]` commit).
+    /// Full Access for Protly (plan Task 2.2): read in Settings, turned on there when off. Every later method that
+    /// needs it (network, clipboard) reads the outcome. Runs first: "access" sorts before "probe".
+    @MainActor
+    func test0_access() throws {
+        try PhoneRun(test: self, name: "test0_access", launch: false).fullAccess()
+    }
+
+    /// Plan Task 2.2 (Sprint 002's probe; Sprint 001's, Task 1.0, is in the notes and git history). Only with
+    /// PROBE=1 (run-shots.sh passes it on a `[probe]` commit).
     @MainActor
     func test0_probe() throws {
         guard ProcessInfo.processInfo.environment["PROBE"] == "1" else {
@@ -47,6 +57,17 @@ final class PhoneChecksUITests: XCTestCase {
     func test5_icon() throws {
         try PhoneRun(test: self, name: "test5_icon", launch: false).icon()
     }
+
+    /// After every offline group, so the requests and the about-me note change nothing they check.
+    @MainActor
+    func test6_85net() throws {
+        try PhoneRun(test: self, name: "test6_85net").checks85network()
+    }
+
+    @MainActor
+    func test7_77() throws {
+        try PhoneRun(test: self, name: "test7_77").checks77()
+    }
 }
 
 /// A string as checks.py reads it back: in double quotes, with \\, \" and \n escaped. nil is `<unreadable>`.
@@ -77,6 +98,10 @@ final class Item {
     private var ocrMissing = false
     private var notes: [String] = []
     private var shots = 0
+    /// SKIP and why (`no network key`, `request cap`), unless something already failed.
+    private var skipReason: String?
+    /// The item holds model output for checks.py's script rules: PENDING unless the test saw a FAIL itself.
+    private var pending = false
 
     init(_ id: String) {
         self.id = id
@@ -119,6 +144,20 @@ final class Item {
         notes.append(why)
     }
 
+    /// One try's model output as `<group>#<n>="..."`, which checks.py judges (plan Task 2.3).
+    func output(_ group: String, _ n: Int, _ text: String) {
+        pending = true
+        notes.append("\(group)#\(n)=\(q(text))")
+    }
+
+    func skip(_ why: String) {
+        skipReason = why
+    }
+
+    var skipped: Bool { skipReason != nil }
+
+    var hasFailed: Bool { failed || unreadable }
+
     func markOCRMissing(_ why: String) {
         ocrMissing = true
         notes.append(why)
@@ -131,11 +170,14 @@ final class Item {
 
     func status(record: Bool) -> String {
         if unreadable || failed { return "FAIL" }
+        if skipReason != nil { return "SKIP" }
+        if pending { return "PENDING" }
         return record || ocrMissing ? "RECORD" : "PASS"
     }
 
     var evidence: String {
-        (unreadable ? "unreadable: " : "") + notes.joined(separator: " ")
+        if let skipReason, !(unreadable || failed) { return ([skipReason] + notes).joined(separator: " ") }
+        return (unreadable ? "unreadable: " : "") + notes.joined(separator: " ")
     }
 }
 
@@ -150,9 +192,10 @@ struct SlotRead {
 
 @MainActor
 final class PhoneRun {
-    let d: Driver
+    /// The driver of the app under test: the host, or the container app while a 7.7 step runs there (inApp).
+    var d: Driver
     let reader: Reader
-    private let ready: Bool
+    let ready: Bool
     /// OCR_FALLBACK=1 (plan Task 1.2 step 3): when Vision fails its self-test, label checks RECORD the crop instead
     /// of FAIL. Off by default: run 8's probe showed Vision works in the UI test.
     private let ocrFallback = ProcessInfo.processInfo.environment["OCR_FALLBACK"] == "1"
@@ -415,6 +458,7 @@ final class PhoneRun {
         d.tapSlot(.left)
         let other = KeyEncoder.keys(forHangul: "봐").map { Dubeolsik.latin($0) } ?? "?"
         it.expect("after-flip", field(), "내일 " + other)
+        translate68(it)  // the Translate part (Sprint 002, NetworkChecks.swift)
         finish(it)
 
         // 6.8-9: the learned word survives a new host process; checks.py compares the keyboard pids at the marks.
@@ -607,60 +651,63 @@ final class PhoneRun {
         d.log("icon: page \(page + 1), exists \(icon.exists)")
     }
 
-    // MARK: Probe (plan Task 1.0)
+    // MARK: Probe (plan Task 2.2)
 
+    /// Sprint 002's probe: the panel's text and button positions around one Translate, and how the Allow Paste prompt
+    /// shows for a Read clipboard. Full Access is test0_access's (run-shots.sh dumps the preferences around it).
     func probe() {
         let p = { (line: String) in self.d.append(line, to: "probe.txt") }
-        p("vision languages (.accurate): \(reader.supportedLanguages())")
-        p("vision self-test: works \(reader.works), hangul \(reader.readsHangul)")
+        p("== sprint 002 probe")
+        p("full access: \(Self.fullAccessHow)")
+        p("network key: \(Self.network)")
         guard ready else {
             p("protly not reached: \(d.takeProblems())")
             return
         }
-
+        let it = Item("probe")
         d.clearField()
-        d.type("hello ")
-        d.pause(0.8)
-        let screen = XCUIScreen.main.screenshot()
-        d.savePNG("probe-hello", screen)
-        if let shot = d.screenshot(screen), let row1 = d.rowOne(shot) {
-            p(String(format: "row 1 top %.2f pt", row1))
-            let bar = CGRect(x: 16, y: row1 - Geo.barBottom - Geo.barHeight - 2, width: d.width - 32, height: Geo.barHeight + 3)
-            p("hello space, whole bar: \(reader.text(in: bar, of: screen, points: d.width, label: "probe bar") ?? ["<vision error>"])")
-            for s in Slot.allCases {
-                let r = d.slotRect(s, row1: row1)
-                let ocr = reader.text(in: r, of: screen, points: d.width, label: "probe \(s.name)") ?? ["<vision error>"]
-                p("hello space, \(s.name) \(r): \(ocr) ink \(shot.ink(in: r, background: CGPoint(x: r.midX, y: r.minY + 1)))")
+        if Self.network && send(it) {
+            d.type("내일 봐 ")
+            if let row1 = d.rowOne() {
+                p(String(format: "row 1 top %.2f pt, panel %@, button band %@", row1,
+                         NSCoder.string(for: d.panelRect(row1: row1)), NSCoder.string(for: d.panelButtonBand(row1: row1))))
+                d.savePNG("probe-bar")
+                let t0 = Date()
+                d.tapSlot(.center, settle: 0)
+                probePanel("probe-panel-loading", row1, p)
+                let r = waitPanel(row1, it, for: ["Insert", "Retry"], timeout: 30)
+                p(String(format: "result after %.1f s: %@", Date().timeIntervalSince(t0), r.label ?? "none"))
+                probePanel("probe-panel-result", row1, p)
+                tapPanelButton("Cancel", row1, it)
+                p("after Cancel: field \(q(field())), panel \(q(readPanel(row1, it, save: nil).seen?.text))")
             }
         } else {
-            p("hello space: no keyboard in probe-hello.png")
+            p("panel probe skipped: no network key")
         }
+        resetKeyboard()
 
-        d.clearField()
-        d.type("안녕")
-        d.pause(0.5)
-        let fieldShot = XCUIScreen.main.screenshot()
-        d.savePNG("probe-hangul", fieldShot)
-        let frame = d.field.frame.insetBy(dx: -8, dy: -8)
-        let ocr = reader.text(in: frame, of: fieldShot, points: d.width, label: "probe field") ?? ["<vision error>"]
-        p("field 안녕: value \(q(field())), ocr of \(frame): \(ocr)")
+        // Allow Paste: a note-shaped clipboard sends no request.
+        let paste = readClipboard(it, "protly about me v1\nprobe", waitFor: ["Save"], sends: false, probe: p)
+        p("clipboard panel: \(q(paste?.text))")
+        if let row1 = paste?.row1 {  // measured before the tap: the panel now covers the keys
+            probePanel("probe-panel-confirm", row1, p)
+            tapPanelButton("Cancel", row1, it)
+        }
+        resetKeyboard()
+        p("problems: \(d.takeProblems()) notes: \(it.evidence)")
+    }
 
-        d.clearField()
-        if let row1 = d.rowOne() {
-            let (x, y) = d.position(of: .layer123, row1: row1)
-            d.point(x, y).tap()
-            d.pause(1)
-            d.savePNG("probe-123")
-            p(String(format: "123 layer: probe-123.png (123 key tapped at %.1f, %.1f)", x, y))
-            d.point(x, y).tap()  // ABC
-            d.pause(0.8)
+    private func probePanel(_ name: String, _ row1: CGFloat, _ p: (String) -> Void) {
+        let screen = XCUIScreen.main.screenshot()
+        d.savePNG(name, screen)
+        guard let seen = reader.read(in: d.panelRect(row1: row1), of: screen, points: d.width, label: name) else {
+            p("\(name): vision error")
+            return
         }
-        for symbol in [":", "?", ",", ".", "!"] {
-            d.clearField()
-            d.type(symbol)
-            p("symbol \(symbol) at its computed position: field \(q(field()))")
+        p("\(name): \(q(seen.text))")
+        for w in seen.words {
+            p(String(format: "  word %@ at x %.1f y %.1f w %.1f h %.1f", q(w.text), w.rect.minX, w.rect.minY,
+                     w.rect.width, w.rect.height))
         }
-        d.clearField()
-        p("problems: \(d.takeProblems())")
     }
 }

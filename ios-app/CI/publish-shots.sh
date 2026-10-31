@@ -18,7 +18,10 @@ fi
 # `STATUS leak-guard` report naming the files goes out, and the step fails.
 leaked=0
 guard_out="$(bash "$here/leak-guard.sh" "$src" 2>&1)" || leaked=1
-if [ "$leaked" = 1 ]; then
+if [ "$leaked" = 0 ]; then
+  # The published report says the guard ran (plan Task 2.1 step 3); the line holds no file content.
+  printf 'LEAK-GUARD pass: no key prefix in %s files\n' "$(find "$src" -type f | wc -l | tr -d ' ')" >> "$src/report.txt"
+else
   echo "$guard_out"
   src="${RUNNER_TEMP:-/tmp}/ci-shots-leak-guard"
   rm -rf "$src"

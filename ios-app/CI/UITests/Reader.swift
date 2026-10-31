@@ -2,6 +2,28 @@ import UIKit
 import Vision
 import XCTest
 
+/// What Vision read in a region: lines in reading order (top to bottom, then left to right) and each word with its
+/// box in points, so a panel button is tapped where its label is drawn (plan Task 2.3).
+struct Seen {
+    let lines: [String]
+    let words: [(text: String, rect: CGRect)]
+
+    /// The lines joined with single spaces (a panel's wrapped sentence reads as one).
+    var text: String {
+        lines.joined(separator: " ").split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+    }
+
+    func contains(_ phrase: String) -> Bool {
+        text.contains(phrase.split(whereSeparator: { $0.isWhitespace }).joined(separator: " "))
+    }
+
+    /// The lowest word equal to `label` inside `band`: a button, not the same word in the panel's text.
+    func word(_ label: String, in band: CGRect) -> CGRect? {
+        words.filter { $0.text == label && band.contains(CGPoint(x: $0.rect.midX, y: $0.rect.midY)) }
+            .max { $0.rect.midY < $1.rect.midY }?.rect
+    }
+}
+
 /// Reads text from screenshots with Vision inside the UI test (plan Task 1.2): what only shows on screen, such as
 /// the bar's slot labels. The field's own text is read through XCUITest instead (exact).
 ///
@@ -65,6 +87,40 @@ final class Reader {
 
     /// Text lines in `rect` (points) of `shot`, left to right, NFC; nil when Vision failed (not when it found nothing).
     func text(in rect: CGRect, of shot: XCUIScreenshot, points: CGFloat, label: String) -> [String]? {
+        guard let c = cropped(rect, of: shot, points: points, label: label) else { return nil }
+        return recognize(c.image, label: label)
+    }
+
+    /// Lines in reading order and word boxes (points) in `rect` of `shot`; nil when Vision failed.
+    func read(in rect: CGRect, of shot: XCUIScreenshot, points: CGFloat, label: String, quiet: Bool = false) -> Seen? {
+        guard let c = cropped(rect, of: shot, points: points, label: label),
+              let observations = observe(c.image, label: label) else { return nil }
+        let px = c.pixels, scale = c.scale
+        // Vision boxes are normalized with the origin at the bottom left of the crop.
+        func toPoints(_ b: CGRect) -> CGRect {
+            CGRect(x: (px.minX + b.minX * px.width) / scale, y: (px.minY + (1 - b.maxY) * px.height) / scale,
+                   width: b.width * px.width / scale, height: b.height * px.height / scale)
+        }
+        // Reading order: rows (2% of the crop's height) from the top, then left to right.
+        func row(_ o: VNRecognizedTextObservation) -> Int { Int(((1 - o.boundingBox.midY) * 50).rounded(.down)) }
+        let ordered = observations.sorted { (row($0), $0.boundingBox.minX) < (row($1), $1.boundingBox.minX) }
+        var lines: [String] = []
+        var words: [(text: String, rect: CGRect)] = []
+        for o in ordered {
+            guard let top = o.topCandidates(1).first else { continue }
+            lines.append(top.string.precomposedStringWithCanonicalMapping)
+            top.string.enumerateSubstrings(in: top.string.startIndex..., options: .byWords) { word, range, _, _ in
+                guard let word, let box = try? top.boundingBox(for: range)?.boundingBox else { return }
+                words.append((text: word.precomposedStringWithCanonicalMapping, rect: toPoints(box)))
+            }
+        }
+        if !quiet { log("ocr \(label): \(lines.map { String(reflecting: $0) }.joined(separator: " "))") }
+        return Seen(lines: lines, words: words)
+    }
+
+    /// The crop of `rect` (points), its rect in pixels and the pixels per point.
+    private func cropped(_ rect: CGRect, of shot: XCUIScreenshot, points: CGFloat, label: String)
+        -> (image: CGImage, pixels: CGRect, scale: CGFloat)? {
         guard let cg = shot.image.cgImage, points > 0 else {
             log("ocr \(label): no image")
             return nil
@@ -77,10 +133,10 @@ final class Reader {
             log("ocr \(label): empty crop \(rect)")
             return nil
         }
-        return recognize(crop, label: label)
+        return (crop, px, scale)
     }
 
-    func recognize(_ image: CGImage, label: String) -> [String]? {
+    private func observe(_ image: CGImage, label: String) -> [VNRecognizedTextObservation]? {
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = false
@@ -92,7 +148,12 @@ final class Reader {
             log("ocr \(label): Vision error \(error)")
             return nil
         }
-        let observations = (request.results ?? []).sorted { $0.boundingBox.minX < $1.boundingBox.minX }
+        return request.results ?? []
+    }
+
+    func recognize(_ image: CGImage, label: String) -> [String]? {
+        guard let results = observe(image, label: label) else { return nil }
+        let observations = results.sorted { $0.boundingBox.minX < $1.boundingBox.minX }
         let lines = observations
             .compactMap { $0.topCandidates(1).first?.string }
             .map { $0.precomposedStringWithCanonicalMapping }

@@ -5,8 +5,10 @@
 # fails the job unless the report says RESULT PASS and no CHECK is FAIL. macOS only (bash 3.2 compatible).
 #
 # Usage: ios-app/CI/run-shots.sh <out-dir>
-# Env: SOURCE_SHA (for the report), PROBE=1 (run the phone checks' probe, plan Task 1.0), OCR_FALLBACK=1 (label
-# checks RECORD a crop when Vision fails its self-test; off: they FAIL unreadable).
+# Env: SOURCE_SHA (for the report), PROBE=1 (the phone checks' probe, plan Task 2.2: the preferences dump around
+# Full Access and test0_probe), OCR_FALLBACK=1 (label checks RECORD a crop when Vision fails its self-test; off: they
+# FAIL unreadable), HAS_KEY=true (write-secrets.sh wrote Secrets.swift with the CI key: the network checks run).
+# Nothing here reads or prints Secrets.swift's key; the run folder goes through leak-guard.sh before any publish.
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -45,10 +47,23 @@ finish() {
 note "source $(printf '%s' "${SOURCE_SHA:-$(git -C "$here" rev-parse HEAD)}")"
 note "xcode $(xcodebuild -version | tr '\n' ' ')"
 
-# Secrets.swift is gitignored; the keyboard types without a key (only Translate/Polish need one).
+# Secrets.swift is gitignored; the keyboard types without a key (only Translate/Polish need one). With HAS_KEY=true
+# write-secrets.sh has written it; grep -q only tests that it holds a key-shaped value (prints nothing).
 secrets="$here/../Sources/ProtlyKeyboard/Secrets.swift"
-if [ ! -f "$secrets" ]; then
-  printf '// CI stand-in written by ios-app/CI/run-shots.sh: no key.\nenum Secrets {\n    static let apiKey = ""\n}\n' > "$secrets"
+network=0
+if [ "${HAS_KEY:-}" = "true" ]; then
+  if ! grep -qE 'apiKey = "sk-ant-[A-Za-z0-9_-]+"' "$secrets" 2> /dev/null; then
+    note "HAS_KEY=true but Secrets.swift holds no key"
+    status="build-failed"
+    finish
+  fi
+  network=1
+  note "network key: present (CI key); DerivedData cache: restore only, not saved in this run"
+else
+  if [ ! -f "$secrets" ]; then
+    printf '// CI stand-in written by ios-app/CI/run-shots.sh: no key.\nenum Secrets {\n    static let apiKey = ""\n}\n' > "$secrets"
+  fi
+  note "network key: none (network checks SKIP); DerivedData cache: saved after the run"
 fi
 
 # Newest iOS 26 runtime, then iPhone 13 Pro or the first 390 pt wide iPhone that the runtime takes.
@@ -120,26 +135,57 @@ for f in "$global" "$prefs/com.apple.keyboard.preferences.plist"; do
   plist_set "$f" KeyboardPrediction bool true
 done
 
-xcrun simctl boot "$udid"
-xcrun simctl bootstatus "$udid" -b > /dev/null
-xcrun simctl ui "$udid" appearance dark
+boot() {
+  xcrun simctl boot "$udid"
+  xcrun simctl bootstatus "$udid" -b > /dev/null
+  xcrun simctl ui "$udid" appearance dark
+  # Keep the keyboard's debug log (ProtlyHeight.swift); debug messages are not stored by default.
+  xcrun simctl spawn "$udid" log config --subsystem com.northprot.protly --mode "level:debug,persist:debug" > /dev/null 2>&1
+}
+
+# One test method on its own (the probe's Full Access step).
+run_one() {  # test-id log
+  TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" TEST_RUNNER_NETWORK="$network" \
+    xcodebuild test-without-building \
+    -project "$here/ProtlyCI.xcodeproj" -scheme ProtlyCI \
+    -destination "platform=iOS Simulator,id=$udid" \
+    -derivedDataPath "$dd" -only-testing:"$1" > "$2" 2>&1
+}
+
+devdata="$HOME/Library/Developer/CoreSimulator/Devices/$udid/data"
+if [ "${PROBE:-0}" = "1" ]; then
+  # Plan Task 2.2 step 1: where Full Access is kept. Snapshots of the shut-down device before and after test0_access
+  # turns it on in Settings; the difference goes to probe-prefs.txt.
+  python3 "$here/prefsdump.py" snapshot "$devdata" "$work/prefs-before" > /dev/null 2>&1
+  boot
+  run_one ProtlyCIUITests/PhoneChecksUITests/test0_access "$work/test-access.log"
+  note "probe: test0_access alone, xcodebuild exit $?"
+  xcrun simctl shutdown "$udid"
+  python3 "$here/prefsdump.py" snapshot "$devdata" "$work/prefs-after" > /dev/null 2>&1
+  {
+    echo "Device data changes around test0_access (Full Access in Settings), each snapshot after simctl shutdown:"
+    echo "$(grep -h 'full access' "$out/network.txt" 2> /dev/null)"
+  } > "$out/probe-prefs.txt"
+  python3 "$here/prefsdump.py" diff "$work/prefs-before" "$work/prefs-after" "$out/probe-prefs.txt" \
+    || note "probe: prefsdump diff failed"
+fi
+
+boot
 note "AppleKeyboards $(xcrun simctl spawn "$udid" defaults read -g AppleKeyboards 2>&1 | tr -d ' \n')"
 note "appearance $(xcrun simctl ui "$udid" appearance 2>&1)"
 
-# Keep the keyboard's debug log (ProtlyHeight.swift); debug messages are not stored by default.
-xcrun simctl spawn "$udid" log config --subsystem com.northprot.protly --mode "level:debug,persist:debug" > /dev/null 2>&1
-
 # The keyboard process's memory from the macOS side during the phone checks (plan Task 1.4): mem.txt,
-# probe-mem.txt. It starts at the phone checks' first log line: in run 8, with the sampler attached from the start,
-# scenario 04 lost the host-active notification (band 69).
+# probe-mem.txt. It starts at test1_68 (test0_access and the probe come first and need no samples): in run 8, with
+# the sampler attached from the start, scenario 04 lost the host-active notification (band 69).
 python3 "$here/memsample.py" "$out/mem.txt" "$out/probe-mem.txt" --name ProtlyCIKeyboard --interval 2 \
-  --wait-for "$out/ui-log.txt" "== PhoneChecksUITests" > "$work/memsample.log" 2>&1 &
+  --wait-for "$out/ui-log.txt" "== PhoneChecksUITests.test1" > "$work/memsample.log" 2>&1 &
 sampler=$!
-note "memory sampler pid $sampler, probe ${PROBE:-0}"
+note "memory sampler pid $sampler, probe ${PROBE:-0}, network $network"
 
 # Layout scenarios (KeyboardShotsUITests), then the phone checks (PhoneChecksUITests).
 rm -rf "$work/Tests.xcresult"
 TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" TEST_RUNNER_OCR_FALLBACK="${OCR_FALLBACK:-0}" \
+  TEST_RUNNER_NETWORK="$network" \
   xcodebuild test-without-building \
   -project "$here/ProtlyCI.xcodeproj" -scheme ProtlyCI \
   -destination "platform=iOS Simulator,id=$udid" \

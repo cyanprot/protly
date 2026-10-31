@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import checks  # noqa: E402
 import memsample  # noqa: E402
+import prefsdump  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # Split so no key-shaped literal sits in the source file (the compiled .pyc, gitignored, may fold it).
@@ -544,6 +545,84 @@ class WorkflowTests(unittest.TestCase):
         with open(os.path.join(HERE, "publish-shots.sh"), encoding="utf-8") as f:
             script = f.read()
         self.assertLess(script.index("leak-guard.sh"), script.index("git push"))
+
+
+class PrefsDumpTests(unittest.TestCase):
+    """prefsdump.py (plan Task 2.2 step 1): what changed in a shut-down device's data folder around Full Access."""
+
+    def setUp(self):
+        import plistlib
+        import sqlite3
+        self.plistlib, self.sqlite3 = plistlib, sqlite3
+        self.tmp = tempfile.TemporaryDirectory()
+        self.data = os.path.join(self.tmp.name, "data")
+        self.prefs = os.path.join(self.data, "Library", "Preferences")
+        os.makedirs(self.prefs)
+        os.makedirs(os.path.join(self.data, "Library", "TCC"))
+        self.write_plist("com.apple.keyboard.preferences.plist", {"KeyboardPrediction": True})
+        self.write_plist("com.apple.other.plist", {"x": 1})
+        db = sqlite3.connect(os.path.join(self.data, "Library", "TCC", "TCC.db"))
+        db.execute("create table access (service text, client text, auth_value integer)")
+        db.execute("insert into access values ('kTCCServiceCamera', 'com.x', 0)")
+        db.commit()
+        db.close()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def write_plist(self, name, value):
+        with open(os.path.join(self.prefs, name), "wb") as f:
+            self.plistlib.dump(value, f, fmt=self.plistlib.FMT_BINARY)
+
+    def snap(self, name):
+        dest = os.path.join(self.tmp.name, name)
+        prefsdump.snapshot(self.data, dest)
+        return dest
+
+    def test_changed_key_new_file_and_tcc_row(self):
+        before = self.snap("before")
+        self.write_plist("com.apple.keyboard.preferences.plist",
+                         {"KeyboardPrediction": True, "KeyboardsWithFullAccess": ["com.northprot.protly.cihost.keyboard"]})
+        self.write_plist("com.apple.new.plist", {"y": "z"})
+        db = self.sqlite3.connect(os.path.join(self.data, "Library", "TCC", "TCC.db"))
+        db.execute("insert into access values ('kTCCServiceKeyboardNetwork', 'com.northprot.protly.cihost.keyboard', 2)")
+        db.commit()
+        db.close()
+        after = self.snap("after")
+        text = prefsdump.diff(before, after)
+        self.assertIn("Library/Preferences/com.apple.keyboard.preferences.plist", text)
+        self.assertIn("+ KeyboardsWithFullAccess", text)
+        self.assertIn("com.northprot.protly.cihost.keyboard", text)
+        self.assertIn("new Library/Preferences/com.apple.new.plist", text)
+        self.assertIn("kTCCServiceKeyboardNetwork", text)
+        self.assertNotIn("kTCCServiceCamera", text)  # unchanged rows are not repeated
+        self.assertNotIn("com.apple.other.plist", text)
+        self.assertIn("create table access", text.lower())
+
+    def test_nothing_changed(self):
+        before = self.snap("before")
+        after = self.snap("after")
+        self.assertIn("no plist or TCC change", prefsdump.diff(before, after))
+
+    def test_unreadable_plist_is_reported_not_raised(self):
+        before = self.snap("before")
+        with open(os.path.join(self.prefs, "com.apple.other.plist"), "wb") as f:
+            f.write(b"not a plist")
+        after = self.snap("after")
+        self.assertIn("unreadable", prefsdump.diff(before, after))
+
+    def test_main_writes_the_diff(self):
+        before = self.snap("before")
+        self.write_plist("com.apple.other.plist", {"x": 2})
+        out = os.path.join(self.tmp.name, "probe-prefs.txt")
+        code = subprocess.run([sys.executable, os.path.join(HERE, "prefsdump.py"), "snapshot", self.data,
+                               os.path.join(self.tmp.name, "after")]).returncode
+        self.assertEqual(code, 0)
+        code = subprocess.run([sys.executable, os.path.join(HERE, "prefsdump.py"), "diff", before,
+                               os.path.join(self.tmp.name, "after"), out]).returncode
+        self.assertEqual(code, 0)
+        with open(out, encoding="utf-8") as f:
+            self.assertIn("~ x: 1 -> 2", f.read())
 
 
 if __name__ == "__main__":
