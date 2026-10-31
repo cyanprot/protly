@@ -33,6 +33,10 @@ that types Korean and English on one QWERTY grid and offers Translate / Polish /
   Swift toolchain). Both pass before every commit.
 - The phone build (`xtool dev build` on the laptop) must keep working: do not edit `ios-app/Package.swift` or
   `ios-app/xtool.yml` without the tower.
+- Project skills in `.claude/skills/` come from the open skills registry (`npx skills add <repo> -s <skill> -a
+  claude-code -y`), pinned in `skills-lock.json`: `swiftui-pro` (SwiftUI review), `swift-concurrency`,
+  `chrome-extensions` (Google's MV3 guidance), `impeccable` (web UI design for the popup and options pages).
+  Update with `npx skills update -p`.
 - `.claude/agents/` and `.claude/hooks/` are vendored from magnusprot by its `scripts/vendor-cloud.sh` (commit in
   `.claude/magnusprot.lock`). Do not edit them here. `.claude/settings.json` wires the hooks for cloud sessions
   only (`CLAUDE_CODE_REMOTE=true`). `.claude/campaigns/` is local tower state and is gitignored.
