@@ -91,6 +91,7 @@ struct SetupView: View {
 /// the keyboard through the clipboard.
 private struct AboutMeSection: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     @AppStorage(AboutMeLink.defaultsKey) private var aboutMe = ""
     @State private var copied = false
     @Binding var guide: Guide?
@@ -115,11 +116,14 @@ private struct AboutMeSection: View {
                     if guide == .saveNote { guide = nil }  // the steps would save the old note
                 }
                 .modifier(RuledField())
-            HStack {
+            // At accessibility sizes the pill goes under the counter instead of squeezing beside it.
+            let row = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout())
+            row {
                 Text("\(aboutMe.unicodeScalars.count) / \(AboutMeLink.cap)")
                     .monospacedDigit()
                     .foregroundStyle(Brand.secondary(scheme))
-                Spacer()
+                Spacer(minLength: 0)
                 Button(copied ? "Copied" : "Copy for the keyboard", action: copy)
                     .buttonStyle(PillButtonStyle())
             }
