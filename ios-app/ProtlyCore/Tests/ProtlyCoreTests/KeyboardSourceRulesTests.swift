@@ -252,7 +252,7 @@ final class KeyboardSourceRulesTests: XCTestCase {
         }
         XCTAssertTrue(controller.contains("spaceDragGestureHandler.verticalThreshold = .greatestFiniteMagnitude"),
                       "R1: KeyboardKit's vertical threshold is not lifted")
-        let delays = matches(#"\blongPressDelay\b"#, in: controller)
+        let delays = matches(#"\blongPressDelay:"#, in: controller)
         XCTAssertEqual(delays.count, 1, "one long-press delay, for space only")
         XCTAssertTrue(controller.contains(
             "$0.item.action == .space ? .init(longPressDelay: SpaceTrackpad.longPressDelay) : .standard"),
