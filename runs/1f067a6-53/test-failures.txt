@@ -1,0 +1,2 @@
+2026-10-31 08:33:49.068489+0000 ProtlyCIUITests-Runner[19462:63574] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+2026-10-31 08:33:49.112503+0000 ProtlyCIUITests-Runner[19462:63574] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics

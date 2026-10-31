@@ -1,0 +1,284 @@
+STATUS test-failed
+source 1f067a65efa6249da0716fe040d12e4552bc80ac
+xcode Xcode 26.6 Build version 17F113 
+network key: present (CI key); DerivedData cache: restore only, not saved in this run
+runtime iOS 26.5 (com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+device iPhone-13-Pro (E58431AE-1EBC-40F7-882B-6F76AC63DBFD), 390 pt wide
+build ok
+AppleKeyboards ("com.northprot.protly.cihost.keyboard","emoji@sw=Emoji","en_US@sw=QWERTY;hw=Automatic")
+appearance dark
+memory sampler pid 17602, probe 0, network 1
+main tests stopped at the 3000 s deadline (see the last CHECK and == lines)
+test failures (2 lines, test-failures.txt):
+  2026-10-31 08:33:49.068489+0000 ProtlyCIUITests-Runner[19462:63574] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+  2026-10-31 08:33:49.112503+0000 ProtlyCIUITests-Runner[19462:63574] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics
+tests failed (xcodebuild exit 124)
+screen 1170x2532 px, 390 pt wide, scale 3.00
+01-apple: top 509.00 row1 561.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 65.00(85) 194.83(14) 325.00(41)
+02-first-open: top 495.00 row1 564.00 band 69.00 pitch 54.00 key 43.00 bar-text-centers none
+03-after-emoji: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+04-after-background: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+05-after-second-emoji: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers none
+06-word-typed: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 67.50(71) 195.33(43)
+07-empty-left-slot: top 512.00 row1 564.00 band 52.00 pitch 54.00 key 43.00 bar-text-centers 195.33(43)
+CHECK top-edge FAIL range 495.00..512.00 (17.00 pt)
+CHECK band-02-first-open FAIL 69.00 vs apple 52.00 (+17.00)
+CHECK band-03-after-emoji PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-04-after-background PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-05-after-second-emoji PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-06-word-typed PASS 52.00 vs apple 52.00 (+0.00)
+CHECK band-07-empty-left-slot PASS 52.00 vs apple 52.00 (+0.00)
+CHECK pitch-02-first-open PASS 54.00 vs 54.00
+CHECK key-02-first-open PASS 43.00 vs 43.00
+CHECK pitch-03-after-emoji PASS 54.00 vs 54.00
+CHECK key-03-after-emoji PASS 43.00 vs 43.00
+CHECK pitch-04-after-background PASS 54.00 vs 54.00
+CHECK key-04-after-background PASS 43.00 vs 43.00
+CHECK pitch-05-after-second-emoji PASS 54.00 vs 54.00
+CHECK key-05-after-second-emoji PASS 43.00 vs 43.00
+CHECK pitch-06-word-typed PASS 54.00 vs 54.00
+CHECK key-06-word-typed PASS 43.00 vs 43.00
+CHECK pitch-07-empty-left-slot PASS 54.00 vs 54.00
+CHECK key-07-empty-left-slot PASS 43.00 vs 43.00
+CHECK bar-center-07 PASS text center 195.33 vs 195.00 (+0.33), words 1
+RESULT FAIL
+CHECKS
+CHECK 6.8-1 PASS field="i dont think its ok teh." right="the" want "the" after-tap="the "
+CHECK 6.8-2 PASS right="receive" want "receive" field="recieve."
+CHECK 6.8-3 PASS right="tomorrow" want "tomorrow" after-tap="tomorrow "
+CHECK 6.8-4 PASS right="안녕" want starts with "안녕" typed="안녕ㅎ" after-tap="안녕하세요 "
+CHECK 6.8-5 RECORD right="On my way!" ink 2934 after-space="omw "
+CHECK 6.8-6 SKIP no contacts in the simulator
+CHECK 6.8-7 PASS context="안녕" field="걍 가자 " field="걔 진짜 웃겨 " field="얘 뭐야 " field="꽤 좋다 " field="I need to get rid of it "
+CHECK 6.8-8 PASS typed="죵" after-flip="wyd" again="wyd "
+CHECK 6.8-9 RECORD same process: field='wyd ' pid 28555 -> 28555
+CHECK 6.8-10 RECORD start 63.0 MB end 61.0 MB growth -2.0 MB over presentations=30/30 (footprint, pid 28555; macOS-side, not the phone's limit; footprint prints whole MB, so growth under 1 MB reads as zero)
+CHECK 6.8-11 PASS left="ghk" ink 1434 after-flip="내일 qhk" context="안녕" busy#1=no seconds#1=4.5 out#1="Thanks so much for today" => out#1 ok
+CHECK 7.7-1 PASS paste="tap, Paste" counter=58 want 58 copied="Copied" confirm-center="Read clipboard" confirm-paste="tapped Allow Paste in SpringBoard" confirm="Save as your About me note" in "Save as your About me note (58 characters)? Translate and Polish send it with every draft. Save only a note you copied in the Protly app. I run Moonbeam Kiln (문빔 킬른), a pottery studio in Victoria. Cancel Save" confirm="(58 characters)" in "Save as your About me note (58 characters)? Translate and Polish send it with every draft. Save only a note you copied in the Protly app. I run Moonbeam Kiln (문빔 킬른), a pottery studio in Victoria. Cancel Save" saved="About me saved" in "About me saved: 58 characters. Done" saved="58 characters" in "About me saved: 58 characters. Done" bar=keys back, panel region "H ㅈ [ = H ㄹ 이 ㅓ ㅏ ㅋ E ㅈ T ㅜ 123" bar-center="" ink 0
+CHECK 7.7-2 PASS context="안녕" busy#1=yes seconds#1=12.5 out#1="Moonbeam Kiln opens next week" => out#1 ok
+CHECK 7.7-3 FAIL unreadable: no CHECK line
+CHECK 7.7-4 FAIL unreadable: no CHECK line
+CHECK 7.7-5 FAIL unreadable: no CHECK line
+CHECK 7.7-6 FAIL unreadable: no CHECK line
+CHECK 8.5-1 PASS context="안녕" ru="겨" flip ru-after-flip="ru" busy#1="Translating" seconds#1=5.1 out#1="Спасибо за конспекты! Благодаря тебе я выжил, ты меня реально спасла." back#1=hangul undo-slot="Undo" ink 1514 undo="ru: 누나 노트 고마워 누나 덕분에 살았다 " => out#1 ok
+CHECK 8.5-1o PASS ru=latin field="ru: 누나 노트 고마워 누나 덕분에 살았다 " center="Translate" want "Translate"
+CHECK 8.5-2o RECORD ru-again="겨" zh="코" flip zh-after-flip="zh" taught="zh: 안녕 " zh-space="zh "
+CHECK 8.5-3 PASS context="안녕" ja=latin busy#1=yes seconds#1=3.7 out#1="明日ひま？一緒にご飯行こうよw" shown#1="BEUㅊ?-##ICERJCSAW 내일 시간 있어? 같이 밥 먹자 ㅋㅋ Cancel insert" => out#1 ok
+CHECK 8.5-4 PASS context="안녕" es=latin busy#1=yes seconds#1=3.4 out#1="Hoy estoy muy cansado" shown#1="Hoy estoy muy cansado 나 오늘 너무 피곤해 Cancel insert" => out#1 ok
+CHECK 8.5-5 PASS context="안녕" busy#1=yes seconds#1=3.7 out#1="See you tomorrow at 3" shown#1="See you tomorrow at 3 내일 3시에 봐 Cancel insert" => out#1 ok
+CHECK 8.5-6 PASS context="안녕" ok=latin busy#1=yes seconds#1=4.3 out#1="ok, see you tomorrow" shown#1="ok, see you tomorrow 0ㅋ, 내일 봐 Cancel insert" => out#1 ok
+CHECK 8.5-6o PASS ok=latin field="ok: 내일 봐 " center="Translate" want "Translate"
+CHECK 8.5-7 PASS context="안녕" ko=latin busy#1="Polishing" seconds#1=4.1 out#1="낼 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘" shown#1="낼 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘 되?-> 돼? (맞춤법) 밥먹자 -> 밥 먹자 (띄어쓰기) 말해죠 -> 말해 줘 (맞춤법) Cancel insert" => out#1 ok
+CHECK 8.5-7o PASS ko=latin field="ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 " center="Polish" want "Polish"
+CHECK 8.5-8 PASS context="안녕" ko=latin busy#1="Polishing" seconds#1=3.2 out#1="오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ" shown#1="오늘 진짜 길었어 낼 아침에 전화할게 늦으면 미안 ㅠㅠ 맞춤법과 띄어쓰기에 문제가 없어 그대로 두었어. Cancel insert" => out#1 ok
+CHECK 8.5-8o RECORD ko=latin field="ko: 오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ" center="" ink 0
+CHECK 8.5-9 PASS context="솓" flip context-after-flip="the" busy#1=yes seconds#1=5.1 out#1="Me encanta el color de tu chaqueta, ¿dónde la compraste? jaja" shown#1="Me encanta el color de tu chaqueta, edonde la compraste? jaa conprastes -> compraste (철자, 활용 수정) donde -> donde, 물음표 앞 : 추가 (의문문 표기) 나머지 어조와 jaja는 그대로 유지 Cancel insert" => out#1 ok
+CHECK 8.5-9o PASS context="솓" flip context-after-flip="the" field="me encanta el color de tu chaqueta, donde la conprastes? jaja " center="Polish" want "Polish"
+CHECK 8.5-10 RECORD context="안녕" ru="겨" flip ru-after-flip="ru" try1=5.1s try2=3.2s (tap to Insert shown; OCR poll every 0.5 s)
+CHECK icon RECORD {296.0,163.0,68.0,90.7} found on page 1 (c-icon.png, c-icon-home.png)
+CHECK ws-1 PASS left="ㅗ디 |ㅐ" want Hangul after-tap="ㅗ디ㅣㅐ " want the Korean reading plus a space
+CHECK ws-2 PASS field="hello. " left=ocr "" ink 0 (c-ws-2-1-left.png)
+CHECK ws-3 PASS field="hello\n" left=ocr "" ink 0 (c-ws-3-1-left.png)
+CHECKS pass 24 fail 4 record 7 skip 1
+--- last 200 lines of test.log
+    t =   349.92s     Wait for com.apple.springboard to idle
+    t =   349.95s     Find the "Allow Paste" Button
+    t =   350.10s     Check for interrupting elements affecting "Allow Paste" Button
+    t =   350.25s     Synthesize event
+    t =   350.72s     Wait for com.apple.springboard to idle
+    t =   350.97s Waiting 3.0s for "Allow Paste" Button to not exist
+    t =   352.02s     Checking `Expect predicate `existsNoRetry == 0` for object "Allow Paste" Button`
+    t =   352.03s         Checking existence of `"Allow Paste" Button`
+    t =   357.95s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (42.3, 747.8)
+    t =   357.95s     Wait for com.northprot.protly.cihost to idle
+    t =   357.95s     Find the Target Application 'com.northprot.protly.cihost'
+    t =   358.09s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =   358.24s     Synthesize event
+    t =   358.27s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   358.38s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   358.53s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   358.90s     Wait for com.northprot.protly.cihost to idle
+    t =   359.91s Waiting 2.0s for "dismiss" Button to exist
+    t =   361.00s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   361.00s         Checking existence of `"dismiss" Button`
+    t =   361.43s Tap "dismiss" Button
+    t =   361.43s     Wait for com.northprot.protly.cihost to idle
+    t =   361.43s     Find the "dismiss" Button
+    t =   362.09s     Check for interrupting elements affecting "dismiss" Button
+    t =   362.74s     Synthesize event
+    t =   363.40s     Wait for com.northprot.protly.cihost to idle
+    t =   364.72s Waiting 3.0s for "field" Any to exist
+    t =   365.74s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   365.75s         Checking existence of `"field" Any`
+    t =   366.12s Tap "field" Any
+    t =   366.12s     Wait for com.northprot.protly.cihost to idle
+    t =   366.28s     Find the "field" Any
+    t =   366.50s     Check for interrupting elements affecting "field" TextField
+    t =   366.80s     Synthesize event
+    t =   367.45s     Wait for com.northprot.protly.cihost to idle
+    t =   367.74s Checking existence of `"q" Key`
+    t =   369.00s Checking existence of `"Q" Key`
+    t =   369.37s Checking existence of `Any (First Match)`
+    t =   373.47s Checking existence of `Key (First Match)`
+    t =   377.81s Checking existence of `"q" Key`
+    t =   378.29s Checking existence of `"Q" Key`
+    t =   379.65s Checking existence of `Any (First Match)`
+    t =   385.53s Checking existence of `Key (First Match)`
+    t =   390.12s Checking existence of `"q" Key`
+    t =   390.74s Checking existence of `"Q" Key`
+    t =   392.16s Checking existence of `Any (First Match)`
+    t =   399.68s Checking existence of `Key (First Match)`
+    t =   403.47s Waiting 2.0s for "clear" Button to exist
+    t =   404.54s     Checking `Expect predicate `existsNoRetry == 1` for object "clear" Button`
+    t =   404.54s         Checking existence of `"clear" Button`
+    t =   405.41s Tap "clear" Button
+    t =   405.41s     Wait for com.northprot.protly.cihost to idle
+    t =   405.48s     Find the "clear" Button
+    t =   405.99s     Check for interrupting elements affecting "clear" Button
+    t =   406.74s     Synthesize event
+    t =   407.44s     Wait for com.northprot.protly.cihost to idle
+    t =   408.06s Waiting 2.0s for "field" Any to exist
+    t =   409.09s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   409.10s         Checking existence of `"field" Any`
+    t =   410.45s     Checking existence of `"field" Any`
+    t =   414.78s Find the "field" Any
+    t =   419.02s Waiting 2.0s for "dismiss" Button to exist
+    t =   420.06s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   420.06s         Checking existence of `"dismiss" Button`
+    t =   420.27s Tap "dismiss" Button
+    t =   420.27s     Wait for com.northprot.protly.cihost to idle
+    t =   420.27s     Find the "dismiss" Button
+    t =   420.39s     Check for interrupting elements affecting "dismiss" Button
+    t =   420.63s     Synthesize event
+    t =   420.98s     Wait for com.northprot.protly.cihost to idle
+    t =   422.41s Waiting 3.0s for "field" Any to exist
+    t =   423.46s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   423.46s         Checking existence of `"field" Any`
+    t =   423.59s Tap "field" Any
+    t =   423.59s     Wait for com.northprot.protly.cihost to idle
+    t =   423.61s     Find the "field" Any
+    t =   423.68s     Check for interrupting elements affecting "field" TextField
+    t =   423.74s     Synthesize event
+    t =   424.17s     Wait for com.northprot.protly.cihost to idle
+    t =   424.44s Checking existence of `"q" Key`
+    t =   424.65s Checking existence of `"Q" Key`
+    t =   424.77s Checking existence of `Any (First Match)`
+    t =   425.32s Checking existence of `Key (First Match)`
+    t =   426.05s Checking existence of `"q" Key`
+    t =   426.18s Checking existence of `"Q" Key`
+    t =   426.30s Checking existence of `Any (First Match)`
+    t =   426.77s Checking existence of `Key (First Match)`
+    t =   429.25s Checking existence of `"q" Key`
+    t =   429.32s Checking existence of `"Q" Key`
+    t =   429.42s Checking existence of `Any (First Match)`
+    t =   429.96s Checking existence of `Key (First Match)`
+    t =   431.59s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (195.0, 544.0)
+    t =   431.59s     Wait for com.northprot.protly.cihost to idle
+    t =   431.60s     Find the Target Application 'com.northprot.protly.cihost'
+    t =   431.73s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =   431.83s     Synthesize event
+    t =   431.84s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   431.94s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   432.09s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   432.62s     Wait for com.northprot.protly.cihost to idle
+    t =   433.16s Checking existence of `"Allow Paste" Button`
+    t =   433.21s Tap "Allow Paste" Button
+    t =   433.21s     Wait for com.apple.springboard to idle
+    t =   433.21s     Find the "Allow Paste" Button
+    t =   433.26s     Check for interrupting elements affecting "Allow Paste" Button
+    t =   433.32s     Synthesize event
+    t =   433.64s     Wait for com.apple.springboard to idle
+    t =   434.04s Waiting 3.0s for "Allow Paste" Button to not exist
+    t =   435.08s     Checking `Expect predicate `existsNoRetry == 0` for object "Allow Paste" Button`
+    t =   435.08s         Checking existence of `"Allow Paste" Button`
+    t =   442.26s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (49.0, 747.7)
+    t =   442.26s     Wait for com.northprot.protly.cihost to idle
+    t =   442.27s     Find the Target Application 'com.northprot.protly.cihost'
+    t =   442.42s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =   442.54s     Synthesize event
+    t =   442.56s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   442.66s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   442.77s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   443.15s     Wait for com.northprot.protly.cihost to idle
+    t =   444.17s Waiting 2.0s for "dismiss" Button to exist
+    t =   445.18s     Checking `Expect predicate `existsNoRetry == 1` for object "dismiss" Button`
+    t =   445.18s         Checking existence of `"dismiss" Button`
+    t =   445.31s Tap "dismiss" Button
+    t =   445.31s     Wait for com.northprot.protly.cihost to idle
+    t =   445.31s     Find the "dismiss" Button
+    t =   445.39s     Check for interrupting elements affecting "dismiss" Button
+    t =   445.49s     Synthesize event
+    t =   445.82s     Wait for com.northprot.protly.cihost to idle
+    t =   447.15s Waiting 3.0s for "field" Any to exist
+    t =   448.19s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   448.19s         Checking existence of `"field" Any`
+    t =   448.26s Tap "field" Any
+    t =   448.26s     Wait for com.northprot.protly.cihost to idle
+    t =   448.27s     Find the "field" Any
+    t =   448.31s     Check for interrupting elements affecting "field" TextField
+    t =   448.37s     Synthesize event
+    t =   448.78s     Wait for com.northprot.protly.cihost to idle
+    t =   449.05s Checking existence of `"q" Key`
+    t =   449.38s Checking existence of `"Q" Key`
+    t =   449.46s Checking existence of `Any (First Match)`
+    t =   449.73s Checking existence of `Key (First Match)`
+    t =   450.21s Checking existence of `"q" Key`
+    t =   450.31s Checking existence of `"Q" Key`
+    t =   450.41s Checking existence of `Any (First Match)`
+    t =   450.70s Checking existence of `Key (First Match)`
+    t =   451.04s Checking existence of `"q" Key`
+    t =   451.12s Checking existence of `"Q" Key`
+    t =   451.20s Checking existence of `Any (First Match)`
+    t =   451.42s Checking existence of `Key (First Match)`
+    t =   451.87s Waiting 2.0s for "clear" Button to exist
+    t =   452.91s     Checking `Expect predicate `existsNoRetry == 1` for object "clear" Button`
+    t =   452.92s         Checking existence of `"clear" Button`
+    t =   453.09s Tap "clear" Button
+    t =   453.09s     Wait for com.northprot.protly.cihost to idle
+    t =   453.10s     Find the "clear" Button
+    t =   453.24s     Check for interrupting elements affecting "clear" Button
+    t =   453.37s     Synthesize event
+    t =   453.73s     Wait for com.northprot.protly.cihost to idle
+    t =   454.35s Waiting 2.0s for "field" Any to exist
+    t =   455.38s     Checking `Expect predicate `existsNoRetry == 1` for object "field" Any`
+    t =   455.38s         Checking existence of `"field" Any`
+    t =   455.81s Find the "field" Any
+    t =   456.48s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (118.5, 639.5)
+    t =   456.48s     Wait for com.northprot.protly.cihost to idle
+    t =   456.49s     Find the Target Application 'com.northprot.protly.cihost'
+    t =   456.58s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =   456.69s     Synthesize event
+    t =   456.70s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   456.78s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   456.94s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   457.34s     Wait for com.northprot.protly.cihost to idle
+    t =   457.70s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (309.8, 639.5)
+    t =   457.70s     Wait for com.northprot.protly.cihost to idle
+    t =   457.71s     Find the Target Application 'com.northprot.protly.cihost'
+    t =   457.88s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =   458.01s     Synthesize event
+    t =   458.03s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   458.12s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   458.25s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   458.63s     Wait for com.northprot.protly.cihost to idle
+    t =   458.99s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (80.2, 639.5)
+    t =   458.99s     Wait for com.northprot.protly.cihost to idle
+    t =   459.00s     Find the Target Application 'com.northprot.protly.cihost'
+    t =   459.10s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =   459.22s     Synthesize event
+    t =   459.24s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   459.34s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   459.51s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   459.96s     Wait for com.northprot.protly.cihost to idle
+    t =   460.33s Tap Target Application 'com.northprot.protly.cihost'[0.00, 0.00] -> (80.2, 639.5)
+    t =   460.33s     Wait for com.northprot.protly.cihost to idle
+    t =   460.34s     Find the Target Application 'com.northprot.protly.cihost'
+    t =   460.45s     Check for interrupting elements affecting "ProtlyCIHost" Application
+    t =   460.53s     Synthesize event
+    t =   460.55s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   460.68s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   460.78s         Find the Target Application 'com.northprot.protly.cihost'
+    t =   461.16s     Wait for com.northprot.protly.cihost to idle
+** BUILD INTERRUPTED **
+ios-app/CI/run-shots.sh: line 197: 17610 Terminated: 15          "$@"
+LEAK-GUARD pass: no key prefix in 117 files
