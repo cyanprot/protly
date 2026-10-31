@@ -246,15 +246,17 @@ final class KeyboardSourceRulesTests: XCTestCase {
             ("guard action == .space else", "only space takes the trackpad path"),
             ("keyboardContext.isSpaceDragGestureActive", "nothing may move before the hold starts the trackpad"),
             ("host.beginSpaceDrag()", "the first event must commit the word and take the snapshot"),
-            ("trackpad?.track(", "the space drag does not use SpaceTrackpad"),
+            ("drag.move(startX: Double(startLocation.x), startY: Double(startLocation.y)",
+             "the space drag does not go through SpaceDrag with the touch's start (a new touch must reset it)"),
             ("host.adjustTextPosition(by: offset)", "the drag does not move through the controller's override"),
         ] {
             XCTAssertTrue(drag.contains(needle), "handleDrag: \(why) (\(needle))")
         }
         // A new press or the end of a drag drops the trackpad: otherwise the next drag would start from the last
-        // drag's finger position and jump.
-        XCTAssertEqual(matches(#"gesture == \.press \|\| gesture == \.release \|\| gesture == \.end\s*\{\s*trackpad = nil"#,
+        // drag's finger position and jump. A cancelled touch sends neither: SpaceDrag resets on a new start location.
+        XCTAssertEqual(matches(#"gesture == \.press \|\| gesture == \.release \|\| gesture == \.end\s*\{\s*drag\.reset\(\)"#,
                                in: handler).count, 1, "the trackpad is not reset on press, release and end")
+        XCTAssertFalse(handler.contains("SpaceTrackpad?"), "the handler keeps its own trackpad instead of SpaceDrag")
         XCTAssertFalse(handler.contains("textDocumentProxy"), "ProtlyActionHandler touches the proxy itself")
         // The snapshot reads the field before the commit (a read after it may not show it yet) and ends the flip
         // and Undo, as any cursor move does.
