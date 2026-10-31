@@ -153,7 +153,7 @@ private struct Hero: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("protly").font(.largeTitle.bold()).fontDesign(.monospaced)
-            Text("Write Korean, send English.").font(.title3)
+            Text("Polish and translate as you type.").font(.title3)
         }
         .padding(.top, Brand.groupSpacing)
     }
@@ -232,11 +232,11 @@ private struct TryItSection: View {
             .id(Self.fieldID)
             // Plain rows, not buttons: these come only from keys typed on the keyboard, so a button would do nothing.
             VStack(alignment: .leading, spacing: 8) {
-                NumberedRow(number: 1) { Text("Type `dkssud`, then tap the left slot.") }
-                NumberedRow(number: 2) { Text("Type `teh`, then tap the right slot.") }
-                NumberedRow(number: 3) {
+                NumberedRow(number: 1) { Text("Type `teh`, then tap the right slot.") }
+                NumberedRow(number: 2) {
                     Text("After a Replace, tap \(Image(systemName: "arrow.uturn.backward")) Undo.")
                 }
+                NumberedRow(number: 3) { Text("Writing Korean? Type `dkssud`, then tap the left slot.") }
             }
         }
     }
@@ -276,33 +276,29 @@ private struct SaveNoteSteps: View {
 }
 
 /// A sample for the test field: the chip's title, the text it puts in the field and the hint under the field.
-/// Headline first.
+/// Written for an English speaker: Polish first; Korean is the one other language Translate reads so far.
 private enum Sample: CaseIterable {
-    case korean, english, prefixed
+    case english, korean
 
     var title: LocalizedStringKey {
         switch self {
-        case .korean: "Translate"
         case .english: "Polish"
-        case .prefixed: "Other languages"
+        case .korean: "Translate Korean"
         }
     }
 
     var text: String {
         switch self {
-        case .korean: "오늘 고마워"
         case .english: "thank you for invite me, i realy enjoyed it"
-        case .prefixed: "ru: 고마워"
+        case .korean: "오늘 고마워"
         }
     }
 
-    /// The symbol the keyboard's bar shows for the action, embedded in the line.
+    /// The words the keyboard's bar shows for the action.
     var hint: Text {
-        let sparkles = Image(systemName: "sparkles")
-        return switch self {
-        case .korean: Text("Tap \(sparkles) → English.")
-        case .english: Text("Tap \(sparkles) Polish.")
-        case .prefixed: Text("Tap \(sparkles) → Русский.")
+        switch self {
+        case .english: Text("Tap Polish in the bar.")
+        case .korean: Text("Tap → English in the bar.")
         }
     }
 }
