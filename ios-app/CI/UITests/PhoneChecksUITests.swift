@@ -70,16 +70,17 @@ final class PhoneChecksUITests: XCTestCase {
     }
 }
 
-/// A string as checks.py reads it back: in double quotes, with \\, \" and \n escaped. nil is `<unreadable>`.
+/// A string as checks.py reads it back: in double quotes, with \\, \" and \n escaped, and every other line break
+/// (\r, U+0085, U+2028, U+2029) as \n too, so one CHECK stays one line. nil is `<unreadable>`.
 func q(_ s: String?) -> String {
     guard let s else { return "<unreadable>" }
     var r = "\""
-    for ch in s {
-        switch ch {
+    for u in s.unicodeScalars {
+        switch u {
         case "\\": r += "\\\\"
         case "\"": r += "\\\""
-        case "\n": r += "\\n"
-        default: r.append(ch)
+        case "\n", "\r", "\u{85}", "\u{2028}", "\u{2029}": r += "\\n"
+        default: r.unicodeScalars.append(u)
         }
     }
     return r + "\""
@@ -665,6 +666,7 @@ final class PhoneRun {
             return
         }
         let it = Item("probe")
+        registerPasteMonitor()  // the probe tries both Allow Paste paths
         d.clearField()
         if Self.network && send(it) {
             d.type("내일 봐 ")

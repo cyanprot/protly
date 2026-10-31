@@ -196,7 +196,20 @@ extension PhoneRun {
         let t0 = Date()
         d.tapSlot(.center, settle: 0)
         a.tapped = true
-        a.busy = readPanel(row1, item, save: saveBusy ? "busy" : nil).seen?.contains(busy)
+        // The loading panel shows at once (act() sets it before the request); poll up to 1.5 s for its label, and
+        // stop when a result button is already there.
+        let busyEnd = Date().addingTimeInterval(1.5)
+        repeat {
+            let r = readPanel(row1, item, save: nil)
+            guard let seen = r.seen else { break }
+            let band = d.panelButtonBand(row1: row1)
+            if seen.contains(busy) || seen.word("Insert", in: band) != nil || seen.word("Retry", in: band) != nil {
+                a.busy = seen.contains(busy)
+                if saveBusy { _ = savePanel(r, item, "busy") }
+                break
+            }
+            a.busy = false
+        } while Date() < busyEnd
         let w = waitPanel(row1, item, for: ["Insert", "Retry"], name: "result")
         a.panel = w.read.seen?.text
         guard let hit = w.label, let rect = w.rect else {
@@ -274,6 +287,7 @@ extension PhoneRun {
             it.markUnreadable("translate: full access not on (\(Self.fullAccessHow))")
             return
         }
+        context(korean: true, it)  // the flip just made the previous word English
         tryAction(it, Draft(code: nil, text: "오늘 정말 고마워 "), center: "Translate", busy: "Translating",
                   needBusy: false, passes: Rules.latin)
         resetKeyboard()
@@ -322,8 +336,8 @@ extension PhoneRun {
         }
         simple("8.5-9", Draft(code: nil, text: "me encanta el color de tu chaqueta, donde la conprastes? jaja "),
                korean: false, center: "Polish", busy: "Polishing") {
-            Rules.hasNoCase($0, "color") && Rules.hasNoCase($0, "compraste") && Rules.hasNoCase($0, "jaja")
-                && !Rules.hasNoCase($0, "colour")
+            Rules.hasNoCase($0, "color") && Rules.hasWord($0, "compraste") && Rules.hasNoCase($0, "jaja")
+                && !Rules.hasNoCase($0, "colour") && !Rules.hasNoCase($0, "conprastes")
         }
 
         // 8.5-10: seconds from tap to Insert for 8.5-1, two tries (a second, Cancel instead of Insert, if 8.5-1 had one).
@@ -653,7 +667,7 @@ extension PhoneRun {
         a.log("no input with the placeholder \(q(placeholder)): taking text input \(index)")
         let types = [XCUIElement.ElementType.textField.rawValue, XCUIElement.ElementType.textView.rawValue]
         return a.app.descendants(matching: .any)
-            .matching(NSPredicate(format: "elementType IN %@", types)).element(boundBy: index)
+            .matching(NSPredicate(format: "elementType IN %@", types as NSArray)).element(boundBy: index)
     }
 
     /// The About me counter, `N / 1000`.
@@ -764,7 +778,13 @@ enum Rules {
 
     static func hasNoCase(_ s: String, _ sub: String) -> Bool { s.range(of: sub, options: .caseInsensitive) != nil }
 
+    /// Case-insensitive, whole word.
+    static func hasWord(_ s: String, _ word: String) -> Bool {
+        s.range(of: "(?<!\\w)" + NSRegularExpression.escapedPattern(for: word) + "(?!\\w)",
+                options: [.regularExpression, .caseInsensitive]) != nil
+    }
+
     static func aboutMe(_ s: String) -> Bool {
-        s.contains("Moonbeam Kiln") && !hasNoCase(s, "pottery") && !hasNoCase(s, "Victoria")
+        s.contains("Moonbeam Kiln") && !hasNoCase(s, "pottery") && !hasNoCase(s, "Victoria") && !hangul(s)
     }
 }

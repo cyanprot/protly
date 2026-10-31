@@ -421,6 +421,16 @@ class NetworkResolveTests(unittest.TestCase):
         self.assertEqual(resolve(good).status, "PASS")
         self.assertEqual(resolve(good.replace("compraste", "conprastes")).status, "FAIL")
 
+    def test_spanish_polish_replaces_the_draft(self):
+        appended = ('CHECK 8.5-9 PENDING out#1="me encanta el color de tu chaqueta, donde la conprastes? jaja '
+                    'Me encanta el color de tu chaqueta, ¿dónde la compraste? Jaja"')
+        self.assertEqual(resolve(appended).status, "FAIL")
+        self.assertEqual(resolve('CHECK 8.5-9 PENDING out#1="el color, ¿dónde la comprastes? jaja"').status, "FAIL")
+
+    def test_about_me_insert_replaces_the_korean_draft(self):
+        c = resolve('CHECK 7.7-2 PENDING out#1="우리 문빔 킬른 다음 주에 오픈해 Moonbeam Kiln opens next week"')
+        self.assertEqual(c.status, "FAIL")
+
     def test_about_me_name_and_nothing_else(self):
         good = 'CHECK 7.7-2 PENDING out#1="Moonbeam Kiln opens next week"'
         self.assertEqual(resolve(good).status, "PASS")

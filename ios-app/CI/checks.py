@@ -219,6 +219,12 @@ def contains(sub, case=True):
     return (f"contains {sub!r}", lambda s: _nfc(sub).casefold() in _nfc(s).casefold())
 
 
+def contains_word(word):
+    """Case-insensitive, whole word: `comprastes` is not `compraste`."""
+    pattern = re.compile(r"(?<!\w)" + re.escape(word) + r"(?!\w)", re.IGNORECASE)
+    return (f"contains the word {word!r}", lambda s: pattern.search(_nfc(s)) is not None)
+
+
 def lacks(sub):
     """Case-insensitive: `KO:` and `Pottery` count."""
     return (f"no {sub!r}", lambda s: _nfc(sub).casefold() not in _nfc(s).casefold())
@@ -229,7 +235,7 @@ HANGUL = ("Hangul", has_hangul)
 NO_HANGUL = ("no Hangul", lambda s: not has_hangul(s))
 KANA_OR_KANJI = ("kana or kanji", has_kana_or_kanji)
 LATIN = ("Latin", is_latin)
-ABOUT_ME = [contains("Moonbeam Kiln"), lacks("pottery"), lacks("Victoria")]
+ABOUT_ME = [contains("Moonbeam Kiln"), lacks("pottery"), lacks("Victoria"), NO_HANGUL]
 
 # ID -> output group -> the rules every try of that group is held to. The test writes `<group>#<n>="..."` per try
 # (n = 1, and 2 after a retry); a group passes when one try passes all its rules. "No Hangul" on a translation into
@@ -243,8 +249,8 @@ RULES = {
     "8.5-6": {"out": [LATIN]},
     "8.5-7": {"out": [HANGUL, contains("ㅋㅋ"), contains("돼"), contains("말해줘"), lacks("ko:")]},
     "8.5-8": {"out": [HANGUL, lacks("ko:")]},
-    "8.5-9": {"out": [contains("color", case=False), contains("compraste", case=False), contains("jaja", case=False),
-                      lacks("colour")]},
+    "8.5-9": {"out": [contains("color", case=False), contains_word("compraste"), contains("jaja", case=False),
+                      lacks("colour"), lacks("conprastes")]},
     "7.7-2": {"out": ABOUT_ME},
     "7.7-3": {"panel": [HANGUL], "out": ABOUT_ME},
 }
