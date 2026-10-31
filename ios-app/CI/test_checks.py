@@ -295,5 +295,256 @@ class LeakGuardTests(unittest.TestCase):
             self.assertNotEqual(self.guard(os.path.join(d, "nope")).returncode, 0)
 
 
+def resolve(line):
+    """One PENDING network line through assemble(), the way checks.py sees it."""
+    return {c.id: c for c in checks.assemble(line + "\n", "", "")}[line.split()[1]]
+
+
+class ScriptRuleTests(unittest.TestCase):
+    """Plan Task 2.3: the script rules for model output."""
+
+    def test_cyrillic(self):
+        self.assertTrue(checks.has_cyrillic("Спасибо"))
+        self.assertTrue(checks.has_cyrillic("Ѐ"))
+        self.assertTrue(checks.has_cyrillic("ӿ"))
+        self.assertFalse(checks.has_cyrillic("spasibo"))
+        self.assertFalse(checks.has_cyrillic("Ԁ"))
+
+    def test_hangul_syllables_and_compatibility_jamo(self):
+        self.assertTrue(checks.has_hangul("안녕"))
+        self.assertTrue(checks.has_hangul("ㅋㅋ"))
+        self.assertTrue(checks.has_hangul("가"))
+        self.assertTrue(checks.has_hangul("힣"))
+        self.assertTrue(checks.has_hangul("ㄱ"))
+        self.assertTrue(checks.has_hangul("ㆎ"))
+        self.assertFalse(checks.has_hangul("hello"))
+        self.assertFalse(checks.has_hangul("㄰"))
+
+    def test_nfd_hangul_counts_as_hangul(self):
+        # Conjoining jamo (U+1100...) are outside the plan's ranges; NFC composes them into syllables first.
+        self.assertTrue(checks.has_hangul(unicodedata.normalize("NFD", "봐")))
+
+    def test_kana_or_kanji(self):
+        self.assertTrue(checks.has_kana_or_kanji("あした"))
+        self.assertTrue(checks.has_kana_or_kanji("カタカナ"))
+        self.assertTrue(checks.has_kana_or_kanji("明日"))
+        self.assertTrue(checks.has_kana_or_kanji("぀"))
+        self.assertTrue(checks.has_kana_or_kanji("鿿"))
+        self.assertFalse(checks.has_kana_or_kanji("ashita"))
+        self.assertFalse(checks.has_kana_or_kanji("내일"))
+
+    def test_latin_needs_a_letter_and_no_hangul(self):
+        self.assertTrue(checks.is_latin("See you at 3 tomorrow"))
+        self.assertFalse(checks.is_latin("3:00"))
+        self.assertFalse(checks.is_latin("See you 내일"))
+        self.assertFalse(checks.is_latin("ㅋ ok"))
+        self.assertFalse(checks.is_latin(""))
+
+    def test_every_network_id_has_rules_or_is_written_by_the_test(self):
+        written = {"7.7-1", "7.7-4", "7.7-5", "7.7-6", "8.5-10"}  # not model output: the test writes the status
+        for i in checks.NETWORK_IDS:
+            self.assertIn(i, checks.EXPECTED_IDS)
+            self.assertTrue(i in checks.RULES or i in written, i)
+
+
+class NetworkResolveTests(unittest.TestCase):
+    """PENDING network lines: the test's `group#n="..."` outputs against RULES; one retry, two FAILs is a FAIL."""
+
+    def test_russian_insert_passes(self):
+        c = resolve('CHECK 8.5-1 PENDING translating=yes out#1="Спасибо за конспект, ты меня спасла." undo=ok')
+        self.assertEqual(c.status, "PASS", c.evidence)
+        self.assertIn("out#1 ok", c.evidence)
+        self.assertIn("undo=ok", c.evidence)
+
+    def test_russian_with_the_code_left_in_fails(self):
+        c = resolve('CHECK 8.5-1 PENDING out#1="ru: Спасибо, ты меня спасла."')
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("ru:", c.evidence)
+
+    def test_russian_with_the_draft_left_in_fails(self):
+        c = resolve('CHECK 8.5-1 PENDING out#1="누나 노트 Спасибо, ты меня спасла."')
+        self.assertEqual(c.status, "FAIL")
+
+    def test_masculine_spas_is_not_spasla(self):
+        self.assertEqual(resolve('CHECK 8.5-1 PENDING out#1="Ты меня спас."').status, "FAIL")
+
+    def test_retry_that_passes_is_pass_with_both_outputs(self):
+        c = resolve('CHECK 8.5-4 PENDING out#1="Estoy muy cansada hoy" out#2="Hoy estoy muy cansado"')
+        self.assertEqual(c.status, "PASS", c.evidence)
+        self.assertIn("cansada", c.evidence)
+        self.assertIn("out#1 fails", c.evidence)
+        self.assertIn("out#2 ok", c.evidence)
+
+    def test_two_fails_is_fail(self):
+        c = resolve('CHECK 8.5-9 PENDING out#1="the colour" out#2="el colour, jaja"')
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("out#2 fails", c.evidence)
+
+    def test_no_output_is_fail_unreadable(self):
+        c = resolve("CHECK 8.5-5 PENDING translating=yes")
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("unreadable", c.evidence)
+
+    def test_escaped_output_is_unescaped(self):
+        self.assertEqual(resolve(r'CHECK 8.5-5 PENDING out#1="He said \"see you\" at 3"').status, "PASS")
+
+    def test_japanese(self):
+        self.assertEqual(resolve('CHECK 8.5-3 PENDING out#1="明日時間ある？一緒にご飯食べよう笑"').status, "PASS")
+        self.assertEqual(resolve('CHECK 8.5-3 PENDING out#1="明日時間ある？ご飯行こう lol"').status, "FAIL")
+        self.assertEqual(resolve('CHECK 8.5-3 PENDING out#1="明日時間ある？ご飯行こう ㅋㅋ"').status, "FAIL")
+        self.assertEqual(resolve('CHECK 8.5-3 PENDING out#1="ashita jikan aru?"').status, "FAIL")
+
+    def test_no_prefix_and_ok_prefix_are_latin(self):
+        self.assertEqual(resolve('CHECK 8.5-5 PENDING out#1="See you at 3 tomorrow"').status, "PASS")
+        self.assertEqual(resolve('CHECK 8.5-6 PENDING out#1="ok: see you tomorrow"').status, "PASS")
+        self.assertEqual(resolve('CHECK 8.5-6 PENDING out#1="내일 봐"').status, "FAIL")
+        self.assertEqual(resolve('CHECK 6.8-11 PENDING flip=ok out#1="See you tomorrow"').status, "PASS")
+
+    def test_korean_polish(self):
+        good = 'CHECK 8.5-7 PENDING polishing=yes out#1="낼 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해줘"'
+        self.assertEqual(resolve(good).status, "PASS")
+        self.assertEqual(resolve(good.replace("ㅋㅋ ", "")).status, "FAIL")
+        self.assertEqual(resolve(good.replace("말해줘", "말해죠")).status, "FAIL")
+        self.assertEqual(resolve(good.replace('out#1="', 'out#1="ko: ')).status, "FAIL")
+        self.assertEqual(resolve('CHECK 8.5-7 PENDING out#1="Are you free tomorrow? lol"').status, "FAIL")
+
+    def test_long_korean_polish(self):
+        self.assertEqual(resolve('CHECK 8.5-8 PENDING out#1="오늘 진짜 길었어.\\n\\n내일 아침에 전화할게."').status, "PASS")
+        self.assertEqual(resolve('CHECK 8.5-8 PENDING out#1="KO: 오늘 진짜 길었어"').status, "FAIL")
+
+    def test_spanish_polish(self):
+        good = 'CHECK 8.5-9 PENDING out#1="Me encanta el color de tu chaqueta, ¿dónde la compraste? Jaja"'
+        self.assertEqual(resolve(good).status, "PASS")
+        self.assertEqual(resolve(good.replace("compraste", "conprastes")).status, "FAIL")
+
+    def test_about_me_name_and_nothing_else(self):
+        good = 'CHECK 7.7-2 PENDING out#1="Moonbeam Kiln opens next week"'
+        self.assertEqual(resolve(good).status, "PASS")
+        self.assertEqual(resolve('CHECK 7.7-2 PENDING out#1="Moonbeam kiln opens next week"').status, "FAIL")
+        self.assertEqual(resolve('CHECK 7.7-2 PENDING out#1="Our pottery studio Moonbeam Kiln opens"').status, "FAIL")
+        self.assertEqual(resolve('CHECK 7.7-2 PENDING out#1="Moonbeam Kiln opens in Victoria"').status, "FAIL")
+        self.assertEqual(resolve('CHECK 7.7-2 PENDING out#1="Munbim Killeun opens next week"').status, "FAIL")
+
+    def test_two_groups_must_both_pass(self):
+        line = 'CHECK 7.7-3 PENDING panel#1="어제 사진 보내줄 수 있어?" four=ok out#1="Moonbeam Kiln opens next week"'
+        self.assertEqual(resolve(line).status, "PASS")
+        self.assertEqual(resolve(line.replace("어제 사진 보내줄 수 있어?", "Can you send me the photos?")).status, "FAIL")
+        self.assertEqual(resolve(line.replace("Moonbeam Kiln", "Munbim Kilreun")).status, "FAIL")
+        missing = resolve('CHECK 7.7-3 PENDING panel#1="어제 사진 보내줄 수 있어?"')
+        self.assertEqual(missing.status, "FAIL")
+        self.assertIn("unreadable", missing.evidence)
+
+    def test_status_the_test_wrote_is_kept(self):
+        # A FAIL for a step the test judged itself (Undo, a missing label) is not overturned by good output.
+        c = resolve('CHECK 8.5-1 FAIL out#1="Ты меня спасла." undo="ru: x" want "ru: y"')
+        self.assertEqual(c.status, "FAIL")
+        self.assertEqual(resolve("CHECK 8.5-3 SKIP no network key").status, "SKIP")
+
+
+class WriteSecretsTests(unittest.TestCase):
+    """write-secrets.sh: the key reaches Secrets.swift through make-secrets.sh in a temporary HOME, never output."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        root = self.tmp.name
+        # A throwaway copy of the two scripts in a git repo shaped like this one, so the real Secrets.swift is
+        # never touched.
+        self.repo = os.path.join(root, "repo")
+        for sub in ("ios-app/CI", "ios-app/scripts", "ios-app/Sources/ProtlyKeyboard"):
+            os.makedirs(os.path.join(self.repo, sub))
+        for rel in ("ios-app/CI/write-secrets.sh", "ios-app/scripts/make-secrets.sh"):
+            with open(os.path.join(HERE, "..", "..", rel), encoding="utf-8") as src, \
+                    open(os.path.join(self.repo, rel), "w", encoding="utf-8") as dst:
+                dst.write(src.read())
+        with open(os.path.join(self.repo, ".gitignore"), "w", encoding="utf-8") as f:
+            f.write("ios-app/Sources/ProtlyKeyboard/Secrets.swift\n")
+        subprocess.run(["git", "init", "-q", self.repo], check=True)
+        self.secrets = os.path.join(self.repo, "ios-app/Sources/ProtlyKeyboard/Secrets.swift")
+        self.env_file = os.path.join(root, "github-env")
+        open(self.env_file, "w").close()
+        self.tmpdir = os.path.join(root, "t")
+        os.makedirs(self.tmpdir)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_script(self, key):
+        env = {"PATH": os.environ["PATH"], "HOME": os.path.join(self.tmp.name, "home"), "GITHUB_ENV": self.env_file,
+               "TMPDIR": self.tmpdir}
+        if key is not None:
+            env["PROTLY_API_KEY"] = key
+        return subprocess.run(["bash", os.path.join(self.repo, "ios-app/CI/write-secrets.sh")],
+                              capture_output=True, text=True, env=env)
+
+    def github_env(self):
+        with open(self.env_file, encoding="utf-8") as f:
+            return f.read()
+
+    def test_key_is_written_and_never_printed(self):
+        key = FAKE_KEY + "-Abc_123"
+        out = self.run_script(key)
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        self.assertNotIn(key, out.stdout + out.stderr)
+        self.assertNotIn("ant-", out.stdout + out.stderr)
+        with open(self.secrets, encoding="utf-8") as f:
+            self.assertIn(f'apiKey = "{key}"', f.read())
+        self.assertEqual(self.github_env(), "HAS_KEY=true\n")
+        self.assertNotIn(key, self.github_env())
+        # The temporary HOME with the key file is gone.
+        self.assertEqual(os.listdir(self.tmpdir), [])
+
+    def test_empty_secret_keeps_the_stand_in(self):
+        for key in (None, ""):
+            out = self.run_script(key)
+            self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+            self.assertFalse(os.path.exists(self.secrets))
+            self.assertIn("no network key", out.stdout)
+        self.assertEqual(self.github_env(), "HAS_KEY=false\nHAS_KEY=false\n")
+
+    def test_malformed_key_fails_without_printing_it(self):
+        out = self.run_script("not-a-key-SECRETVALUE")
+        self.assertNotEqual(out.returncode, 0)
+        self.assertNotIn("SECRETVALUE", out.stdout + out.stderr)
+        self.assertFalse(os.path.exists(self.secrets))
+        self.assertNotIn("HAS_KEY=true", self.github_env())
+        self.assertEqual(os.listdir(self.tmpdir), [])
+
+
+class WorkflowTests(unittest.TestCase):
+    """keyboard-shots.yml (plan Task 2.1): the key reaches one step, and a run with the key never saves the cache."""
+
+    @classmethod
+    def setUpClass(cls):
+        import yaml  # the verify command and the workflow's test step install it
+        with open(os.path.join(HERE, "..", "..", ".github", "workflows", "keyboard-shots.yml"), encoding="utf-8") as f:
+            cls.text = f.read()
+        cls.steps = yaml.safe_load(cls.text)["jobs"]["shots"]["steps"]
+
+    def test_secret_goes_to_the_write_secrets_step_only(self):
+        self.assertEqual(self.text.count("secrets.PROTLY_API_KEY"), 1)
+        users = [s for s in self.steps if "secrets.PROTLY_API_KEY" in str(s)]
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0]["env"], {"PROTLY_API_KEY": "${{ secrets.PROTLY_API_KEY }}"})
+        self.assertIn("write-secrets.sh", users[0]["run"])
+
+    def test_cache_is_restore_then_save_without_the_key(self):
+        uses = [s.get("uses", "") for s in self.steps]
+        self.assertFalse([u for u in uses if u.startswith("actions/cache@")], "the combined action saves on its own")
+        restore = [i for i, u in enumerate(uses) if u.startswith("actions/cache/restore@")]
+        save = [i for i, u in enumerate(uses) if u.startswith("actions/cache/save@")]
+        self.assertEqual((len(restore), len(save)), (1, 1))
+        secrets_step = next(i for i, s in enumerate(self.steps) if "write-secrets.sh" in s.get("run", ""))
+        # The cache key is hashed before Secrets.swift exists.
+        self.assertLess(restore[0], secrets_step)
+        self.assertIn("env.HAS_KEY == 'false'", self.steps[save[0]]["if"])  # unset (the step failed) never saves
+
+    def test_publish_goes_through_the_leak_guard(self):
+        publish = [s for s in self.steps if "bash ios-app/CI/publish-shots.sh" in s.get("run", "")]
+        self.assertEqual(len(publish), 1)
+        with open(os.path.join(HERE, "publish-shots.sh"), encoding="utf-8") as f:
+            script = f.read()
+        self.assertLess(script.index("leak-guard.sh"), script.index("git push"))
+
+
 if __name__ == "__main__":
     unittest.main()

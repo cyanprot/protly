@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assembles the phone checks of one CI run (docs/plans/2026-10-30-sim-phone-checks.md, Tasks 1.2-1.6).
+"""Assembles the phone checks of one CI run (docs/plans/2026-10-30-sim-phone-checks.md, Tasks 1.2-1.6 and 2.3).
 
 Usage: checks.py <dir>
 
@@ -8,7 +8,8 @@ Reads from <dir>:
 - ui-log.txt: `MARK <name> <epoch seconds>` lines (relaunch-before/-after, mem-start/-end).
 - mem.txt: `<epoch> <pid> <method> <kb>` samples written by memsample.py (`<epoch> - none -` with no process).
 
-Resolves the PENDING lines (6.8-9 relaunch, 6.8-10 memory) from the marks and the samples, adds a FAIL `unreadable`
+Resolves the PENDING lines (6.8-9 relaunch, 6.8-10 memory) from the marks and the samples, and the network items'
+PENDING lines (model output as `<group>#<try>="..."`) with the script rules in RULES; adds a FAIL `unreadable`
 line for every expected ID without a line (and for every malformed line), sorts by ID, keeps the test's own lines in
 checks-raw.txt and rewrites checks.txt with the final lines. Prints `CHECKS`, the lines and
 `CHECKS pass N fail N record N skip N`. Exit 1 when any line is FAIL.
@@ -20,9 +21,11 @@ import sys
 import unicodedata
 from dataclasses import dataclass
 
-# Every ID of the plan's Task 1.3 table.
-EXPECTED_IDS = [f"6.8-{i}" for i in range(1, 12)] + ["ws-1", "ws-2", "ws-3"] + [
+# Every ID of the plan's Task 1.3 table (Sprint 001) and Task 2.3 table (Sprint 002, network).
+OFFLINE_IDS = [f"6.8-{i}" for i in range(1, 12)] + ["ws-1", "ws-2", "ws-3"] + [
     "8.5-1o", "8.5-2o", "8.5-6o", "8.5-7o", "8.5-8o", "8.5-9o", "icon"]
+NETWORK_IDS = ["6.8-11"] + [f"8.5-{i}" for i in (1, 3, 4, 5, 6, 7, 8, 9, 10)] + [f"7.7-{i}" for i in range(1, 7)]
+EXPECTED_IDS = OFFLINE_IDS + [i for i in NETWORK_IDS if i not in OFFLINE_IDS]
 
 STATUSES = ("PASS", "FAIL", "RECORD", "SKIP", "PENDING")
 # Preferred memory method first (memsample.py writes these names).
@@ -63,12 +66,17 @@ def parse_line(line):
     return Check(parts[1], parts[2], evidence)
 
 
+def unescape(value):
+    """Backslash escapes as the Swift side's q() writes them."""
+    return re.sub(r"\\(.)", lambda e: "\n" if e.group(1) == "n" else e.group(1), value)
+
+
 def quoted_field(text, name):
     """The value of name="..." in a line (backslash escapes as the Swift side writes them), or None."""
     m = re.search(name + r'="((?:[^"\\]|\\.)*)"', text)
     if not m:
         return None
-    return re.sub(r"\\(.)", lambda e: "\n" if e.group(1) == "n" else e.group(1), m.group(1))
+    return unescape(m.group(1))
 
 
 def same_text(a, b):
@@ -181,7 +189,92 @@ def resolve_memory(check, marks, samples):
                  f"limit{resolution})")
 
 
-RESOLVERS = {"6.8-9": resolve_relaunch, "6.8-10": resolve_memory}
+# Script rules for model output (plan Task 2.3). Text is NFC first: conjoining jamo compose into syllables.
+def _nfc(s):
+    return unicodedata.normalize("NFC", s)
+
+
+def has_cyrillic(s):
+    return any(0x0400 <= ord(c) <= 0x04FF for c in _nfc(s))
+
+
+def has_hangul(s):
+    return any(0xAC00 <= ord(c) <= 0xD7A3 or 0x3131 <= ord(c) <= 0x318E for c in _nfc(s))
+
+
+def has_kana_or_kanji(s):
+    return any(0x3040 <= ord(c) <= 0x30FF or 0x4E00 <= ord(c) <= 0x9FFF for c in _nfc(s))
+
+
+def is_latin(s):
+    return any(c.isascii() and c.isalpha() for c in s) and not has_hangul(s)
+
+
+def contains(sub, case=True):
+    if case:
+        return (f"contains {sub!r}", lambda s: _nfc(sub) in _nfc(s))
+    return (f"contains {sub!r}", lambda s: _nfc(sub).casefold() in _nfc(s).casefold())
+
+
+def lacks(sub):
+    """Case-insensitive: `KO:` and `Pottery` count."""
+    return (f"no {sub!r}", lambda s: _nfc(sub).casefold() not in _nfc(s).casefold())
+
+
+CYRILLIC = ("Cyrillic", has_cyrillic)
+HANGUL = ("Hangul", has_hangul)
+NO_HANGUL = ("no Hangul", lambda s: not has_hangul(s))
+KANA_OR_KANJI = ("kana or kanji", has_kana_or_kanji)
+LATIN = ("Latin", is_latin)
+ABOUT_ME = [contains("Moonbeam Kiln"), lacks("pottery"), lacks("Victoria")]
+
+# ID -> output group -> the rules every try of that group is held to. The test writes `<group>#<n>="..."` per try
+# (n = 1, and 2 after a retry); a group passes when one try passes all its rules. "No Hangul" on a translation into
+# another script is how the field shows only the translation (the draft was Hangul).
+RULES = {
+    "6.8-11": {"out": [LATIN]},
+    "8.5-1": {"out": [CYRILLIC, NO_HANGUL, lacks("ru:"), contains("спасла")]},
+    "8.5-3": {"out": [KANA_OR_KANJI, NO_HANGUL, lacks("ㅋ"), lacks("lol")]},
+    "8.5-4": {"out": [contains("cansado", case=False), lacks("cansada"), NO_HANGUL]},
+    "8.5-5": {"out": [LATIN]},
+    "8.5-6": {"out": [LATIN]},
+    "8.5-7": {"out": [HANGUL, contains("ㅋㅋ"), contains("돼"), contains("말해줘"), lacks("ko:")]},
+    "8.5-8": {"out": [HANGUL, lacks("ko:")]},
+    "8.5-9": {"out": [contains("color", case=False), contains("compraste", case=False), contains("jaja", case=False),
+                      lacks("colour")]},
+    "7.7-2": {"out": ABOUT_ME},
+    "7.7-3": {"panel": [HANGUL], "out": ABOUT_ME},
+}
+
+TRY = re.compile(r'(?<![\w#])([a-z]+)#(\d+)="((?:[^"\\]|\\.)*)"')
+
+
+def tries(evidence):
+    """{group: [(n, text), ...]} from the `<group>#<n>="..."` pairs of a line, in order."""
+    found = {}
+    for m in TRY.finditer(evidence):
+        found.setdefault(m.group(1), []).append((int(m.group(2)), unescape(m.group(3))))
+    return found
+
+
+def resolve_rules(check, marks, samples):
+    found = tries(check.evidence)
+    missing = [g for g in RULES[check.id] if g not in found]
+    if missing:
+        return unreadable(check.id, f"no {'/'.join(missing)} output in {check.evidence[:200]!r}")
+    verdicts = []
+    passed = True
+    for group, rules in RULES[check.id].items():
+        group_ok = False
+        for n, text in found[group]:
+            fails = [name for name, ok in rules if not ok(text)]
+            verdicts.append(f"{group}#{n} " + ("ok" if not fails else "fails " + ", ".join(fails)))
+            group_ok = group_ok or not fails
+        passed = passed and group_ok
+    return Check(check.id, "PASS" if passed else "FAIL", f"{check.evidence} => {'; '.join(verdicts)}")
+
+
+RESOLVERS = {"6.8-9": resolve_relaunch, "6.8-10": resolve_memory, **{i: resolve_rules for i in RULES}}
 
 
 def assemble(checks_text, log_text, mem_text):
