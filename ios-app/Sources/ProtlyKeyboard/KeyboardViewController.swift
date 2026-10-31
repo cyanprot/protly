@@ -316,13 +316,17 @@ final class KeyboardViewController: KeyboardInputViewController {
         mode.panel = .loading(action)
         actionTask?.cancel()
         actionTask = Task { [weak self] in
-            let result = await ActionClient.run(action, text: text)
-            guard let self, !Task.isCancelled else { return }
-            switch result {
-            case .success(let r):
-                mode.panel = .result(action, r, original: original, isSelection: isSelection)
-            case .failure(let e):
-                mode.panel = .failed(e.message, retry: action)
+            // self is bound per update, never before the loop: a torn-down controller is not held for the call.
+            for await update in ActionClient.run(action, text: text) {
+                guard let self, !Task.isCancelled else { return }
+                switch update {
+                case .partial:
+                    continue
+                case .done(let r):
+                    mode.panel = .result(action, r, original: original, isSelection: isSelection)
+                case .failed(let e):
+                    mode.panel = .failed(e.message, retry: action)
+                }
             }
         }
     }

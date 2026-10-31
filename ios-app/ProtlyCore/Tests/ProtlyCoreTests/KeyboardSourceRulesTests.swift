@@ -304,6 +304,16 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertTrue(bar.contains("accessibilityReduceMotion"), "ProtlyBar.swift has no Reduce Motion form")
     }
 
+    /// keyboard-ui 003: ActionClient stays nonisolated, so the download and the parsing run off the main actor, and
+    /// it reads the reply only through ProtlyCore's stream driver.
+    func testActionClientIsNotOnTheMainActor() throws {
+        guard let client = try sources().first(where: { $0.name == "ActionClient.swift" })?.text else {
+            return XCTFail("ActionClient.swift not found")
+        }
+        XCTAssertFalse(client.contains("@MainActor"), "ActionClient.swift must not be on the main actor")
+        XCTAssertTrue(client.contains("ActionAPI.updates"), "ActionClient.swift must read the reply through ActionAPI.updates")
+    }
+
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {
         let line = ns.lineRange(for: r)
         return "\(ns.substring(to: r.location).components(separatedBy: "\n").count): "

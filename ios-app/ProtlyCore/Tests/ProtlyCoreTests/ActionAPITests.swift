@@ -14,6 +14,7 @@ final class ActionAPITests: XCTestCase {
         XCTAssertEqual((b["thinking"] as? [String: String])?["type"], "between_tools")
         XCTAssertEqual(b["system"] as? String, "SYS")
         XCTAssertNil(b["temperature"])
+        XCTAssertEqual(b["stream"] as? Bool, true)
         let msg = (b["messages"] as! [[String: Any]])[0]
         XCTAssertEqual(msg["content"] as? String, "MODE: in\n\nTEXT:\nsee you soon")
     }
@@ -23,6 +24,8 @@ final class ActionAPITests: XCTestCase {
             let b = json(try ActionAPI.body(mode: mode, text: "x", system: "S"))
             XCTAssertEqual(b["model"] as? String, "claude-opus-5-5")
             XCTAssertEqual((b["thinking"] as? [String: String])?["type"], "adaptive")
+            XCTAssertEqual(b["stream"] as? Bool, true)
+            XCTAssertEqual(b["max_tokens"] as? Int, 16000)
             let msg = (b["messages"] as! [[String: Any]])[0]
             let target = mode == .out ? "\nTARGET: English" : ""
             XCTAssertEqual(msg["content"] as? String, "MODE: \(mode.rawValue)\(target)\n\nDRAFT:\nx")
@@ -72,6 +75,32 @@ final class ActionAPITests: XCTestCase {
         XCTAssertEqual(kind(529, "{}"), .overloaded)
         XCTAssertEqual(kind(503, "{}"), .server)
         XCTAssertEqual(kind(400, "{}"), .badRequest)
+    }
+
+    /// The part of parse after the status, shared by the whole-body path and the stream.
+    func testResultFromTheTextAndTheStopReason() {
+        let text = #"{"translation":"Hi","back_translation":"안녕"}"#
+        let ok = ActionResult(translation: "Hi", backTranslation: "안녕")
+        XCTAssertEqual(try ActionAPI.result(text: text, stopReason: "end_turn").get(), ok)
+        XCTAssertEqual(try ActionAPI.result(text: text, stopReason: nil).get(), ok)
+        XCTAssertEqual(ActionAPI.result(text: text, stopReason: "refusal").failureKind, .refused)
+        XCTAssertEqual(ActionAPI.result(text: text, stopReason: "max_tokens").failureKind, .truncated)
+        XCTAssertEqual(ActionAPI.result(text: #"{"translation":"Hi""#, stopReason: "end_turn").failureKind, .parse)
+        XCTAssertEqual(ActionAPI.result(text: #"{"translation":" ","back_translation":""}"#, stopReason: nil).failureKind, .parse)
+    }
+
+    /// A stream's error event maps through the same table as an error body, by the status its type stands for.
+    func testStreamErrorTypesStandForTheirStatus() {
+        let table: [(String, Int, ActionError.Kind)] = [
+            ("invalid_request_error", 400, .badRequest), ("authentication_error", 401, .auth),
+            ("permission_error", 403, .auth), ("not_found_error", 404, .badRequest),
+            ("request_too_large", 413, .badRequest), ("rate_limit_error", 429, .rate), ("api_error", 500, .server),
+            ("overloaded_error", 529, .overloaded), ("something_new", 500, .server), ("", 500, .server),
+        ]
+        for (type, status, kind) in table {
+            XCTAssertEqual(ActionAPI.status(forStreamError: type), status, type)
+            XCTAssertEqual(ActionAPI.kind(status: status, body: Data()), kind, type)
+        }
     }
 }
 

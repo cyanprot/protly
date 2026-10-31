@@ -132,6 +132,47 @@ final class ActionAPIHostileTests: XCTestCase {
         }
     }
 
+    /// A streamed reply that is junk, cut off or an echo ends in one fixed error: no trap, no raw text shown.
+    func testHostileStreamsEndInAFixedError() async throws {
+        let echo = #"{"type": "error", "error": {"type": "invalid_request_error", "message": "sk-ant-SECRET USERTEXT"}}"#
+        let streams: [[UInt8]] = [
+            [0xFF, 0xFE, 0x00, 0x0A, 0x0A, 0x80, 0x0D, 0x0A],
+            Array("data: {\"type\": \"content_block_delta\", \"delta\": {\"type\": \"text_delta\", \"text\": \"\u{FFFF}".utf8) + [0xC3, 0x28, 0x0A, 0x0A],
+            Array(("event: error\ndata: " + echo + "\n\n").utf8),
+            Array(("data: " + String(repeating: "{[", count: 50_000) + "\n\n").utf8),
+            Array(SSE.text("Sure, here it is with no JSON at all.").utf8),
+            Array(SSE.text(#"{"translation": "SECRET"#).utf8),  // cut off: no stop, no closing brace
+            Array(SSE.stop("refusal").utf8),
+            [],
+        ]
+        for bytes in streams {
+            var updates: [ActionUpdate] = []
+            try await ActionAPI.drive(status: 200, bytes: Bytes(bytes), limit: ActionAPI.maxResponseBytes) { updates.append($0) }
+            guard case .failed(let e)? = updates.last else { return XCTFail("\(updates)") }
+            XCTAssertEqual(updates.filter { if case .partial = $0 { return false }; return true }.count, 1)
+            for shown in [e.message, "\(e)", String(reflecting: e)] {
+                XCTAssertFalse(shown.contains("SECRET"), shown)
+                XCTAssertFalse(shown.contains("USERTEXT"), shown)
+            }
+        }
+    }
+
+    private struct Bytes: AsyncSequence {
+        typealias Element = UInt8
+        let bytes: [UInt8]
+        init(_ bytes: [UInt8]) { self.bytes = bytes }
+        func makeAsyncIterator() -> AsyncIterator { AsyncIterator(bytes: bytes) }
+        struct AsyncIterator: AsyncIteratorProtocol {
+            let bytes: [UInt8]
+            var i = 0
+            mutating func next() async -> UInt8? {
+                guard i < bytes.count else { return nil }
+                defer { i += 1 }
+                return bytes[i]
+            }
+        }
+    }
+
     func testOddEscapesAndEncodings() {
         // Lone surrogates: an error or a replacement character, never a trap.
         for text in [#"{"translation":"\ud800","back_translation":""}"#, #"\udfff {"translation":"x","back_translation":""}"#] {

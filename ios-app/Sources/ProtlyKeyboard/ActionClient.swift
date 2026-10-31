@@ -1,32 +1,38 @@
 import Foundation
 import ProtlyCore
 
-/// One Translate/Polish call. Bytes from ProtlyCore, URLSession here.
+/// One Translate/Polish/Read call, streamed. The request and the reading of the reply are ProtlyCore's
+/// (ActionAPI.request, ActionAPI.updates); URLSession is here. Never on the main actor: the download and the parsing
+/// run off it, and only the consumer hops back.
 enum ActionClient {
     /// One session for the process: ephemeral, no cache, no cookies, no redirects (ActionAPI).
     private static let session = URLSession(
         configuration: ActionAPI.sessionConfiguration(), delegate: ActionSessionDelegate(), delegateQueue: nil)
 
-    static func run(_ mode: ActionMode, text: String) async -> Result<ActionResult, ActionError> {
-        guard let base = try? ActionAPI.bundledPrompt() else { return .failure(ActionError(.setup)) }
+    /// Partial translations, then exactly one done or failed. Ending the consumer (its task cancelled) cancels the
+    /// download; a cancel ends the stream with nothing more.
+    static func run(_ mode: ActionMode, text: String) -> AsyncStream<ActionUpdate> {
+        guard let base = try? ActionAPI.bundledPrompt() else { return failed(ActionError(.setup)) }
         // The about-me note joins Translate (out) and Polish (fix) only. AboutMe.system leaves Read clipboard (in) as is.
         let note = UserDefaults.standard.string(forKey: AboutMe.defaultsKey) ?? ""
         let system = AboutMe.system(base: base, note: note, mode: mode)
         let req: URLRequest
         switch ActionAPI.request(mode: mode, text: text, system: system, apiKey: Secrets.apiKey) {
         case .success(let r): req = r
-        case .failure(let e): return .failure(e)
+        case .failure(let e): return failed(e)
         }
-        do {
-            let (bytes, resp) = try await session.bytes(for: req)
-            defer { bytes.task.cancel() }  // on every way out: stop the download now, not when it is released
-            // Read at most maxResponseBytes: a huge body must not take the keyboard's memory.
-            guard let data = try await ActionAPI.collect(bytes) else { return .failure(ActionError(.parse)) }
-            return ActionAPI.parse(status: (resp as? HTTPURLResponse)?.statusCode ?? 0, body: data)
-        } catch let error as URLError where error.code == .timedOut {
-            return .failure(ActionError(.timeout))
-        } catch {
-            return .failure(ActionError(.network))
+        return ActionAPI.updates { () async throws -> (status: Int, bytes: URLSession.AsyncBytes, stop: @Sendable () -> Void) in
+            let (bytes, response) = try await session.bytes(for: req)
+            let task = bytes.task
+            // The timeouts stay URLSession's (ActionAPI.sessionConfiguration): both cancel this read.
+            return ((response as? HTTPURLResponse)?.statusCode ?? 0, bytes, { task.cancel() })
+        }
+    }
+
+    private static func failed(_ error: ActionError) -> AsyncStream<ActionUpdate> {
+        AsyncStream { continuation in
+            continuation.yield(.failed(error))
+            continuation.finish()
         }
     }
 }
