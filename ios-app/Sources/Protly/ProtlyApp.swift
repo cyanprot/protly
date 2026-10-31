@@ -49,12 +49,15 @@ struct SetupView: View {
     @State private var test = ""
     @AppStorage(AboutMeLink.defaultsKey) private var aboutMe = ""
     @State private var copied = false
+    @State private var guide: Guide?
+    @FocusState private var testFocused: Bool
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Brand.sectionSpacing) {
                 Hero()
                 TurnOnSection()
+                TryItSection(test: $test, guide: $guide, focused: $testFocused)
                 VStack(alignment: .leading, spacing: Brand.groupSpacing) {
                     SectionTitle("About me")
                     TextField("Who you are, in a few facts", text: $aboutMe,
@@ -78,12 +81,6 @@ struct SetupView: View {
                     }
                     Text("Translate and Polish send this note with your draft. To update the keyboard: tap Copy for the keyboard, tap the Test field below, tap Read clipboard in the protly bar, Allow Paste, then Save. Copy an empty note to clear it.")
                         .foregroundStyle(Brand.secondary(scheme))
-                }
-                VStack(alignment: .leading, spacing: Brand.groupSpacing) {
-                    SectionTitle("Test")
-                    TextField("Type here", text: $test,
-                              prompt: Text("Type here").foregroundStyle(Brand.secondary(scheme)), axis: .vertical)
-                        .modifier(RuledField())
                 }
             }
             .padding()
@@ -153,6 +150,99 @@ private struct TurnOnSection: View {
     }
 }
 
+/// A: the test field, three samples that fill it, and the three things only typed keys can show.
+private struct TryItSection: View {
+    @Environment(\.colorScheme) private var scheme
+    @Binding var test: String
+    @Binding var guide: Guide?
+    let focused: FocusState<Bool>.Binding
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Brand.groupSpacing) {
+            SectionTitle("Try it")
+            // Without the switch the field opens with Apple's keyboard and nothing below works.
+            Text("Switch to Protly with the \(Image(systemName: "globe")) key under the keyboard, and back the same way.")
+            // iOS 17 has no wrapping stack: the chips go in a column when a row does not fit.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) { SampleChips(fill: fill) }
+                VStack(alignment: .leading, spacing: 8) { SampleChips(fill: fill) }
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("Type here", text: $test,
+                          prompt: Text("Type here").foregroundStyle(Brand.secondary(scheme)), axis: .vertical)
+                    .focused(focused)
+                    .modifier(RuledField())
+                if case let .sample(sample)? = guide {
+                    sample.hint
+                }
+            }
+            // Plain rows, not buttons: these come only from keys typed on the keyboard, so a button would do nothing.
+            VStack(alignment: .leading, spacing: 8) {
+                NumberedRow(number: 1) { Text("Type `dkssud`, then tap the left slot.") }
+                NumberedRow(number: 2) { Text("Type `teh`, then tap the right slot.") }
+                NumberedRow(number: 3) {
+                    Text("After a Replace, tap \(Image(systemName: "arrow.uturn.backward")) Undo.")
+                }
+            }
+        }
+    }
+
+    private func fill(_ sample: Sample) {
+        test = sample.text
+        guide = .sample(sample)
+        focused.wrappedValue = true
+    }
+}
+
+/// What the line under the test field says.
+private enum Guide: Equatable {
+    /// A chip filled the field: the action to tap.
+    case sample(Sample)
+}
+
+/// A sample for the test field: the chip's title, the text it puts in the field and the hint under the field.
+/// Headline first.
+private enum Sample: CaseIterable {
+    case korean, english, prefixed
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .korean: "Translate"
+        case .english: "Polish"
+        case .prefixed: "Other languages"
+        }
+    }
+
+    var text: String {
+        switch self {
+        case .korean: "오늘 고마워"
+        case .english: "thank you for invite me, i realy enjoyed it"
+        case .prefixed: "ru: 고마워"
+        }
+    }
+
+    /// The symbol the keyboard's bar shows for the action, embedded in the line.
+    var hint: Text {
+        let sparkles = Image(systemName: "sparkles")
+        return switch self {
+        case .korean: Text("Tap \(sparkles) → English.")
+        case .english: Text("Tap \(sparkles) Polish.")
+        case .prefixed: Text("Tap \(sparkles) → Русский.")
+        }
+    }
+}
+
+private struct SampleChips: View {
+    let fill: (Sample) -> Void
+
+    var body: some View {
+        ForEach(Sample.allCases, id: \.self) { sample in
+            Button(sample.title) { fill(sample) }
+                .buttonStyle(ChipButtonStyle())
+        }
+    }
+}
+
 /// One step of a numbered list: the number in the title's monospaced design, then its lines.
 private struct NumberedRow<Content: View>: View {
     let number: Int
@@ -180,6 +270,21 @@ private struct PillButtonStyle: ButtonStyle {
             .background(Brand.text(scheme), in: .capsule)
             .contentShape(.capsule)
             .opacity(configuration.isPressed ? 0.7 : 1)
+    }
+}
+
+/// A chip as in the extension (`.pl-chip`): a capsule with a 1 pt rule, at least 44 pt tall.
+private struct ChipButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var scheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(minHeight: 44)
+            .background(configuration.isPressed ? Brand.text(scheme).opacity(0.12) : .clear, in: .capsule)
+            .overlay { Capsule().strokeBorder(Brand.secondary(scheme), lineWidth: 1) }
+            .contentShape(.capsule)
     }
 }
 
