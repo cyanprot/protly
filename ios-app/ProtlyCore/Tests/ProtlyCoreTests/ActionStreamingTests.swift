@@ -111,10 +111,11 @@ final class ActionStreamingTests: XCTestCase {
     private let ok = ActionResult(translation: "Thanks for today", backTranslation: "오늘 고마워")
 
     /// Every update the driver yields, in order (no buffer in between).
-    private func drive(_ bytes: Chunks, status: Int = 200, limit: Int = ActionAPI.maxResponseBytes) async -> [ActionUpdate] {
+    private func drive(_ bytes: Chunks, status: Int = 200, limit: Int = ActionAPI.maxResponseBytes,
+                       interval: Duration = .zero) async -> [ActionUpdate] {
         var out: [ActionUpdate] = []
         do {
-            try await ActionAPI.drive(status: status, bytes: bytes, limit: limit) { out.append($0) }
+            try await ActionAPI.drive(status: status, bytes: bytes, limit: limit, partialInterval: interval) { out.append($0) }
         } catch {
             if let e = ActionAPI.failure(for: error) { out.append(.failed(e)) }
         }
@@ -142,6 +143,22 @@ final class ActionStreamingTests: XCTestCase {
         }
     }
 
+    /// At most one partial per interval: the rest wait, and the result still carries the whole text.
+    func testPartialsAreSpacedByTheInterval() async {
+        let updates = await drive(Chunks(SSE.reply(SSE.pieces)), interval: .seconds(60))
+        XCTAssertEqual(updates, [.partial("Thanks "), .done(ok)])
+    }
+
+    /// A failure carries no text: the newest held partial goes out right before it, so the card keeps all of it.
+    func testAHeldPartialGoesOutBeforeAFailure() async {
+        let s = SSE.start + SSE.text(#"{"translation": "A"#) + SSE.text("B")
+            + SSE.event("error", #"{"type": "error", "error": {"type": "api_error"}}"#)
+        let failed = await drive(Chunks(s), interval: .seconds(60))
+        XCTAssertEqual(failed, [.partial("A"), .partial("AB"), .failed(ActionError(.server))])
+        let cut = await drive(Chunks(SSE.start + SSE.text(#"{"translation": "A"#) + SSE.text("B")), interval: .seconds(60))
+        XCTAssertEqual(cut, [.partial("A"), .partial("AB"), .failed(ActionError(.network))])
+    }
+
     /// The card opens at the first word: the opening quote alone yields nothing.
     func testAnEmptyTranslationSoFarYieldsNothing() async {
         let s = SSE.text(#"{"translation": ""#) + SSE.text("Hi") + SSE.text(#"", "back_translation": ""}"#)
@@ -167,8 +184,12 @@ final class ActionStreamingTests: XCTestCase {
     func testAStreamThatEndsWithoutAStopReason() async {
         let whole = await drive(Chunks(SSE.start + SSE.text(#"{"translation": "Hi", "back_translation": ""}"#)))
         XCTAssertEqual(whole, [.partial("Hi"), .done(ActionResult(translation: "Hi", backTranslation: ""))])
+        // Cut off on the way (no stop reason, no whole reply): a network failure, which offers Retry.
         let cut = await drive(Chunks(SSE.start + SSE.text(#"{"translation": "Hi"#)))
-        XCTAssertEqual(cut, [.partial("Hi"), .failed(ActionError(.parse))])
+        XCTAssertEqual(cut, [.partial("Hi"), .failed(ActionError(.network))])
+        // A reply that ended (a stop reason) but is not readable stays a parse failure.
+        let ended = await drive(Chunks(SSE.start + SSE.text(#"{"translation": "Hi"#) + SSE.stop("end_turn")))
+        XCTAssertEqual(ended, [.partial("Hi"), .failed(ActionError(.parse))])
     }
 
     func testAnErrorEventMidStream() async {

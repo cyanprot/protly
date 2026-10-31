@@ -12,7 +12,9 @@ enum ActionClient {
     /// Partial translations, then exactly one done or failed. Ending the consumer (its task cancelled) cancels the
     /// download; a cancel ends the stream with nothing more.
     static func run(_ mode: ActionMode, text: String) -> AsyncStream<ActionUpdate> {
-        ActionAPI.updates { () async throws -> (status: Int, bytes: URLSession.AsyncBytes, stop: @Sendable () -> Void) in
+        // At most 20 partials a second: each one redraws the card's whole text.
+        ActionAPI.updates(partialInterval: .milliseconds(50)) {
+            () async throws -> (status: Int, bytes: URLSession.AsyncBytes, stop: @Sendable () -> Void) in
             let (bytes, response) = try await session.bytes(for: request(mode, text: text))
             let task = bytes.task
             // The timeouts stay URLSession's (ActionAPI.sessionConfiguration): both cancel this read.

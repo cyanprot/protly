@@ -1,35 +1,46 @@
 /// Where Cancel puts the cursor (keyboard-ui 003, P6). A whole-field read moves the cursor to the end of the field in
-/// steps; each step is recorded as the text it moved over, even when the read is cancelled before it returns. Moving
-/// back is safe only while that text is still just before the cursor.
+/// steps. Each step is recorded when it is sent to the host and counted once the host shows it, so Cancel works mid-read
+/// too, even while a move is still on its way. Moving back is safe only while that text is still just before the cursor.
 public struct CursorReturn: Sendable, Equatable {
-    /// The text the last read that moved moved over, now just before the cursor.
+    /// The text the reads moved the cursor over, in order: now just before the cursor.
     private var over = ""
-    /// What the read in progress has moved over so far.
-    private var reading = ""
+    /// A move sent to the host and not seen there yet.
+    private var inFlight = ""
 
     public init() {}
 
-    public mutating func begin() { reading = "" }
+    /// A read starts at the cursor, whose before-context is `before`. A Retry that starts where the last read left
+    /// the cursor continues its record; once the cursor moved since, the old record no longer describes it.
+    public mutating func begin(before: String) {
+        if !FieldGuard.canRestore(over, before: before) { over = "" }
+        inFlight = ""
+    }
 
     /// The read is about to move the cursor over `chunk`.
-    public mutating func moved(over chunk: String) { reading += chunk }
+    public mutating func sending(_ chunk: String) { inFlight = chunk }
 
-    /// The read finished or was cancelled. A read that moved replaces the earlier record, never adds to it (the user
-    /// put the cursor back before a Retry). A read that moved nothing keeps it: a Retry re-reads a field the first
-    /// read already moved to its end.
-    public mutating func end() {
-        if !reading.isEmpty { over = reading }
-        reading = ""
+    /// The host shows the move: it counts.
+    public mutating func applied() {
+        over += inFlight
+        inFlight = ""
     }
 
-    /// Nothing to put back: a selection read, Read clipboard, or the result replaced the text.
+    /// The host never showed the move (the read gave up waiting and never sends it again): it does not count.
+    public mutating func notApplied() { inFlight = "" }
+
+    /// Nothing to put back: a selection read, Read clipboard, the result replaced the text, or the call ended.
     public mutating func clear() {
         over = ""
-        reading = ""
+        inFlight = ""
     }
 
-    /// UTF-16 units to move back, 0 when nothing moved or the field changed since.
+    /// UTF-16 units to move back, 0 when nothing moved or the field changed since. A move still in flight counts
+    /// whether or not the before-context shows it yet: the host applies moves in the order they were sent, so a move
+    /// back sent now lands after it.
     public func back(before: String) -> Int {
-        FieldGuard.canRestore(over, before: before) ? over.utf16.count : 0
+        let all = over + inFlight
+        if FieldGuard.canRestore(all, before: before) { return all.utf16.count }
+        guard !inFlight.isEmpty, over.isEmpty || FieldGuard.canRestore(over, before: before) else { return 0 }
+        return all.utf16.count
     }
 }

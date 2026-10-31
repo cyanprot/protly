@@ -72,33 +72,62 @@ struct ResultCard: View {
         .foregroundStyle(.secondary)
     }
 
+    /// One row when it fits; else two rows, never one per button, so the text above keeps room at large text sizes.
+    /// The labels stop growing at xxxLarge: the card's height is the key area's, whatever the text size.
     private var buttons: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) { buttonRow(stacked: false) }
-            VStack(spacing: 0) { buttonRow(stacked: true) }
+            HStack(spacing: 8) {
+                closeButton
+                Spacer(minLength: 0)
+                retryButton
+                copyButton
+                primaryButton
+            }
+            VStack(spacing: 0) {
+                HStack(spacing: 8) {
+                    closeButton
+                    Spacer(minLength: 0)
+                    retryButton
+                }
+                HStack(spacing: 8) {
+                    Spacer(minLength: 0)
+                    copyButton
+                    primaryButton
+                }
+            }
         }
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+
+    private var closeButton: some View {
+        button(card.action == .in ? "Done" : "Cancel", action: close)
     }
 
     @ViewBuilder
-    private func buttonRow(stacked: Bool) -> some View {
-        button(card.action == .in ? "Done" : "Cancel", stacked: stacked, action: close)
-        if !stacked { Spacer(minLength: 0) }
+    private var retryButton: some View {
         if let error = feed.failed, error.canRetry {
-            button("Retry", stacked: stacked) { retry(card.action) }
-        }
-        button(copied ? "Copied" : "Copy", stacked: stacked) {
-            if copy() { copied = true }
-        }
-        .disabled(card.phase == .streaming)
-        if let primary = card.primary {
-            button(primary, stacked: stacked, action: replace).fontWeight(.semibold)
-        } else if card.phase == .streaming {
-            // Keeps the row's layout while the text arrives.
-            button(card.action == .in ? "Insert" : "Replace", stacked: stacked) {}.disabled(true)
+            button("Retry") { retry(card.action) }
         }
     }
 
-    private func button(_ title: String, stacked: Bool, action: @escaping () -> Void) -> some View {
+    private var copyButton: some View {
+        button(copied ? "Copied" : "Copy") {
+            if copy() { copied = true }
+        }
+        .disabled(card.phase == .streaming)
+    }
+
+    @ViewBuilder
+    private var primaryButton: some View {
+        if let primary = card.primary {
+            button(primary, action: replace).fontWeight(.semibold)
+        } else if card.phase == .streaming {
+            // Keeps the row's layout while the text arrives.
+            button(card.action == .in ? "Insert" : "Replace") {}.disabled(true)
+        }
+    }
+
+    private func button(_ title: String, action: @escaping () -> Void) -> some View {
         Button {
             // The keys were live until the card appeared: a tap in its first moment is a typing thumb.
             guard AboutMe.canSave(shownAt: card.shownAt, now: ProcessInfo.processInfo.systemUptime) else { return }
@@ -106,7 +135,7 @@ struct ResultCard: View {
         } label: {
             Text(title)
                 .padding(.horizontal, 8)
-                .frame(maxWidth: stacked ? .infinity : nil, minHeight: 44)
+                .frame(minHeight: 44)
                 .contentShape(.rect)
         }
     }
