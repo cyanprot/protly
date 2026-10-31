@@ -53,12 +53,8 @@ struct SetupView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Brand.sectionSpacing) {
-                VStack(alignment: .leading, spacing: Brand.groupSpacing) {
-                    SectionTitle("Setup")
-                    Text("1. Settings > General > Keyboard > Keyboards > Add New Keyboard > Protly")
-                    Text("2. Tap Protly and turn on Allow Full Access")
-                    Text("3. Keep the Emoji keyboard")
-                }
+                Hero()
+                TurnOnSection()
                 VStack(alignment: .leading, spacing: Brand.groupSpacing) {
                     SectionTitle("About me")
                     TextField("Who you are, in a few facts", text: $aboutMe,
@@ -108,6 +104,82 @@ struct SetupView: View {
             options: [.localOnly: true, .expirationDate: Date().addingTimeInterval(600)]
         )
         copied = true
+    }
+}
+
+private struct Hero: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("protly").font(.largeTitle.bold()).fontDesign(.monospaced)
+            Text("Write Korean, send English.").font(.title3)
+        }
+        .padding(.top, Brand.groupSpacing)
+    }
+}
+
+/// F2: the two switches in Settings, why each is needed, and what leaves the phone. The app cannot read whether the
+/// keyboard or Full Access is on (no App Group), so it shows no status.
+private struct TurnOnSection: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Brand.groupSpacing) {
+            SectionTitle("Turn on Protly")
+            NumberedRow(number: 1) {
+                Text("Add the Protly keyboard").font(.headline)
+                Text("In Settings, tap Keyboards and turn on Protly, so the globe key can switch to it.")
+                    .foregroundStyle(Brand.secondary(scheme))
+            }
+            NumberedRow(number: 2) {
+                Text("Turn on Allow Full Access").font(.headline)
+                Text("Translate, Polish and Read need the network and the clipboard.")
+                    .foregroundStyle(Brand.secondary(scheme))
+            }
+            // Right after Full Access, where iOS shows its warning.
+            VStack(alignment: .leading, spacing: 4) {
+                Text("What Protly sends").font(.headline)
+                Text("Only when you tap an action, and only to the model API: Translate and Polish send the field's text and your About me note; Read sends the copied text. Keystrokes are never sent. Words the keyboard learns stay on this phone.")
+                    .foregroundStyle(Brand.secondary(scheme))
+            }
+            Button("Open Settings", systemImage: "gear", action: openSettings)
+                .buttonStyle(PillButtonStyle())
+        }
+    }
+
+    /// Protly's own page in Settings, which holds its Keyboards switches.
+    private func openSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+    }
+}
+
+/// One step of a numbered list: the number in the title's monospaced design, then its lines.
+private struct NumberedRow<Content: View>: View {
+    let number: Int
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("\(number).").fontDesign(.monospaced)
+            VStack(alignment: .leading, spacing: 4) { content }
+        }
+    }
+}
+
+/// The brand pill (D3), as in the keyboard's bar: ink with paper text in light mode, paper with ink text in dark.
+private struct PillButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var scheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundStyle(Brand.background(scheme))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .frame(minHeight: 44)
+            .background(Brand.text(scheme), in: .capsule)
+            .contentShape(.capsule)
+            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 
