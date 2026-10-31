@@ -1,0 +1,142 @@
+Attributes: Application, 0x10a2761c0, pid: 9883, label: 'ProtlyCIHost'
+Element subtree:
+ →Application, 0x10a2761c0, pid: 9883, label: 'ProtlyCIHost'
+    Window (Main), 0x10a275cc0, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x10a275e00, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x10a275a40, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x10a275b80, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x10a2757c0, {{0.0, 0.0}, {390.0, 844.0}}
+              TextField, 0x10a275900, {{16.0, 71.0}, {200.0, 22.0}}, identifier: 'field', Keyboard Focused
+                Other, 0x10a275540, {{16.0, 71.0}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                  Other, 0x10a275400, {{16.0, 71.0}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                    Other, 0x10a2752c0, {{8.8, 57.5}, {16.5, 16.5}}
+                    Other, 0x10a275180, {{16.0, 71.0}, {2.0, 0.0}}
+                  Other, 0x10a275040, {{16.0, 71.0}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                    Other, 0x10a274f00, {{8.8, 57.5}, {16.5, 16.5}}
+                    Other, 0x10a274dc0, {{16.0, 71.0}, {2.0, 0.0}}
+                Other, 0x10a274c80, {{16.0, 79.0}, {200.0, 11.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                  Other, 0x10a274b40, {{19.0, 87.0}, {194.0, 3.0}}
+              Button, 0x10a274a00, {{334.0, 71.0}, {40.0, 20.3}}, identifier: 'clear', label: 'Clear'
+              Button, 0x10a2748c0, {{314.7, 107.3}, {59.3, 20.3}}, identifier: 'dismiss', label: 'Dismiss'
+    Window, 0x10a274780, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x10a274640, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x10a274500, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x10a2743c0, {{0.0, 509.0}, {390.0, 335.0}}
+          Other, 0x10a274280, {{0.0, 509.0}, {390.0, 335.0}}, identifier: 'inputView'
+    Window, 0x10a274140, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x10a274000, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x10a276300, {{0.0, 0.0}, {390.0, 844.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+        Other, 0x10a276440, {{5.0, 495.0}, {228.0, 275.0}}, identifier: 'InputSwitcherView'
+          Table, 0x10a276580, {{5.0, 495.0}, {228.0, 274.0}}, identifier: 'InputSwitcherTable'
+            Cell, 0x10a2766c0, {{5.0, 505.0}, {228.0, 50.0}}, label: 'Keyboard Settings…'
+              StaticText, 0x10a276800, {{5.0, 505.0}, {0.0, 0.0}}
+              Other, 0x10a276940, {{5.0, 505.0}, {228.0, 50.0}}
+              StaticText, 0x10a276a80, {{31.0, 505.0}, {176.0, 50.0}}, label: 'Keyboard Settings…'
+            Cell, 0x10a276bc0, {{5.0, 555.0}, {228.0, 50.0}}, label: 'Protly, Korean', Selected
+              Other, 0x10a276d00, {{5.0, 555.0}, {228.0, 50.0}}
+              StaticText, 0x10a276e40, {{31.0, 537.0}, {176.0, 68.0}}, label: 'Protly'
+              StaticText, 0x10a276f80, {{31.0, 577.0}, {176.0, 28.0}}, label: 'Korean'
+            Cell, 0x10a2770c0, {{5.0, 605.0}, {228.0, 50.0}}, label: 'Emoji'
+              StaticText, 0x10a277200, {{5.0, 605.0}, {0.0, 0.0}}
+              Other, 0x10a277340, {{5.0, 605.0}, {228.0, 50.0}}
+              StaticText, 0x10a277480, {{31.0, 605.0}, {176.0, 50.0}}, label: 'Emoji'
+            Cell, 0x10a2775c0, {{5.0, 655.0}, {228.0, 50.0}}, label: 'English (US)'
+              StaticText, 0x10a277700, {{5.0, 655.0}, {0.0, 0.0}}
+              Other, 0x10a277840, {{5.0, 655.0}, {228.0, 50.0}}
+              StaticText, 0x10a277980, {{31.0, 655.0}, {176.0, 50.0}}, label: 'English (US)'
+            Cell, 0x10a277ac0, {{5.0, 705.0}, {228.0, 50.0}}
+              StaticText, 0x10a277c00, {{5.0, 705.0}, {0.0, 0.0}}
+              StaticText, 0x10a277d40, {{5.0, 705.0}, {0.0, 0.0}}
+              Other, 0x10a277e80, {{5.0, 705.0}, {0.0, 0.0}}
+              Other, 0x106a63d40, {{14.0, 705.0}, {210.0, 50.0}}
+                Other, 0x106a63e80, {{14.0, 705.0}, {210.0, 50.0}}
+                  Button, 0x117a7c000, {{14.0, 705.0}, {64.0, 50.0}}, label: 'left handed layout'
+                    Image, 0x117a7c140, {{27.0, 718.0}, {38.7, 23.7}}, identifier: 'keyboard.onehanded.left', label: 'keyboard.onehanded.left'
+                  Button, 0x117a7c280, {{87.0, 705.0}, {64.0, 50.0}}, label: 'default layout', Selected
+                    Image, 0x117a7c3c0, {{100.0, 718.0}, {38.7, 23.7}}, identifier: 'keyboard', label: 'Keyboard'
+                  Button, 0x117a7c500, {{160.0, 705.0}, {64.0, 50.0}}, label: 'right handed layout'
+                    Image, 0x117a7c640, {{173.0, 718.0}, {38.7, 23.7}}, identifier: 'keyboard.onehanded.right', label: 'keyboard.onehanded.right'
+            Other, 0x117a7c780, {{200.0, 507.0}, {30.0, 250.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+              Other, 0x117a7c8c0, {{227.0, 510.0}, {3.0, 238.7}}
+            Other, 0x117a7ca00, {{5.0, 724.0}, {228.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+              Other, 0x117a7cb40, {{8.0, 751.0}, {219.0, 3.0}}
+          Other, 0x117a7cc80, {{5.0, 495.0}, {228.0, 275.0}}
+            Other, 0x117a7cdc0, {{5.0, 495.0}, {228.0, 275.0}}
+              Other, 0x117a7cf00, {{5.0, 495.0}, {228.0, 275.0}}
+                Other, 0x117a7d040, {{5.0, 495.0}, {228.0, 275.0}}
+                  Other, 0x117a7d180, {{5.0, 495.0}, {228.0, 275.0}}
+                    Other, 0x117a7d2c0, {{5.0, 495.0}, {228.0, 275.0}}
+                Other, 0x117a7d400, {{5.0, 495.0}, {228.0, 275.0}}
+                  Other, 0x117a7d540, {{5.0, 495.0}, {228.0, 275.0}}
+        Other, 0x117a7d680, {{0.0, 509.0}, {390.0, 335.0}}
+          Other, 0x117a7d7c0, {{0.0, 509.0}, {390.0, 44.0}}, identifier: 'SystemInputAssistantView'
+            Other, 0x117a7d900, {{0.0, 509.0}, {390.0, 44.0}}
+              Other, 0x117a7da40, {{0.0, 509.0}, {390.0, 44.0}}, identifier: 'CenterPageView'
+                Other, 0x117a7db80, {{0.0, -91.0}, {390.0, 1244.0}}
+                  ScrollView, 0x117a7dcc0, {{0.0, 509.0}, {390.0, 44.0}}
+                Other, 0x117a7de00, {{0.0, 509.0}, {390.0, 44.0}}
+                  Other, 0x117a7df40, {{0.0, 509.0}, {390.0, 44.0}}, label: 'Typing Predictions'
+                    Other, 0x117a7e080, {{0.0, 509.0}, {390.0, 44.0}}
+                      Other, 0x117a7e1c0, {{0.0, 509.0}, {390.0, 44.0}}
+                        Other, 0x117a7e300, {{0.0, 509.0}, {130.0, 44.0}}
+                        Other, 0x117a7e440, {{130.0, 509.0}, {130.0, 44.0}}
+                        Other, 0x117a7e580, {{260.0, 509.0}, {130.0, 44.0}}
+          Other, 0x117a7e6c0, {{0.0, 509.0}, {390.0, 335.0}}
+            Other, 0x117a7e800, {{0.0, 509.0}, {390.0, 335.0}}
+              Other, 0x117a7e940, {{0.0, 509.0}, {390.0, 335.0}}
+          Other, 0x117a7ea80, {{0.0, 553.0}, {390.0, 233.0}}
+            Keyboard, 0x117a7ebc0, {{0.0, 553.0}, {390.0, 233.0}}
+              Other, 0x117a7ed00, {{0.0, 553.0}, {390.0, 233.0}}
+                Other, 0x117a7ee40, {{0.0, 553.0}, {390.0, 233.0}}, identifier: 'UIKeyboardLayoutStar Preview'
+                  Key, 0x117a7ef80, {{0.0, 553.0}, {0.0, 0.0}}, label: 'Padding-Left'
+                  Key, 0x117a7f0c0, {{0.0, 553.0}, {0.0, 0.0}}, label: 'Padding-Right'
+                  Key, 0x117a7f200, {{0.0, 553.0}, {0.0, 0.0}}, label: 'Padding-Left'
+                  Key, 0x117a7f340, {{0.0, 553.0}, {0.0, 0.0}}, label: 'Padding-Right'
+                  Key, 0x117a7f480, {{0.0, 553.0}, {0.0, 0.0}}, label: 'Padding-Left'
+                  Key, 0x117a7f5c0, {{0.0, 553.0}, {0.0, 0.0}}, label: 'Padding-Right'
+                  Key, 0x117a7f700, {{4.7, 560.0}, {38.0, 54.0}}, label: 'ㅂ'
+                  Key, 0x117a7f840, {{42.7, 560.0}, {38.3, 54.0}}, label: 'ㅈ'
+                  Key, 0x117a7f980, {{81.0, 560.0}, {38.3, 54.0}}, label: 'ㄷ'
+                  Key, 0x117a7fac0, {{119.3, 560.0}, {38.3, 54.0}}, label: 'ㄱ'
+                  Key, 0x117a7fc00, {{157.7, 560.0}, {38.3, 54.0}}, label: 'ㅅ'
+                  Key, 0x117a7fd40, {{196.0, 560.0}, {38.3, 54.0}}, label: 'ㅛ'
+                  Key, 0x117a7fe80, {{234.3, 560.0}, {38.3, 54.0}}, label: 'ㅕ'
+                  Key, 0x10a26c000, {{272.7, 560.0}, {38.3, 54.0}}, label: 'ㅑ'
+                  Key, 0x10a26c140, {{311.0, 560.0}, {38.3, 54.0}}, label: 'ㅐ'
+                  Key, 0x10a26c280, {{349.3, 560.0}, {38.3, 54.0}}, label: 'ㅔ'
+                  Key, 0x10a26c3c0, {{23.7, 614.0}, {38.3, 54.0}}, label: 'ㅁ'
+                  Key, 0x10a26c500, {{62.0, 614.0}, {38.3, 54.0}}, label: 'ㄴ'
+                  Key, 0x10a26c640, {{100.3, 614.0}, {38.3, 54.0}}, label: 'ㅇ'
+                  Key, 0x10a26c780, {{138.7, 614.0}, {38.3, 54.0}}, label: 'ㄹ'
+                  Key, 0x10a26c8c0, {{177.0, 614.0}, {38.0, 54.0}}, label: 'ㅎ'
+                  Key, 0x10a26ca00, {{215.0, 614.0}, {38.3, 54.0}}, label: 'ㅗ'
+                  Key, 0x10a26cb40, {{253.3, 614.0}, {38.3, 54.0}}, label: 'ㅓ'
+                  Key, 0x10a26cc80, {{291.7, 614.0}, {38.3, 54.0}}, label: 'ㅏ'
+                  Key, 0x10a26cdc0, {{330.0, 614.0}, {38.3, 54.0}}, label: 'ㅣ'
+                  Button, 0x10a26cf00, {{4.7, 668.0}, {49.7, 54.0}}, identifier: 'shift', label: 'shift'
+                  Key, 0x10a26d040, {{62.0, 668.0}, {38.3, 54.0}}, label: 'ㅋ'
+                  Key, 0x10a26d180, {{100.3, 668.0}, {38.3, 54.0}}, label: 'ㅌ'
+                  Key, 0x10a26d2c0, {{138.7, 668.0}, {38.3, 54.0}}, label: 'ㅊ'
+                  Key, 0x10a26d400, {{177.0, 668.0}, {38.0, 54.0}}, label: 'ㅍ'
+                  Key, 0x10a26d540, {{215.0, 668.0}, {38.3, 54.0}}, label: 'ㅠ'
+                  Key, 0x10a26d680, {{253.3, 668.0}, {38.3, 54.0}}, label: 'ㅜ'
+                  Key, 0x10a26d7c0, {{291.7, 668.0}, {38.3, 54.0}}, label: 'ㅡ'
+                  Key, 0x10a26d900, {{337.7, 668.0}, {50.0, 54.0}}, identifier: 'delete', label: '삭제'
+                  Key, 0x10a26da40, {{4.7, 722.0}, {47.7, 54.0}}, identifier: 'more', label: '숫자'
+                  Button, 0x10a26db80, {{52.3, 722.0}, {48.0, 54.0}}, identifier: 'emoji', label: '이모지'
+                  Key, 0x10a26dcc0, {{100.3, 722.0}, {191.3, 54.0}}, identifier: 'space', label: ' '
+                  Button, 0x10a26de00, {{291.7, 722.0}, {96.0, 54.0}}, identifier: 'Return', label: 'Return 키'
+          Other, 0x10a26df40, {{0.0, 553.0}, {390.0, 291.0}}
+            Button, 0x10a26e080, {{8.5, 775.7}, {68.1, 68.7}}, label: 'Next keyboard', value: Protly
+              StaticText, 0x10a26e1c0, {{8.5, 775.7}, {0.0, 0.0}}
+            Button, 0x10a26e300, {{313.4, 775.4}, {68.1, 68.7}}, identifier: 'dictation', label: 'Dictate'
+              StaticText, 0x10a26e440, {{313.4, 775.4}, {0.0, 0.0}}
+            Button, 0x10a26e580, {{313.4, 775.4}, {68.1, 68.7}}, identifier: 'dictation', label: 'Dictate'
+              StaticText, 0x10a26e6c0, {{313.4, 775.4}, {0.0, 0.0}}
+Path to element:
+ →Application, 0x10a2761c0, pid: 9883, label: 'ProtlyCIHost'
+Query chain:
+ →Find: Target Application 'com.northprot.protly.cihost'
+  Output: {
+    Application, 0x10a26e800, pid: 9883, label: 'ProtlyCIHost'
+  }
