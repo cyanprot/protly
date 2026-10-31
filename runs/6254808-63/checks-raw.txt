@@ -1,0 +1,36 @@
+CHECK 6.8-1 PASS field="i dont think its ok teh." right="the" want "the" after-tap="the "
+CHECK 6.8-2 PASS right="receive" want "receive" field="recieve."
+CHECK 6.8-3 PASS right="tomorrow" want "tomorrow" after-tap="tomorrow "
+CHECK 6.8-4 PASS right="안녕" want starts with "안녕" typed="안녕ㅎ" after-tap="안녕하세요 "
+CHECK 6.8-5 RECORD right="" ink 0 after-space="omw "
+CHECK 6.8-6 SKIP no contacts in the simulator
+CHECK 6.8-7 PASS context="안녕" field="걍 가자 " field="걔 진짜 웃겨 " field="얘 뭐야 " field="꽤 좋다 " field="I need to get rid of it "
+CHECK 6.8-8 PASS typed="죵" after-flip="wyd" again="wyd "
+CHECK 6.8-11 PENDING left="ghk" ink 1434 after-flip="내일 qhk" context="안녕" busy#1=no seconds#1=4.1 out#1="Thanks so much for today"
+CHECK 6.8-9 PENDING field="wyd "
+CHECK ws-1 PASS left="ㅗ디 |ㅐ" want Hangul after-tap="ㅗ디ㅣㅐ " want the Korean reading plus a space
+CHECK ws-2 PASS field="hello. " left=ocr "" ink 0 (c-ws-2-1-left.png)
+CHECK ws-3 PASS field="hello\n" left=ocr "" ink 0 (c-ws-3-1-left.png)
+CHECK 8.5-1o PASS ru=latin field="ru: 누나 노트 고마워 누나 덕분에 살았다 " center="Translate" want "Translate"
+CHECK 8.5-2o RECORD ru-again="겨" zh="코" flip zh-after-flip="zh" taught="zh: 안녕 " zh-space="zh "
+CHECK 8.5-6o PASS ok=latin field="ok: 내일 봐 " center="Translate" want "Translate"
+CHECK 8.5-7o PASS ko=latin field="ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 " center="Polish" want "Polish"
+CHECK 8.5-8o RECORD ko=latin field="ko: 오늘 진짜 길었어\n\n낼 아침에 전화할게\n\n늦으면 미안 ㅠㅠ" center="" ink 0
+CHECK 8.5-9o PASS context="솓" flip context-after-flip="the" field="me encanta el color de tu chaqueta, donde la conprastes? jaja " center="Polish" want "Polish"
+CHECK 6.8-10 PENDING presentations=30/30
+CHECK icon RECORD {296.0,163.0,68.0,90.7} found on page 1 (c-icon.png, c-icon-home.png)
+CHECK 8.5-1 PENDING context="안녕" ru="겨" flip ru-after-flip="ru" busy#1="Translating" seconds#1=3.6 out#1="Спасибо за конспект, ты меня спасла." back#1=hangul undo-slot="Undo" ink 1514 undo="ru: 누나 노트 고마워 누나 덕분에 살았다 "
+CHECK 8.5-3 PENDING context="안녕" ja=latin busy#1=yes seconds#1=3.1 out#1="明日空いてる？一緒にご飯行こうよw" shown#1="BE초니 3?-#CWtED£W 내일 시간 있어? 같이 밥 먹자 ㅎㅎ Cancel insert"
+CHECK 8.5-4 PENDING context="안녕" es=latin busy#1=yes seconds#1=3.4 out#1="Estoy muy cansado hoy" shown#1="Estoy muy cansado hoy 나 오늘 너무 피곤해 Cancel insert"
+CHECK 8.5-5 PENDING context="안녕" busy#1=yes seconds#1=2.8 out#1="See you tomorrow at 3" shown#1="See you tomorrow at 3 내일 3시에 봐 Cancel insert"
+CHECK 8.5-6 PENDING context="안녕" ok=latin busy#1=yes seconds#1=2.8 out#1="ok, see you tomorrow" shown#1="ok, see you tomorrow 알겠어, 내일 봐 Cancel insert"
+CHECK 8.5-7 PENDING context="안녕" ko=latin busy#1="Polishing" seconds#1=4.0 out#1="낼 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘" shown#1="낼 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘 되?-> 돼? (맞춤법) 밥먹자 -> 밥 먹자 (띄어쓰기) 말해죠 -> 말해 줘 (맞춤법) Cancel insert"
+CHECK 8.5-8 PENDING context="안녕" ko=latin busy#1="Polishing" seconds#1=2.9 out#1="오늘 진짜 길었어\n\n내일 아침에 전화할게\n\n늦으면 미안 ㅠㅠ" shown#1="오늘 진짜 길었어 내일 아침에 전화할게 늦으면 미안 ㅠㅠ 맞춤법: 낼 -> 내일 (구어체로도 쓰지만 표준어로 수정) 나머지는 자연스러워서 그대로 둠 Cancel Insert"
+CHECK 8.5-9 PENDING context="솓" flip context-after-flip="the" busy#1=yes seconds#1=3.8 out#1="¡Me encanta el color de tu chaqueta! ¿Dónde la compraste? jaja" shown#1="iMe encanta el color de tu chaqueta! iDonde la compraste? jaa conprastes -> compraste (철자•문법 수정) • ... ? 물음표 앞뒤 부호와 donde 악센트 추가 문장 분리로 구조 명확화 Cancel insert"
+CHECK 8.5-10 RECORD context="안녕" ru="겨" flip ru-after-flip="ru" try1=3.6s try2=4.4s (tap to Insert shown; OCR poll every 0.5 s)
+CHECK 7.7-1 PASS paste="tap, Paste" counter=58 want 58 copied="Copied" confirm-center="Read clipboard" confirm-paste="tapped Allow Paste in SpringBoard" confirm="Save as your About me note" in "Save as your About me note (58 characters)? Translate and Polish send it with every draft. Save only a note you copied in the Protly app. I run Moonbeam Kiln (문빔 킬른), a pottery studio in Victoria. Cancel Save" confirm="(58 characters)" in "Save as your About me note (58 characters)? Translate and Polish send it with every draft. Save only a note you copied in the Protly app. I run Moonbeam Kiln (문빔 킬른), a pottery studio in Victoria. Cancel Save" saved="About me saved" in "About me saved: 58 characters. Done" saved="58 characters" in "About me saved: 58 characters. Done" bar=keys back, panel region "H [ H 2ㆆ ㅓ ㅏ ㅋ E ㅊ ㅍ ㅜ 123" bar-center="" ink 0
+CHECK 7.7-2 PENDING context="안녕" busy#1=yes seconds#1=3.5 out#1="Moonbeam Kiln opens next week"
+CHECK 7.7-3 PENDING read-center="Read clipboard" read-paste="tapped Allow Paste in SpringBoard" panel#1="어제 찍은 사진 좀 보내줄 수 있어? Done윦" test-note-center="Read clipboard" test-note-paste="tapped Allow Paste in SpringBoard" four="Save as your About me note (4 characters)? Translate and Polish send it with every draft. Save only a note you copied in the Protly app. test Cancel Save" context="안녕" busy#1=yes seconds#1=3.7 out#1="Moonbeam Kiln opens next week"
+CHECK 7.7-4 RECORD try1=3.5s try2=3.7s (7.7-2 and 7.7-3's repeat; tap to Insert shown, OCR poll every 0.5 s)
+CHECK 7.7-5 PASS clear="Select All, Cut" counter-clear=0 want 0 copied-clear="Copied" confirm-clear-center="Read clipboard" confirm-clear-paste="tapped Allow Paste in SpringBoard" confirm-clear="Clear your About me note" in "Clear your About me note? Translate and Polish will send no note. Save Cancel" saved-clear="About me cleared" in "About me cleared. Done" bar-clear=keys back, panel region "ㅈ [ H Z 이 ㅓ ㅏ ㅋ E ㅊ ㅍ ㅜ 123" bar-center-clear="" ink 0 paste-again="tap, Paste" counter-again=58 want 58 copied-again="Copied" confirm-again-center="Read clipboard" confirm-again-paste="tapped Allow Paste in SpringBoard" confirm-again="Save as your About me note" in "Save as your About me note (58 characters)? Translate and Polish send it with every draft. Save only a note you copied in the Protly app. I run Moonbeam Kiln (문빔 킬른), a pottery studio in Victoria. Cancel Save" confirm-again="(58 characters)" in "Save as your About me note (58 characters)? Translate and Polish send it with every draft. Save only a note you copied in the Protly app. I run Moonbeam Kiln (문빔 킬른), a pottery studio in Victoria. Cancel Save" saved-again="About me saved" in "About me saved: 58 characters. Done윦" saved-again="58 characters" in "About me saved: 58 characters. Done윦" bar-again=keys back, panel region "H ㅈ [ H ㅓ ㅏ ㅋ E ㅊ ㅍ ㅠ ㅜ 123" bar-center-again="" ink 0
+CHECK 7.7-6 SKIP needs a phone reinstall
