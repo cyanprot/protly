@@ -1,0 +1,7 @@
+getpwuid_r did not find a match for uid 501
+Timestamp               Ty Process[PID:TID]
+2026-10-31 22:48:30.012 Db ProtlyCIKeyboard[9941:97e5] [com.northprot.protly:height] orientation portrait: height 0.000000 window -1.000000 pin 257.000000 active true
+2026-10-31 22:48:30.012 Db ProtlyCIKeyboard[9941:97e5] [com.northprot.protly:height] pinned: height 0.000000 window -1.000000 pin 257.000000 active true
+2026-10-31 22:48:30.050 Db ProtlyCIKeyboard[9941:97e5] [com.northprot.protly:height] bounds: height 844.000000 window -1.000000 pin 257.000000 active true
+2026-10-31 22:48:30.962 Db ProtlyCIKeyboard[9941:97e5] [com.northprot.protly:height] bounds: height 444.000000 window 444.000000 pin 257.000000 active true
+2026-10-31 22:48:30.969 Db ProtlyCIKeyboard[9941:97e5] [com.northprot.protly:height] bounds: height 257.000000 window 257.000000 pin 257.000000 active true
