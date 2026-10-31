@@ -2,8 +2,9 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-// Container app: setup guide, the "about me" note and a test field. A free Apple ID team gets no App Group, so
-// the note reaches the keyboard through the clipboard: Copy here, then Read clipboard and Save in the keyboard.
+// Container app: one guide screen (design Part 2): turn on the keyboard, try it, and the "about me" note. A free
+// Apple ID team gets no App Group, so the note reaches the keyboard through the clipboard: Copy here, then Read
+// and Save in the keyboard.
 @main
 struct ProtlyApp: App {
     var body: some Scene {
@@ -29,6 +30,8 @@ enum Brand {
     /// Secondary text, placeholders and field rules. System `.secondary` is 3.3:1 on paper; ink at 72% is 6.1:1 on
     /// paper and paper at 72% is 8.1:1 on ink.
     static let secondaryOpacity = 0.72
+    /// Quiet rules around a group (the extension's `--pl-rule`); text never uses it.
+    static let ruleOpacity = 0.18
     static let radius: CGFloat = 8
     static let sectionSpacing: CGFloat = 40
     static let groupSpacing: CGFloat = 16
@@ -37,6 +40,7 @@ enum Brand {
     static func background(_ scheme: ColorScheme) -> Color { scheme == .dark ? ink : paper }
     static func text(_ scheme: ColorScheme) -> Color { scheme == .dark ? paper : ink }
     static func secondary(_ scheme: ColorScheme) -> Color { text(scheme).opacity(secondaryOpacity) }
+    static func rule(_ scheme: ColorScheme) -> Color { text(scheme).opacity(ruleOpacity) }
 
     private static func color(_ hex: Int) -> Color {
         Color(.sRGB, red: Double(hex >> 16 & 0xFF) / 255, green: Double(hex >> 8 & 0xFF) / 255,
@@ -46,51 +50,87 @@ enum Brand {
 
 struct SetupView: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var test = ""
-    @AppStorage(AboutMeLink.defaultsKey) private var aboutMe = ""
-    @State private var copied = false
     @State private var guide: Guide?
     @FocusState private var testFocused: Bool
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Brand.sectionSpacing) {
-                Hero()
-                TurnOnSection()
-                TryItSection(test: $test, guide: $guide, focused: $testFocused)
-                VStack(alignment: .leading, spacing: Brand.groupSpacing) {
-                    SectionTitle("About me")
-                    TextField("Who you are, in a few facts", text: $aboutMe,
-                              prompt: Text("Who you are, in a few facts").foregroundStyle(Brand.secondary(scheme)),
-                              axis: .vertical)
-                        .lineLimit(4...12)
-                        .onChange(of: aboutMe) { _, new in
-                            // Scalars, as AboutMe counts: combining marks must not hide inside one character.
-                            if new.unicodeScalars.count > AboutMeLink.cap {
-                                aboutMe = String(String.UnicodeScalarView(new.unicodeScalars.prefix(AboutMeLink.cap)))
-                            }
-                            copied = false
-                        }
-                        .modifier(RuledField())
-                    HStack {
-                        Text("\(aboutMe.unicodeScalars.count) / \(AboutMeLink.cap)")
-                            .monospacedDigit()
-                            .foregroundStyle(Brand.secondary(scheme))
-                        Spacer()
-                        Button(copied ? "Copied" : "Copy for the keyboard", action: copyForKeyboard)
-                    }
-                    Text("Translate and Polish send this note with your draft. To update the keyboard: tap Copy for the keyboard, tap the Test field below, tap Read clipboard in the protly bar, Allow Paste, then Save. Copy an empty note to clear it.")
-                        .foregroundStyle(Brand.secondary(scheme))
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: Brand.sectionSpacing) {
+                    Hero()
+                    TurnOnSection()
+                    TryItSection(test: $test, guide: $guide, focused: $testFocused)
+                    AboutMeSection(guide: $guide) { showSaveSteps(proxy) }
                 }
+                .padding()
+                .frame(maxWidth: Brand.readableWidth, alignment: .leading)
+                .frame(maxWidth: .infinity)
             }
-            .padding()
-            .frame(maxWidth: Brand.readableWidth, alignment: .leading)
-            .frame(maxWidth: .infinity)
+            .scrollDismissesKeyboard(.interactively)
         }
-        .scrollDismissesKeyboard(.interactively)
         .foregroundStyle(Brand.text(scheme))
         .tint(Brand.text(scheme))
         .background { Brand.background(scheme).ignoresSafeArea() }
+    }
+
+    /// A2: the note reaches the keyboard through the test field, so after the copy the field is emptied (the bar
+    /// offers Read only on an empty field), focused and shown with the steps that save the note.
+    private func showSaveSteps(_ proxy: ScrollViewProxy) {
+        test = ""
+        guide = .saveNote
+        testFocused = true
+        withAnimation(reduceMotion ? nil : .default) {
+            proxy.scrollTo(TryItSection.fieldID, anchor: .center)
+        }
+    }
+}
+
+/// A2: the note, its counter and Copy for the keyboard. A free Apple ID team gets no App Group, so the note reaches
+/// the keyboard through the clipboard.
+private struct AboutMeSection: View {
+    @Environment(\.colorScheme) private var scheme
+    @AppStorage(AboutMeLink.defaultsKey) private var aboutMe = ""
+    @State private var copied = false
+    @Binding var guide: Guide?
+    /// After the copy: point at the test field and the steps that save the note there.
+    let showSaveSteps: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Brand.groupSpacing) {
+            SectionTitle("About me")
+            Text("Translate and Polish send this note with your draft.")
+                .foregroundStyle(Brand.secondary(scheme))
+            TextField("Who you are, in a few facts", text: $aboutMe,
+                      prompt: Text("Who you are, in a few facts").foregroundStyle(Brand.secondary(scheme)),
+                      axis: .vertical)
+                .lineLimit(4...12)
+                .onChange(of: aboutMe) { _, new in
+                    // Scalars, as AboutMe counts: combining marks must not hide inside one character.
+                    if new.unicodeScalars.count > AboutMeLink.cap {
+                        aboutMe = String(String.UnicodeScalarView(new.unicodeScalars.prefix(AboutMeLink.cap)))
+                    }
+                    copied = false
+                    if guide == .saveNote { guide = nil }  // the steps would save the old note
+                }
+                .modifier(RuledField())
+            HStack {
+                Text("\(aboutMe.unicodeScalars.count) / \(AboutMeLink.cap)")
+                    .monospacedDigit()
+                    .foregroundStyle(Brand.secondary(scheme))
+                Spacer()
+                Button(copied ? "Copied" : "Copy for the keyboard", action: copy)
+                    .buttonStyle(PillButtonStyle())
+            }
+            Text("Copy an empty note to clear it from the keyboard.")
+                .foregroundStyle(Brand.secondary(scheme))
+        }
+    }
+
+    private func copy() {
+        copyForKeyboard()
+        showSaveSteps()
     }
 
     private func copyForKeyboard() {
@@ -156,6 +196,7 @@ private struct TryItSection: View {
     @Binding var test: String
     @Binding var guide: Guide?
     let focused: FocusState<Bool>.Binding
+    static let fieldID = "test-field"
 
     var body: some View {
         VStack(alignment: .leading, spacing: Brand.groupSpacing) {
@@ -172,10 +213,13 @@ private struct TryItSection: View {
                           prompt: Text("Type here").foregroundStyle(Brand.secondary(scheme)), axis: .vertical)
                     .focused(focused)
                     .modifier(RuledField())
-                if case let .sample(sample)? = guide {
-                    sample.hint
+                switch guide {
+                case let .sample(sample)?: sample.hint
+                case .saveNote?: SaveNoteSteps()
+                case nil: EmptyView()
                 }
             }
+            .id(Self.fieldID)
             // Plain rows, not buttons: these come only from keys typed on the keyboard, so a button would do nothing.
             VStack(alignment: .leading, spacing: 8) {
                 NumberedRow(number: 1) { Text("Type `dkssud`, then tap the left slot.") }
@@ -198,6 +242,27 @@ private struct TryItSection: View {
 private enum Guide: Equatable {
     /// A chip filled the field: the action to tap.
     case sample(Sample)
+    /// About me was copied: the steps that save it in the keyboard.
+    case saveNote
+}
+
+/// The numbered banner under the test field after Copy for the keyboard.
+private struct SaveNoteSteps: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Then, on the Protly keyboard:").font(.headline)
+            NumberedRow(number: 1) { Text("Tap \(Image(systemName: "doc.on.clipboard")) Read in the bar.") }
+            NumberedRow(number: 2) { Text("Tap Allow Paste.") }
+            NumberedRow(number: 3) { Text("Tap Save.") }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay {
+            RoundedRectangle(cornerRadius: Brand.radius).strokeBorder(Brand.rule(scheme), lineWidth: 1)
+        }
+    }
 }
 
 /// A sample for the test field: the chip's title, the text it puts in the field and the hint under the field.
