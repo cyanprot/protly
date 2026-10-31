@@ -89,6 +89,19 @@ final class ActionAPITests: XCTestCase {
         XCTAssertEqual(ActionAPI.result(text: #"{"translation":" ","back_translation":""}"#, stopReason: nil).failureKind, .parse)
     }
 
+    /// keyboard-ui 003 (P4): Retry only where trying again can work.
+    func testRetryOnlyWhereItCanWork() {
+        let retry: Set<ActionError.Kind> = [.network, .timeout, .overloaded, .rate]
+        for k in [ActionError.Kind.auth, .spendLimit, .rate, .overloaded, .server, .badRequest, .network, .timeout,
+                  .refused, .truncated, .parse, .tooLong, .noKey, .setup] {
+            XCTAssertEqual(ActionError(k).canRetry, retry.contains(k), "\(k)")
+            // Each line says what happened and what to do next: at least two sentences.
+            let m = ActionError(k).message
+            XCTAssertGreaterThanOrEqual(m.components(separatedBy: ". ").count, 2, m)
+            XCTAssertTrue(m.hasSuffix("."), m)
+        }
+    }
+
     /// A stream's error event maps through the same table as an error body, by the status its type stands for.
     func testStreamErrorTypesStandForTheirStatus() {
         let table: [(String, Int, ActionError.Kind)] = [

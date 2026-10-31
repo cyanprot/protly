@@ -24,18 +24,25 @@ public struct ActionError: Error, Sendable, Equatable {
         case tooLong, noKey, setup
     }
     public let kind: Kind
-    /// Short English line for the bar.
+    /// Trying again can work: the network, a timeout, an overloaded API or a rate limit (P4).
+    public var canRetry: Bool {
+        switch kind {
+        case .network, .timeout, .overloaded, .rate: return true
+        default: return false
+        }
+    }
+    /// One line for the strip or the card: what happened, then what to do next.
     public var message: String {
         switch kind {
         case .auth: return "API key rejected. Rebuild protly with a valid key."
-        case .spendLimit: return "Monthly API spend limit reached."
+        case .spendLimit: return "Monthly API spend limit reached. Raise the limit in the Console, or wait until it resets."
         case .rate: return "Rate limited. Try again in a moment."
         case .overloaded: return "The API is overloaded. Try again in a moment."
         case .server: return "The API had a server error. Try again."
-        case .badRequest: return "The API rejected the request."
+        case .badRequest: return "The API rejected the request. Try a shorter text, or rebuild protly."
         case .network: return "Network error. Check the connection and try again."
         case .timeout: return "The model took too long. Try again."
-        case .refused: return "The model declined this text."
+        case .refused: return "The model declined this text. Edit it and try again."
         case .truncated: return "The reply was cut off. Try a shorter text."
         case .parse: return "The reply was not readable. Try again."
         case .tooLong: return "The text is too long. Try a shorter text."
