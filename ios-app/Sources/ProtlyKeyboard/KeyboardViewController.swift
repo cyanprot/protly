@@ -617,12 +617,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     /// Not private: Words.swift calls it when the system lexicon arrives.
     func refreshMode() {
         let korean = session.keycapLanguage == .korean
-        if mode.korean != korean {
-            mode.korean = korean
-            // primaryLanguage follows the keycaps through its getter: tell observers it changed (dictation, the host).
-            willChangeValue(forKey: "primaryLanguage")
-            didChangeValue(forKey: "primaryLanguage")
-        }
+        if mode.korean != korean { mode.korean = korean }
         if mode.alternative != session.alternative { mode.alternative = session.alternative }
         let isWord = session.alternativeIsWord
         if mode.alternativeIsWord != isWord { mode.alternativeIsWord = isWord }
