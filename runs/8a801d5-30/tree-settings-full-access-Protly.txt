@@ -1,0 +1,172 @@
+Attributes: Application, 0x114a37980, pid: 15491, label: 'Settings'
+Element subtree:
+ →Application, 0x114a37980, pid: 15491, label: 'Settings'
+    Window (Main), 0x114a37ac0, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x114a37700, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x114a37840, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x114a375c0, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x114a37480, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, 0x114a37340, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, 0x114a37200, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, 0x114a370c0, {{0.0, 0.0}, {390.0, 844.0}}
+                    Other, 0x114a36f80, {{0.0, 0.0}, {390.0, 844.0}}
+                      NavigationBar, 0x114a36d00, {{0.0, 47.0}, {390.0, 54.0}}, identifier: 'Keyboards'
+                        Button, 0x114a36e40, {{16.0, 47.0}, {44.0, 44.0}}, identifier: 'BackButton', label: 'General'
+                        StaticText, 0x114a36a80, {{152.3, 58.7}, {85.0, 20.7}}, label: 'Keyboards'
+                      Other, 0x114a36bc0, {{0.0, 0.0}, {390.0, 844.0}}
+                        Other, 0x114a36940, {{0.0, 0.0}, {390.0, 844.0}}
+                          Other, 0x114a361c0, {{0.0, 0.0}, {390.0, 844.0}}
+                            Other, 0x114a36300, {{0.0, 0.0}, {390.0, 844.0}}
+                              Other, 0x114a36440, {{0.0, 101.0}, {390.0, 709.0}}
+                                Table, 0x114a36580, {{0.0, 0.0}, {390.0, 844.0}}
+                                  Other, 0x114a36800, {{0.0, -805.0}, {390.0, 17.7}}
+                                  Cell, 0x114a366c0, {{20.0, -840.3}, {350.0, 53.0}}, identifier: 'KEYBOARDS', label: 'Keyboards, 3'
+                                    Other, 0x114a35a40, {{0.0, -858.0}, {350.0, 53.0}}
+                                      Other, 0x114a35b80, {{0.0, -858.0}, {350.0, 53.0}}
+                                    Button, 0x114a35cc0, {{0.0, -858.0}, {10.3, 14.0}}, label: 'chevron', Disabled
+                                    Other, 0x114a35e00, {{0.0, -858.0}, {350.0, 1.0}}
+                                    Other, 0x114a36080, {{0.0, -858.0}, {319.7, 53.0}}
+                                      Other, 0x114a35f40, {{0.0, -858.0}, {319.7, 53.0}}
+                                        Button, 0x114a352c0, {{0.0, 0.0}, {0.0, 0.0}}, identifier: 'KEYBOARDS', label: 'Keyboards, 3'
+                                          StaticText, 0x114a35400, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Keyboards'
+                                          StaticText, 0x114a35540, {{0.0, 0.0}, {0.0, 0.0}}, label: '3'
+                                  Other, 0x114a35680, {{0.0, -787.3}, {390.0, 17.3}}
+                                  Other, 0x114a35900, {{0.0, -664.0}, {390.0, 17.7}}
+                                  Cell, 0x114a357c0, {{20.0, -752.3}, {350.0, 53.0}}, identifier: 'USER_DICTIONARY', label: 'Text Replacement'
+                                    Other, 0x114a34b40, {{0.0, -858.0}, {350.0, 53.0}}
+                                      Other, 0x114a34c80, {{0.0, -858.0}, {350.0, 53.0}}
+                                    Button, 0x114a34dc0, {{0.0, -858.0}, {10.3, 14.0}}, label: 'chevron', Disabled
+                                    Other, 0x114a34f00, {{0.0, -858.0}, {318.0, 1.0}}
+                                    Other, 0x114a35180, {{0.0, -858.0}, {319.7, 53.0}}
+                                      Other, 0x114a35040, {{0.0, -858.0}, {319.7, 53.0}}
+                                        StaticText, 0x114a343c0, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Text Replacement'
+                                  Cell, 0x114a34500, {{20.0, -699.3}, {350.0, 53.0}}, identifier: 'ReachableKeyboard', label: 'One-Handed Keyboard, Off'
+                                    Other, 0x114a34640, {{0.0, -858.0}, {350.0, 53.0}}
+                                      Other, 0x114a34780, {{0.0, -858.0}, {350.0, 53.0}}
+                                    Button, 0x114a34a00, {{0.0, -858.0}, {10.3, 14.0}}, label: 'chevron', Disabled
+                                    Other, 0x114a348c0, {{0.0, -858.0}, {350.0, 1.0}}
+                                    Other, 0x114a34140, {{0.0, -858.0}, {319.7, 53.0}}
+                                      Other, 0x114a34280, {{0.0, -858.0}, {319.7, 53.0}}
+                                        Button, 0x114a34000, {{0.0, 0.0}, {0.0, 0.0}}, identifier: 'ReachableKeyboard', label: 'One-Handed Keyboard, Off'
+                                          StaticText, 0x114a37d40, {{0.0, 0.0}, {0.0, 0.0}}, label: 'One-Handed Keyboard'
+                                          StaticText, 0x114a37e80, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Off'
+                                  Other, 0x1142a3ac0, {{0.0, -646.3}, {390.0, 17.3}}
+                                  Other, 0x114b1a300, {{0.0, -417.0}, {390.0, 17.7}}
+                                  Cell, 0x114b1a440, {{20.0, -611.3}, {350.0, 53.0}}, identifier: 'KeyboardAllowPaddle'
+                                  Cell, 0x114b16440, {{20.0, -558.3}, {350.0, 53.0}}, identifier: 'KeyboardVisceral'
+                                  Cell, 0x114b15180, {{20.0, -505.3}, {350.0, 53.0}}, identifier: 'keyboard-audio'
+                                  Cell, 0x114b17ac0, {{20.0, -452.3}, {350.0, 53.0}}, identifier: 'HardwareKeyboard', label: 'Hardware Keyboard'
+                                    Other, 0x114b166c0, {{0.0, -858.0}, {350.0, 53.0}}
+                                      Other, 0x114b16d00, {{0.0, -858.0}, {350.0, 53.0}}
+                                    Button, 0x114b16f80, {{0.0, -858.0}, {10.3, 14.0}}, label: 'chevron', Disabled
+                                    Other, 0x114b15680, {{0.0, -858.0}, {350.0, 1.0}}
+                                    Other, 0x114b17700, {{0.0, -858.0}, {319.7, 53.0}}
+                                      Other, 0x114b15a40, {{0.0, -858.0}, {319.7, 53.0}}
+                                        StaticText, 0x114b16a80, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Hardware Keyboard'
+                                  Other, 0x1149d4140, {{0.0, -399.3}, {390.0, 17.3}}
+                                  Other, 0x1149d4000, {{0.0, -64.0}, {390.0, 45.3}}
+                                    Other, 0x117a8c000, {{0.0, -64.0}, {390.0, 45.3}}
+                                  Cell, 0x117a8c140, {{20.0, -336.7}, {350.0, 53.0}}, identifier: 'KeyboardAutocapitalization'
+                                  Cell, 0x117a8c280, {{20.0, -283.7}, {350.0, 53.0}}, identifier: 'KeyboardAutocorrection'
+                                  Cell, 0x117a8c3c0, {{20.0, -230.7}, {350.0, 53.0}}, identifier: 'KeyboardMathExpressionCompletion'
+                                  Cell, 0x117a8c500, {{20.0, -177.7}, {350.0, 53.0}}, identifier: 'KeyboardCapsLock'
+                                  Cell, 0x117a8c640, {{20.0, -124.7}, {350.0, 53.0}}, identifier: 'SmartTyping'
+                                  Cell, 0x117a8c780, {{20.0, -71.7}, {350.0, 53.0}}, identifier: 'KeyboardPeriodShortcut', label: 'Period shortcut'
+                                  Other, 0x117a8c8c0, {{0.0, -18.7}, {390.0, 46.0}}, identifier: 'Double tapping the space bar will insert a period followed by a space.'
+                                    StaticText, 0x117a8ca00, {{0.0, -18.7}, {390.0, 46.0}}, label: 'Double tapping the space bar will insert a period followed by a space.'
+                                  Other, 0x117a8cb40, {{0.0, 101.0}, {390.0, 38.0}}, identifier: 'Dictation'
+                                    StaticText, 0x117a8cc80, {{0.0, 101.0}, {390.0, 38.0}}, label: 'Dictation'
+                                  Cell, 0x117a8cdc0, {{20.0, 65.3}, {350.0, 53.0}}, identifier: 'Dictation'
+                                    Other, 0x117a8cf00, {{20.0, 65.3}, {350.0, 53.0}}
+                                      Other, 0x117a8d040, {{20.0, 65.3}, {350.0, 53.0}}
+                                        Switch, 0x117a8d180, {{36.0, 78.0}, {318.0, 28.0}}, identifier: 'Dictation', label: 'Enable Dictation', value: 1
+                                          Button, 0x117a8d2c0, {{36.0, 81.7}, {124.0, 20.3}}, identifier: 'Dictation', label: 'Enable Dictation'
+                                          Switch, 0x117a8d400, {{293.0, 78.0}, {63.0, 28.0}}, value: 1
+                                  Cell, 0x117a8d540, {{20.0, 118.3}, {350.0, 53.0}}, identifier: 'AutoPunctuationSetting'
+                                    Other, 0x117a8d680, {{20.0, 118.3}, {350.0, 53.0}}
+                                      Other, 0x117a8d7c0, {{20.0, 118.3}, {350.0, 53.0}}
+                                        Switch, 0x117a8d900, {{36.0, 131.0}, {318.0, 28.0}}, identifier: 'AutoPunctuationSetting', label: 'Auto-Punctuation', value: 1
+                                          Button, 0x117a8da40, {{36.0, 134.7}, {134.3, 20.3}}, identifier: 'AutoPunctuationSetting', label: 'Auto-Punctuation'
+                                          Switch, 0x117a8db80, {{293.0, 131.0}, {63.0, 28.0}}, value: 1
+                                  Cell, 0x117a8dcc0, {{20.0, 171.3}, {350.0, 53.0}}, identifier: 'DictationSettings', label: 'Dictation Languages'
+                                    Other, 0x117a8de00, {{20.0, 171.3}, {319.7, 53.0}}
+                                      Other, 0x117a8df40, {{20.0, 171.3}, {319.7, 53.0}}
+                                        StaticText, 0x117a8e080, {{36.0, 187.7}, {156.3, 20.3}}, label: 'Dictation Languages'
+                                    Other, 0x117a8e1c0, {{20.0, 171.3}, {350.0, 53.0}}
+                                      Other, 0x117a8e300, {{20.0, 171.3}, {350.0, 53.0}}
+                                    Other, 0x117a8e440, {{36.0, 223.3}, {318.0, 1.0}}
+                                    Button, 0x117a8e580, {{339.7, 190.7}, {10.3, 14.0}}, label: 'chevron', Disabled
+                                  Cell, 0x117a8e6c0, {{20.0, 224.3}, {350.0, 53.0}}, identifier: 'DictationHWShortcut', label: 'Dictation Shortcut'
+                                    Other, 0x117a8e800, {{20.0, 224.3}, {319.7, 53.0}}
+                                      Other, 0x117a8e940, {{20.0, 224.3}, {319.7, 53.0}}
+                                        StaticText, 0x117a8ea80, {{36.0, 240.7}, {138.3, 20.3}}, label: 'Dictation Shortcut'
+                                    Other, 0x117a8ebc0, {{20.0, 224.3}, {350.0, 53.0}}
+                                      Other, 0x117a8ed00, {{20.0, 224.3}, {350.0, 53.0}}
+                                    Other, 0x117a8ee40, {{20.0, 276.3}, {350.0, 1.0}}
+                                    Button, 0x117a8ef80, {{339.7, 243.7}, {10.3, 14.0}}, label: 'chevron', Disabled
+                                  Other, 0x117a8f0c0, {{0.0, 277.3}, {390.0, 64.0}}
+                                    Other, 0x117a8f200, {{0.0, 277.3}, {390.0, 64.0}}
+                                  Other, 0x117a8f340, {{0.0, 341.3}, {390.0, 45.3}}, identifier: 'Emoji'
+                                    StaticText, 0x117a8f480, {{0.0, 341.3}, {390.0, 45.3}}, label: 'Emoji'
+                                  Cell, 0x117a8f5c0, {{20.0, 386.7}, {350.0, 53.0}}, identifier: 'ShowStickers'
+                                    Other, 0x117a8f700, {{20.0, 386.7}, {350.0, 53.0}}
+                                      Other, 0x117a8f840, {{20.0, 386.7}, {350.0, 53.0}}
+                                        Switch, 0x117a8f980, {{36.0, 399.3}, {318.0, 28.0}}, identifier: 'ShowStickers', label: 'Stickers', value: 1
+                                          Button, 0x117a8fac0, {{36.0, 403.0}, {61.3, 20.3}}, identifier: 'ShowStickers', label: 'Stickers'
+                                          Switch, 0x117a8fc00, {{293.0, 399.3}, {63.0, 28.0}}, value: 1
+                                  Other, 0x117a8fd40, {{0.0, 439.7}, {390.0, 30.0}}, identifier: 'Send stickers from the Emoji keyboard.'
+                                    StaticText, 0x117a8fe80, {{0.0, 439.7}, {390.0, 30.0}}, label: 'Send stickers from the Emoji keyboard.'
+                                  Other, 0x117a88000, {{0.0, 469.7}, {390.0, 38.0}}, identifier: 'English'
+                                    StaticText, 0x117a88140, {{0.0, 469.7}, {390.0, 38.0}}, label: 'English'
+                                  Cell, 0x117a88280, {{20.0, 507.7}, {350.0, 53.0}}, identifier: 'KeyboardPrediction'
+                                    Other, 0x117a883c0, {{20.0, 507.7}, {350.0, 53.0}}
+                                      Other, 0x117a88500, {{20.0, 507.7}, {350.0, 53.0}}
+                                        Switch, 0x117a88640, {{36.0, 520.3}, {318.0, 28.0}}, identifier: 'KeyboardPrediction', label: 'Predictive Text', value: 1
+                                          Button, 0x117a88780, {{36.0, 524.0}, {112.0, 20.3}}, identifier: 'KeyboardPrediction', label: 'Predictive Text'
+                                          Switch, 0x117a888c0, {{293.0, 520.3}, {63.0, 28.0}}, value: 1
+                                  Cell, 0x117a88a00, {{20.0, 560.7}, {350.0, 53.0}}, identifier: 'KeyboardInlineCompletion'
+                                    Other, 0x117a88b40, {{20.0, 560.7}, {350.0, 53.0}}
+                                      Other, 0x117a88c80, {{20.0, 560.7}, {350.0, 53.0}}
+                                        Switch, 0x117a88dc0, {{36.0, 573.3}, {318.0, 28.0}}, identifier: 'KeyboardInlineCompletion', label: 'Show Predictions Inline', value: 1
+                                          Button, 0x117a88f00, {{36.0, 577.0}, {176.3, 20.3}}, identifier: 'KeyboardInlineCompletion', label: 'Show Predictions Inline'
+                                          Switch, 0x117a89040, {{293.0, 573.3}, {63.0, 28.0}}, value: 1
+                                  Cell, 0x117a89180, {{20.0, 613.7}, {350.0, 53.0}}, identifier: 'KeyboardCheckSpelling'
+                                    Other, 0x117a892c0, {{20.0, 613.7}, {350.0, 53.0}}
+                                      Other, 0x117a89400, {{20.0, 613.7}, {350.0, 53.0}}
+                                        Switch, 0x117a89540, {{36.0, 626.3}, {318.0, 28.0}}, identifier: 'KeyboardCheckSpelling', label: 'Check Spelling', value: 1
+                                          Button, 0x117a89680, {{36.0, 630.0}, {113.7, 20.3}}, identifier: 'KeyboardCheckSpelling', label: 'Check Spelling'
+                                          Switch, 0x117a897c0, {{293.0, 626.3}, {63.0, 28.0}}, value: 1
+                                  Cell, 0x117a89900, {{20.0, 666.7}, {350.0, 53.0}}, identifier: 'KeyboardContinuousPathEnabled'
+                                    Other, 0x117a89a40, {{20.0, 666.7}, {350.0, 53.0}}
+                                      Other, 0x117a89b80, {{20.0, 666.7}, {350.0, 53.0}}
+                                        Switch, 0x117a89cc0, {{36.0, 679.3}, {318.0, 28.0}}, identifier: 'KeyboardContinuousPathEnabled', label: 'Slide to Type', value: 1
+                                          Button, 0x117a89e00, {{36.0, 683.0}, {98.7, 20.3}}, identifier: 'KeyboardContinuousPathEnabled', label: 'Slide to Type'
+                                          Switch, 0x117a89f40, {{293.0, 679.3}, {63.0, 28.0}}, value: 1
+                                  Cell, 0x117a8a080, {{20.0, 719.7}, {350.0, 53.0}}, identifier: 'KeyboardContinuousPathDeleteWholeWord'
+                                    Other, 0x117a8a1c0, {{20.0, 719.7}, {350.0, 53.0}}
+                                      Other, 0x117a8a300, {{20.0, 719.7}, {350.0, 53.0}}
+                                        Switch, 0x117a8a440, {{36.0, 732.3}, {318.0, 28.0}}, identifier: 'KeyboardContinuousPathDeleteWholeWord', label: 'Delete Slide-to-Type by Word', value: 1
+                                          Button, 0x117a8a580, {{36.0, 736.0}, {225.0, 20.3}}, identifier: 'KeyboardContinuousPathDeleteWholeWord', label: 'Delete Slide-to-Type by Word'
+                                          Switch, 0x117a8a6c0, {{293.0, 732.3}, {63.0, 28.0}}, value: 1
+                                  Other, 0x117a8a800, {{0.0, 772.7}, {390.0, 17.3}}
+                                  Other, 0x117a8a940, {{357.0, 101.0}, {30.0, 695.7}}, label: 'Vertical scroll bar, 3 pages', value: 100%
+                                    Other, 0x117a8aa80, {{384.0, 470.7}, {3.0, 323.0}}
+                                  Other, 0x117a8abc0, {{47.3, 811.0}, {295.3, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                    Other, 0x117a8ad00, {{50.3, 838.0}, {289.3, 3.0}}
+                                  Other, 0x117a8ae40, {{20.0, 277.3}, {350.0, 64.0}}, label: 'You can use Dictation for English when you are not connected to the Internet. About Dictation & Privacy…'
+                                  Other, 0x117a8af80, {{20.0, 341.3}, {350.0, 45.3}}, label: 'Emoji'
+                                  Other, 0x117a8b0c0, {{20.0, 439.7}, {350.0, 30.0}}, label: 'Send stickers from the Emoji keyboard.'
+                                  Other, 0x117a8b200, {{20.0, 469.7}, {350.0, 38.0}}, label: 'English'
+                                  Other, 0x117a8b340, {{20.0, 27.3}, {350.0, 38.0}}, label: 'Dictation'
+                                  Other, 0x117a8b480, {{20.0, -18.7}, {350.0, 46.0}}, label: 'Double tapping the space bar will insert a period followed by a space.'
+                      Other, 0x117a8b5c0, {{0.0, 0.0}, {390.0, 844.0}}
+                        Other, 0x117a8b700, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, 0x117a8b840, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, 0x117a8b980, {{0.0, 0.0}, {390.0, 844.0}}
+Path to element:
+ →Application, 0x114a37980, pid: 15491, label: 'Settings'
+Query chain:
+ →Find: Application 'com.apple.Preferences'
+  Output: {
+    Application, 0x117a8bac0, pid: 15491, label: 'Settings'
+  }

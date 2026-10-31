@@ -1,0 +1,3 @@
+full access: off, Settings: Protly not found
+full access: off, Settings: Protly not found
+allow paste (probe clipboard): no Allow Paste prompt in 6 s

@@ -1,0 +1,49 @@
+== sprint 002 probe
+full access: Settings: Protly not found
+network key: true
+row 1 top 564.00 pt, panel {{5.6666666666666661, 558.5}, {378.66666666666669, 210.5}}, button band {{5.6666666666666661, 724}, {378.66666666666669, 45}}
+probe-panel-loading: "Turn on Full Access in Settings to use protly actions Cancel Retry"
+  word "Turn" at x 50.3 y 631.0 w 31.2 h 16.7
+  word "on" at x 83.7 y 631.0 w 20.8 h 16.7
+  word "Full" at x 106.6 y 631.0 w 29.2 h 16.7
+  word "Access" at x 137.8 y 631.0 w 56.3 h 16.7
+  word "in" at x 196.2 y 631.0 w 16.7 h 16.7
+  word "Settings" at x 214.9 y 631.0 w 64.6 h 16.7
+  word "to" at x 281.6 y 631.0 w 18.7 h 16.7
+  word "use" at x 302.4 y 631.0 w 32.6 h 16.7
+  word "protly" at x 51.0 y 653.0 w 39.6 h 16.7
+  word "actions" at x 92.7 y 653.0 w 62.3 h 16.7
+  word "Cancel" at x 22.3 y 740.8 w 53.4 h 13.8
+  word "Retry" at x 326.3 y 741.7 w 42.0 h 15.3
+result after 8.0 s: Retry
+probe-panel-result: "Turn on Full Access in Settings to use protly actions Cancel Retry"
+  word "Turn" at x 50.3 y 631.0 w 31.2 h 16.7
+  word "on" at x 83.7 y 631.0 w 20.8 h 16.7
+  word "Full" at x 106.6 y 631.0 w 29.2 h 16.7
+  word "Access" at x 137.8 y 631.0 w 56.3 h 16.7
+  word "in" at x 196.2 y 631.0 w 16.7 h 16.7
+  word "Settings" at x 214.9 y 631.0 w 64.6 h 16.7
+  word "to" at x 281.6 y 631.0 w 18.7 h 16.7
+  word "use" at x 302.4 y 631.0 w 32.6 h 16.7
+  word "protly" at x 51.0 y 653.0 w 39.6 h 16.7
+  word "actions" at x 92.7 y 653.0 w 62.3 h 16.7
+  word "Cancel" at x 22.3 y 740.8 w 53.4 h 13.8
+  word "Retry" at x 326.3 y 741.7 w 42.0 h 15.3
+after Cancel: field "내일 봐 ", panel "ㅈ [ 근 이 ㅓ ㅏ ㅋ E 123"
+paste prompt: app alerts 0, springboard alerts 0, Allow Paste in app false, in springboard false
+allow paste: no Allow Paste prompt in 6 s
+clipboard panel: "Turn on Full Access in Settings to use protly actions Cancel Retry"
+probe-panel-confirm: "Turn on Full Access in Settings to use protly actions Cancel Retry"
+  word "Turn" at x 50.3 y 631.0 w 31.2 h 16.7
+  word "on" at x 83.7 y 631.0 w 20.8 h 16.7
+  word "Full" at x 106.6 y 631.0 w 29.2 h 16.7
+  word "Access" at x 137.8 y 631.0 w 56.3 h 16.7
+  word "in" at x 196.2 y 631.0 w 16.7 h 16.7
+  word "Settings" at x 214.9 y 631.0 w 64.6 h 16.7
+  word "to" at x 281.6 y 631.0 w 18.7 h 16.7
+  word "use" at x 302.4 y 631.0 w 32.6 h 16.7
+  word "protly" at x 51.0 y 653.0 w 39.6 h 16.7
+  word "actions" at x 92.7 y 653.0 w 62.3 h 16.7
+  word "Cancel" at x 22.3 y 740.8 w 53.4 h 13.8
+  word "Retry" at x 326.3 y 741.7 w 42.0 h 15.3
+problems: [] notes: unreadable: clipboard-center="Read clipboard" clipboard-paste="no Allow Paste prompt in 6 s" clipboard: none of ["Save"] on the panel, "Turn on Full Access in Settings to use protly actions Cancel Retry"
