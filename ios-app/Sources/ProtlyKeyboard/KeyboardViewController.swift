@@ -51,8 +51,8 @@ final class KeyboardViewController: KeyboardInputViewController {
     let feed = ResultFeed()
     /// Numbers the calls: a new number restarts the strip's 8 s line and makes a new card.
     private var calls = 0
-    /// What the last whole-field read returned and how far it moved the cursor, for Cancel (P6).
-    private var readMove: (text: String, moved: Int)?
+    /// What the field reads moved the cursor over, for Cancel (P6).
+    private var cursorReturn = CursorReturn()
     /// Text protly inserted and what it replaced, for Undo.
     private var lastInsert: (inserted: String, original: String, isSelection: Bool)?
     /// LearnedWords.changes at the last save (Words.swift). Per controller: each one loads its own copy.
@@ -63,6 +63,10 @@ final class KeyboardViewController: KeyboardInputViewController {
     override var primaryLanguage: String? {
         get { session.keycapLanguage == .korean ? "ko-KR" : "en-US" }
         set {}
+    }
+
+    deinit {
+        actionTask?.cancel()
     }
 
     override func viewDidLoad() {
@@ -121,11 +125,11 @@ final class KeyboardViewController: KeyboardInputViewController {
         // The word is already plain text in the field: only the session state goes, so the next key starts a new
         // word. The abandoned word's language carries to the next message.
         abandonWord()
-        actionTask?.cancel()
-        mode.panel = nil
-        mode.strip = nil  // also stops the glow
+        // Hiding mid-call counts as Cancel: the call stops and the cursor goes back too.
+        restoreCursor()
+        if mode.panel != nil { mode.panel = nil }
+        if mode.strip != nil { mode.strip = nil }  // also stops the glow
         feed.reset()
-        readMove = nil
         endUndo()
         refreshMode()
     }
@@ -270,7 +274,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         refreshMode()
         // Every path below shows its own strip or panel: a request still running must not replace it later.
         actionTask?.cancel()
-        mode.panel = nil
+        if mode.panel != nil { mode.panel = nil }
         feed.reset()
         guard hasFullAccess else {
             // F1: say why instead of a failed call (the bar shows the outlined lock pill).
@@ -290,16 +294,16 @@ final class KeyboardViewController: KeyboardInputViewController {
         mode.strip = StripState(call: call, action: action, label: tapped ?? BarAction.call(action, text: ""))
         actionTask = Task { [weak self] in
             guard let self else { return }
-            let field = await FieldText.read(textDocumentProxy)
+            cursorReturn.begin()
+            let field = await FieldText.read(textDocumentProxy) { [weak self] in self?.cursorReturn.moved(over: $0) }
+            cursorReturn.end()  // also after a cancel: the moves made so far count
             guard !Task.isCancelled else { return }
             guard let field else {
                 mode.strip = nil
                 if requested == nil { readClipboard() }
                 return
             }
-            // A Retry reads a field the first read already moved to its end: keep the first offset for Cancel.
-            let earlier = readMove.flatMap { $0.text == field.text ? $0.moved : nil } ?? 0
-            readMove = field.isSelection ? nil : (field.text, field.moved + earlier)
+            if field.isSelection { cursorReturn.clear() }
             // The action comes from the text read here (the whole field or the selection), not from the bar's view of it.
             let action = ActionAPI.mode(forDraft: field.text)
             // Text left after the cursor = only a prefix was read: Replace would glue the result to the rest.
@@ -319,7 +323,7 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     /// Reading the string shows the Allow Paste prompt: only ever on a tap.
     private func readClipboard() {
-        readMove = nil  // Read does not touch the field
+        cursorReturn.clear()  // Read does not touch the field
         if mode.strip != nil { mode.strip = nil }
         let pb = UIPasteboard.general
         UserDefaults.standard.set(pb.changeCount, forKey: Self.clipboardKey)
@@ -347,9 +351,11 @@ final class KeyboardViewController: KeyboardInputViewController {
     private func run(_ action: ActionMode, text: String, original: String, isSelection: Bool, call: Int? = nil) {
         let call = call ?? nextCall()
         let label = BarAction.call(action, text: text)
-        mode.panel = nil
+        if mode.panel != nil { mode.panel = nil }
         feed.reset()
-        mode.strip = StripState(call: call, action: action, label: label)
+        // From act() the strip is already up for this call: one write at most.
+        let strip = StripState(call: call, action: action, label: label)
+        if mode.strip != strip { mode.strip = strip }
         actionTask?.cancel()
         actionTask = Task { [weak self] in
             // self is bound per update, never before the loop: a torn-down controller is not held for up to 90 s. The
@@ -382,7 +388,9 @@ final class KeyboardViewController: KeyboardInputViewController {
             card.copyOnly = card.action != .in && !fieldHolds(card.original, isSelection: card.isSelection)
             mode.strip = nil
             mode.panel = .card(card)
+            announce(result.translation)
         case .failed(let error):
+            announce(error.message)
             guard var card = openCard else {
                 // No text yet: the error replaces the strip's label, the keys stay, no card opens.
                 mode.strip?.error = error
@@ -394,6 +402,11 @@ final class KeyboardViewController: KeyboardInputViewController {
             mode.strip = nil
             mode.panel = .card(card)
         }
+    }
+
+    /// VoiceOver hears the end of a call; the strip and the card change without moving its focus.
+    private func announce(_ text: String) {
+        UIAccessibility.post(notification: .announcement, argument: text)
     }
 
     private var openCard: CardState? {
@@ -437,7 +450,7 @@ final class KeyboardViewController: KeyboardInputViewController {
             FieldText.replace(card.original, isSelection: card.isSelection, with: result, p)
             lastInsert = (result, card.original, card.isSelection)
         }
-        readMove = nil
+        cursorReturn.clear()
         watch.forget()
         mode.canUndo = true
         mode.panel = nil
@@ -482,18 +495,24 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     /// The strip's xmark, the card's Cancel or Done, and every other panel's close.
     func closePanel() {
-        actionTask?.cancel()
-        actionTask = nil
-        // P6: the cursor goes back where it was before the read moved it, while the field still holds what was read.
-        if let r = readMove, FieldGuard.canRestore(r.text, before: textDocumentProxy.documentContextBeforeInput ?? "") {
-            FieldText.restore(r.moved, textDocumentProxy)
-            watch.forget()
-        }
-        readMove = nil
-        mode.panel = nil
+        restoreCursor()
+        if mode.panel != nil { mode.panel = nil }
         if mode.strip != nil { mode.strip = nil }
         feed.reset()
         refreshField()
+    }
+
+    /// P6: stop the call, then put the cursor back where it was before the reads moved it, while the text they moved
+    /// over is still just before it. Works mid-read too: the moves made so far are recorded.
+    private func restoreCursor() {
+        actionTask?.cancel()
+        actionTask = nil
+        cursorReturn.end()
+        let back = cursorReturn.back(before: textDocumentProxy.documentContextBeforeInput ?? "")
+        cursorReturn.clear()
+        guard back > 0 else { return }
+        FieldText.restore(back, textDocumentProxy)
+        watch.forget()
     }
 
     private func endUndo() {
