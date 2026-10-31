@@ -12,8 +12,8 @@ public enum ActionUpdate: Sendable, Equatable {
 }
 
 extension ActionAPI {
-    /// The updates of one streamed call. `open` sends the request and returns the HTTP status, the reply's bytes
-    /// and a way to stop the download; the keyboard's ActionClient passes URLSession's, the tests pass fakes.
+    /// The updates of one streamed call. `open` builds and sends the request (throwing an ActionError when it cannot
+    /// be built) and returns the HTTP status, the reply's bytes and a way to stop the download; the keyboard's ActionClient passes URLSession's, the tests pass fakes.
     /// Runs off the caller's actor. Ending the consumer (its task cancelled, or the stream dropped) cancels the
     /// producer and so the download; a cancel never shows as an error. The buffer keeps only the newest update:
     /// a partial carries the whole text so far, so a dropped one loses nothing, and the final update is yielded
@@ -61,7 +61,8 @@ extension ActionAPI {
                 case .text(let t):
                     text += t
                     // Thinking, pings and the back translation change nothing: no update for them.
-                    if partial.append(t), let value = partial.value { yield(.partial(value)) }
+                    // The opening quote alone is no text yet: the card opens at the first word.
+                    if partial.append(t), let value = partial.value, !value.isEmpty { yield(.partial(value)) }
                 case .stop(let reason):
                     stopReason = reason
                 case let .error(type, body):
@@ -77,7 +78,9 @@ extension ActionAPI {
     }
 
     /// A thrown error as the user sees it. nil for a cancel (Cancel, the keyboard hiding, a Retry): no error shows.
+    /// An ActionError (a request that could not be built) shows as it is.
     public static func failure(for error: any Error) -> ActionError? {
+        if let e = error as? ActionError { return e }
         if error is CancellationError { return nil }
         if let e = error as? URLError {
             if e.code == .cancelled { return nil }

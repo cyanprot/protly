@@ -142,6 +142,14 @@ final class ActionStreamingTests: XCTestCase {
         }
     }
 
+    /// The card opens at the first word: the opening quote alone yields nothing.
+    func testAnEmptyTranslationSoFarYieldsNothing() async {
+        let s = SSE.text(#"{"translation": ""#) + SSE.text("Hi") + SSE.text(#"", "back_translation": ""}"#)
+            + SSE.stop("end_turn")
+        let updates = await drive(Chunks(s))
+        XCTAssertEqual(updates, [.partial("Hi"), .done(ActionResult(translation: "Hi", backTranslation: ""))])
+    }
+
     func testThinkingAndPingsBetweenDeltasYieldNothing() async {
         let s = SSE.start + SSE.text(#"{"translation": "A"#) + SSE.thinking + SSE.event("ping", #"{"type": "ping"}"#)
             + SSE.text(#"", "back_translation": "B"}"#) + SSE.stop("end_turn") + SSE.end
@@ -254,6 +262,26 @@ final class ActionStreamingTests: XCTestCase {
         XCTAssertEqual(stop.value, 1, "the download is stopped on the way out")
     }
 
+    /// A consumer that starts reading only after the producer is done still gets the final update: the buffer keeps
+    /// the newest one. Partials may be dropped.
+    func testASlowConsumerStillGetsTheResult() async {
+        let produced = expectation(description: "the producer is done")
+        let stream = ActionAPI.updates { (200, Chunks(SSE.reply(SSE.pieces)), { produced.fulfill() }) }
+        await fulfillment(of: [produced], timeout: 10)
+        let updates = await consume(stream)
+        XCTAssertEqual(updates.last, .done(ok))
+        XCTAssertEqual(updates.count, 1, "only the newest update is kept")
+    }
+
+    /// A request that cannot be built fails through the same stream (open throws the ActionError).
+    func testAnActionErrorFromOpenIsShownAsIs() async {
+        let noKey = await consume(ActionAPI.updates { () async throws -> (status: Int, bytes: Chunks, stop: @Sendable () -> Void) in
+            throw ActionError(.noKey)
+        })
+        XCTAssertEqual(noKey, [.failed(ActionError(.noKey))])
+        XCTAssertEqual(ActionAPI.failure(for: ActionError(.tooLong)), ActionError(.tooLong))
+    }
+
     func testTheStreamReportsAFailureToOpen() async {
         let timeout = await consume(ActionAPI.updates { () async throws -> (status: Int, bytes: Chunks, stop: @Sendable () -> Void) in
             throw URLError(.timedOut)
@@ -277,9 +305,8 @@ final class ActionStreamingTests: XCTestCase {
     func testCancellingTheConsumerCancelsTheDownload() async {
         let cancelled = expectation(description: "the read was cancelled")
         let first = expectation(description: "the first partial arrived")
-        let stop = Counter()
         let bytes = Endless(prefix: Array(SSE.text(#"{"translation": "Hi"#).utf8), cancelled: cancelled)
-        let stream = ActionAPI.updates { (200, bytes, { stop.add() }) }
+        let stream = ActionAPI.updates { (200, bytes, {}) }
         let consumer = Task {
             var out: [ActionUpdate] = []
             for await u in stream {
