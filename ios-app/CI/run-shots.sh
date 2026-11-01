@@ -332,6 +332,15 @@ fi
 # The keyboard's own height log (ProtlyHeight.swift), for what iOS did between the screenshots.
 xcrun simctl spawn "$udid" log show --last 30m --debug --info --style compact \
   --predicate 'subsystem == "com.northprot.protly"' > "$out/keyboard-log.txt" 2>&1
+# The web composer's DOM event log (typing-fixes 004, HostApp.swift `-screen web`): the host appends it in its
+# Documents folder; it goes into the run folder next to the ret-* lines.
+host_data="$(xcrun simctl get_app_container "$udid" com.northprot.protly.cihost data 2> /dev/null)"
+if [ -n "$host_data" ] && [ -s "$host_data/Documents/web-events.txt" ]; then
+  cp "$host_data/Documents/web-events.txt" "$out/web-events.txt"
+  note "web-events.txt: $(wc -l < "$out/web-events.txt" | tr -d ' ') lines"
+else
+  note "web-events.txt: none (the web screen did not run or logged nothing)"
+fi
 xcrun simctl shutdown "$udid" > /dev/null 2>&1
 
 if [ $test_code -ne 0 ]; then
