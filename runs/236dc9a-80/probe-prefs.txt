@@ -1,0 +1,2031 @@
+Device data changes around test0_access (Full Access in Settings), each snapshot after simctl shutdown:
+full access: on, turned on in Settings (switch tap 2, Allow in the alert)
+snapshots: before 1086 plists, TCC.db, after 1127 plists, TCC.db
+new Containers/Data/Application/A01619C5-D3D5-4FE5-AFCA-5CB8BC5872D0/.com.apple.mobile_container_manager.metadata.plist
+  + MCMMetadataActiveDPClass: -1
+  + MCMMetadataContentClass: 2
+  + MCMMetadataCreator: 'com.apple.installd'
+  + MCMMetadataIdentifier: 'com.northprot.protly.cihost.uitests.xctrunner'
+  + MCMMetadataInfo.com.apple.MobileInstallation.ContentProtectionClass: -1
+  + MCMMetadataSchemaVersion: 1
+  + MCMMetadataUUID: 'B9F8207D-344D-4AE9-A265-D7E0B971BC06'
+  + MCMMetadataUserIdentity.posixGID: 20
+  + MCMMetadataUserIdentity.posixUID: 501
+  + MCMMetadataUserIdentity.type: 2
+  + MCMMetadataUserIdentity.version: '2'
+  + MCMMetadataVersion: 8
+new Containers/Data/InternalDaemon/5F5C3902-4E25-408B-8ABE-07CBD63EAB66/.com.apple.mobile_container_manager.metadata.plist
+  + MCMMetadataActiveDPClass: -1
+  + MCMMetadataContentClass: 10
+  + MCMMetadataCreator: 'com.apple.testmanagerd'
+  + MCMMetadataIdentifier: 'com.apple.testmanagerd'
+  + MCMMetadataInfo.com.apple.MobileInstallation.ContentProtectionClass: -1
+  + MCMMetadataSchemaVersion: 1
+  + MCMMetadataUUID: '7FC52E9D-510A-4024-999A-157C21104C04'
+  + MCMMetadataUserIdentity.posixGID: 20
+  + MCMMetadataUserIdentity.posixUID: 501
+  + MCMMetadataUserIdentity.type: 2
+  + MCMMetadataUserIdentity.version: '2'
+  + MCMMetadataVersion: 8
+new Library/DataDeliveryServices/ddsassertiondata.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null', {'NS.objects': [UID(2), UID(29), UID(43)], '$class': UID(57)}, {'descriptors': UID(18), '$class': UID(28), 'query': UID(3), 'lastUpdated': UID(16)}, {'$class': UID(15), 'filter': UID(5), 'assetType': UID(4), 'cachedOnly': UID(13), 'installedOnly': UID(13), 'localOnly': UID(13), 'latestOnly...
+  + $top.root: UID(1)
+  + $version: 100000
+new Library/FinanceBackup/finance.plist
+  + permissions: []
+new Library/Preferences/Logging/Subsystems/com.northprot.protly.plist
+  + DEFAULT-OPTIONS.Level.Enable: 'debug'
+  + DEFAULT-OPTIONS.Level.Persist: 'debug'
+Library/Preferences/TokenBucketRateLimiter.plist
+  ~ SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Embedding.timestamp: 815229496.799025 -> 815229592.276639
+  ~ SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Embedding.timestampLastReplenished: 815229476.665686 -> 815229591.865686
+  ~ SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Keyphrase.timestamp: 815229496.68695 -> 815229592.263159
+  ~ SKDUserDefaultsRoot.SKDUserDefaultsMap.PriorityProcessing+Keyphrase.timestampLastReplenished: 815229476.2140601 -> 815229591.4140601
+Library/Preferences/com.apple.Accessibility.Assets.plist
+  ~ RefreshEvents.com.apple.MobileAsset.AXIconVision: [datetime.datetime(2026, 11, 1, 12, 37, 10, 293954)] -> [datetime.datetime(2026, 11, 1, 12, 37, 10, 293954), datetime.datetime(2026, 11, 1, 12, 39, 44, 76796)]
+  ~ RefreshEvents.com.apple.MobileAsset.MagnifierAsset: [datetime.datetime(2026, 11, 1, 12, 37, 17, 955493)] -> [datetime.datetime(2026, 11, 1, 12, 37, 17, 955493), datetime.datetime(2026, 11, 1, 12, 39, 56, 956869)]
+  ~ StoreTasks.com.apple.voicedb.OnDisk.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.'] -> ['You don’t have permission to save the file “Accessibility” in the folder “Library”.', 'You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  ~ StoreTasks.com.apple.voicedb.Siri_gryphon.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.'] -> ['You don’t have permission to save the file “Accessibility” in the folder “Library”.', 'You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  ~ StoreTasks.com.apple.voicedb.Siri_neural.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.'] -> ['You don’t have permission to save the file “Accessibility” in the folder “Library”.', 'You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  - StoreTasks.com.apple.voicedb.Siri_neural.retry.state.running: {}
+  + StoreTasks.com.apple.voicedb.Siri_neural.retry.state.scheduled: {}
+  - StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.state.running: {}
+  + StoreTasks.com.apple.voicedb.Siri_neuralAX.retry.state.scheduled: {}
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.identifier: 'com.apple.voicedb.TTSVBVoiceLoader.retry'
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.requiredConditions: 1
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.type.delay._0: 5.0
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.type.delay._1.retry._0.exponential.max: 1200.0
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.type.delay._1.retry._0.exponential.multiplier: 2.0
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.configuration.type.delay._1.retry._0.exponential.start: 5.0
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.TTSVBVoiceLoader.retry.state.running: {}
+  ~ StoreTasks.com.apple.voicedb.ausp_kona_appl.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.'] -> ['You don’t have permission to save the file “Accessibility” in the folder “Library”.', 'You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  ~ StoreTasks.com.apple.voicedb.ausp_mctk_appl.retry.failures: ['You don’t have permission to save the file “Accessibility” in the folder “Library”.'] -> ['You don’t have permission to save the file “Accessibility” in the folder “Library”.', 'You don’t have permission to save the file “Accessibility” in the folder “Library”.']
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.cardinality.once: {}
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.identifier: 'com.apple.voicedb.firstUnlock'
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.requiredConditions: 1
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._0: 0.0
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._1.retry._0.exponential.max: 3600.0
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._1.retry._0.exponential.multiplier: 1.5
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._1.retry._0.exponential.start: 1.0
+  + StoreTasks.com.apple.voicedb.firstUnlock.configuration.type.delay._1.retry.maxAttempts: 5
+  + StoreTasks.com.apple.voicedb.firstUnlock.failures: []
+  + StoreTasks.com.apple.voicedb.firstUnlock.state.running: {}
+  ~ UserInfo.com.apple.MobileAsset.AXIconVision.UpdateAsset_RestorationState.Date: datetime.datetime(2026, 11, 1, 12, 37, 10, 641466) -> datetime.datetime(2026, 11, 1, 12, 39, 54, 801881)
+  ~ UserInfo.com.apple.MobileAsset.MagnifierAsset.UpdateAsset_RestorationState.Date: datetime.datetime(2026, 11, 1, 12, 37, 18, 381064) -> datetime.datetime(2026, 11, 1, 12, 39, 57, 153975)
+Library/Preferences/com.apple.Accessibility.plist
+  + AccessibilityEnabled: False
+  + ApplicationAccessibilityEnabled: 0
+  + AutomationEnabled: 0
+  + LocalizedStringLookupInfoEnabled: 0
+Library/Preferences/com.apple.AuthKit.plist
+  ~ timeCfg: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c\x13U$null\xd3\r\x0e\x0f\x10\x11\x12_\x10\x16lastServerTimeInterval_\x10\x15lastLocalTimeIntervalV$class#A\xda\xb9\xcc\x7f@\x00\x00#A\xda\xb9\xc... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c\x13U$null\xd3\r\x0e\x0f\x10\x11\x12_\x10\x16lastServerTimeInterval_\x10\x15lastLocalTimeIntervalV$class#A\xda\xb9\xcc\x7f@\x00\x00#A\xda\xb9\xc...
+Library/Preferences/com.apple.BatteryCenter.BatteryWidget.plist
+  + avocado.systemMediumWidth: 342.0
+Library/Preferences/com.apple.CloudKit.plist
+  ~ AccountInfoValidationCounter: 38 -> 40
+new Library/Preferences/com.apple.CloudSubscriptionFeatures.config.plist
+  + subscriptionStatusRefresh: b'bplist00\xd1\x01\x02Uvalue\t\x08\x0b\x11\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x12'
+new Library/Preferences/com.apple.DataDeliveryServices.plist
+  + MetadataSyncState.AttemptCount: 0
+  + MetadataSyncState.BuildVersion: '23F77'
+  + MetadataSyncState.Date: datetime.datetime(2026, 11, 1, 12, 41, 29, 60572)
+  + MetadataSyncState.Status: 2
+  + UpdateCatalogMetadata-com.apple.MobileAsset.LinguisticData: datetime.datetime(2026, 11, 1, 12, 41, 22, 683399)
+new Library/Preferences/com.apple.DiagnosticExtensions.extensionTracker.plist
+  + com.apple.DiagnosticExtensions.extensionTracker.XPCActivity.EarliestExpirationDate: datetime.datetime(4001, 1, 1, 0, 0)
+  + com.apple.DiagnosticExtensions.extensionTracker.XPCActivity.XPCActivityScheduledDate: datetime.datetime(4001, 1, 1, 2, 0)
+new Library/Preferences/com.apple.FinanceKit.plist
+  + postInstallTaskVersions.clearTransactionIcons: 1
+  + postInstallTaskVersions.migrateAppPermissions: 1
+  + postInstallTaskVersions.populateAccountMatchEntities: 1
+  + postInstallTaskVersions.populateExtractedOrderMessageIDHash: 1
+  + postInstallTaskVersions.populateExtractedOrdersAutomaticIngestionLocalConsent: 1
+  + postInstallTaskVersions.populateFullyQualifiedAccountIdentifierInApplications: 1
+  + postInstallTaskVersions.populateMerchantNameFromBrand: 1
+  + postInstallTaskVersions.populateTransactionCategories: 2
+  + postInstallTaskVersions.populateTransactionsWithIsVisibleAndRemoveEmptyCurrencyCodes: 1
+  + postInstallTaskVersions.updateAccountsWithCurrentConsentID: 1
+new Library/Preferences/com.apple.HeartRate.notifications.plist
+  + MigrationVersion: 1
+new Library/Preferences/com.apple.Maps.mapssyncd.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793535881
+  + CloudKitAccountInfoCache.e30a6ddbb34dc219d5eec58a034494eef2e10a3ca6e5a93b1b3406c8da4cdfe6: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.PosterBoard.unprotectedUserDefaults.plist
+  ~ PBFExecuteUpdateHistory: ['2026-11-01 12:37:16 | prewarm | 53.58s | PBFDescriptorRefreshStrategyRefreshIfEmpty | PBFPosterExtensionDataStoreGalleryConfigurationOptionsPersistAndUse | PBFPosterExtensionDataStoreGalleryConfigurationOptionsOnlyIfStale | SUCCESS'] -> ['2026-11-01 12:37:16 | prewarm | 53.58s | PBFDescriptorRefreshStrategyRefreshIfEmpty | PBFPosterExtensionDataStoreGalleryConfigurationOptionsPersistAndUse | PBFPosterExtensionDataStoreGalleryConfigurationOptionsOnlyIfStale | SUCCESS', '2026-11-01 12:40:23 | prewarm | 14.85s | PBFDescriptorRefreshSt...
+Library/Preferences/com.apple.Preferences.plist
+  + HasMouse: False
+  + HasPointerDevice: False
+  + VSDeveloperIdentityProviderAvailabilityStatus: 2
+  + VSIdentityProviderAvailabilityStatus: 2
+  + VSStoreIdentityProviderAvailabilityStatus: 2
+  + WebDatabaseDirectory: '/Users/runner/Library/Developer/CoreSimulator/Devices/7A74E80C-1653-4323-AD47-F694F6D41E61/data/Library/WebKit/Databases'
+  + WebKitLocalStorageDatabasePathPreferenceKey: '/Users/runner/Library/Developer/CoreSimulator/Devices/7A74E80C-1653-4323-AD47-F694F6D41E61/data/Library/WebKit/LocalStorage'
+  + com.apple.UIKit.UISplitViewController.Root.primaryEdgeSplitViewControllerColumn: 0
+  + com.apple.UIKit.UISplitViewController.Root.secondaryEdgeSplitViewControllerColumn: 999
+Library/Preferences/com.apple.SafariBookmarksSyncAgent.plist
+  ~ CloudKitAccountInfoCache.2b3de799861e14b04addec7e2f751b30c50441f04acc2955c1af16d72e36d330: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.StatusKitAgent.plist
+  ~ CloudKitAccountInfoCache.3902b2981283e580a9da1ac08c3d62865213f45d1f05b9813a67ecb44fc70ae5: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.TelephonyUtilities.plist
+  ~ badge_count_data: b'{"faceTimeAudioMessages":0,"legacyVoicemails":0,"faceTimeVideoMessages":0,"missedFaceTimeGroupCalls":0,"missedFaceTimeCalls":0,"carrierVoicemails":0,"isAmbiguous":false,"missedTelephonyCalls":0}' -> b'{"carrierVoicemails":0,"faceTimeVideoMessages":0,"isAmbiguous":false,"missedFaceTimeGroupCalls":0,"missedFaceTimeCalls":0,"missedTelephonyCalls":0,"legacyVoicemails":0,"faceTimeAudioMessages":0}'
+new Library/Preferences/com.apple.amsaccountsd.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793535881
+  + CloudKitAccountInfoCache.6dc5ee5628a170b03b4ba253894da1b8e64bf5ff2dfca6f7b163a9d6eaf80464: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.amsengagementd.plist
+  ~ AMSActivityObserverDateLastCheckedIn: 1793536515.0809078 -> 1793536795.54957
+  + CloudKitAccountInfoCache.e5a393ccc7f7b509f52390698eee30a76c991d614aedd94780ff29061ebe3a9f: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.appstored.plist
+  ~ AdPlatformsStatusConditionSetDate: datetime.datetime(2026, 11, 1, 12, 38, 28, 253522) -> datetime.datetime(2026, 11, 1, 12, 39, 23, 620480)
+Library/Preferences/com.apple.apsd.plist
+  ~ APSLastFullHandshake: 1793536715.845073 -> 1793536900.337634
+  + APSPersistentTopics.com.apple.aps.amsprivateidentifiers.darkWakeEnabled: False
+  + APSPersistentTopics.com.apple.aps.amsprivateidentifiers.enableStatusUpdates: True
+  + APSPersistentTopics.com.apple.aps.amsprivateidentifiers.enabled: ['com.apple.icloud-container.com.apple.amsprivateidentifiers']
+  + APSPersistentTopics.com.apple.aps.amsprivateidentifiers.environment: 'development'
+  + APSPersistentTopics.com.apple.aps.amsprivateidentifiers.processName: 'amsaccountsd'
+  + APSPersistentTopics.com.apple.aps.amsprivateidentifiers.tokenAcked: False
+Library/Preferences/com.apple.assetsd.plist
+  ~ PLSyndicationLastUpdateDate: datetime.datetime(2026, 11, 1, 12, 35, 23, 795050) -> datetime.datetime(2026, 11, 1, 12, 39, 20, 302217)
+Library/Preferences/com.apple.assistant.backedup.plist
+  ~ SiriAvailability.unavailabilityReasons: 41781441855744 -> 6597069766912
+Library/Preferences/com.apple.assistant.plist
+  + Accounts.F1BF2D5A-B598-4EF9-AFBC-4F79A2030315.Validation Expiration: datetime.datetime(2026, 11, 4, 13, 39, 41, 76212)
+  + Accounts.F1BF2D5A-B598-4EF9-AFBC-4F79A2030315.Validation Version: 1
+  + Country Code: 'US'
+  ~ Last client experiment check date: datetime.datetime(2026, 11, 1, 12, 37, 24, 217010) -> datetime.datetime(2026, 11, 1, 12, 39, 38, 510890)
+  ~ Last server experiment check date: datetime.datetime(2026, 11, 1, 12, 37, 24, 203040) -> datetime.datetime(2026, 11, 1, 12, 39, 38, 501761)
+Library/Preferences/com.apple.assistant.support.plist
+  + Allow Explicit Content: True
+  ~ Offline Dictation Status.en-US.Auto Punctuation: False -> True
+  ~ Offline Dictation Status.en-US.Continuous Listening: False -> True
+  ~ Offline Dictation Status.en-US.Emoji Recognition: False -> True
+  ~ Offline Dictation Status.en-US.Installed: False -> True
+  ~ Offline Dictation Status.en-US.On Device Search: False -> True
+Library/Preferences/com.apple.bg.system.task.plist
+  + FastPassActivitiesRun.com.apple.healthd.post-install-update.fastpass: 0
+  ~ VersionSpecificActivitiesRun: ['com.apple.ap.promotedcontentd.postinstall', 'com.apple.GenerativeFunctions.PeriodicTasks.AvailabilityUpdateTask.Postinstall.ClassD', 'com.apple.family.osupdate.backgroundTask', 'com.apple.jetpackassetd.postinstall', 'com.apple.siri.bg_system_task.post-install-asset-subscription'] -> ['com.apple.ap.promotedcontentd.postinstall', 'com.apple.GenerativeFunctions.PeriodicTasks.AvailabilityUpdateTask.Postinstall.ClassD', 'com.apple.family.osupdate.backgroundTask', 'com.apple.jetpackassetd.postinstall', 'com.apple.siri.bg_system_task.post-install-asset-subscription', 'com.apple.siri.b...
+Library/Preferences/com.apple.chronod.plist
+  ~ lastKnownTimes.world: 1793536546.844194 -> 1793536733.617763
+Library/Preferences/com.apple.contacts.postersyncd.plist
+  ~ CloudKitAccountInfoCache.22d1a0538d856e09e254acd889f7e8accdfa8371053045bcdeda766ec7c9b687: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.corespotlightui.plist
+  + CSReceiverBundleIdentifierState.com.apple.AppStore: True
+  + CSReceiverBundleIdentifierState.com.apple.Preferences: True
+Library/Preferences/com.apple.das.fairscheduling.plist
+  ~ lastResetDate: datetime.datetime(2026, 11, 1, 12, 34, 36, 388958) -> datetime.datetime(2026, 11, 1, 12, 38, 47, 917151)
+  + priorityQueue.com.apple.spotlightknowledged.pipelines.embedding.index-processing.ab: 2.260074019432068
+  + priorityQueue.com.apple.spotlightknowledged.pipelines.embedding.index-processing.c: 0.21680796146392822
+  + priorityQueue.com.apple.spotlightknowledged.task: 11.174870014190674
+  - priorityQueue.com.apple.spotlightknowledged.task.keyphrases: 19.375110030174255
+  ~ priorityQueue.com.apple.springboard.posterboardupdate.prewarm: 56.0856739282608 -> 59.265361070632935
+Library/Preferences/com.apple.dasd.activityDurationTracker.plist
+  ~ FeatureDurationDict.600: 0 -> 7.2053749561309814
+Library/Preferences/com.apple.email.maild.plist
+  ~ CloudKitAccountInfoCache.a80927d7659fb869fab40b5e912e64d2622c282e8b53c91aceee98d0f35051e4: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  + EDLegacyKeychainCleanupCompleted: True
+Library/Preferences/com.apple.financed.plist
+  ~ CloudKitAccountInfoCache.41d1d24fb0315bd233ae8c8acef0b2a1cb04969fdd52aa2104ca1bc755acf80e: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.findmy.findmylocated.plist
+  ~ CloudKitAccountInfoCache.210c4646fe74acf7d8f0546ec3ecbe1eb0fff2d916e85e5b66b8adbaaadeedf3: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.fitcored.plist
+  ~ CloudKitAccountInfoCache.1ddd4ca09c9bee0c39bc4dc94c3ac97a791897eeb7ff140d0ffd46de0c665fe9: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ RecentAPIAccessProcessBundles.com.apple.ActivityAwardsServices: datetime.datetime(2026, 11, 1, 12, 38, 11, 975433) -> datetime.datetime(2026, 11, 1, 12, 39, 44, 309114)
+  ~ RecentAPIAccessProcessBundles.com.apple.FitnessIntelligenceSnapshotService: datetime.datetime(2026, 11, 1, 12, 38, 13, 873197) -> datetime.datetime(2026, 11, 1, 12, 39, 44, 910081)
+  + notificationSettingsMigrated: True
+new Library/Preferences/com.apple.fitnesscoachingd.plist
+  + CoachingStartDate: datetime.datetime(2026, 11, 1, 12, 40, 4, 666224)
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierActiveEnergyBurned: 'Cal'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierBasalEnergyBurned: 'Cal'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceCrossCountrySkiing: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceCycling: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceDownhillSnowSports: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistancePaddleSports: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceRowing: 'km'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceSkatingSports: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceSwimming: 'yd'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierDistanceWalkingRunning: 'mi'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierUnderwaterDepth: 'ft'
+  + FICachedPreferredUnitsKey.HKQuantityTypeIdentifierWaterTemperature: 'degF'
+new Library/Preferences/com.apple.fontservicesd.plist
+  + version: 5
+Library/Preferences/com.apple.gamed.plist
+  ~ GKURLPatternCacheExpirationDateUserDefaultsKey: datetime.datetime(2026, 11, 1, 13, 36, 4, 149185) -> datetime.datetime(2026, 11, 1, 13, 36, 4, 151195)
+Library/Preferences/com.apple.health.shared.plist
+  + HealthExperience.healthKitDatabaseIdentifierKey: '0C8E1303-7F3E-4F49-9F4D-7F65886F06E8'
+new Library/Preferences/com.apple.healthappd.plist
+  + com.apple.healthappd.generation.background.after_unlock_all: 815229588.171239
+Library/Preferences/com.apple.healthd.plist
+  + CloudKitAccountInfoCache.1f7c159e2c345e3e712195e1c664374cde99d78d53871c0ed30f4f7c7125cc9d: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  + HDAuthorizationBackupSyncEntityRestoreIdentifier: 'EC595C29-8B15-4669-829E-E1E1B52CF177'
+  ~ HDCloudSyncAccountInfo: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ HDPeriodicCountryMonitor_LastCheckAttemptDate: datetime.datetime(2026, 11, 1, 12, 38, 31, 558523) -> datetime.datetime(2026, 11, 1, 12, 39, 47, 393232)
+  ~ HDPeriodicCountryMonitor_LastFetchAttemptDate: datetime.datetime(2026, 11, 1, 12, 38, 31, 787252) -> datetime.datetime(2026, 11, 1, 12, 39, 47, 417845)
+Library/Preferences/com.apple.homed.plist
+  ~ CloudKitAccountInfoCache.16e5dd866e807589ee3bf28c038a0b7c234b01797f60a9f91ef1177310cbb8e8: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.68f88d50b86377fe9cf4499ffbf0ab85be05d3d3867ca003ac1a350634e025a4: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.6b3152cb5cb61325362e70273a2109e1894bfbe253ff5eea9cb1df461f4bea12: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.eaa60b397c3964a115f599077b8417e354f5c33c43f8ca7211e483489b664bc0: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ HMDHomeManagerGenerationCounter: 3 -> 6
+  ~ homedLaunchTime: datetime.datetime(2026, 11, 1, 12, 34, 54, 624697) -> datetime.datetime(2026, 11, 1, 12, 39, 13, 13635)
+Library/Preferences/com.apple.homeeventsd.plist
+  + CloudKitAccountInfoCache.c72f6a314c31157ee9d33261b344002f6512d39bb24166e4c97881881d465623: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.identityservicesd.plist
+  + CloudKitAccountInfoCache.058f954dc58b7ee5aaa32162774998dd87a5fb4d7de2da441ab54103d038f9af: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ LastKeyGeneration: 1793536476.805633 -> 1793536728.638551
+new Library/Preferences/com.apple.ind.plist
+  + CKPerBootTasks: ['CKAccountInfoCacheReset']
+  + CKStartupTime: 1793535881
+Library/Preferences/com.apple.itunesstored.plist
+  ~ TLSLastSampleDate: datetime.datetime(2026, 11, 1, 12, 36, 9, 620704) -> datetime.datetime(2026, 11, 1, 12, 39, 21, 187017)
+Library/Preferences/com.apple.liveactivitiesd.plist
+  ~ KnownClients: ['com.apple.remindd', 'com.apple.springboard', 'com.apple.mobiletimerd', 'com.apple.routined', 'com.apple.chronod'] -> ['com.apple.mobiletimerd', 'com.apple.chronod', 'com.apple.routined', 'com.apple.remindd', 'com.apple.springboard']
+Library/Preferences/com.apple.mediaremoted.plist
+  ~ ConnectedClientAuditTokens: [b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00I,\x00\x00\xae\x86\x01\x00\x7f\\\x00\x00', b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00N,\x00\x00\xae\x86\x01\x00)\\\x00\x00', b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\x... -> [b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\x888\x00\x00\xae\x86\x01\x00\xa0t\x00\x00', b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x00z8\x00\x00\xae\x86\x01\x00\x7ft\x00\x00', b'\xf5\x01\x00\x00\xf5\x01\x00\x00\x14\x00\x00\x...
+  ~ PersonalDeviceState.kMRDPersonalDeviceControllerPersonalDeviceStateDateKey: datetime.datetime(2026, 11, 1, 12, 34, 45, 804885) -> datetime.datetime(2026, 11, 1, 12, 39, 9, 747632)
+  ~ SystemEndpoint.Proactive.timesince: 5.9604644775390625e-06 -> 263.919420003891
+  ~ SystemEndpoint.UserSelected.selectionreason: 'No UserSelectedSystemEndpoint' -> "doesn't participate in idle reset"
+  ~ SystemEndpoint.UserSelected.timesince: 0.00022494792938232422 -> 263.9196399450302
+Library/Preferences/com.apple.mobilecal.plist
+  + BirthdayEventsGenerationAttemptsToResetKey: 0
+  + BirthdayEventsGenerationLastLocale: 'en_US'
+  + LastDeselectedCalendarSyncHashes: []
+  + LastDeselectedCalendarSyncIdentifiers: []
+  + LastViewType: 3
+  + NumDaysToShow: 1
+  + ShowListView: False
+  + com.apple.UIKit.UISplitViewController.Root.primaryEdgeSplitViewControllerColumn: 2
+  + com.apple.UIKit.UISplitViewController.Root.secondaryEdgeSplitViewControllerColumn: 2
+  + defaultCalendarChangedReason: 'Old default ((null)) not valid'
+  + defaultCalendarChangedTimestamp: 815229677
+  + defaultCalendarDatabaseID: 0
+  + defaultCalendarID: '3BBA7533-B275-45C3-B99D-2F86C69A98A8'
+  + defaultCalendarStoreUID: 1
+new Library/Preferences/com.apple.mobileslideshow.PhotosReliveWidget.plist
+  + scheduledReload_0: b"bplist00\xd3\x01\x02\x03\x04\x05\x06_\x10\x0fentryIdentifierUdelay]scheduledDateP#@\x92\xc0\x00\x00\x00\x00\x003A\xc8K\xb7\xd8c\x1b\xa9\x08\x0f!'56?\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00H"
+Library/Preferences/com.apple.mobiletimerd.plist
+  + MTAlarmStorageMigratedToCoreData: True
+  + MTNeedsSleepMigration: False
+  + MTTimerStorageMigratedToCoreData: True
+  + StopwatchStorageVersion: 1.0
+Library/Preferences/com.apple.news.widget.plist
+  + first_widget_refresh_date: datetime.datetime(2026, 11, 1, 12, 40, 31, 916607)
+  + first_widget_refresh_date_0-(null)-1: datetime.datetime(2026, 11, 1, 12, 40, 37, 154146)
+  + marker: False
+Library/Preferences/com.apple.newscore.plist
+  + com.apple.newsd.download.hasUnfinishedWork: False
+new Library/Preferences/com.apple.newscore2.plist
+  + widget_assigned_user_id: '150C090C-B257-4981-A90C-1F1950BF5563'
+new Library/Preferences/com.apple.newsd.plist
+  + FCAppConfigurationBundleShortVersionKey: '6.0'
+Library/Preferences/com.apple.parsecd.plist
+  ~ PARAppWhitelistSignatureLastModified: 815229317.344417 -> 815229556.330348
+  ~ WhitelistUpdateRequiredKey: False -> True
+Library/Preferences/com.apple.passd.plist
+  ~ CloudKitAccountInfoCache.1f99b032af56f07a23a4eb8361d1316f025dd9c59902e97cba3ffa577e19ec49: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.2240b37044c4d9970dd513fe0b775681988b55f48ce3163534312d41b95b9f6f: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.57a13b8d5696680caab58c7ecfbf2431d11cfde693bd68a9108872b3397d7dd4: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  + CloudKitAccountInfoCache.98108dad9500c8a7a55c156827d53a674ba011397d590a6877b8a0e31d215a42: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.private.health.mental-health.plist
+  ~ TypicalDayProviderCacheLastUpdatedDate: datetime.datetime(2026, 11, 1, 12, 38, 23, 817701) -> datetime.datetime(2026, 11, 1, 12, 39, 47, 139736)
+Library/Preferences/com.apple.remindd.babysitter.plist
+  - RefreshingWaiters: {}
+  + RefreshingWaiters.ICCloudContext.CloudKitUpdateCloudContextState: 1
+  + RefreshingWaiters.com.apple.remindd.RDSharedInlineTagAutoConvertEngine.babysitter.babysitterOperationDidLaunch: 1
+Library/Preferences/com.apple.routined.plist
+  ~ CloudKitAccountInfoCache.706b43cf149ca98c167ec1eed7a5ba0bfe3ebea6e47003577fe5566032177412: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ LastLaunchDate.routined: datetime.datetime(2026, 11, 1, 12, 34, 46, 997800) -> datetime.datetime(2026, 11, 1, 12, 39, 5, 435272)
+  + RTDefaultsPersistenceMirroringManagerMirroringAttemptsByBuildMap.23F77: False
+  ~ RTDefaultsSafetyCacheActiveSessionDetailsFetchFailureDateKey: datetime.datetime(2026, 11, 1, 12, 35, 54, 189857) -> datetime.datetime(2026, 11, 1, 12, 39, 40, 196290)
+  + XPCActivityLastAttemptDate.com.apple.routined.cloudkit.initializeSentinelZone: datetime.datetime(2026, 11, 1, 12, 39, 44, 74272)
+  ~ XPCActivityLastAttemptDate.com.apple.routined.persistence.mirroring.post-install: datetime.datetime(2026, 11, 1, 12, 35, 41, 332469) -> datetime.datetime(2026, 11, 1, 12, 39, 56, 753033)
+  + XPCActivityLastCompleteDate.com.apple.routined.cloudkit.initializeSentinelZone: datetime.datetime(2026, 11, 1, 12, 40, 43, 816654)
+  + XPCActivityLastCompleteDate.com.apple.routined.persistence.mirroring.post-install: datetime.datetime(2026, 11, 1, 12, 40, 4, 963396)
+Library/Preferences/com.apple.sharingd.plist
+  ~ HashManager-LastRebuiltDateKey: datetime.datetime(2026, 11, 1, 12, 37, 41, 631056) -> datetime.datetime(2026, 11, 1, 12, 39, 25, 674294)
+  ~ HashManager-LastUpdatedDateKey: datetime.datetime(2026, 11, 1, 12, 37, 41, 631056) -> datetime.datetime(2026, 11, 1, 12, 39, 25, 674294)
+Library/Preferences/com.apple.spotlightknowledged.pipeline.plist
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.itemsInstantProcessed: 0
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.itemsInstantUnprocessed: 0
+  + SKDUserDefaultsRoot.SKDUserDefaultsMap.pipeline:Embedding.timeSpentProcessing: 69
+Library/Preferences/com.apple.springboard.plist
+  + SBParentalControlsMCContentRestrictions.apps: 1000
+  + SBParentalControlsMCContentRestrictions.countryCode: ''
+  + SBParentalControlsMCContentRestrictions.movies: 1000
+  + SBParentalControlsMCContentRestrictions.tvshows: 1000
+  + last_label_cache_cleanup: 'A9499D20-EF83-42AE-AFF1-EB648ED9B85B'
+Library/Preferences/com.apple.suggestd.plist
+  + CloudKitAccountInfoCache.416a466e3d2dfde094e9f348b77e2011712c2c5a6086909782a5337f445c95e2: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.suggestions.plist
+  + AppCanShowSiriSuggestionsBlacklist: []
+  ~ CloudKitPersistedState: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c!U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x17\x19\x17\x17\x17\x17\x17\x17\x17_\x10\x0fhasDeferredSync_\x10\x1ehasDeferredProcessStat... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa4\x0b\x0c!"U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x17\x19\x17\x17\x1c\x17\x17\x17\x17_\x10\x0fhasDeferredSync_\x10\x1ehasDeferredProcessSta...
+  + findToShowMigrationPerformed: True
+  + spToLearnMigrationPerformed: True
+Library/Preferences/com.apple.syncdefaultsd.plist
+  ~ CloudKitAccountInfoCache.3226a56d03b30d311f30ce6fd265432d7e365dcedb83750bc34d52d5df22deb1: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.80a6332a2fd40a10934c388220acea81007452de6054f39b496c0584575cf41e: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+  ~ CloudKitAccountInfoCache.900f5df007bb7e133dc9139c1682fe808f0e2c5f5c081fe785b3ead316b7ef7c: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.voicebankingd.plist
+  ~ CloudKitAccountInfoCache.3b7397e33ab178050f75735ff8c3fb8a91bb30ee90a98343396d55d227c9cf4a: b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\... -> b'bplist00\xd4\x01\x02\x03\x04\x05\x06\x07\nX$versionY$archiverT$topX$objects\x12\x00\x01\x86\xa0_\x10\x0fNSKeyedArchiver\xd1\x08\tTroot\x80\x01\xa3\x0b\x0c U$null\xda\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x19\x17\x1b\x19\x1d\x1e\x1f_\x10\x1aAccountAccessAuthorization\\WalrusStatus_\x10\...
+Library/Preferences/com.apple.xpc.activity2.plist
+  + ActivityBaseDates.FaceTimeAppInstallAlertActivity: datetime.datetime(2026, 11, 1, 12, 39, 37, 495298)
+  + ActivityBaseDates.PDAuxiliaryCapabilityManager.checkPassRegistrationState: datetime.datetime(2026, 11, 1, 12, 40, 7, 944624)
+  ~ ActivityBaseDates.PDCardFileManager.CacheMaintenance: datetime.datetime(2026, 11, 15, 12, 35, 39, 242005) -> datetime.datetime(2026, 11, 15, 12, 39, 36, 876749)
+  ~ ActivityBaseDates.PDCardFileManager.RevocationCheck: datetime.datetime(2026, 11, 2, 12, 35, 38, 290605) -> datetime.datetime(2026, 11, 2, 12, 39, 26, 245899)
+  + ActivityBaseDates.PDChangeRegistryScheduledClientIdentifier.PDChangeRegistryScheduledActivityIdentifier: datetime.datetime(2026, 11, 1, 12, 40, 7, 948015)
+  + ActivityBaseDates.PDCloudStoreClientID.PDPassChangesActivityIdentifier: datetime.datetime(2026, 11, 1, 13, 24, 37, 161814)
+  + ActivityBaseDates.PDCloudStoreClientID.PDPassSyncActivityIdentifier: datetime.datetime(2026, 11, 2, 0, 39, 37, 460829)
+  + ActivityBaseDates.PDIssuerBindingManager.checkAllPasses: datetime.datetime(2026, 11, 2, 12, 39, 37, 397438)
+  ~ ActivityBaseDates.PDMapsBrandAndMerchantUpdaterClientIdentifier.PDMapsBrandAndMerchantUpdaterActivityIdentifier: datetime.datetime(2026, 11, 2, 12, 35, 38, 926159) -> datetime.datetime(2026, 11, 2, 12, 39, 36, 976185)
+  + ActivityBaseDates.PDWalletUserNotificationManager.reportDeliveredReceipts: datetime.datetime(2026, 11, 1, 12, 40, 7, 949218)
+  + ActivityBaseDates.PDWalletUserNotificationManager.syncDeliveredNotifications: datetime.datetime(2026, 11, 1, 12, 40, 7, 950464)
+  + ActivityBaseDates.PredictedTransactionNotificationCoordinator.SchedulePredictedTransactionNotification: datetime.datetime(2026, 11, 1, 12, 40, 7, 946766)
+  + ActivityBaseDates.com.apple.SafariBookmarksSyncAgent.XPC.TabCollectionMaintenance: datetime.datetime(2026, 11, 1, 12, 39, 36, 926989)
+  + ActivityBaseDates.com.apple.SafariBookmarksSyncAgent.XPC.ZoneSubscriptionRegistration: datetime.datetime(2026, 11, 1, 12, 39, 37, 50877)
+  ~ ActivityBaseDates.com.apple.Seymour.Scheduling.RandomPublicDataNetworkActivity: datetime.datetime(2026, 11, 1, 15, 9, 54, 922941) -> datetime.datetime(2026, 11, 1, 18, 48, 53, 653494)
+  ~ ActivityBaseDates.com.apple.Seymour.Scheduling.RandomizedDailyPublicDataNetworkActivity: datetime.datetime(2026, 11, 2, 10, 0, 58, 860269) -> datetime.datetime(2026, 11, 2, 7, 32, 39, 650558)
+  + ActivityBaseDates.com.apple.UIKit.UserInterfaceStyleAnalyticsActivity: datetime.datetime(2026, 11, 1, 12, 39, 37, 489002)
+  ~ ActivityBaseDates.com.apple.accounts.cleanup: datetime.datetime(2026, 11, 1, 12, 40, 37, 838362) -> datetime.datetime(2026, 11, 1, 12, 39, 37, 17168)
+  + ActivityBaseDates.com.apple.amsaccountsd.jetpackfetch: datetime.datetime(2026, 11, 1, 12, 39, 35, 871841)
+  ~ ActivityBaseDates.com.apple.ap.promotedcontentd.timespent: datetime.datetime(2026, 11, 1, 13, 33, 31, 831371) -> datetime.datetime(2026, 11, 1, 13, 5, 11, 824623)
+  ~ ActivityBaseDates.com.apple.appleaccountd.postinstall: datetime.datetime(2026, 11, 1, 12, 35, 42, 927948) -> datetime.datetime(2026, 11, 1, 12, 39, 57, 850321)
+  ~ ActivityBaseDates.com.apple.appleaccountd.trustedContacts.healthCheck: datetime.datetime(2026, 11, 1, 12, 38, 25, 711728) -> datetime.datetime(2026, 11, 1, 12, 39, 55, 450432)
+  ~ ActivityBaseDates.com.apple.biomesyncd.cascade.periodic-sync: datetime.datetime(2026, 11, 1, 12, 51, 49, 905108) -> datetime.datetime(2026, 11, 1, 13, 21, 47, 544816)
+  ~ ActivityBaseDates.com.apple.biomesyncd.database-maintenance: datetime.datetime(2026, 11, 1, 12, 55, 8, 901456) -> datetime.datetime(2026, 11, 1, 13, 11, 48, 483867)
+  ~ ActivityBaseDates.com.apple.biomesyncd.metrics-collection: datetime.datetime(2026, 11, 1, 13, 24, 16, 952543) -> datetime.datetime(2026, 11, 1, 13, 3, 26, 617917)
+  ~ ActivityBaseDates.com.apple.biomesyncd.periodic-sync: datetime.datetime(2026, 11, 1, 13, 14, 3, 945395) -> datetime.datetime(2026, 11, 1, 13, 27, 5, 613471)
+  + ActivityBaseDates.com.apple.email.EMCoreAnalyticsCollector: datetime.datetime(2026, 11, 1, 12, 39, 37, 825938)
+  + ActivityBaseDates.com.apple.email.back-fill-message-bodies: datetime.datetime(2026, 11, 1, 12, 40, 6, 877502)
+  ~ ActivityBaseDates.com.apple.fitnesscoaching.Scheduling.InitialLaunchActivity: datetime.datetime(2026, 11, 1, 12, 35, 34, 121971) -> datetime.datetime(2026, 11, 1, 12, 39, 34, 726204)
+  ~ ActivityBaseDates.com.apple.followup.notify: datetime.datetime(2026, 11, 1, 12, 35, 33, 259677) -> datetime.datetime(2026, 11, 1, 12, 39, 36, 367720)
+  ~ ActivityBaseDates.com.apple.fontservicesd.subscription-support: datetime.datetime(2026, 11, 1, 12, 35, 22, 587673) -> datetime.datetime(2026, 11, 1, 12, 40, 22, 587673)
+  + ActivityBaseDates.com.apple.healthd.awd-submission-manager.heart-daily-analytics: datetime.datetime(2026, 11, 1, 12, 39, 58, 983078)
+  + ActivityBaseDates.com.apple.healthd.healthrecords-analytics-activity: datetime.datetime(2026, 11, 1, 12, 39, 58, 960375)
+  + ActivityBaseDates.com.apple.healthd.healthrecords.opt-in-data-collection: datetime.datetime(2026, 11, 1, 12, 39, 58, 732674)
+  + ActivityBaseDates.com.apple.healthd.healthrecords.opt-in-data-upload: datetime.datetime(2026, 11, 1, 12, 39, 58, 989833)
+  + ActivityBaseDates.com.apple.healthd.heart.hypertension-measurement-analysis: datetime.datetime(2026, 11, 1, 12, 39, 58, 975027)
+  + ActivityBaseDates.com.apple.healthd.medications.scheduler: datetime.datetime(2026, 11, 1, 12, 39, 59, 161506)
+  + ActivityBaseDates.com.apple.healthd.ontology.update: datetime.datetime(2026, 11, 1, 12, 39, 58, 966994)
+  + ActivityBaseDates.com.apple.healthd.sleep.breathingdisturbanceanalysisactivity: datetime.datetime(2026, 11, 1, 12, 39, 58, 653102)
+  + ActivityBaseDates.com.apple.itunesstored.PurchaseActionManager.IAParamsClean: datetime.datetime(2026, 11, 1, 12, 39, 36, 573480)
+  + ActivityBaseDates.com.apple.itunesstored.PurchaseActionManager.IAPingbackRetry: datetime.datetime(2026, 11, 1, 12, 39, 37, 12317)
+  + ActivityBaseDates.com.apple.message.LibraryPurgeableMigrator: datetime.datetime(2026, 11, 1, 12, 39, 37, 807297)
+  + ActivityBaseDates.com.apple.message.libraryCompression: datetime.datetime(2026, 11, 1, 12, 39, 38, 86864)
+  + ActivityBaseDates.com.apple.mobilemail.activity.reset-device-activity-alarms: datetime.datetime(2026, 11, 1, 12, 39, 37, 816041)
+  + ActivityBaseDates.com.apple.mobilemail.compactingFetches: datetime.datetime(2026, 11, 1, 12, 39, 37, 795874)
+  + ActivityBaseDates.com.apple.mobilemail.powernapFetches: datetime.datetime(2026, 11, 1, 12, 39, 37, 790557)
+  + ActivityBaseDates.com.apple.nanotimekit.facesupport.dailyQuery: datetime.datetime(2026, 11, 1, 12, 48, 37, 52808)
+  + ActivityBaseDates.com.apple.proactive.PersonalIntelligence.PersonalIntelligenceMetrics: datetime.datetime(2026, 11, 1, 12, 39, 37, 395348)
+  + ActivityBaseDates.com.apple.proactive.PersonalizationPortrait.SpotlightScoringCache: datetime.datetime(2026, 11, 1, 12, 39, 37, 359013)
+  ~ ActivityBaseDates.com.apple.purplebuddy.backup: datetime.datetime(2026, 11, 1, 12, 35, 33, 250566) -> datetime.datetime(2026, 11, 1, 12, 39, 31, 325177)
+  ~ ActivityBaseDates.com.apple.purplebuddy.betaReEnrollment: datetime.datetime(2026, 11, 1, 12, 35, 33, 240239) -> datetime.datetime(2026, 11, 1, 12, 39, 31, 299181)
+  ~ ActivityBaseDates.com.apple.purplebuddy.finishsetup.firstreschedule: datetime.datetime(2026, 11, 1, 12, 35, 33, 253169) -> datetime.datetime(2026, 11, 1, 12, 39, 35, 697421)
+  ~ ActivityBaseDates.com.apple.purplebuddy.finishsetup.secondreschedule: datetime.datetime(2026, 11, 1, 12, 35, 37, 584954) -> datetime.datetime(2026, 11, 1, 12, 39, 36, 336696)
+  ~ ActivityBaseDates.com.apple.purplebuddy.finishsetup.wifiobserver: datetime.datetime(2026, 11, 1, 12, 35, 37, 592427) -> datetime.datetime(2026, 11, 1, 12, 39, 36, 370676)
+  ~ ActivityBaseDates.com.apple.siri.cdm.xpc_activity.maintenance: datetime.datetime(2026, 11, 1, 12, 35, 37, 575759) -> datetime.datetime(2026, 11, 1, 12, 39, 37, 48326)
+  ~ ActivityBaseDates.com.apple.siri.cdm.xpc_activity.post_install: datetime.datetime(2026, 11, 1, 12, 35, 38, 598424) -> datetime.datetime(2026, 11, 1, 12, 39, 36, 238662)
+  ~ ActivityBaseDates.com.apple.siri.inference.FirstBoot: datetime.datetime(2026, 11, 1, 12, 35, 38, 5093) -> datetime.datetime(2026, 11, 1, 12, 39, 36, 833866)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.announce-messages-eligibility: datetime.datetime(2026, 11, 1, 12, 39, 37, 248717)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.context-collector-reelection: datetime.datetime(2026, 11, 1, 12, 39, 37, 389987)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.heartbeat: datetime.datetime(2026, 11, 1, 12, 39, 37, 326954)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.peer_fetch: datetime.datetime(2026, 11, 1, 12, 39, 36, 676249)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.refresh_validation: datetime.datetime(2026, 11, 1, 12, 39, 38, 66987)
+  + ActivityBaseDates.com.apple.siri.xpc_activity.service_maintenance: datetime.datetime(2026, 11, 1, 12, 39, 37, 449079)
+  ~ ActivityBaseDates.com.apple.siriactionsd.RemoteQuarantineUpdate: datetime.datetime(2026, 11, 1, 13, 21, 2, 961973) -> datetime.datetime(2026, 11, 1, 12, 58, 21, 623566)
+  ~ ActivityBaseDates.com.apple.siriactionsd.ShortcutsDailyMetricCheckIn: datetime.datetime(2026, 11, 1, 15, 42, 36, 187322) -> datetime.datetime(2026, 11, 1, 19, 5, 47, 625265)
+  ~ ActivityBaseDates.com.apple.siriactionsd.ShortcutsWeeklyMetricCheckIn: datetime.datetime(2026, 11, 1, 16, 6, 4, 220486) -> datetime.datetime(2026, 11, 2, 2, 48, 1, 626253)
+  ~ ActivityBaseDates.com.apple.sirittsd.voiceUpdate: datetime.datetime(2026, 11, 1, 13, 20, 41, 878058) -> datetime.datetime(2026, 11, 1, 13, 12, 47, 599047)
+  ~ ActivityBaseDates.com.apple.triald.cellular: datetime.datetime(2026, 11, 1, 13, 26, 13, 491907) -> datetime.datetime(2026, 11, 1, 13, 22, 4, 592701)
+  ~ ActivityBaseDates.com.apple.triald.fetch-experiments: datetime.datetime(2026, 11, 1, 13, 12, 36, 466085) -> datetime.datetime(2026, 11, 1, 13, 33, 7, 972982)
+  ~ ActivityBaseDates.com.apple.triald.maintenance: datetime.datetime(2026, 11, 1, 12, 41, 24, 480403) -> datetime.datetime(2026, 11, 1, 13, 11, 55, 975827)
+  ~ ActivityBaseDates.com.apple.webkit.adattributiond.activity: datetime.datetime(2026, 11, 2, 9, 29, 17, 845505) -> datetime.datetime(2026, 11, 2, 10, 26, 56, 636914)
+  ~ VersionSpecificActivitiesRun: ['com.apple.findmy.findmylocated.post-install', 'com.apple.siri.xpc_activity.uaf-system-post-upgrade', 'com.apple.biomesyncd.post-install-immediate-sync', 'com.apple.sirittsd.postInstall', 'com.apple.ak.postinstall', 'com.apple.siri.inference.SiriRemembers.BackfillSuggestionsBiomeDonation', 'com.app... -> ['com.apple.findmy.findmylocated.post-install', 'com.apple.siri.xpc_activity.uaf-system-post-upgrade', 'com.apple.biomesyncd.post-install-immediate-sync', 'com.apple.sirittsd.postInstall', 'com.apple.ak.postinstall', 'com.apple.siri.inference.SiriRemembers.BackfillSuggestionsBiomeDonation', 'com.app...
+new Library/Spotlight/BundleInfo/InstalledApps.plist
+  + : ['com.apple.Passbook', 'com.northprot.protly.cihost', 'com.apple.MobileAddressBook', 'com.apple.Fitness', 'com.apple.DocumentsApp', 'com.apple.MobileSMS', 'com.apple.Maps', 'com.apple.Passwords', 'com.northprot.protly.ciapp', 'com.apple.Bridge', 'com.apple.mobilecal', 'com.apple.BarcodeScanner', 'co...
+Library/SpringBoard/IconState.plist
+  ~ iconLists: [[{'widgetIdentifier': 'com.apple.Maps', 'elementType': 'widget', 'containerBundleIdentifier': 'com.apple.Maps', 'bundleIdentifier': 'com.apple.Maps.GeneralMapsWidget', 'displayIdentifier': 'FBAB0A26-96C9-4211-B7BE-A4688B6252DB', 'allowsExternalSuggestions': True, 'uniqueIdentifier': '038E2F23-CF09-... -> [[{'widgetIdentifier': 'com.apple.Maps', 'elementType': 'widget', 'containerBundleIdentifier': 'com.apple.Maps', 'bundleIdentifier': 'com.apple.Maps.GeneralMapsWidget', 'displayIdentifier': 'FBAB0A26-96C9-4211-B7BE-A4688B6252DB', 'allowsExternalSuggestions': True, 'uniqueIdentifier': '038E2F23-CF09-...
+  ~ uniqueIdentifier: '750FC6EF-630E-492E-A2D1-F68A9943644A' -> '9EEFC972-AB45-4730-AD91-1328ACF1ADBC'
+new Library/UserNotifications/76422C22-0F7D-4417-8F4E-0411EBB044F1/Categories.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null', {'NS.objects': [UID(2), UID(40)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27)], 'NS....
+  + $top.root: UID(1)
+  + $version: 100000
+Library/UserNotifications/8653778A-D778-447B-B2EC-67B7B8B04884/Categories.plist
+  ~ $objects: ['$null', {'NS.objects': [UID(2), UID(53)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27)], 'NS.... -> ['$null', {'NS.objects': [UID(2), UID(53), UID(64), UID(75)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(2...
+new Library/UserNotifications/8653778A-D778-447B-B2EC-67B7B8B04884/Topics.plist
+  + $archiver: 'NSKeyedArchiver'
+  + $objects: ['$null', {'NS.objects': [], '$class': UID(2)}, {'$classname': 'NSMutableArray', '$classes': ['NSMutableArray', 'NSArray', 'NSObject']}]
+  + $top.root: UID(1)
+  + $version: 100000
+Library/UserNotifications/C0E9328D-11FB-4DDC-8084-F2BB865D912B/Categories.plist
+  ~ $objects: ['$null', {'NS.objects': [UID(2)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27)], 'NS.objects':... -> ['$null', {'NS.objects': [], '$class': UID(2)}, {'$classname': 'NSMutableArray', '$classes': ['NSMutableArray', 'NSArray', 'NSObject']}]
+Library/UserNotifications/C0E9328D-11FB-4DDC-8084-F2BB865D912B/DeliveredNotifications.plist
+  ~ $objects: ['$null', {'NS.objects': [UID(2)], '$class': UID(106)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27), UID(28), UID(... -> ['$null', {'NS.objects': [UID(2)], '$class': UID(105)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27), UID(28), UID(...
+Library/UserNotifications/F3B860B0-8BF3-4715-A813-16C3C7FD0752/Categories.plist
+  ~ $objects: ['$null', {'NS.objects': [UID(2), UID(39), UID(64), UID(79)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(2... -> ['$null', {'NS.objects': [UID(2), UID(39), UID(62), UID(77), UID(92), UID(102), UID(111)], '$class': UID(29)}, {'NS.keys': [UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID...
+Library/UserNotifications/Library.plist
+  ~ $objects: ['$null', {'NS.keys': [UID(2), UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27), UID(28), UID(29), UID(30), UID(31), UID(32), UID(33... -> ['$null', {'NS.keys': [UID(2), UID(3), UID(4), UID(5), UID(6), UID(7), UID(8), UID(9), UID(10), UID(11), UID(12), UID(13), UID(14), UID(15), UID(16), UID(17), UID(18), UID(19), UID(20), UID(21), UID(22), UID(23), UID(24), UID(25), UID(26), UID(27), UID(28), UID(29), UID(30), UID(31), UID(32), UID(33...
+new Library/com.apple.VideoSubscriberAccount.DeveloperService/DeveloperSettings.plist
+  + VSDeveloperSettingsPropertyIsCacheBusterEnabledKey: False
+  + VSDeveloperSettingsPropertyIsInSetTopBoxModeKey: False
+  + VSDeveloperSettingsPropertyRequestTimeoutsDisabled: False
+  + VSDeveloperSettingsPropertySetTopBoxSupportsOptOut: False
+  + VSDeveloperSettingsPropertySetTopBoxUseDeviceProfileKey: False
+  + VSDeveloperSettingsPropertySimulateExpiredToken: False
+private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/GECModel/gec_autocorrection_thresholds.plist: unreadable after (InvalidFileException)
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/GECModel/gec_classes.plist
+  + $APPEND_a.Category: 'Homophone'
+  + $APPEND_a.Index: 398
+  + $APPEND_about.Category: 'Homophone'
+  + $APPEND_about.Index: 404
+  + $APPEND_above.Category: 'Homophone'
+  + $APPEND_above.Index: 406
+  + $APPEND_across.Category: 'Homophone'
+  + $APPEND_across.Index: 408
+  + $APPEND_after.Category: 'Homophone'
+  + $APPEND_after.Index: 410
+  + $APPEND_against.Category: 'Homophone'
+  + $APPEND_against.Index: 412
+  + $APPEND_along.Category: 'Homophone'
+  + $APPEND_along.Index: 414
+  + $APPEND_among.Category: 'Homophone'
+  + $APPEND_among.Index: 416
+  + $APPEND_an.Category: 'Homophone'
+  + $APPEND_an.Index: 400
+  + $APPEND_around.Category: 'Homophone'
+  + $APPEND_around.Index: 418
+  + $APPEND_at.Category: 'Homophone'
+  + $APPEND_at.Index: 420
+  + $APPEND_before.Category: 'Homophone'
+  + $APPEND_before.Index: 422
+  + $APPEND_behind.Category: 'Homophone'
+  + $APPEND_behind.Index: 424
+  + $APPEND_below.Category: 'Homophone'
+  + $APPEND_below.Index: 426
+  + $APPEND_beneath.Category: 'Homophone'
+  + $APPEND_beneath.Index: 428
+  + $APPEND_beside.Category: 'Homophone'
+  + $APPEND_beside.Index: 430
+  + $APPEND_between.Category: 'Homophone'
+  + $APPEND_between.Index: 432
+  + $APPEND_beyond.Category: 'Homophone'
+  + $APPEND_beyond.Index: 434
+  + $APPEND_by.Category: 'Homophone'
+  + $APPEND_by.Index: 436
+  + $APPEND_concerning.Category: 'Homophone'
+  + $APPEND_concerning.Index: 438
+  + $APPEND_despite.Category: 'Homophone'
+  + $APPEND_despite.Index: 440
+  + $APPEND_down.Category: 'Homophone'
+  + $APPEND_down.Index: 442
+  + $APPEND_during.Category: 'Homophone'
+  + $APPEND_during.Index: 444
+  + $APPEND_except.Category: 'Homophone'
+  + $APPEND_except.Index: 446
+  + $APPEND_for.Category: 'Homophone'
+  + $APPEND_for.Index: 448
+  + $APPEND_from.Category: 'Homophone'
+  + $APPEND_from.Index: 450
+  + $APPEND_in.Category: 'Homophone'
+  + $APPEND_in.Index: 452
+  + $APPEND_inside.Category: 'Homophone'
+  + $APPEND_inside.Index: 454
+  + $APPEND_into.Category: 'Homophone'
+  + $APPEND_into.Index: 456
+  + $APPEND_like.Category: 'Homophone'
+  + $APPEND_like.Index: 458
+  + $APPEND_of.Category: 'Homophone'
+  + $APPEND_of.Index: 460
+  + $APPEND_off.Category: 'Homophone'
+  + $APPEND_off.Index: 462
+  + $APPEND_on.Category: 'Homophone'
+  + $APPEND_on.Index: 464
+  + $APPEND_onto.Category: 'Homophone'
+  + $APPEND_onto.Index: 466
+  + $APPEND_out.Category: 'Homophone'
+  + $APPEND_out.Index: 468
+  + $APPEND_outside.Category: 'Homophone'
+  + $APPEND_outside.Index: 470
+  + $APPEND_over.Category: 'Homophone'
+  + $APPEND_over.Index: 472
+  + $APPEND_past.Category: 'Homophone'
+  + $APPEND_past.Index: 474
+  + $APPEND_since.Category: 'Homophone'
+  + $APPEND_since.Index: 476
+  + $APPEND_the.Category: 'Homophone'
+  + $APPEND_the.Index: 402
+  + $APPEND_through.Category: 'Homophone'
+  + $APPEND_through.Index: 478
+  + $APPEND_throughout.Category: 'Homophone'
+  + $APPEND_throughout.Index: 480
+  + $APPEND_to.Category: 'Homophone'
+  + $APPEND_to.Index: 482
+  + $APPEND_toward.Category: 'Homophone'
+  + $APPEND_toward.Index: 484
+  + $APPEND_under.Category: 'Homophone'
+  + $APPEND_under.Index: 486
+  + $APPEND_underneath.Category: 'Homophone'
+  + $APPEND_underneath.Index: 488
+  + $APPEND_until.Category: 'Homophone'
+  + $APPEND_until.Index: 490
+  + $APPEND_up.Category: 'Homophone'
+  + $APPEND_up.Index: 492
+  + $APPEND_upon.Category: 'Homophone'
+  + $APPEND_upon.Index: 494
+  + $APPEND_with.Category: 'Homophone'
+  + $APPEND_with.Index: 496
+  + $APPEND_within.Category: 'Homophone'
+  + $APPEND_within.Index: 498
+  + $APPEND_without.Category: 'Homophone'
+  + $APPEND_without.Index: 500
+  + $DELETE.Category: 'Homophone'
+  + $DELETE.Index: 501
+  + $KEEP.Category: 'Homophone'
+  + $KEEP.Index: 0
+  + $PREPEND_a.Category: 'Homophone'
+  + $PREPEND_a.Index: 397
+  + $PREPEND_about.Category: 'Homophone'
+  + $PREPEND_about.Index: 403
+  + $PREPEND_above.Category: 'Homophone'
+  + $PREPEND_above.Index: 405
+  + $PREPEND_across.Category: 'Homophone'
+  + $PREPEND_across.Index: 407
+  + $PREPEND_after.Category: 'Homophone'
+  + $PREPEND_after.Index: 409
+  + $PREPEND_against.Category: 'Homophone'
+  + $PREPEND_against.Index: 411
+  + $PREPEND_along.Category: 'Homophone'
+  + $PREPEND_along.Index: 413
+  + $PREPEND_among.Category: 'Homophone'
+  + $PREPEND_among.Index: 415
+  + $PREPEND_an.Category: 'Homophone'
+  + $PREPEND_an.Index: 399
+  + $PREPEND_around.Category: 'Homophone'
+  + $PREPEND_around.Index: 417
+  + $PREPEND_at.Category: 'Homophone'
+  + $PREPEND_at.Index: 419
+  + $PREPEND_before.Category: 'Homophone'
+  + $PREPEND_before.Index: 421
+  + $PREPEND_behind.Category: 'Homophone'
+  + $PREPEND_behind.Index: 423
+  + $PREPEND_below.Category: 'Homophone'
+  + $PREPEND_below.Index: 425
+  + $PREPEND_beneath.Category: 'Homophone'
+  + $PREPEND_beneath.Index: 427
+  + $PREPEND_beside.Category: 'Homophone'
+  + $PREPEND_beside.Index: 429
+  + $PREPEND_between.Category: 'Homophone'
+  + $PREPEND_between.Index: 431
+  + $PREPEND_beyond.Category: 'Homophone'
+  + $PREPEND_beyond.Index: 433
+  + $PREPEND_by.Category: 'Homophone'
+  + $PREPEND_by.Index: 435
+  + $PREPEND_concerning.Category: 'Homophone'
+  + $PREPEND_concerning.Index: 437
+  + $PREPEND_despite.Category: 'Homophone'
+  + $PREPEND_despite.Index: 439
+  + $PREPEND_down.Category: 'Homophone'
+  + $PREPEND_down.Index: 441
+  + $PREPEND_during.Category: 'Homophone'
+  + $PREPEND_during.Index: 443
+  + $PREPEND_except.Category: 'Homophone'
+  + $PREPEND_except.Index: 445
+  + $PREPEND_for.Category: 'Homophone'
+  + $PREPEND_for.Index: 447
+  + $PREPEND_from.Category: 'Homophone'
+  + $PREPEND_from.Index: 449
+  + $PREPEND_in.Category: 'Homophone'
+  + $PREPEND_in.Index: 451
+  + $PREPEND_inside.Category: 'Homophone'
+  + $PREPEND_inside.Index: 453
+  + $PREPEND_into.Category: 'Homophone'
+  + $PREPEND_into.Index: 455
+  + $PREPEND_like.Category: 'Homophone'
+  + $PREPEND_like.Index: 457
+  + $PREPEND_of.Category: 'Homophone'
+  + $PREPEND_of.Index: 459
+  + $PREPEND_off.Category: 'Homophone'
+  + $PREPEND_off.Index: 461
+  + $PREPEND_on.Category: 'Homophone'
+  + $PREPEND_on.Index: 463
+  + $PREPEND_onto.Category: 'Homophone'
+  + $PREPEND_onto.Index: 465
+  + $PREPEND_out.Category: 'Homophone'
+  + $PREPEND_out.Index: 467
+  + $PREPEND_outside.Category: 'Homophone'
+  + $PREPEND_outside.Index: 469
+  + $PREPEND_over.Category: 'Homophone'
+  + $PREPEND_over.Index: 471
+  + $PREPEND_past.Category: 'Homophone'
+  + $PREPEND_past.Index: 473
+  + $PREPEND_since.Category: 'Homophone'
+  + $PREPEND_since.Index: 475
+  + $PREPEND_the.Category: 'Homophone'
+  + $PREPEND_the.Index: 401
+  + $PREPEND_through.Category: 'Homophone'
+  + $PREPEND_through.Index: 477
+  + $PREPEND_throughout.Category: 'Homophone'
+  + $PREPEND_throughout.Index: 479
+  + $PREPEND_to.Category: 'Homophone'
+  + $PREPEND_to.Index: 481
+  + $PREPEND_toward.Category: 'Homophone'
+  + $PREPEND_toward.Index: 483
+  + $PREPEND_under.Category: 'Homophone'
+  + $PREPEND_under.Index: 485
+  + $PREPEND_underneath.Category: 'Homophone'
+  + $PREPEND_underneath.Index: 487
+  + $PREPEND_until.Category: 'Homophone'
+  + $PREPEND_until.Index: 489
+  + $PREPEND_up.Category: 'Homophone'
+  + $PREPEND_up.Index: 491
+  + $PREPEND_upon.Category: 'Homophone'
+  + $PREPEND_upon.Index: 493
+  + $PREPEND_with.Category: 'Homophone'
+  + $PREPEND_with.Index: 495
+  + $PREPEND_within.Category: 'Homophone'
+  + $PREPEND_within.Index: 497
+  + $PREPEND_without.Category: 'Homophone'
+  + $PREPEND_without.Index: 499
+  + $REPLACE_accept.Category: 'Homophone'
+  + $REPLACE_accept.Index: 230
+  + $REPLACE_ad.Category: 'Homophone'
+  + $REPLACE_ad.Index: 283
+  + $REPLACE_advice.Category: 'Homophone'
+  + $REPLACE_advice.Index: 326
+  + $REPLACE_advise.Category: 'Homophone'
+  + $REPLACE_advise.Index: 55
+  + $REPLACE_affect.Category: 'Homophone'
+  + $REPLACE_affect.Index: 302
+  + $REPLACE_affected.Category: 'Homophone'
+  + $REPLACE_affected.Index: 69
+  + $REPLACE_affects.Category: 'Homophone'
+  + $REPLACE_affects.Index: 192
+  + $REPLACE_aid.Category: 'Homophone'
+  + $REPLACE_aid.Index: 293
+  + $REPLACE_aide.Category: 'Homophone'
+  + $REPLACE_aide.Index: 178
+  + $REPLACE_allow.Category: 'Homophone'
+  + $REPLACE_allow.Index: 244
+  + $REPLACE_allows.Category: 'Homophone'
+  + $REPLACE_allows.Index: 349
+  + $REPLACE_am.Category: 'Homophone'
+  + $REPLACE_am.Index: 180
+  + $REPLACE_amounts.Category: 'Homophone'
+  + $REPLACE_amounts.Index: 30
+  + $REPLACE_an.Category: 'Homophone'
+  + $REPLACE_an.Index: 59
+  + $REPLACE_and.Category: 'Homophone'
+  + $REPLACE_and.Index: 205
+  + $REPLACE_answers.Category: 'Homophone'
+  + $REPLACE_answers.Index: 33
+  + $REPLACE_ant.Category: 'Homophone'
+  + $REPLACE_ant.Index: 231
+  + $REPLACE_any.Category: 'Homophone'
+  + $REPLACE_any.Index: 94
+  + $REPLACE_appear.Category: 'Homophone'
+  + $REPLACE_appear.Index: 362
+  + $REPLACE_appears.Category: 'Homophone'
+  + $REPLACE_appears.Index: 37
+  + $REPLACE_are.Category: 'Homophone'
+  + $REPLACE_are.Index: 118
+  + $REPLACE_area.Category: 'Homophone'
+  + $REPLACE_area.Index: 229
+  + $REPLACE_areas.Category: 'Homophone'
+  + $REPLACE_areas.Index: 332
+  + $REPLACE_aren't.Category: 'Homophone'
+  + $REPLACE_aren't.Index: 202
+  + $REPLACE_around.Category: 'Homophone'
+  + $REPLACE_around.Index: 395
+  + $REPLACE_artists.Category: 'Homophone'
+  + $REPLACE_artists.Index: 110
+  + $REPLACE_as.Category: 'Homophone'
+  + $REPLACE_as.Index: 120
+  + $REPLACE_asks.Category: 'Homophone'
+  + $REPLACE_asks.Index: 168
+  + $REPLACE_at.Category: 'Homophone'
+  + $REPLACE_at.Index: 113
+  + $REPLACE_barely.Category: 'Homophone'
+  + $REPLACE_barely.Index: 337
+  + $REPLACE_be.Category: 'Homophone'
+  + $REPLACE_be.Index: 58
+  + $REPLACE_bear.Category: 'Homophone'
+  + $REPLACE_bear.Index: 323
+  + $REPLACE_become.Category: 'Homophone'
+  + $REPLACE_become.Index: 313
+  + $REPLACE_becomes.Category: 'Homophone'
+  + $REPLACE_becomes.Index: 81
+  + $REPLACE_becoming.Category: 'Homophone'
+  + $REPLACE_becoming.Index: 280
+  + $REPLACE_been.Category: 'Homophone'
+  + $REPLACE_been.Index: 61
+  + $REPLACE_being.Category: 'Homophone'
+  + $REPLACE_being.Index: 279
+  + $REPLACE_beside.Category: 'Homophone'
+  + $REPLACE_beside.Index: 141
+  + $REPLACE_besides.Category: 'Homophone'
+  + $REPLACE_besides.Index: 254
+  + $REPLACE_best.Category: 'Homophone'
+  + $REPLACE_best.Index: 380
+  + $REPLACE_bet.Category: 'Homophone'
+  + $REPLACE_bet.Index: 367
+  + $REPLACE_bit.Category: 'Homophone'
+  + $REPLACE_bit.Index: 307
+  + $REPLACE_books.Category: 'Homophone'
+  + $REPLACE_books.Index: 38
+  + $REPLACE_boyfriend's.Category: 'Homophone'
+  + $REPLACE_boyfriend's.Index: 11
+  + $REPLACE_breath.Category: 'Homophone'
+  + $REPLACE_breath.Index: 41
+  + $REPLACE_breathe.Category: 'Homophone'
+  + $REPLACE_breathe.Index: 366
+  + $REPLACE_brings.Category: 'Homophone'
+  + $REPLACE_brings.Index: 210
+  + $REPLACE_brother's.Category: 'Homophone'
+  + $REPLACE_brother's.Index: 1
+  + $REPLACE_businesses.Category: 'Homophone'
+  + $REPLACE_businesses.Index: 234
+  + $REPLACE_but.Category: 'Homophone'
+  + $REPLACE_but.Index: 256
+  + $REPLACE_buy.Category: 'Homophone'
+  + $REPLACE_buy.Index: 241
+  + $REPLACE_by.Category: 'Homophone'
+  + $REPLACE_by.Index: 181
+  + $REPLACE_can.Category: 'Homophone'
+  + $REPLACE_can.Index: 201
+  + $REPLACE_capital.Category: 'Homophone'
+  + $REPLACE_capital.Index: 262
+  + $REPLACE_capitol.Category: 'Homophone'
+  + $REPLACE_capitol.Index: 238
+  + $REPLACE_cases.Category: 'Homophone'
+  + $REPLACE_cases.Index: 223
+  + $REPLACE_cat's.Category: 'Homophone'
+  + $REPLACE_cat's.Index: 23
+  + $REPLACE_choose.Category: 'Homophone'
+  + $REPLACE_choose.Index: 396
+  + $REPLACE_chose.Category: 'Homophone'
+  + $REPLACE_chose.Index: 189
+  + $REPLACE_cite.Category: 'Homophone'
+  + $REPLACE_cite.Index: 258
+  + $REPLACE_come.Category: 'Homophone'
+  + $REPLACE_come.Index: 74
+  + $REPLACE_comes.Category: 'Homophone'
+  + $REPLACE_comes.Index: 80
+  + $REPLACE_complement.Category: 'Homophone'
+  + $REPLACE_complement.Index: 252
+  + $REPLACE_compliment.Category: 'Homophone'
+  + $REPLACE_compliment.Index: 84
+  + $REPLACE_council.Category: 'Homophone'
+  + $REPLACE_council.Index: 368
+  + $REPLACE_counsel.Category: 'Homophone'
+  + $REPLACE_counsel.Index: 137
+  + $REPLACE_creates.Category: 'Homophone'
+  + $REPLACE_creates.Index: 77
+  + $REPLACE_dad's.Category: 'Homophone'
+  + $REPLACE_dad's.Index: 3
+  + $REPLACE_daughter's.Category: 'Homophone'
+  + $REPLACE_daughter's.Index: 5
+  + $REPLACE_days.Category: 'Homophone'
+  + $REPLACE_days.Index: 195
+  + $REPLACE_decisions.Category: 'Homophone'
+  + $REPLACE_decisions.Index: 47
+  + $REPLACE_depends.Category: 'Homophone'
+  + $REPLACE_depends.Index: 184
+  + $REPLACE_deserves.Category: 'Homophone'
+  + $REPLACE_deserves.Index: 383
+  + $REPLACE_differences.Category: 'Homophone'
+  + $REPLACE_differences.Index: 369
+  + $REPLACE_do.Category: 'Homophone'
+  + $REPLACE_do.Index: 224
+  + $REPLACE_doctor's.Category: 'Homophone'
+  + $REPLACE_doctor's.Index: 18
+  + $REPLACE_does.Category: 'Homophone'
+  + $REPLACE_does.Index: 198
+  + $REPLACE_doesn't.Category: 'Homophone'
+  + $REPLACE_doesn't.Index: 275
+  + $REPLACE_dog's.Category: 'Homophone'
+  + $REPLACE_dog's.Index: 22
+  + $REPLACE_don't.Category: 'Homophone'
+  + $REPLACE_don't.Index: 382
+  + $REPLACE_dose.Category: 'Homophone'
+  + $REPLACE_dose.Index: 48
+  + $REPLACE_due.Category: 'Homophone'
+  + $REPLACE_due.Index: 314
+  + $REPLACE_effect.Category: 'Homophone'
+  + $REPLACE_effect.Index: 282
+  + $REPLACE_effects.Category: 'Homophone'
+  + $REPLACE_effects.Index: 185
+  + $REPLACE_ever.Category: 'Homophone'
+  + $REPLACE_ever.Index: 331
+  + $REPLACE_every.Category: 'Homophone'
+  + $REPLACE_every.Index: 289
+  + $REPLACE_everyone's.Category: 'Homophone'
+  + $REPLACE_everyone's.Index: 14
+  + $REPLACE_except.Category: 'Homophone'
+  + $REPLACE_except.Index: 50
+  + $REPLACE_exist.Category: 'Homophone'
+  + $REPLACE_exist.Index: 248
+  + $REPLACE_exists.Category: 'Homophone'
+  + $REPLACE_exists.Index: 233
+  + $REPLACE_expect.Category: 'Homophone'
+  + $REPLACE_expect.Index: 276
+  + $REPLACE_father's.Category: 'Homophone'
+  + $REPLACE_father's.Index: 7
+  + $REPLACE_feel.Category: 'Homophone'
+  + $REPLACE_feel.Index: 100
+  + $REPLACE_feels.Category: 'Homophone'
+  + $REPLACE_feels.Index: 87
+  + $REPLACE_fewer.Category: 'Homophone'
+  + $REPLACE_fewer.Index: 272
+  + $REPLACE_first.Category: 'Homophone'
+  + $REPLACE_first.Index: 315
+  + $REPLACE_fist.Category: 'Homophone'
+  + $REPLACE_fist.Index: 339
+  + $REPLACE_fits.Category: 'Homophone'
+  + $REPLACE_fits.Index: 270
+  + $REPLACE_focused.Category: 'Homophone'
+  + $REPLACE_focused.Index: 284
+  + $REPLACE_foe.Category: 'Homophone'
+  + $REPLACE_foe.Index: 186
+  + $REPLACE_for.Category: 'Homophone'
+  + $REPLACE_for.Index: 174
+  + $REPLACE_form.Category: 'Homophone'
+  + $REPLACE_form.Index: 132
+  + $REPLACE_forth.Category: 'Homophone'
+  + $REPLACE_forth.Index: 157
+  + $REPLACE_fourth.Category: 'Homophone'
+  + $REPLACE_fourth.Index: 318
+  + $REPLACE_friend's.Category: 'Homophone'
+  + $REPLACE_friend's.Index: 9
+  + $REPLACE_friends.Category: 'Homophone'
+  + $REPLACE_friends.Index: 343
+  + $REPLACE_from.Category: 'Homophone'
+  + $REPLACE_from.Index: 212
+  + $REPLACE_game.Category: 'Homophone'
+  + $REPLACE_game.Index: 365
+  + $REPLACE_games.Category: 'Homophone'
+  + $REPLACE_games.Index: 236
+  + $REPLACE_get.Category: 'Homophone'
+  + $REPLACE_get.Index: 90
+  + $REPLACE_gets.Category: 'Homophone'
+  + $REPLACE_gets.Index: 316
+  + $REPLACE_getting.Category: 'Homophone'
+  + $REPLACE_getting.Index: 271
+  + $REPLACE_girlfriend's.Category: 'Homophone'
+  + $REPLACE_girlfriend's.Index: 10
+  + $REPLACE_give.Category: 'Homophone'
+  + $REPLACE_give.Index: 378
+  + $REPLACE_gives.Category: 'Homophone'
+  + $REPLACE_gives.Index: 209
+  + $REPLACE_go.Category: 'Homophone'
+  + $REPLACE_go.Index: 45
+  + $REPLACE_goes.Category: 'Homophone'
+  + $REPLACE_goes.Index: 144
+  + $REPLACE_going.Category: 'Homophone'
+  + $REPLACE_going.Index: 89
+  + $REPLACE_grow.Category: 'Homophone'
+  + $REPLACE_grow.Index: 155
+  + $REPLACE_grows.Category: 'Homophone'
+  + $REPLACE_grows.Index: 76
+  + $REPLACE_guy.Category: 'Homophone'
+  + $REPLACE_guy.Index: 245
+  + $REPLACE_happens.Category: 'Homophone'
+  + $REPLACE_happens.Index: 126
+  + $REPLACE_has.Category: 'Homophone'
+  + $REPLACE_has.Index: 146
+  + $REPLACE_hasn't.Category: 'Homophone'
+  + $REPLACE_hasn't.Index: 193
+  + $REPLACE_have.Category: 'Homophone'
+  + $REPLACE_have.Index: 133
+  + $REPLACE_haven't.Category: 'Homophone'
+  + $REPLACE_haven't.Index: 65
+  + $REPLACE_having.Category: 'Homophone'
+  + $REPLACE_having.Index: 49
+  + $REPLACE_he'll.Category: 'Homophone'
+  + $REPLACE_he'll.Index: 288
+  + $REPLACE_he.Category: 'Homophone'
+  + $REPLACE_he.Index: 228
+  + $REPLACE_hear.Category: 'Homophone'
+  + $REPLACE_hear.Index: 54
+  + $REPLACE_heard.Category: 'Homophone'
+  + $REPLACE_heard.Index: 295
+  + $REPLACE_hell.Category: 'Homophone'
+  + $REPLACE_hell.Index: 393
+  + $REPLACE_help.Category: 'Homophone'
+  + $REPLACE_help.Index: 360
+  + $REPLACE_helps.Category: 'Homophone'
+  + $REPLACE_helps.Index: 363
+  + $REPLACE_her.Category: 'Homophone'
+  + $REPLACE_her.Index: 71
+  + $REPLACE_here.Category: 'Homophone'
+  + $REPLACE_here.Index: 92
+  + $REPLACE_his.Category: 'Homophone'
+  + $REPLACE_his.Index: 216
+  + $REPLACE_hours.Category: 'Homophone'
+  + $REPLACE_hours.Index: 156
+  + $REPLACE_husband's.Category: 'Homophone'
+  + $REPLACE_husband's.Index: 12
+  + $REPLACE_i'll.Category: 'Homophone'
+  + $REPLACE_i'll.Index: 257
+  + $REPLACE_if.Category: 'Homophone'
+  + $REPLACE_if.Index: 150
+  + $REPLACE_ill.Category: 'Homophone'
+  + $REPLACE_ill.Index: 225
+  + $REPLACE_in.Category: 'Homophone'
+  + $REPLACE_in.Index: 268
+  + $REPLACE_includes.Category: 'Homophone'
+  + $REPLACE_includes.Index: 247
+  + $REPLACE_interests.Category: 'Homophone'
+  + $REPLACE_interests.Index: 215
+  + $REPLACE_is.Category: 'Homophone'
+  + $REPLACE_is.Index: 85
+  + $REPLACE_isn't.Category: 'Homophone'
+  + $REPLACE_isn't.Index: 169
+  + $REPLACE_issue.Category: 'Homophone'
+  + $REPLACE_issue.Index: 98
+  + $REPLACE_issues.Category: 'Homophone'
+  + $REPLACE_issues.Index: 66
+  + $REPLACE_it's.Category: 'Homophone'
+  + $REPLACE_it's.Index: 196
+  + $REPLACE_it.Category: 'Homophone'
+  + $REPLACE_it.Index: 107
+  + $REPLACE_its.Category: 'Homophone'
+  + $REPLACE_its.Index: 219
+  + $REPLACE_jobs.Category: 'Homophone'
+  + $REPLACE_jobs.Index: 93
+  + $REPLACE_just.Category: 'Homophone'
+  + $REPLACE_just.Index: 190
+  + $REPLACE_keep.Category: 'Homophone'
+  + $REPLACE_keep.Index: 292
+  + $REPLACE_keeps.Category: 'Homophone'
+  + $REPLACE_keeps.Index: 375
+  + $REPLACE_kinds.Category: 'Homophone'
+  + $REPLACE_kinds.Index: 346
+  + $REPLACE_knew.Category: 'Homophone'
+  + $REPLACE_knew.Index: 164
+  + $REPLACE_know.Category: 'Homophone'
+  + $REPLACE_know.Index: 103
+  + $REPLACE_knows.Category: 'Homophone'
+  + $REPLACE_knows.Index: 319
+  + $REPLACE_laid.Category: 'Homophone'
+  + $REPLACE_laid.Index: 373
+  + $REPLACE_later.Category: 'Homophone'
+  + $REPLACE_later.Index: 199
+  + $REPLACE_latter.Category: 'Homophone'
+  + $REPLACE_latter.Index: 387
+  + $REPLACE_lay.Category: 'Homophone'
+  + $REPLACE_lay.Index: 129
+  + $REPLACE_laying.Category: 'Homophone'
+  + $REPLACE_laying.Index: 278
+  + $REPLACE_leads.Category: 'Homophone'
+  + $REPLACE_leads.Index: 357
+  + $REPLACE_less.Category: 'Homophone'
+  + $REPLACE_less.Index: 112
+  + $REPLACE_let's.Category: 'Homophone'
+  + $REPLACE_let's.Index: 371
+  + $REPLACE_let.Category: 'Homophone'
+  + $REPLACE_let.Index: 149
+  + $REPLACE_lets.Category: 'Homophone'
+  + $REPLACE_lets.Index: 394
+  + $REPLACE_lie.Category: 'Homophone'
+  + $REPLACE_lie.Index: 176
+  + $REPLACE_life.Category: 'Homophone'
+  + $REPLACE_life.Index: 389
+  + $REPLACE_like.Category: 'Homophone'
+  + $REPLACE_like.Index: 309
+  + $REPLACE_likes.Category: 'Homophone'
+  + $REPLACE_likes.Index: 334
+  + $REPLACE_live.Category: 'Homophone'
+  + $REPLACE_live.Index: 260
+  + $REPLACE_look.Category: 'Homophone'
+  + $REPLACE_look.Index: 46
+  + $REPLACE_looking.Category: 'Homophone'
+  + $REPLACE_looking.Index: 298
+  + $REPLACE_looks.Category: 'Homophone'
+  + $REPLACE_looks.Index: 255
+  + $REPLACE_loose.Category: 'Homophone'
+  + $REPLACE_loose.Index: 242
+  + $REPLACE_lose.Category: 'Homophone'
+  + $REPLACE_lose.Index: 102
+  + $REPLACE_loss.Category: 'Homophone'
+  + $REPLACE_loss.Index: 148
+  + $REPLACE_lost.Category: 'Homophone'
+  + $REPLACE_lost.Index: 291
+  + $REPLACE_lot.Category: 'Homophone'
+  + $REPLACE_lot.Index: 352
+  + $REPLACE_lots.Category: 'Homophone'
+  + $REPLACE_lots.Index: 327
+  + $REPLACE_love.Category: 'Homophone'
+  + $REPLACE_love.Index: 351
+  + $REPLACE_lying.Category: 'Homophone'
+  + $REPLACE_lying.Index: 127
+  + $REPLACE_make.Category: 'Homophone'
+  + $REPLACE_make.Index: 152
+  + $REPLACE_makes.Category: 'Homophone'
+  + $REPLACE_makes.Index: 213
+  + $REPLACE_making.Category: 'Homophone'
+  + $REPLACE_making.Index: 32
+  + $REPLACE_many.Category: 'Homophone'
+  + $REPLACE_many.Index: 172
+  + $REPLACE_master's.Category: 'Homophone'
+  + $REPLACE_master's.Index: 19
+  + $REPLACE_matters.Category: 'Homophone'
+  + $REPLACE_matters.Index: 173
+  + $REPLACE_may.Category: 'Homophone'
+  + $REPLACE_may.Index: 105
+  + $REPLACE_me.Category: 'Homophone'
+  + $REPLACE_me.Index: 322
+  + $REPLACE_means.Category: 'Homophone'
+  + $REPLACE_means.Index: 227
+  + $REPLACE_members.Category: 'Homophone'
+  + $REPLACE_members.Index: 355
+  + $REPLACE_men.Category: 'Homophone'
+  + $REPLACE_men.Index: 95
+  + $REPLACE_mom's.Category: 'Homophone'
+  + $REPLACE_mom's.Index: 4
+  + $REPLACE_month's.Category: 'Homophone'
+  + $REPLACE_month's.Index: 24
+  + $REPLACE_months.Category: 'Homophone'
+  + $REPLACE_months.Index: 372
+  + $REPLACE_more.Category: 'Homophone'
+  + $REPLACE_more.Index: 158
+  + $REPLACE_most.Category: 'Homophone'
+  + $REPLACE_most.Index: 348
+  + $REPLACE_mother's.Category: 'Homophone'
+  + $REPLACE_mother's.Index: 8
+  + $REPLACE_much.Category: 'Homophone'
+  + $REPLACE_much.Index: 321
+  + $REPLACE_must.Category: 'Homophone'
+  + $REPLACE_must.Index: 52
+  + $REPLACE_my.Category: 'Homophone'
+  + $REPLACE_my.Index: 109
+  + $REPLACE_need.Category: 'Homophone'
+  + $REPLACE_need.Index: 304
+  + $REPLACE_needs.Category: 'Homophone'
+  + $REPLACE_needs.Index: 179
+  + $REPLACE_new.Category: 'Homophone'
+  + $REPLACE_new.Index: 34
+  + $REPLACE_no.Category: 'Homophone'
+  + $REPLACE_no.Index: 79
+  + $REPLACE_nor.Category: 'Homophone'
+  + $REPLACE_nor.Index: 250
+  + $REPLACE_not.Category: 'Homophone'
+  + $REPLACE_not.Index: 78
+  + $REPLACE_now.Category: 'Homophone'
+  + $REPLACE_now.Index: 267
+  + $REPLACE_numbers.Category: 'Homophone'
+  + $REPLACE_numbers.Index: 208
+  + $REPLACE_of.Category: 'Homophone'
+  + $REPLACE_of.Index: 143
+  + $REPLACE_off.Category: 'Homophone'
+  + $REPLACE_off.Index: 261
+  + $REPLACE_offer.Category: 'Homophone'
+  + $REPLACE_offer.Index: 253
+  + $REPLACE_on.Category: 'Homophone'
+  + $REPLACE_on.Index: 60
+  + $REPLACE_once.Category: 'Homophone'
+  + $REPLACE_once.Index: 312
+  + $REPLACE_one's.Category: 'Homophone'
+  + $REPLACE_one's.Index: 16
+  + $REPLACE_one.Category: 'Homophone'
+  + $REPLACE_one.Index: 64
+  + $REPLACE_ones.Category: 'Homophone'
+  + $REPLACE_ones.Index: 308
+  + $REPLACE_options.Category: 'Homophone'
+  + $REPLACE_options.Index: 237
+  + $REPLACE_or.Category: 'Homophone'
+  + $REPLACE_or.Index: 83
+  + $REPLACE_ore.Category: 'Homophone'
+  + $REPLACE_ore.Index: 354
+  + $REPLACE_other's.Category: 'Homophone'
+  + $REPLACE_other's.Index: 17
+  + $REPLACE_other.Category: 'Homophone'
+  + $REPLACE_other.Index: 324
+  + $REPLACE_others.Category: 'Homophone'
+  + $REPLACE_others.Index: 82
+  + $REPLACE_our.Category: 'Homophone'
+  + $REPLACE_our.Index: 44
+  + $REPLACE_out.Category: 'Homophone'
+  + $REPLACE_out.Index: 125
+  + $REPLACE_own.Category: 'Homophone'
+  + $REPLACE_own.Index: 31
+  + $REPLACE_parent's.Category: 'Homophone'
+  + $REPLACE_parent's.Index: 13
+  + $REPLACE_parents.Category: 'Homophone'
+  + $REPLACE_parents.Index: 161
+  + $REPLACE_parts.Category: 'Homophone'
+  + $REPLACE_parts.Index: 329
+  + $REPLACE_pass.Category: 'Homophone'
+  + $REPLACE_pass.Index: 305
+  + $REPLACE_passed.Category: 'Homophone'
+  + $REPLACE_passed.Index: 191
+  + $REPLACE_past.Category: 'Homophone'
+  + $REPLACE_past.Index: 269
+  + $REPLACE_peace.Category: 'Homophone'
+  + $REPLACE_peace.Index: 226
+  + $REPLACE_people.Category: 'Homophone'
+  + $REPLACE_people.Index: 67
+  + $REPLACE_piece.Category: 'Homophone'
+  + $REPLACE_piece.Index: 379
+  + $REPLACE_places.Category: 'Homophone'
+  + $REPLACE_places.Index: 356
+  + $REPLACE_play.Category: 'Homophone'
+  + $REPLACE_play.Index: 68
+  + $REPLACE_players.Category: 'Homophone'
+  + $REPLACE_players.Index: 294
+  + $REPLACE_points.Category: 'Homophone'
+  + $REPLACE_points.Index: 214
+  + $REPLACE_posts.Category: 'Homophone'
+  + $REPLACE_posts.Index: 43
+  + $REPLACE_principal.Category: 'Homophone'
+  + $REPLACE_principal.Index: 392
+  + $REPLACE_principle.Category: 'Homophone'
+  + $REPLACE_principle.Index: 303
+  + $REPLACE_problems.Category: 'Homophone'
+  + $REPLACE_problems.Index: 220
+  + $REPLACE_products.Category: 'Homophone'
+  + $REPLACE_products.Index: 361
+  + $REPLACE_prove.Category: 'Homophone'
+  + $REPLACE_prove.Index: 277
+  + $REPLACE_proves.Category: 'Homophone'
+  + $REPLACE_proves.Index: 108
+  + $REPLACE_provide.Category: 'Homophone'
+  + $REPLACE_provide.Index: 171
+  + $REPLACE_provides.Category: 'Homophone'
+  + $REPLACE_provides.Index: 131
+  + $REPLACE_put.Category: 'Homophone'
+  + $REPLACE_put.Index: 119
+  + $REPLACE_question.Category: 'Homophone'
+  + $REPLACE_question.Index: 358
+  + $REPLACE_questions.Category: 'Homophone'
+  + $REPLACE_questions.Index: 249
+  + $REPLACE_quiet.Category: 'Homophone'
+  + $REPLACE_quiet.Index: 128
+  + $REPLACE_quite.Category: 'Homophone'
+  + $REPLACE_quite.Index: 290
+  + $REPLACE_reason.Category: 'Homophone'
+  + $REPLACE_reason.Index: 251
+  + $REPLACE_reasons.Category: 'Homophone'
+  + $REPLACE_reasons.Index: 347
+  + $REPLACE_relationship.Category: 'Homophone'
+  + $REPLACE_relationship.Index: 345
+  + $REPLACE_remain.Category: 'Homophone'
+  + $REPLACE_remain.Index: 159
+  + $REPLACE_remains.Category: 'Homophone'
+  + $REPLACE_remains.Index: 222
+  + $REPLACE_require.Category: 'Homophone'
+  + $REPLACE_require.Index: 381
+  + $REPLACE_requires.Category: 'Homophone'
+  + $REPLACE_requires.Index: 344
+  + $REPLACE_right.Category: 'Homophone'
+  + $REPLACE_right.Index: 97
+  + $REPLACE_rights.Category: 'Homophone'
+  + $REPLACE_rights.Index: 39
+  + $REPLACE_rite.Category: 'Homophone'
+  + $REPLACE_rite.Index: 266
+  + $REPLACE_round.Category: 'Homophone'
+  + $REPLACE_round.Index: 359
+  + $REPLACE_same.Category: 'Homophone'
+  + $REPLACE_same.Index: 99
+  + $REPLACE_say.Category: 'Homophone'
+  + $REPLACE_say.Index: 281
+  + $REPLACE_says.Category: 'Homophone'
+  + $REPLACE_says.Index: 115
+  + $REPLACE_scientists.Category: 'Homophone'
+  + $REPLACE_scientists.Index: 385
+  + $REPLACE_seem.Category: 'Homophone'
+  + $REPLACE_seem.Index: 364
+  + $REPLACE_seems.Category: 'Homophone'
+  + $REPLACE_seems.Index: 221
+  + $REPLACE_sense.Category: 'Homophone'
+  + $REPLACE_sense.Index: 136
+  + $REPLACE_set.Category: 'Homophone'
+  + $REPLACE_set.Index: 188
+  + $REPLACE_she'll.Category: 'Homophone'
+  + $REPLACE_she'll.Index: 317
+  + $REPLACE_shell.Category: 'Homophone'
+  + $REPLACE_shell.Index: 311
+  + $REPLACE_shows.Category: 'Homophone'
+  + $REPLACE_shows.Index: 263
+  + $REPLACE_sight.Category: 'Homophone'
+  + $REPLACE_sight.Index: 51
+  + $REPLACE_simply.Category: 'Homophone'
+  + $REPLACE_simply.Index: 338
+  + $REPLACE_since.Category: 'Homophone'
+  + $REPLACE_since.Index: 151
+  + $REPLACE_sister's.Category: 'Homophone'
+  + $REPLACE_sister's.Index: 2
+  + $REPLACE_sit.Category: 'Homophone'
+  + $REPLACE_sit.Index: 333
+  + $REPLACE_site.Category: 'Homophone'
+  + $REPLACE_site.Index: 183
+  + $REPLACE_smell.Category: 'Homophone'
+  + $REPLACE_smell.Index: 306
+  + $REPLACE_smells.Category: 'Homophone'
+  + $REPLACE_smells.Index: 246
+  + $REPLACE_so.Category: 'Homophone'
+  + $REPLACE_so.Index: 154
+  + $REPLACE_some.Category: 'Homophone'
+  + $REPLACE_some.Index: 301
+  + $REPLACE_someone's.Category: 'Homophone'
+  + $REPLACE_someone's.Index: 15
+  + $REPLACE_son's.Category: 'Homophone'
+  + $REPLACE_son's.Index: 6
+  + $REPLACE_sound.Category: 'Homophone'
+  + $REPLACE_sound.Index: 300
+  + $REPLACE_sounds.Category: 'Homophone'
+  + $REPLACE_sounds.Index: 73
+  + $REPLACE_started.Category: 'Homophone'
+  + $REPLACE_started.Index: 91
+  + $REPLACE_starts.Category: 'Homophone'
+  + $REPLACE_starts.Index: 265
+  + $REPLACE_stay.Category: 'Homophone'
+  + $REPLACE_stay.Index: 330
+  + $REPLACE_stays.Category: 'Homophone'
+  + $REPLACE_stays.Index: 217
+  + $REPLACE_students.Category: 'Homophone'
+  + $REPLACE_students.Index: 235
+  + $REPLACE_suggests.Category: 'Homophone'
+  + $REPLACE_suggests.Index: 287
+  + $REPLACE_systems.Category: 'Homophone'
+  + $REPLACE_systems.Index: 218
+  + $REPLACE_take.Category: 'Homophone'
+  + $REPLACE_take.Index: 194
+  + $REPLACE_takes.Category: 'Homophone'
+  + $REPLACE_takes.Index: 259
+  + $REPLACE_taste.Category: 'Homophone'
+  + $REPLACE_taste.Index: 75
+  + $REPLACE_tastes.Category: 'Homophone'
+  + $REPLACE_tastes.Index: 72
+  + $REPLACE_team's.Category: 'Homophone'
+  + $REPLACE_team's.Index: 20
+  + $REPLACE_teams.Category: 'Homophone'
+  + $REPLACE_teams.Index: 204
+  + $REPLACE_tells.Category: 'Homophone'
+  + $REPLACE_tells.Index: 170
+  + $REPLACE_tests.Category: 'Homophone'
+  + $REPLACE_tests.Index: 353
+  + $REPLACE_than.Category: 'Homophone'
+  + $REPLACE_than.Index: 182
+  + $REPLACE_thank.Category: 'Homophone'
+  + $REPLACE_thank.Index: 336
+  + $REPLACE_that.Category: 'Homophone'
+  + $REPLACE_that.Index: 163
+  + $REPLACE_the.Category: 'Homophone'
+  + $REPLACE_the.Index: 63
+  + $REPLACE_their.Category: 'Homophone'
+  + $REPLACE_their.Index: 130
+  + $REPLACE_them.Category: 'Homophone'
+  + $REPLACE_them.Index: 167
+  + $REPLACE_then.Category: 'Homophone'
+  + $REPLACE_then.Index: 53
+  + $REPLACE_there's.Category: 'Homophone'
+  + $REPLACE_there's.Index: 207
+  + $REPLACE_there.Category: 'Homophone'
+  + $REPLACE_there.Index: 124
+  + $REPLACE_therefore.Category: 'Homophone'
+  + $REPLACE_therefore.Index: 374
+  + $REPLACE_these.Category: 'Homophone'
+  + $REPLACE_these.Index: 138
+  + $REPLACE_they're.Category: 'Homophone'
+  + $REPLACE_they're.Index: 286
+  + $REPLACE_they.Category: 'Homophone'
+  + $REPLACE_they.Index: 88
+  + $REPLACE_thing.Category: 'Homophone'
+  + $REPLACE_thing.Index: 166
+  + $REPLACE_things.Category: 'Homophone'
+  + $REPLACE_things.Index: 325
+  + $REPLACE_think.Category: 'Homophone'
+  + $REPLACE_think.Index: 299
+  + $REPLACE_thinks.Category: 'Homophone'
+  + $REPLACE_thinks.Index: 57
+  + $REPLACE_this.Category: 'Homophone'
+  + $REPLACE_this.Index: 187
+  + $REPLACE_thorough.Category: 'Homophone'
+  + $REPLACE_thorough.Index: 111
+  + $REPLACE_though.Category: 'Homophone'
+  + $REPLACE_though.Index: 123
+  + $REPLACE_thought.Category: 'Homophone'
+  + $REPLACE_thought.Index: 135
+  + $REPLACE_threw.Category: 'Homophone'
+  + $REPLACE_threw.Index: 56
+  + $REPLACE_through.Category: 'Homophone'
+  + $REPLACE_through.Index: 134
+  + $REPLACE_throw.Category: 'Homophone'
+  + $REPLACE_throw.Index: 142
+  + $REPLACE_till.Category: 'Homophone'
+  + $REPLACE_till.Index: 243
+  + $REPLACE_time.Category: 'Homophone'
+  + $REPLACE_time.Index: 239
+  + $REPLACE_times.Category: 'Homophone'
+  + $REPLACE_times.Index: 153
+  + $REPLACE_to.Category: 'Homophone'
+  + $REPLACE_to.Index: 70
+  + $REPLACE_today's.Category: 'Homophone'
+  + $REPLACE_today's.Index: 25
+  + $REPLACE_tomorrow's.Category: 'Homophone'
+  + $REPLACE_tomorrow's.Index: 26
+  + $REPLACE_too.Category: 'Homophone'
+  + $REPLACE_too.Index: 335
+  + $REPLACE_tough.Category: 'Homophone'
+  + $REPLACE_tough.Index: 40
+  + $REPLACE_trying.Category: 'Homophone'
+  + $REPLACE_trying.Index: 165
+  + $REPLACE_two.Category: 'Homophone'
+  + $REPLACE_two.Index: 203
+  + $REPLACE_types.Category: 'Homophone'
+  + $REPLACE_types.Index: 328
+  + $REPLACE_understanding.Category: 'Homophone'
+  + $REPLACE_understanding.Index: 162
+  + $REPLACE_understands.Category: 'Homophone'
+  + $REPLACE_understands.Index: 232
+  + $REPLACE_us.Category: 'Homophone'
+  + $REPLACE_us.Index: 177
+  + $REPLACE_use.Category: 'Homophone'
+  + $REPLACE_use.Index: 140
+  + $REPLACE_uses.Category: 'Homophone'
+  + $REPLACE_uses.Index: 211
+  + $REPLACE_vary.Category: 'Homophone'
+  + $REPLACE_vary.Index: 200
+  + $REPLACE_very.Category: 'Homophone'
+  + $REPLACE_very.Index: 370
+  + $REPLACE_want.Category: 'Homophone'
+  + $REPLACE_want.Index: 86
+  + $REPLACE_wants.Category: 'Homophone'
+  + $REPLACE_wants.Index: 42
+  + $REPLACE_was.Category: 'Homophone'
+  + $REPLACE_was.Index: 197
+  + $REPLACE_wasn't.Category: 'Homophone'
+  + $REPLACE_wasn't.Index: 139
+  + $REPLACE_way.Category: 'Homophone'
+  + $REPLACE_way.Index: 377
+  + $REPLACE_ways.Category: 'Homophone'
+  + $REPLACE_ways.Index: 240
+  + $REPLACE_we'll.Category: 'Homophone'
+  + $REPLACE_we'll.Index: 296
+  + $REPLACE_we're.Category: 'Homophone'
+  + $REPLACE_we're.Index: 340
+  + $REPLACE_we.Category: 'Homophone'
+  + $REPLACE_we.Index: 376
+  + $REPLACE_weak.Category: 'Homophone'
+  + $REPLACE_weak.Index: 35
+  + $REPLACE_weather.Category: 'Homophone'
+  + $REPLACE_weather.Index: 273
+  + $REPLACE_week's.Category: 'Homophone'
+  + $REPLACE_week's.Index: 27
+  + $REPLACE_week.Category: 'Homophone'
+  + $REPLACE_week.Index: 384
+  + $REPLACE_weeks.Category: 'Homophone'
+  + $REPLACE_weeks.Index: 341
+  + $REPLACE_well.Category: 'Homophone'
+  + $REPLACE_well.Index: 122
+  + $REPLACE_were.Category: 'Homophone'
+  + $REPLACE_were.Index: 145
+  + $REPLACE_weren't.Category: 'Homophone'
+  + $REPLACE_weren't.Index: 121
+  + $REPLACE_what.Category: 'Homophone'
+  + $REPLACE_what.Index: 114
+  + $REPLACE_when.Category: 'Homophone'
+  + $REPLACE_when.Index: 104
+  + $REPLACE_where.Category: 'Homophone'
+  + $REPLACE_where.Index: 206
+  + $REPLACE_whether.Category: 'Homophone'
+  + $REPLACE_whether.Index: 391
+  + $REPLACE_which.Category: 'Homophone'
+  + $REPLACE_which.Index: 106
+  + $REPLACE_who's.Category: 'Homophone'
+  + $REPLACE_who's.Index: 160
+  + $REPLACE_whole.Category: 'Homophone'
+  + $REPLACE_whole.Index: 274
+  + $REPLACE_whose.Category: 'Homophone'
+  + $REPLACE_whose.Index: 388
+  + $REPLACE_will.Category: 'Homophone'
+  + $REPLACE_will.Index: 96
+  + $REPLACE_with.Category: 'Homophone'
+  + $REPLACE_with.Index: 310
+  + $REPLACE_woman.Category: 'Homophone'
+  + $REPLACE_woman.Index: 116
+  + $REPLACE_women.Category: 'Homophone'
+  + $REPLACE_women.Index: 320
+  + $REPLACE_won.Category: 'Homophone'
+  + $REPLACE_won.Index: 342
+  + $REPLACE_work.Category: 'Homophone'
+  + $REPLACE_work.Index: 285
+  + $REPLACE_works.Category: 'Homophone'
+  + $REPLACE_works.Index: 101
+  + $REPLACE_world's.Category: 'Homophone'
+  + $REPLACE_world's.Index: 21
+  + $REPLACE_worse.Category: 'Homophone'
+  + $REPLACE_worse.Index: 386
+  + $REPLACE_worst.Category: 'Homophone'
+  + $REPLACE_worst.Index: 36
+  + $REPLACE_would.Category: 'Homophone'
+  + $REPLACE_would.Index: 297
+  + $REPLACE_write.Category: 'Homophone'
+  + $REPLACE_write.Index: 62
+  + $REPLACE_writes.Category: 'Homophone'
+  + $REPLACE_writes.Index: 350
+  + $REPLACE_year's.Category: 'Homophone'
+  + $REPLACE_year's.Index: 28
+  + $REPLACE_year.Category: 'Homophone'
+  + $REPLACE_year.Index: 390
+  + $REPLACE_years.Category: 'Homophone'
+  + $REPLACE_years.Index: 264
+  + $REPLACE_yesterday's.Category: 'Homophone'
+  + $REPLACE_yesterday's.Index: 29
+  + $REPLACE_you're.Category: 'Homophone'
+  + $REPLACE_you're.Index: 175
+  + $REPLACE_you.Category: 'Homophone'
+  + $REPLACE_you.Index: 117
+  + $REPLACE_your.Category: 'Homophone'
+  + $REPLACE_your.Index: 147
+private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/GECModel/gec_indication_thresholds.plist: unreadable after (InvalidFileException)
+private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/GECModel/gec_issue_types.plist: unreadable after (InvalidFileException)
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/Siri-en.lm/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.LanguageModeling.en'
+  + CFBundleInfoDictionaryVersion: 6
+  + CFBundleName: 'en'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'override-variants', 'Priority': 0, 'Type': 47}, {'Name': 'morphology-v2', 'Priority': 0, 'Type': 43}, {'Name': 'variants', 'Priority': 0, 'Type': 25}, {'Name': 'classmodel', 'Priority': 0, 'Type': 34}, {'Name': 'params', 'Priority': 0, 'Type': 15}, {'Name': 'blocklist.bundle', 'Priority':...
+  + Locale: 'en'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/Siri-en.lm/blocklist.bundle/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.LanguageModeling.en.blocklistbundle'
+  + CFBundleInfoDictionaryVersion: 6
+  + CFBundleName: 'blocklist.bundle'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'blocklist', 'Type': 41}, {'Name': 'Unigrams-en', 'Type': 53}]
+  + Locale: 'en'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/Siri-en.lm/inline_completion_params.plist
+  + MinAdditionalCharactersForInlineCompletions: 1
+  + PrimaryThreshold.0.1.0: 0.0
+  + PrimaryThreshold.0.1.1: -0.3691
+  + PrimaryThreshold.0.1.2: -0.3908
+  + PrimaryThreshold.0.1.3: -0.6513
+  + PrimaryThreshold.0.1.4: -0.6513
+  + PrimaryThreshold.0.2.0: 0.0
+  + PrimaryThreshold.0.2.1: -0.2823
+  + PrimaryThreshold.0.2.2: -0.2823
+  + PrimaryThreshold.0.2.3: -0.2605
+  + PrimaryThreshold.0.2.4: -0.2388
+  + PrimaryThreshold.0.3.0: 0.0
+  + PrimaryThreshold.0.3.1: -0.3908
+  + PrimaryThreshold.0.3.2: -0.3908
+  + PrimaryThreshold.0.3.3: -0.3474
+  + PrimaryThreshold.0.3.4: -0.3474
+  + PrimaryThreshold.1.1.0: 0.0
+  + PrimaryThreshold.1.1.1: -0.1954
+  + PrimaryThreshold.1.1.2: -0.0911
+  + PrimaryThreshold.1.1.3: -0.2823
+  + PrimaryThreshold.1.1.4: -0.3691
+  + PrimaryThreshold.1.2.0: 0.0
+  + PrimaryThreshold.1.2.1: -0.1954
+  + PrimaryThreshold.1.2.2: -0.1954
+  + PrimaryThreshold.1.2.3: -0.1736
+  + PrimaryThreshold.1.2.4: -0.152
+  + PrimaryThreshold.1.3.0: 0.0
+  + PrimaryThreshold.1.3.1: -0.2823
+  + PrimaryThreshold.1.3.2: -0.2823
+  + PrimaryThreshold.1.3.3: -0.2388
+  + PrimaryThreshold.1.3.4: -0.1954
+  + PrimaryThreshold.2.1.0: 0.0
+  + PrimaryThreshold.2.1.1: -0.0825
+  + PrimaryThreshold.2.1.2: -0.0911
+  + PrimaryThreshold.2.1.3: -0.0955
+  + PrimaryThreshold.2.1.4: -0.0955
+  + PrimaryThreshold.2.2.0: 0.0
+  + PrimaryThreshold.2.2.1: -0.1737
+  + PrimaryThreshold.2.2.2: -0.1737
+  + PrimaryThreshold.2.2.3: -0.152
+  + PrimaryThreshold.2.2.4: -0.1303
+  + PrimaryThreshold.2.3.0: 0.0
+  + PrimaryThreshold.2.3.1: -0.2605
+  + PrimaryThreshold.2.3.2: -0.2605
+  + PrimaryThreshold.2.3.3: -0.2171
+  + PrimaryThreshold.2.3.4: -0.1737
+  + SecondaryThreshold.0.1.0: 0.0
+  + SecondaryThreshold.0.1.1: -0.3691
+  + SecondaryThreshold.0.1.2: -0.3908
+  + SecondaryThreshold.0.1.3: -0.6513
+  + SecondaryThreshold.0.1.4: -0.6513
+  + SecondaryThreshold.0.2.0: 0.0
+  + SecondaryThreshold.0.2.1: -0.2823
+  + SecondaryThreshold.0.2.2: -0.2823
+  + SecondaryThreshold.0.2.3: -0.2605
+  + SecondaryThreshold.0.2.4: -0.2388
+  + SecondaryThreshold.0.3.0: 0.0
+  + SecondaryThreshold.0.3.1: -0.3908
+  + SecondaryThreshold.0.3.2: -0.3908
+  + SecondaryThreshold.0.3.3: -0.3474
+  + SecondaryThreshold.0.3.4: -0.3474
+  + SecondaryThreshold.1.1.0: 0.0
+  + SecondaryThreshold.1.1.1: -0.2082
+  + SecondaryThreshold.1.1.2: -0.2258
+  + SecondaryThreshold.1.1.3: -0.2823
+  + SecondaryThreshold.1.1.4: -0.3691
+  + SecondaryThreshold.1.2.0: 0.0
+  + SecondaryThreshold.1.2.1: -0.1954
+  + SecondaryThreshold.1.2.2: -0.1954
+  + SecondaryThreshold.1.2.3: -0.1736
+  + SecondaryThreshold.1.2.4: -0.152
+  + SecondaryThreshold.1.3.0: 0.0
+  + SecondaryThreshold.1.3.1: -0.2823
+  + SecondaryThreshold.1.3.2: -0.2823
+  + SecondaryThreshold.1.3.3: -0.2388
+  + SecondaryThreshold.1.3.4: -0.1954
+  + SecondaryThreshold.2.1.0: 0.0
+  + SecondaryThreshold.2.1.1: -0.2082
+  + SecondaryThreshold.2.1.2: -0.1822
+  + SecondaryThreshold.2.1.3: -0.1649
+  + SecondaryThreshold.2.1.4: -0.139
+  + SecondaryThreshold.2.2.0: 0.0
+  + SecondaryThreshold.2.2.1: -0.013
+  + SecondaryThreshold.2.2.2: -0.0174
+  + SecondaryThreshold.2.2.3: -0.0347
+  + SecondaryThreshold.2.2.4: -0.0434
+  + SecondaryThreshold.2.3.0: 0.0
+  + SecondaryThreshold.2.3.1: -0.0217
+  + SecondaryThreshold.2.3.2: -0.0261
+  + SecondaryThreshold.2.3.3: -0.0434
+  + SecondaryThreshold.2.3.4: -0.0521
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/Siri-en.lm/qp_blocklist.bundle/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.LanguageModeling.en.qpblocklistbundle'
+  + CFBundleInfoDictionaryVersion: 6
+  + CFBundleName: 'blocklist.bundle'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'blocklist', 'Type': 41}, {'Name': 'Unigrams-en', 'Type': 53}]
+  + Locale: 'en'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/Siri-en.lm/unilm.bundle/modelInfo.plist
+  + EmbeddingDimension: 512
+  + EmbeddingNodeNameOnANE: 'embedding_out'
+  + EmbeddingNodeNameOnCPU: 'decoder/ln_final_out'
+  + MaximumSequenceLength: 256
+  + PreProcessor.Name: 'custom2'
+  + SupportedBatchSizesAndSequenceLengths.1: [64]
+  + VersionString: 'en_y2f3zdg5bn-408000_2024-04-24_21:32:59'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/en-search.plist
+  + CFBundleDevelopmentRegion: 'en'
+  + CFBundleExecutable: '$(EXECUTABLE_NAME)'
+  + CFBundleIdentifier: 'com.apple.NLP'
+  + CFBundleInfoDictionaryVersion: '6.0'
+  + CFBundleName: '$(PRODUCT_NAME)'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + CanonicalRegions.de.CanonicalRegion: 'DE'
+  + CanonicalRegions.de.ValidRegions: ['DE', 'AT', 'CH']
+  + CanonicalRegions.en.CanonicalRegion: 'GB'
+  + CanonicalRegions.en.ValidRegions: ['US', 'GB']
+  + CanonicalRegions.es.CanonicalRegion: 'ES'
+  + CanonicalRegions.es.ValidRegions: ['ES']
+  + CanonicalRegions.fr.CanonicalRegion: 'FR'
+  + CanonicalRegions.fr.ValidRegions: ['FR']
+  + CanonicalRegions.it.CanonicalRegion: 'IT'
+  + CanonicalRegions.it.ValidRegions: ['IT']
+  + CanonicalRegions.ja.CanonicalRegion: 'JP'
+  + CanonicalRegions.ja.ValidRegions: ['JP']
+  + CanonicalRegions.nl.CanonicalRegion: 'NL'
+  + CanonicalRegions.nl.ValidRegions: ['NL']
+  + CanonicalRegions.pt.CanonicalRegion: 'BR'
+  + CanonicalRegions.pt.ValidRegions: ['PT', 'BR']
+  + CanonicalRegions.sv.CanonicalRegion: 'SE'
+  + CanonicalRegions.sv.ValidRegions: ['SE']
+  + CanonicalRegions.zh.CanonicalRegion: 'CN'
+  + CanonicalRegions.zh.ValidRegions: ['CN', 'TW', 'HK']
+  + CanonicalRegions.zh_CN.CanonicalRegion: 'CN'
+  + CanonicalRegions.zh_CN.ValidRegions: ['CN']
+  + CanonicalRegions.zh_HK.CanonicalRegion: 'HK'
+  + CanonicalRegions.zh_HK.ValidRegions: ['HK']
+  + CanonicalRegions.zh_Hans.CanonicalRegion: 'CN'
+  + CanonicalRegions.zh_Hans.ValidRegions: ['CN']
+  + CanonicalRegions.zh_Hant.CanonicalRegion: 'HK'
+  + CanonicalRegions.zh_Hant.ValidRegions: ['HK', 'TW']
+  + CanonicalRegions.zh_MO.CanonicalRegion: 'MO'
+  + CanonicalRegions.zh_MO.ValidRegions: ['MO']
+  + CanonicalRegions.zh_SG.CanonicalRegion: 'SG'
+  + CanonicalRegions.zh_SG.ValidRegions: ['SG']
+  + CanonicalRegions.zh_TW.CanonicalRegion: 'TW'
+  + CanonicalRegions.zh_TW.ValidRegions: ['TW']
+  + Contents: [{'Version': 4, 'Name': 'en-search', 'Type': 'cache'}, {'Version': 3, 'Name': 'en-search', 'Type': 'cfg'}]
+  + Locale: 'en'
+  + ProjectName: 'NLSearchParser'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/en.lm/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.LanguageModeling.en'
+  + CFBundleInfoDictionaryVersion: 6
+  + CFBundleName: 'en'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'fst', 'Priority': 1, 'Type': 27}, {'Name': 'morphology-v2', 'Priority': 0, 'Type': 43}, {'Name': 'blocklist.bundle', 'Priority': 0, 'Type': 50}, {'Name': 'qp_blocklist.bundle', 'Priority': 0, 'Type': 52}]
+  + Locale: 'en'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/en.lm/blocklist.bundle/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.LanguageModeling.en.blocklistbundle'
+  + CFBundleInfoDictionaryVersion: 6
+  + CFBundleName: 'en'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'blocklist', 'Type': 41}, {'Name': 'blocklistidmap', 'Type': 42}]
+  + Locale: 'en'
+  + Type: 50
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/en.lm/qp_blocklist.bundle/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.LanguageModeling.en.qpblocklistbundle'
+  + CFBundleInfoDictionaryVersion: 6
+  + CFBundleName: 'en'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'blocklist', 'Type': 41}, {'Name': 'blocklistidmap', 'Type': 42}]
+  + Locale: 'en'
+  + Type: 50
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/searchquery.lm/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.LanguageModeling.en'
+  + CFBundleInfoDictionaryVersion: 6
+  + CFBundleName: 'en'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'lm', 'Priority': 0, 'Type': 40, 'Weight': 0.8}]
+  + Locale: 'en'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/sentiment.bundle/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.Sentiment.en'
+  + CFBundleInfoDictionaryVersion: 1
+  + CFBundleName: 'en'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'char_id.json', 'Priority': 0, 'Type': 34}, {'Name': 'model.espresso.net', 'Priority': 0, 'Type': 15}, {'Name': 'model.espresso.shape', 'Priority': 0, 'Type': 10}, {'Name': 'model.espresso.weights', 'Priority': 0, 'Type': 16}]
+  + Locale: 'en'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/AssetData/topic.bundle/Info.plist
+  + CFBundleDevelopmentRegion: 'English'
+  + CFBundleIdentifier: 'com.apple.Topic.en'
+  + CFBundleInfoDictionaryVersion: 1
+  + CFBundleName: 'en'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '1'
+  + Contents: [{'Name': 'char_id.json', 'Priority': 0, 'Type': 34}, {'Name': 'model.espresso.net', 'Priority': 0, 'Type': 15}, {'Name': 'model.espresso.shape', 'Priority': 0, 'Type': 10}, {'Name': 'model.espresso.weights', 'Priority': 0, 'Type': 16}]
+  + Locale: 'en'
+new private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_LinguisticData/9e5af7e2cffff3cded5db21909fd7d3a58b4ed43.asset/Info.plist
+  + CFBundleDevelopmentRegion: 'en'
+  + CFBundleExecutable: '$(EXECUTABLE_NAME)'
+  + CFBundleIdentifier: 'com.apple.MobileAsset.LinguisticData'
+  + CFBundleInfoDictionaryVersion: '6.0'
+  + CFBundleName: '$(PRODUCT_NAME)'
+  + CFBundlePackageType: 'BNDL'
+  + CFBundleShortVersionString: '1.0'
+  + CFBundleSignature: '????'
+  + CFBundleVersion: '483.10'
+  + MobileAssetProperties.AssetLocale: 'en'
+  + MobileAssetProperties.Contents: [{'ContentPath': 'GECModel', 'ContentType': 'SentenceCorrection', 'Locale': 'en'}, {'ContentPath': 'Lemmatizer-en.dat', 'ContentType': 'Lemmatizer', 'Locale': 'en'}, {'ContentPath': 'Polarity-en.lstm', 'ContentType': 'Events', 'Locale': 'en'}, {'ContentPath': 'Siri-Delta-en_AU.dat', 'ContentType': '...
+  + MobileAssetProperties.FormatVersion: 1
+  + MobileAssetProperties.Language: 'en'
+  + MobileAssetProperties.LinguisticAssetType: 'Optional'
+  + MobileAssetProperties._CompatibilityVersion: 17
+  + MobileAssetProperties._ContentVersion: 449
+  + MobileAssetProperties._SupportedPlatforms: ['iOS', 'macOS', 'iOS Simulator', 'visionOS', 'tvOS']
+  + MobileAssetProperties.__RequiredByOS: 0
+private/var/db/eligibilityd/eligibility_allowlists.plist
+  ~ Precise Locations: ['US-VI', 'CA-NB', 'US-UT', 'US-AS', 'US-GU', 'US-PR', 'US-TX', 'US-UM', 'CA-NS', 'US-MP', 'CA-AB', 'US-LA'] -> ['US-UT', 'US-UM', 'US-MP', 'US-AS', 'CA-NB', 'CA-NS', 'US-VI', 'CA-AB', 'US-GU', 'US-PR', 'US-TX', 'US-LA']
+new private/var/protected/trustd/AutoAsset.plist
+  + AssetPath: '/Users/runner/Library/Developer/CoreSimulator/Devices/7A74E80C-1653-4323-AD47-F694F6D41E61/data/private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_PKITrustStore/purpose_auto/d1b36c40ecf011c1a2dfeacc93215881ad4cf525.asset/AssetData'
+private/var/protected/trustd/SupplementalsAssets/OTAPKIContext.plist
+  + CTKillSwitch: 0
+  + CTKillSwitch_nonTLS: 0
+  ~ MobileAssetLastRequest-com.apple.MobileAsset.PKITrustSupplementals: datetime.datetime(2001, 1, 1, 0, 0) -> datetime.datetime(2026, 11, 1, 12, 39, 36)
+var/run/launchd_bootstrap.plist
+  ~ Bootstrap.Child.SIMULATOR_BOOT_TIME: '1793536466' -> '1793536722'
+  ~ Bootstrap.Self.SIMULATOR_BOOT_TIME: '1793536466' -> '1793536722'
+Library/TCC/TCC.db: 5 rows added or changed; schema: CREATE TABLE access (    service        TEXT        NOT NULL,     client         TEXT        NOT NULL,     client_type    INTEGER     NOT NULL,     auth_value     INTEGER     NOT NULL,     auth_reason    INTEGER     NOT NULL,     auth_version   INTEGER     NOT NULL,     csreq          BLOB,     policy_id      INTEGER,     indirect_object_identifier_type    INTEGER,     indirect_object_identifier         TEXT NOT NULL DEFAULT 'UNUSED',     indirect_object_code_identity      BLOB,     flags          INTEGER,     last_modified  INTEGER     NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER)),     pid            INTEGER,     pid_version    INTEGER,     boot_uuid      TEXT NOT NULL DEFAULT 'UNUSED',     last_reminded  INTEGER     NOT NULL DEFAULT (CAST(strftime('%s','now') AS INTEGER)),     PRIMARY KEY (service, client, client_type, indirect_object_identifier),    FOREIGN KEY (policy_id) REFERENCES policies(id) ON DELETE CASCADE ON UPDATE CASCADE)
+  + ('kTCCServiceKeyboardNetwork', 'com.northprot.protly.cihost', 0, 2, 4, 1, None, None, 0, 'UNUSED', None, 0, 1793536889, None, None, 'UNUSED', 1793536889)
+  + ('kTCCServiceKeyboardNetwork', 'com.northprot.protly.cihost.keyboard', 0, 2, 4, 1, None, None, 0, 'UNUSED', None, 0, 1793536889, None, None, 'UNUSED', 1793536889)
+  + ('kTCCServiceLiverpool', 'com.apple.Maps', 0, 2, 4, 1, None, None, 0, 'UNUSED', None, 0, 1793536814, None, None, 'UNUSED', 1793536814)
+  + ('kTCCServiceLiverpool', 'com.apple.amsaccountsd', 0, 2, 4, 1, None, None, 0, 'UNUSED', None, 0, 1793536783, None, None, 'UNUSED', 1793536783)
+  + ('kTCCServiceUbiquity', 'com.apple.mobilecal', 0, 2, 4, 1, None, None, 0, 'UNUSED', None, 0, 1793536880, None, None, 'UNUSED', 1793536880)
+other new or changed files: 1446
+  Containers/Data/Application/A01619C5-D3D5-4FE5-AFCA-5CB8BC5872D0/Library/Saved Application State/com.northprot.protly.cihost.uitests.xctrunner.savedState/KnownSceneSessions/data.data
+  Containers/Data/Application/DEB2287B-101A-4B1F-AD10-7D3BE97BC6A4/Library/Saved Application State/com.apple.mobilecal.savedState/81407F8B-05E7-4AC9-A2B0-D8FD59F7B7BA/data.data
+  Containers/Data/Application/DEB2287B-101A-4B1F-AD10-7D3BE97BC6A4/Library/Saved Application State/com.apple.mobilecal.savedState/KnownSceneSessions/data.data
+  Containers/Data/Application/DEB2287B-101A-4B1F-AD10-7D3BE97BC6A4/Library/SplashBoard/Snapshots/sceneID:com.apple.mobilecal-81407F8B-05E7-4AC9-A2B0-D8FD59F7B7BA/3C067203-B1AE-4C05-BA78-A8C0C16C537E@3x.ktx
+  Containers/Data/Application/DEB2287B-101A-4B1F-AD10-7D3BE97BC6A4/Library/SplashBoard/Snapshots/sceneID:com.apple.mobilecal-81407F8B-05E7-4AC9-A2B0-D8FD59F7B7BA/downscaled/0885FDBA-D6D1-401E-A3CB-416B11FFA59F@3x.ktx
+  Containers/Data/Application/E1BABFDA-325C-4A1D-B7AF-14492E0C495E/Library/Safari/IgnoredSiriSuggestedSites.db-shm
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/ChangeTokens/EndToEndEncryption/maild/com.apple.mail
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/ChangeTokens/EndToEndEncryption/suggestd/com.apple.CoreSuggestions
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/ChangeTokens/EndToEndEncryption/weatherd/com.apple.weather
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/ChangeTokens/EndToEndEncryptionAllPlatforms/callservicesd/com.apple.telephonyutilities.callservicesd
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/ChangeTokens/NoEncryption/MobileCal/com.apple.Calendar
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/ChangeTokens/NoEncryption/routined/com.apple.MobileSMS
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/ChangeTokens/NoEncryption/suggestd/com.apple.CoreSuggestions
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/ChangeTokens/NoEncryption/voicebankingd/com.apple.accessibility.livespeech
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/com.apple.KeyValueService-Production.sqlite-shm
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/com.apple.KeyValueService-Production.sqlite-wal
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/com.apple.KeyValueService.EndToEndEncrypted-Production.sqlite-shm
+  Containers/Data/InternalDaemon/0551DC49-BCB7-4359-B503-C1390FDA8DA9/com.apple.kvs/com.apple.KeyValueService.EndToEndEncrypted.AllPlatforms-Production.sqlite-shm
+  Containers/Data/InternalDaemon/4AB03124-8A56-46CC-85BA-91D3B55FF09F/Library/store.sqlite3-shm
+  Containers/Data/InternalDaemon/DE6D8E7F-2015-43CE-AAB8-C47C23471E0F/com.apple.SharedWebCredentials/swc.db
+  Containers/Data/PluginKitPlugin/01A2C3C8-4DBB-46E5-A5CC-4B0B6CC348C9/SystemData/com.apple.chrono/placeholders/com.apple.health.SleepScoreWidget/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/01A2C3C8-4DBB-46E5-A5CC-4B0B6CC348C9/SystemData/com.apple.chrono/placeholders/com.apple.health.SleepScoreWidget/accessoryRectangular----160.00w-72.00h-0.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/01A2C3C8-4DBB-46E5-A5CC-4B0B6CC348C9/SystemData/com.apple.chrono/placeholders/com.apple.health.SleepScoreWidget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/01A2C3C8-4DBB-46E5-A5CC-4B0B6CC348C9/SystemData/com.apple.chrono/placeholders/com.apple.health.SleepScoreWidget/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/1E694CB8-7FF5-4BDB-BE27-BF5FC28164FE/SystemData/com.apple.chrono/placeholders/com.apple.passbook.cashDeviceTap.widget/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/68DB7D81-740E-4B8A-84A8-C94E0215BEE1/SystemData/com.apple.chrono/placeholders/com.apple.reminders.widget.today/accessoryInline----336.00w--36.00h--0.00r--0f--0.00t-0.00l-0.00b0.00t.chrono-timeline
+  Containers/Data/PluginKitPlugin/68DB7D81-740E-4B8A-84A8-C94E0215BEE1/SystemData/com.apple.chrono/placeholders/com.apple.reminders.widget/accessoryRectangular----160.00w-72.00h-0.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/68DB7D81-740E-4B8A-84A8-C94E0215BEE1/SystemData/com.apple.chrono/placeholders/com.apple.reminders.widget/systemLarge----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/68DB7D81-740E-4B8A-84A8-C94E0215BEE1/SystemData/com.apple.chrono/placeholders/com.apple.reminders.widget/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/68DB7D81-740E-4B8A-84A8-C94E0215BEE1/SystemData/com.apple.chrono/placeholders/com.apple.reminders.widget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/68DB7D81-740E-4B8A-84A8-C94E0215BEE1/SystemData/com.apple.chrono/placeholders/com.apple.reminders.widget/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8973D89E-EF8C-488C-AF15-F6591BB38210/SystemData/com.apple.chrono/placeholders/RunShortcutWidget/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8BDEEAD6-8E6A-4771-B63D-D1130D9D114F/SystemData/com.apple.chrono/placeholders/ple.mobileslideshow.PhotosReliveWidget.collections/systemLarge----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8BDEEAD6-8E6A-4771-B63D-D1130D9D114F/SystemData/com.apple.chrono/placeholders/ple.mobileslideshow.PhotosReliveWidget.collections/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8BDEEAD6-8E6A-4771-B63D-D1130D9D114F/SystemData/com.apple.chrono/placeholders/ple.mobileslideshow.PhotosReliveWidget.collections/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8BDEEAD6-8E6A-4771-B63D-D1130D9D114F/SystemData/com.apple.chrono/placeholders/ple.mobileslideshow.PhotosReliveWidget.collections/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/8BDEEAD6-8E6A-4771-B63D-D1130D9D114F/SystemData/com.apple.chrono/timelines/com.apple.mobileslideshow.PhotosReliveWidget/systemSmall--9042110358117915459----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/9449C36B-5727-49E7-9630-3FAA497CAD17/SystemData/com.apple.chrono/placeholders/PassbookAppleCardWidget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/9449C36B-5727-49E7-9630-3FAA497CAD17/SystemData/com.apple.chrono/placeholders/PassbookAppleCardWidget/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/95EF8B3D-1580-431F-A89F-075BDD8F2C57/SystemData/com.apple.chrono/timelines/today/systemExtraLargePortrait--3270473718301326798----342.00w-554.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/95EF8B3D-1580-431F-A89F-075BDD8F2C57/SystemData/com.apple.chrono/timelines/today/systemSmall--3270473718301326798----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/9B6338F2-D042-4A04-8CDC-04D68546DA75/SystemData/com.apple.chrono/placeholders/NanoMenstrualCyclesWidgetExtension/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/9B6338F2-D042-4A04-8CDC-04D68546DA75/SystemData/com.apple.chrono/placeholders/NanoMenstrualCyclesWidgetExtension/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/A8602F0A-F749-48BA-A742-62369733F148/SystemData/com.apple.chrono/placeholders/BalanceOneDayWidgetKind/accessoryCircular----72.00w-72.00h-36.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/A8602F0A-F749-48BA-A742-62369733F148/SystemData/com.apple.chrono/placeholders/BalanceOneDayWidgetKind/accessoryRectangular----160.00w-72.00h-0.00r-dx8daCqVbJr#z7Qcf00capA4ovd4dGKbcSX3N+h1TP4=.chrono-timeline
+  Containers/Data/PluginKitPlugin/A8602F0A-F749-48BA-A742-62369733F148/SystemData/com.apple.chrono/placeholders/BalanceOneDayWidgetKind/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/A8602F0A-F749-48BA-A742-62369733F148/SystemData/com.apple.chrono/placeholders/BalanceOneDayWidgetKind/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/A8602F0A-F749-48BA-A742-62369733F148/SystemData/com.apple.chrono/relevance/BalanceOneDayWidgetKind.chrono-relevance
+  Containers/Data/PluginKitPlugin/AFC05677-2A7C-4AAC-9B95-218E52C5CAE9/SystemData/com.apple.chrono/placeholders/com.apple.CalendarWidget.CalendarUpNextWidget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/AFC05677-2A7C-4AAC-9B95-218E52C5CAE9/SystemData/com.apple.chrono/timelines/com.apple.CalendarWidget.CalendarUpNextWidget/systemSmall--2474718758988609311----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/DC34BB45-DDD6-40FC-9CA6-A841401F0C00/SystemData/com.apple.chrono/placeholders/BatteriesAvocadoWidget/systemLarge----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/DC34BB45-DDD6-40FC-9CA6-A841401F0C00/SystemData/com.apple.chrono/placeholders/BatteriesAvocadoWidget/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/DC34BB45-DDD6-40FC-9CA6-A841401F0C00/SystemData/com.apple.chrono/placeholders/BatteriesAvocadoWidget/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/DC34BB45-DDD6-40FC-9CA6-A841401F0C00/SystemData/com.apple.chrono/placeholders/BatteriesAvocadoWidget/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/PluginKitPlugin/E3B6F22E-ED97-4794-A243-748A376FB556/SystemData/com.apple.chrono/placeholders/com.apple.Maps/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/E3B6F22E-ED97-4794-A243-748A376FB556/SystemData/com.apple.chrono/timelines/com.apple.Maps/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/E3B6F22E-ED97-4794-A243-748A376FB556/SystemData/com.apple.chrono/timelines/com.apple.Maps/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/F98B42A6-0DF4-4557-8415-D6488B69A992/SystemData/com.apple.chrono/placeholders/MultipleContactWidget_iOS/systemLarge----342.00w-358.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/F98B42A6-0DF4-4557-8415-D6488B69A992/SystemData/com.apple.chrono/placeholders/MultipleContactWidget_iOS/systemMedium----342.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/F98B42A6-0DF4-4557-8415-D6488B69A992/SystemData/com.apple.chrono/placeholders/SingleContactWidget_iOS/systemSmall----162.00w-162.00h-27.54r-9k63MyH2GlzMUJAxr8OQTJhQhzecwCYiO6ve5Onejd0=.chrono-timeline
+  Containers/Data/PluginKitPlugin/F98B42A6-0DF4-4557-8415-D6488B69A992/SystemData/com.apple.chrono/placeholders/SingleContactWidget_iOS/systemSmall----350.00w-350.00h-59.50r-8RnBkKlkQhxerfjRihSB4HNbtE5phvgyFIOe6Amaa5Y=.chrono-timeline
+  Containers/Data/System/1197551D-CEF6-463E-9DDD-CEDFD29D999E/Documents/Persistence/storeSystem.db-shm
+  Containers/Data/System/1197551D-CEF6-463E-9DDD-CEDFD29D999E/Documents/Persistence/storeSystem.db-wal
+  Containers/Data/System/E6609A67-80BA-49FE-B230-2A83B0257298/database/linkd.metadatastore.sqlite3-shm
+  Containers/Data/System/E6609A67-80BA-49FE-B230-2A83B0257298/database/linkd.metadatastore.sqlite3-wal
+  Containers/Shared/AppGroup/150F8685-EF28-4AFB-A271-2CE229E90FDA/com.apple.news.public-com.apple.news.private-production/article_exposures
+  Containers/Shared/AppGroup/150F8685-EF28-4AFB-A271-2CE229E90FDA/com.apple.news.public-com.apple.news.private-production/article_exposures-shm
+  Containers/Shared/AppGroup/150F8685-EF28-4AFB-A271-2CE229E90FDA/com.apple.news.public-com.apple.news.private-production/article_exposures-wal
+  Containers/Shared/AppGroup/884F35A7-0C0F-45F8-AA47-43A2A4FEA36B/replicatord/replicatord.sql
+  Containers/Shared/AppGroup/884F35A7-0C0F-45F8-AA47-43A2A4FEA36B/replicatord/replicatord.sql-shm
+  Containers/Shared/AppGroup/884F35A7-0C0F-45F8-AA47-43A2A4FEA36B/replicatord/replicatord.sql-wal
+  Containers/Shared/AppGroup/E3671391-6CDD-4583-B33B-DC1BBCA1375D/com.apple.Preferences/.tipkit/tips-store.db
+  Containers/Shared/AppGroup/E3671391-6CDD-4583-B33B-DC1BBCA1375D/com.apple.Preferences/.tipkit/tips-store.db-shm
+  Containers/Shared/AppGroup/E3671391-6CDD-4583-B33B-DC1BBCA1375D/com.apple.Preferences/.tipkit/tips-store.db-wal
+  Containers/Shared/AppGroup/E3671391-6CDD-4583-B33B-DC1BBCA1375D/com.apple.mobilecal/.tipkit/tips-store.db
+  Containers/Shared/AppGroup/E3671391-6CDD-4583-B33B-DC1BBCA1375D/com.apple.mobilecal/.tipkit/tips-store.db-journal
+  Containers/Shared/AppGroup/F0B286F7-4016-4348-ACE2-AE184BA3F1AE/TTSVoiceBanking/PersonalVoiceLogs/2026-11-1-PersonalVoice.log
+  Containers/Shared/AppGroup/F0B286F7-4016-4348-ACE2-AE184BA3F1AE/TTSVoiceBanking/TTSVoiceBanking.sqlite-shm
+  Containers/Shared/AppGroup/F0B286F7-4016-4348-ACE2-AE184BA3F1AE/TTSVoiceBanking/TTSVoiceBanking.sqlite-wal
+  Containers/Shared/AppGroup/F0B286F7-4016-4348-ACE2-AE184BA3F1AE/TTSVoiceBanking/TTSVoiceBankingLocal.sqlite-shm
+  Containers/Shared/AppGroup/F228749A-AB16-4F93-99E4-7CE2FE5B3343/Container_v1/Stores/Data-37B82A5C-28AA-4B14-BE5F-931CA202111D.sqlite-shm
+  Containers/Shared/AppGroup/F228749A-AB16-4F93-99E4-7CE2FE5B3343/Container_v1/Stores/Data-F24AEE96-D1D9-4C12-B8FC-C9C4708DFE27.sqlite-shm
+  Containers/Shared/SystemGroup/25BC258F-7365-48C2-9A52-AC6D4941FCCA/com.apple.DeviceAccess/DAMessageStore.db-shm
+  Containers/Shared/SystemGroup/FF7C0DA4-041E-4AAD-B8F3-2A555DC8D9B4/Library/local.sqlite-shm
+  Containers/Shared/SystemGroup/FF7C0DA4-041E-4AAD-B8F3-2A555DC8D9B4/Library/local.sqlite-wal
+  Library/Accounts/Accounts3.sqlite-shm
+  Library/AddressBook/AddressBook.sqlitedb-shm
+  Library/AddressBook/AddressBookImages.sqlitedb-shm
+  Library/AppleMediaServices/Accounts/AB739A73-AF33-451D-A26A-1AE5F5BE0429/cookies.sqlitedb
+  Library/AppleMediaServices/Accounts/AB739A73-AF33-451D-A26A-1AE5F5BE0429/cookies.sqlitedb-shm
+  Library/AppleMediaServices/Accounts/AB739A73-AF33-451D-A26A-1AE5F5BE0429/cookies.sqlitedb-wal
+  Library/AppleMediaServices/Engagement/analytics/database/app.db-shm
+  Library/AppleMediaServices/Engagement/internal/database/app.db-shm
+  Library/AppleMediaServices/Engagement/journeys/database/app.db-shm
+  Library/AppleMediaServices/Engagement/recommendations/database/app.db-shm
+  Library/AppleMediaServices/Engagement/treatments-shm
+  Library/AppleMediaServices/private-identifiers/PrivateIdentifiers.sqlite
+  Library/AppleMediaServices/private-identifiers/PrivateIdentifiers.sqlite-shm
+  Library/AppleMediaServices/private-identifiers/PrivateIdentifiers.sqlite-wal
+  Library/ApplePushService/aps.db-shm
+  Library/ApplePushService/aps.db-wal
+  Library/Application Support/CloudKitMailConversationsFlags/CloudKitMirroringDataModel-shm
+  Library/Application Support/CloudKitMailConversationsFlags/CloudKitMirroringDataModel-wal
+  Library/Application Support/FaceTime/FaceTime.sqlite3-shm
+  Library/Application Support/FileProvider/LegacyEnabledStateHasBeenMigrated
+  Library/Application Support/UsageTrackingAgent/UsageTracking.sqlite-shm
+  Library/Application Support/com.apple.ap.promotedcontentd/APDB/APDatabase/APDatabase.sql3-shm
+  Library/Application Support/com.apple.remotemanagementd/RMAdminStore-Cloud.sqlite-shm
+  Library/Application Support/com.apple.remotemanagementd/RMAdminStore-Cloud.sqlite-wal
+  Library/Application Support/com.apple.remotemanagementd/RMAdminStore-Local.sqlite-shm
+  Library/Application Support/com.apple.remotemanagementd/RMAdminStore-Local.sqlite-wal
+  Library/Assistant/SiriVocabulary/Modules/Task/Info
+  Library/Assistant/assistantdDidLaunch
+  Library/Avatar/CoreDataBackend/avatars.db-shm
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/bookmarks/client/com.apple.modelcatalogd/com.apple.modelcatalog.availabilitysubscriptionevaluationtrigger
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/bookmarks/client/com.apple.modelcatalogd/com.apple.modelcatalog.subscriptionstreamchangelistener
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/bookmarks/server/com.apple.modelcatalogd/com.apple.modelcatalog.availabilitysubscriptionevaluationtrigger
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/bookmarks/server/com.apple.modelcatalogd/com.apple.modelcatalog.subscriptionstreamchangelistener
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/App.InFocus
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/App.Installation
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/App.Intent
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/AppleIntelligence.Availability
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Audio.Route
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/CarPlay.Connected
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Clock.Alarm
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Device.Display.Backlight
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Device.Metadata
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Device.Power.BatteryLevel
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Device.Power.PluggedIn
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Device.ScreenLocked
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Device.Wireless.Bluetooth
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Device.Wireless.WiFi
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Family.ScreenTime.Request
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/GenerativeExperiences.FailureTracking
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/IntelligenceEngine.Interaction.Donation
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/IntelligenceFlow.Telemetry
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/IntelligenceFlow.Transcript.Datastream
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/IntelligencePlatform.MessageTerms
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/IntelligencePlatform.Views.Updated
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Location.HashedCoordinates
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Location.MicrolocationVisit
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Location.Semantic
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Media.NowPlaying
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/ModelCatalog.Subscriptions.Decisions
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Motion.Activity
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/OSAnalytics.Hardware.Reliability
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Sage.Transcript
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Screen.Sharing
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Siri.FeedbackLearning.UserInteractions
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Siri.PostSiriEngagement
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Siri.Remembers.AssistantSuggestions
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Siri.Remembers.AudioHistory
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Siri.Remembers.CallHistory
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Siri.Remembers.InteractionHistory
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Siri.Remembers.MessageHistory
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/Siri.UI
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/UserFocus.ComputedMode
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/UserFocus.InferredMode
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/WalletPaymentsCommerce.FoundIn.ClassicOrder
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/WalletPaymentsCommerce.FoundIn.ExtractedOrder
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/WalletPaymentsCommerce.FoundIn.OrderEmail
+  Library/Biome/compute/sessions/A9499D20-EF83-42AE-AFF1-EB648ED9B85B/subscriptions/WalletPaymentsCommerce.FoundIn.Transaction
+  Library/Biome/sets/Default/Health.Medication/Database/Set.db
+  Library/Biome/sets/Default/Health.Medication/Database/Set.db-shm
+  Library/Biome/sets/Default/Health.Medication/Database/Set.db-wal
+  Library/Biome/sets/Default/HomeKit.Home/Database/Set.db
+  Library/Biome/sets/Default/HomeKit.Home/Database/Set.db-shm
+  Library/Biome/sets/Default/HomeKit.Home/Database/Set.db-wal
+  Library/Biome/streams/restricted/AppleIntelligence.Reporting.AssetDeliveryLog.Availability/local/815229302678649
+  Library/Biome/streams/restricted/ModelCatalog.Subscriptions.Decisions/local/815229347581260
+  Library/Calendar/Calendar.sqlitedb
+  Library/Calendar/Calendar.sqlitedb-shm
+  Library/Calendar/Calendar.sqlitedb-wal
+  Library/Calendar/Extras.db
+  Library/Calendar/Extras.db-shm
+  Library/Calendar/Extras.db-wal
+  Library/Calendar/Notifications.Calendar.TriggeredEvent.NotificationData.Unprotected
+  Library/Calendar/Notifications.Calendar.Unprotected
+  Library/ContactsMetadata/CNContactMetadata.db-shm
+  Library/ContactsMetadata/CNContactMetadata.db-wal
+  Library/DoNotDisturb/DB/ModeConfigurations.json
+  Library/DoNotDisturb/DB/ModeConfigurationsSecure.json
+  Library/DoNotDisturb/DB/Settings.sqlite-shm
+  Library/DuetExpertCenter/CachedHomeScreenConfig/HomeScreenPages
+  Library/DuetExpertCenter/_ATXInfoSuggestionStore.db-shm
+  Library/DuetExpertCenter/_ATXInfoSuggestionStore.db-wal
+  Library/DuetExpertCenter/streams/blendingUIHomeScreen/local/815229371502222
+  Library/Finance/finance_cloud.db-shm
+  Library/Finance/finance_cloud.db-wal
+  Library/Finance/finance_local.db-shm
+  Library/Finance/finance_local.db-wal
+  Library/FrontBoard/applicationState.db
+  Library/FrontBoard/applicationState.db-shm
+  Library/FrontBoard/applicationState.db-wal
+  Library/HTTPStorages/com.apple.amsaccountsd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.amsaccountsd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.amsengagementd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.amsengagementd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.ap.promotedcontentd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.ap.promotedcontentd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.email.maild/httpstorages.sqlite
+  Library/HTTPStorages/com.apple.email.maild/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.email.maild/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.gamed/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.gamed/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.itunesstored/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.itunesstored/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.mobileassetd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.mobileassetd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.news.widget/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.news.widget/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.newsd/httpstorages.sqlite
+  Library/HTTPStorages/com.apple.newsd/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.newsd/httpstorages.sqlite-wal
+  Library/HTTPStorages/com.apple.nsurlsessiond/httpstorages.sqlite-shm
+  Library/HTTPStorages/com.apple.nsurlsessiond/httpstorages.sqlite-wal
+  Library/Health/Client/HealthApp.sqlite
+  Library/Health/Client/HealthApp.sqlite-shm
+  Library/Health/Client/HealthApp.sqlite-wal
+  Library/Health/NanoSync/com.apple.private.alloy.health.sync.db-shm
+  Library/Health/healthdb.sqlite-shm
+  Library/Health/healthdb.sqlite-wal
+  Library/Health/healthdb_secure.sqlite
+  Library/Health/healthdb_secure.sqlite-shm
+  Library/Health/healthdb_secure.sqlite-wal
+  Library/Health/ontology/HealthOntology.db-shm
+  Library/IdentityServices/PDS/PDSCDCache-shm
+  Library/IdentityServices/ids-firewall-identityservicesd.db-shm
+  Library/IdentityServices/ids-firewall-identityservicesd.db-wal
+  Library/IntelligencePlatform/eventLog.db-shm
+  Library/IntelligencePlatform/feedbackLog.db-shm
+  Library/IntelligencePlatform/globalKnowledge.db
+  Library/IntelligencePlatform/globalKnowledge.db-shm
+  Library/IntelligencePlatform/globalKnowledge.db-wal
+  Library/IntelligencePlatform/graph.db-shm
+  Library/IntelligencePlatform/keyvalue.db
+  Library/IntelligencePlatform/keyvalue.db-shm
+  Library/IntelligencePlatform/keyvalue.db-wal
+  Library/IntelligencePlatform/ontology.db
+  Library/IntelligencePlatform/ontology.db-shm
+  Library/IntelligencePlatform/ontology.db-wal
+  Library/IntelligencePlatform/state.db-shm
+  Library/IntelligencePlatform/views.db-shm
+  Library/Keychains/Analytics/ckks_analytics.db-shm
+  Library/Keychains/Analytics/ckks_analytics.db-wal
+  Library/Keychains/keychain-2-debug.db-shm
+  Library/Keychains/keychain-2-debug.db-wal
+  Library/Mail/Envelope Index-shm
+  Library/Mail/Envelope Index-wal
+  Library/Mail/Protected Index-shm
+  Library/ManagedAssets/managedAssets.sqlite-shm
+  Library/ManagedAssets/managedAssetsC.sqlite-shm
+  Library/ManagedAssets/managedAssetsC.sqlite-wal
+  Library/ManagedAssets/managedAssetsD.sqlite-shm
+  Library/Maps/MapsSync_0.0.1
+  Library/Maps/MapsSync_0.0.1-shm
+  Library/Maps/MapsSync_0.0.1-wal
+  Library/MobileContainerManager/references.sqlite3-wal
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/10586FBF-9CE7-44E6-B28D-38151E549BF1
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/14F64800-982C-42D2-9879-1DC04A508EC7/0A2ECCBB-5171-4635-A6DF-D055E9C63132
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/14F64800-982C-42D2-9879-1DC04A508EC7/5D535098-62BE-4702-9A96-A9DE5EDF99F5
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/14F64800-982C-42D2-9879-1DC04A508EC7/5DFEBF8C-B480-489D-9CAA-DE41831AF3CF
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/14F64800-982C-42D2-9879-1DC04A508EC7/9B63593A-D588-4A08-B5F9-97CF19CC7B5B
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/14F64800-982C-42D2-9879-1DC04A508EC7/C91382F3-CAAB-4158-833C-29F02F954E7B
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/14F64800-982C-42D2-9879-1DC04A508EC7/F7397F2B-322F-4D2A-AF5A-D28EEE47FFB0
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/14F64800-982C-42D2-9879-1DC04A508EC7/dictionary
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/18A4DD5B-9436-4CC7-9F3D-1CAE0D64452D
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/18C474D0-875F-4659-9590-E37049110D95
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/2C268DF2-E6B7-4063-96F7-012C3628E837
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/2C82A2FB-E89F-4003-8857-B3FBB6DA75A2
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/53D02B29-EF10-4F3D-AE71-AEE0377DED1E
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/5A094486-22EB-4201-B4F3-BA554297E3F0/5AC1CDB3-D5D3-4AF9-8A56-04836DD6E5D1
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/5A094486-22EB-4201-B4F3-BA554297E3F0/60508A31-E235-49CD-8021-A81C41737CA1
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/5A094486-22EB-4201-B4F3-BA554297E3F0/61A54669-457A-4D35-82E6-FEC105B8E298
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/5A094486-22EB-4201-B4F3-BA554297E3F0/629A414C-137F-4A63-BAF4-7138BC75623F
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/5A094486-22EB-4201-B4F3-BA554297E3F0/6ACDF98E-87CA-4D0C-9723-C22D7F679F4C
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/5A094486-22EB-4201-B4F3-BA554297E3F0/C2847A30-4EB5-49DC-BA94-AA27D90A6122
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/5A094486-22EB-4201-B4F3-BA554297E3F0/dictionary
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/6633DA18-732B-4C94-BD11-371F95FFBC45
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/670B60C6-4D98-4A4B-94DA-E639176DC891
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/6CFEB0CC-9977-46DB-B53C-2585E60FB233/1784C09C-EAB3-47E8-A6FB-7E1132A381B9
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/6CFEB0CC-9977-46DB-B53C-2585E60FB233/3D35EFE8-1088-45B4-9585-1D04B1916A84
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/6CFEB0CC-9977-46DB-B53C-2585E60FB233/72851E0D-AD6C-4476-A2DE-12749B1389B6
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/6CFEB0CC-9977-46DB-B53C-2585E60FB233/792DBDD9-7249-457E-BBED-7E775C7E2880
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/6CFEB0CC-9977-46DB-B53C-2585E60FB233/861D9099-2968-43B7-8E46-547C40F14439
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/6CFEB0CC-9977-46DB-B53C-2585E60FB233/D36DB65E-EE17-40C9-BB4C-2FECA01D356E
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/6CFEB0CC-9977-46DB-B53C-2585E60FB233/dictionary
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/9CED40C9-FE0F-46BC-8A84-109A9DAB9B39
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/9F41A3D5-09D9-4041-8CB3-FE27AA1AFC59
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/A20E7EC7-DBDC-4749-B653-E2BAD8208D56
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/A9E2797D-E69B-493C-8D44-A839461B063B
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/AB2F45BA-9849-476C-B907-13C7593D4D08/029188F8-F861-4C6B-9B0D-1D47931BDE03
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/AB2F45BA-9849-476C-B907-13C7593D4D08/547D20DA-FF5C-4A76-8517-C5565DF30E7D
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/AB2F45BA-9849-476C-B907-13C7593D4D08/869AE48A-00B0-4C2F-9EA0-F951A08DA297
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/AB2F45BA-9849-476C-B907-13C7593D4D08/D2FFF15D-27CF-46B8-8F94-34AB87C23061
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/AB2F45BA-9849-476C-B907-13C7593D4D08/F989DED7-658D-4ED8-98DF-66DB73692A95
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/AB2F45BA-9849-476C-B907-13C7593D4D08/FDF6E556-A423-4A55-BD8D-842C974FB647
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/AB2F45BA-9849-476C-B907-13C7593D4D08/dictionary
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/AF14A8C6-5F11-42E2-9F79-FCF4D8513975
+  Library/News/com.apple.news.public-com.apple.news.private-production/referralItems/com.apple.news.widget/today--systemExtraLargePortrait-085700A4-FEEA-4004-B2BE-736AAE32A1F1/C0F8C2FD-445D-41CF-ADB4-677462469914
