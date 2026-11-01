@@ -569,6 +569,78 @@ Field text is read through XCUITest (exact); bar labels with Vision OCR in the U
 - The icon on the real home screen (the crop is the simulator's rendering of the same `AppIcon.png`).
 - Other host apps (Messages, KakaoTalk, Instagram), typing feel and haptics.
 
+### Sprint 002: network checks (Full Access, CI key, container app)
+
+Campaign 2026-10-30-sim-phone-checks, sprint 002. Same runner, Xcode, runtime and device as sprint 001. The
+workflow writes `Secrets.swift` from the Actions secret `PROTLY_API_KEY` (a CI-only key) through
+`make-secrets.sh`; a run with the key only restores the DerivedData cache, never saves it (`network key: present
+(CI key); DerivedData cache: restore only, not saved in this run` in each report), and the leak guard writes
+`LEAK-GUARD pass: no key prefix in N files` before publishing. Full runs: `runs/8a801d5-30` (probe 1),
+`runs/79473e5-34`, run 35 (cancelled by a push), run 36 (hung, hit the 80-minute job limit, nothing published),
+`runs/c6d83a1-40` (probe 2), `runs/067c1cd-41`, `runs/30a1fbf-44`, run 48 (cancelled by a push),
+`runs/1f067a6-53` (stopped at the 3000 s test deadline in test7_77 on a slow runner), `runs/7ae22f7-54` (the
+3900 s deadline: every method finished; one lost keystroke in 6.8-2) and `runs/7ae22f7-57`, the final full run of
+record: `STATUS measured`, no filter, layout `RESULT PASS` with every band at +0, `CHECKS pass 26 fail 0 record 8
+skip 2`, 13 requests, leak guard on 132 files. Filtered debug runs: run 49 (refused, a bad filter) and
+`runs/ec69307-50` (`[shots:KeyboardShotsUITests,PhoneChecksUITests/test6_85net]`, the closing run under
+TOWER-CLOSE-RULE-2 before run 57 replaced it). The evidence below quotes run 57 unless it names another run.
+
+| ID | Result | Evidence |
+|---|---|---|
+| 6.8-11 | PASS | `내일 봐` typed as `ghk` + flip, center Translate: busy, Insert after 5.1 s: `Thanks so much for today` (Latin) |
+| 8.5-1 | PASS | `ru: 누나 노트 고마워 누나 덕분에 살았다` (`ru` came out `겨`, flipped): `Translating`, 3.5 s: `Спасибо за конспекты! Ты меня спасла` with a Hangul back translation in the panel (RECORD); Undo: the field equals the draft again. Run 50's first try once kept a Hangul `ㅋ` (rule fail; its retry passed) |
+| 8.5-3 | PASS | `ja:`: `明日ひま？一緒にご飯行こうよw` (kana and kanji, no `ㅋ`, no `lol`), 3.7 s |
+| 8.5-4 | PASS | `es:`: `Hoy estoy muy cansado`, 3.6 s |
+| 8.5-5 | PASS | `내일 3시에 봐`: `See you tomorrow at 3`, 2.6 s |
+| 8.5-6 | PASS | `ok: 내일 봐`: `ok, see you tomorrow`, 4.2 s |
+| 8.5-7 | PASS | `Polishing`, 5.6 s: `내일 시간 돼? 같이 밥 먹자 ㅋㅋ 안 되면 말해 줘`. The model always writes the spaced `말해 줘` (runs 41, 44, 50, 53, 54, 57); the tower ruled both spellings correct (plan row updated), and run 44's FAIL was under the earlier rule. Change lines (RECORD): `되? -> 돼? (맞춤법)`, `밥먹자 -> 밥 먹자 (띄어쓰기)`, `말해죠 -> 말해 줘 (맞춤법)` |
+| 8.5-8 | PASS | three-paragraph `ko:` draft: `Polishing`, 3.5 s, `오늘 진짜 길었어\n\n내일 아침에 전화할게\n\n늦으면 미안 ㅠㅠ` (paragraphs kept, no `ko:`) |
+| 8.5-9 | PASS | Spanish polish: `Me encanta el color de tu chaqueta, ¿dónde la compraste? jaja` (no `colour`, no `conprastes`), 3.4 s |
+| 8.5-10 | RECORD | 8.5-1 tap to `Insert`: 3.5 s and 3.8 s (run 54: 4.0 s, 3.3 s; run 50: 4.0 s, 3.3 s; run 44: 4.5 s, 4.2 s) |
+| 7.7-1 | PASS | `ProtlyCIApp`: in-app Paste of the test note, counter `58 / 1,000` = 58; `Copy for the keyboard`: `Copied`; Read clipboard in the app's Test field, Allow Paste: `Save as your About me note (58 characters)?`; Save: `About me saved: 58 characters.`; Done: keys back, no panel text |
+| 7.7-2 | PASS | `우리 문빔 킬른 다음 주에 오픈해` -> `Moonbeam Kiln opens next week` (no `pottery`, no `Victoria`), 3.4 s |
+| 7.7-3 | PASS | `Can you send me the photos from yesterday?`, Read clipboard: `어제 찍은 사진 좀 보내줄래?`; `protly about me v1` + `test`: `Save as your About me note (4 characters)?`, Cancel; 7.7-2 again: `We're opening Moonbeam Kiln next week`, 2.9 s |
+| 7.7-4 | RECORD | 7.7-2 tap to `Insert`: 3.4 s and 2.9 s (7.7-2 and 7.7-3's repeat) |
+| 7.7-5 | PASS | Select All, Cut: counter 0; Copy: `Copied`; Read clipboard: `Clear your About me note?`; Save: `About me cleared.`; the 7.7-1 copy and save again: 58 characters |
+| 7.7-6 | SKIP | needs a phone reinstall |
+
+Each run sends at most 14 requests (cap 60). Sprint 001's rows did not change in these runs; 8.5-9o now PASSes
+(the Spanish flip fix on main) and 6.8-5 reads `On my way!` in the right slot in runs 40, 53 and 57 but nothing in
+runs 41, 44 and 54 (the simulator's text replacements are not stable; RECORD either way).
+
+### Sprint 002 findings
+
+- Full Access: the Settings UI path works on iOS 26.5 (General > Keyboard > Keyboards > Protly > Allow Full Access
+  > Allow; the switch takes two taps). The root list's rows are unlabeled cells around labeled buttons with
+  identifiers like `com.apple.settings.general`, and the list may open scrolled to the bottom, so the test scrolls
+  both ways until the row is on screen. Probe 2 (`runs/c6d83a1-40`) diffed the device's data folder around the
+  switch (1068 and 1088 plists, each snapshot after `simctl shutdown`): no plist key for Full Access changed. TCC.db
+  could not be read there (its rows were still in the -wal file, now copied too); this was not probed again, so
+  the Settings UI stays the way.
+- Allow Paste: the prompt is a SpringBoard alert, not the host's. In probe 2 the interruption monitor answered it;
+  the phone checks tap `Allow Paste` in SpringBoard directly. While the prompt is up the keyboard is blocked in its
+  clipboard read and the host does not answer accessibility queries (run 41: three 60 s snapshot timeouts on one
+  tap), so nothing touches the host until the prompt is gone.
+- The panel's buttons are found by OCR word boxes in the bottom 45 pt of the panel each time (probe 2: Cancel at
+  x 22, Insert at x 321, y 741 pt), and the label match ignores case (Vision reads `Insert` as `insert`).
+- Model output: 8.5-1's wording changes from run to run (`ты меня спасла` / `Ты меня реально спасла`) and 8.5-7's
+  polish sometimes keeps `낼` (run 44's retry); the rules check what the plan asks, not one wording.
+- The layout test once stopped at launch: `runs/30a1fbf-44` stopped in `app.launch()` 17 s in, before any shot,
+  and the 200-line log tail did not say why. The same code passed in runs 41 and 50 (run 50 with every band at
+  +0), so it counts as a flake until shown otherwise (tower ruling); `test-failures.txt` now keeps xcodebuild's
+  error lines for the next one. Runs 30, 34, 40, 41 and 53 measured the +17 pt band flake on one shot or two
+  adjacent shots with `top-edge` 495..512 pt, which the tower counts as layout PASS; runs 50, 54 and 57 had
+  every band at +0.
+- Run time: `runs/1f067a6-53` ran on a slow runner (testScenarios 249 s against 115 s, test6_85net 924 s against
+  726 s) and hit the 3000 s main-test deadline in test7_77, so 7.7-3 to 7.7-6 had no CHECK line. The deadline is
+  now 3900 s, the build step 85 minutes and the job 95; run 54 (also slow, 2900 s of tests) finished every method,
+  run 57 took 2270 s.
+- One lost keystroke: in `runs/7ae22f7-54`, 6.8-2 typed `recieve` and the field read `reciev`; the keyboard's own
+  reading of the word (left slot `"ㄱㄷ챺"`, run 53 `"ㄱㄷ챺ㄷ"`) lacked the last `e` too, so the tap never reached the
+  keyboard's input and the bar had nothing to correct. The typing path is sprint 001's (0.35 s between taps) and
+  6.8-2 passed in runs 30, 34, 40, 41, 44, 53 and 57. Whether the driver should check the field after typing is
+  open (a silent retype could hide a keyboard that drops keys).
+
 ## Plain-text composition (typing-fixes 001)
 
 Campaign 2026-10-30-typing-fixes, sprint 001 (`docs/plans/2026-10-30-typing-fixes.md`). The word being typed is
@@ -648,3 +720,41 @@ character, no acceleration, every step dropped 50 pt above or below the start).
 Phone checks the tower still owes (`space-trackpad.md` P3 to P5): drag left across the keyboard while the thumb
 rises, the cursor never stops; slow drags are precise and a flick reaches about 40 characters; Korean and English
 feel equally fast on screen; `안녕` with no space, hold space, one step left gives `안|녕` with nothing lost.
+
+## Bar and protly key (keyboard-ui 001)
+
+Campaign 2026-10-30-keyboard-ui, sprint 001 (`docs/plans/2026-10-30-keyboard-ui.md`, design Part 1).
+
+- **What changed.** The bar is Apple's three full slots, each a button the full third and the whole band above row
+  1, with thin dividers that hide next to an empty slot. The center is a pill in the brand colors (dark keyboard:
+  paper pill, ink text; light: the reverse) whose words come from `BarAction` (ProtlyCore): `→ English` or the
+  target's endonym (`→ Русский`, `→ 日本語`), `Polish` (`한 Polish` for `ko:`), `Read`, `Undo`. Translate and Polish
+  show words only, no symbol (owner, 2026-10-30); Read and Undo keep `doc.on.clipboard` and
+  `arrow.uturn.backward`. The action stays visible while a word is typed. The left slot drops the quotes and dims a
+  flip that is not a listed word (`alternativeIsWord`). The protly key shows the same action's symbol and runs it.
+  Without Full Access the pill is an outline with `lock.fill`, and a tap explains where to turn it on.
+- **Simulator.** `runs/59f8eca-69`: `STATUS measured`, layout `RESULT PASS` (no +17 pt flake), `CHECKS pass 26 fail 0
+  record 8 skip 2`. It is the free re-run of `runs/59f8eca-68`, which had the same 26 passes but a KeyboardShots
+  harness failure (02 met a system keyboard standing in, then emoji not reached; `runs/6254808-61` on a branch
+  without this bar failed the same way). `measure.py` needed no change: the pill reads as one bar word centered
+  on the slot (`bar-text-centers 195.17(88)` in 07, 2 pt tolerance).
+- **Hit frames** (`tree-06-word-typed.txt`, `tree-07-empty-left-slot.txt`): 06 left `{3.7, 512.0} 127.3 x 46.7`,
+  06 center `{131.3, 512.0} 127.3 x 46.7`, 07 center `{131.3, 512.0} 127.3 x 46.7`; the right slot is empty in
+  both. Every slot showing a button is at least 120 x 40 pt.
+- **Shots.** KeyboardShots runs before `test0_access`, so shots 06 and 07 show the locked pill (`lock.fill` Polish,
+  outlined). With Full Access on, the phone checks' crops show the filled paper pill with `Polish` and no symbol
+  (`c-8.5-9o-1-center.png`). Shots 02 to 05 keep an empty center.
+- **CI words.** The center checks match the pill's words, contains-the-word (OCR adds `→`, `•` or a stray glyph for
+  a symbol, for example `G Read`, `5 Undo`). Vision's Korean model drops Cyrillic and Japanese (the Russian line of
+  an 8.5-1 result panel in `runs/ec69307-50` was on screen and not read), so `Reader.labelLanguages` reads a
+  Cyrillic label with `ru-RU, en-US` and a Japanese one with `ja-JP, en-US`; `→ Русский` and `→ 日本語` now read
+  exactly. Without its quotes Vision reads the jamo-only flip `ㅗ디ㅣㅐ` as `-]T`, also from contrast-stretched
+  crops (`runs/394cf1a-66`), so ws-1 falls back to the left slot button's accessibility label when OCR finds no
+  Hangul, only if the slot has ink, and notes both readings.
+- **Known limit.** With a selection, the label comes from the text around the cursor while the action sends the
+  selection (the old `draftMode` did the same).
+
+Phone checks the tower still owes: the feel of the bar and the pill in dark and light apps; a flip of a real word
+against a dimmed one; the protly key's symbol after a Replace (`arrow.uturn.backward`) and on an empty field
+(`doc.on.clipboard`); Full Access off shows the outlined lock pill and the reason line; the pill in a dark keyboard
+field inside a light app; whether the pill is too loud (design D3); VoiceOver reads the protly key's action.

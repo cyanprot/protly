@@ -1,6 +1,10 @@
 # Simulator screenshots of the Protly keyboard, measured against Apple's keyboard, and the phone checks
 # (ios-app/CI/README.md). Runs only for a head commit whose message contains [shots]: macOS minutes are scarce.
-# [probe] in the same message also runs the phone checks' probe (PhoneChecksUITests.test0_probe).
+# [probe] in the same message also runs the phone checks' probe (PhoneChecksUITests.test0_probe and the
+# preferences dump around Full Access). The secret PROTLY_API_KEY (a CI-only key) reaches only the Write Secrets.swift
+# step; without it every network check is SKIP. A run with the key never saves the DerivedData cache.
+# [shots:<class>[/<method>],...] instead runs only those tests (a debug run; shotsfilter.py, README "Debug runs"):
+# the report says FILTER and the IDs of other methods are NOT-RUN. The run that closes a sprint is a full [shots] run.
 # Every outcome is published to the orphan branch ci-shots under runs/<sha7>-<run_number>/.
 name: keyboard-shots
 
@@ -17,13 +21,15 @@ permissions:
 
 jobs:
   shots:
-    if: contains(github.event.head_commit.message, '[shots]') || github.event_name == 'workflow_dispatch'
+    if: >-
+      contains(github.event.head_commit.message, '[shots]') || contains(github.event.head_commit.message, '[shots:')
+      || github.event_name == 'workflow_dispatch'
     # On the job, not the workflow: a push without [shots] skips the job and so cannot cancel a running one.
     concurrency:
       group: keyboard-shots-${{ github.ref }}
       cancel-in-progress: true
     runs-on: macos-26
-    timeout-minutes: 55
+    timeout-minutes: 95  # the build step's 85 minutes, then publish and judge
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,7 +41,7 @@ jobs:
 
       - name: measure.py and checks.py tests
         run: |
-          python -m pip install --quiet "pillow>=11,<13"
+          python -m pip install --quiet "pillow>=11,<13" "pyyaml>=6,<7"
           python -m unittest discover -s ios-app/CI -p 'test_*.py'
 
       - name: Install XcodeGen
@@ -44,8 +50,11 @@ jobs:
           HOMEBREW_NO_INSTALL_CLEANUP: "1"
         run: brew install xcodegen
 
-      - name: Cache SwiftPM and DerivedData
-        uses: actions/cache@v4
+      # Restore before Secrets.swift exists, so the key's file is never part of a cache key. A run with the key only
+      # restores: its DerivedData holds the compiled key, so it is never saved (plan Task 2.1 step 2).
+      - name: Restore SwiftPM and DerivedData
+        id: cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/Library/Caches/org.swift.swiftpm
@@ -53,11 +62,31 @@ jobs:
           key: shots-dd-${{ hashFiles('ios-app/CI/project.yml', 'ios-app/**/Package.swift', 'ios-app/Sources/**', 'ios-app/Vendor/KeyboardKit/Sources/**') }}
           restore-keys: shots-dd-
 
+      # The only step that sees the key. write-secrets.sh never prints it and sets HAS_KEY in $GITHUB_ENV.
+      - name: Write Secrets.swift
+        env:
+          PROTLY_API_KEY: ${{ secrets.PROTLY_API_KEY }}
+        run: bash ios-app/CI/write-secrets.sh
+
+      # Under the job's limit: a step timeout fails the step (the publish steps still run), a job timeout cancels the
+      # job (run 36 published nothing). run-shots.sh stops the tests itself after 65 minutes.
       - name: Build, run scenarios, measure
+        timeout-minutes: 85  # about 12 min to build and boot cold, 65 of tests, then measure
         env:
           SOURCE_SHA: ${{ github.sha }}
           PROBE: ${{ contains(github.event.head_commit.message, '[probe]') && '1' || '0' }}
+          # Data for shotsfilter.py, never interpolated into a script.
+          SHOTS_MESSAGE: ${{ github.event.head_commit.message }}
         run: bash ios-app/CI/run-shots.sh "$RUNNER_TEMP/shots"
+
+      - name: Save SwiftPM and DerivedData (runs without the key only)
+        if: ${{ !cancelled() && env.HAS_KEY == 'false' && steps.cache.outputs.cache-hit != 'true' }}  # unset (secrets step failed) does not save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            ios-app/CI/build/DerivedData
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Publish to ci-shots
         if: ${{ !cancelled() }}
@@ -77,6 +106,18 @@ jobs:
             grep -E '^CHECKS (pass|$)|^CHECK .* FAIL' "$report" || true
           fi
           [ "$(head -n 1 "$report")" = "STATUS measured" ]
-          grep -qx 'RESULT PASS' "$report"
+          # A filtered run (FILTER line, only checked test names) says so in the log and the step summary, so a
+          # green debug run never reads as a full one. Its layout is RESULT NOT-RUN only when the filter left
+          # KeyboardShotsUITests out. A full run needs RESULT PASS.
+          if grep -q '^FILTER ' "$report"; then
+            echo "FILTERED RUN (debug, not a full run): $(grep -m 1 '^FILTER ' "$report")" | tee -a "$GITHUB_STEP_SUMMARY"
+            if grep -q '^FILTER .*KeyboardShotsUITests' "$report"; then
+              grep -qx 'RESULT PASS' "$report"
+            else
+              grep -q '^RESULT NOT-RUN' "$report"
+            fi
+          else
+            grep -qx 'RESULT PASS' "$report"
+          fi
           grep -qE '^CHECKS pass [0-9]+ fail 0 ' "$report"
           if grep -qE '^CHECK [^ ]+ FAIL' "$report"; then exit 1; fi
