@@ -1,0 +1,77 @@
+CHECK 6.8-1 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-2 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-3 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-4 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-5 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-6 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-7 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-8 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-9 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-10 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-11 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-1 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-2 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-3 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-4 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-5 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-6 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-1 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-1o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-2o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-3 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-4 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-5 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-6 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-6o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-7 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-7o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-8 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-8o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-9 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-9o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-10 NOT-RUN filtered run: its test method was not selected
+CHECK app-dark PASS hero=1 shot1="c-app-dark-1.png" shot2="c-app-dark-2.png" look=dark => background (26, 31, 46)
+CHECK app-light PASS hero=1 shot1="c-app-light-1.png" shot2="c-app-light-2.png" look=light => background (245, 240, 230)
+CHECK bar-dark PASS shot1="c-bar-dark-1.png" slot1={131.2,527.5,127.6,32.0} center1="Polish" shot2="c-bar-dark-2.png" slot2={131.2,527.5,127.6,32.0} center2="→, English" look=dark points=390 => shot1 paper 11111 ink 1599 px, keyboard luma 44; shot2 paper 16070 ink 2275 px, keyboard luma 44
+CHECK bar-light PASS shot1="c-bar-light-1.png" slot1={131.2,527.5,127.6,32.0} center1="Polish" shot2="c-bar-light-2.png" slot2={131.2,527.5,127.6,32.0} center2="→, English" look=light points=390 => shot1 paper 1585 ink 11121 px, keyboard luma 192; shot2 paper 2261 ink 16080 px, keyboard luma 192
+CHECK bar-xxl RECORD base-h=20.3 ms-button={131.3,512.0,127.3,46.7} ms-slot={131.2,527.5,127.6,32.0} ms-texts="→ {152.8,521.3,19.0,25.3}|Bahasa Melayu {175.8,524.0,61.3,20.0}" ms-want="Bahasa Melayu" ms-ocr="〉 Bahas..." ar-button={131.3,512.0,127.3,46.7} ar-slot={131.2,527.5,127.6,32.0} ar-texts="→ {155.7,521.3,19.0,25.3}|العربية {178.7,521.3,55.7,25.3}" ar-want="العربية" ar-ocr="العربية →" => ms: the name is 20.0 pt tall, as at the default size (20.3); ms ocr '〉 Bahas...'; ms: the name is cut short on screen; ar ocr 'العربية →'
+CHECK card-cancel PASS center="→, English" look=dark side={0.5,533.5,2.5,20.0} card-before=1 xmark=44.0x44.0 card-after=0 strip-after=0 keys=1 card-late=0 field="protly-stub ok 오늘 정말 고마워" want-field="protly-stub ok 오늘 정말 고마워" => ok
+CHECK card-done-dark FAIL look=dark side={0.5,533.5,2.5,20.0} text="Vertical scroll bar, 1 page" back="Vertical scroll bar, 1 page" want="Thanks so much for today, it really helped me out." want-back="오늘 정말 고마워, 큰 도움이 됐어." header="→ English" texts=4 buttons="Cancel 68.7x44.0,Copy 56.0x44.0,Replace 79.7x44.0" strip=0 after="Thanks so much for today, it really helped me out." want-after="Thanks so much for today, it really helped me out." => text 'Vertical scroll bar, 1 page', want 'Thanks so much for today, it really helped me out.'; back translation 'Vertical scroll bar, 1 page', want '오늘 정말 고마워, 큰 도움이 됐어.'
+CHECK card-done-light FAIL look=light side={0.5,533.5,2.5,20.0} text="Vertical scroll bar, 1 page" back="Vertical scroll bar, 1 page" want="Thanks so much for today, it really helped me out." want-back="오늘 정말 고마워, 큰 도움이 됐어." header="→ English" texts=4 buttons="Cancel 68.7x44.0,Copy 56.0x44.0,Replace 79.7x44.0" strip=0 copied=1 closed=1 after="protly-stub ok 오늘 정말 고마워" want-after="protly-stub ok 오늘 정말 고마워" => text 'Vertical scroll bar, 1 page', want 'Thanks so much for today, it really helped me out.'; back translation 'Vertical scroll bar, 1 page', want '오늘 정말 고마워, 큰 도움이 됐어.'
+CHECK card-err0-dark FAIL unreadable: center="→, English" look=dark side={0.5,533.5,2.5,20.0} no error on the strip in 8 s: strip="Polishing, … Polishing …"
+CHECK card-err0-light PASS center="→, English" look=light side={0.5,533.5,2.5,20.0} strip="The API is overloaded. Try again in a moment." cancel=44.0x44.0 card=0 want-error="The API is overloaded. Try again in a moment." retry=44.0x44.0 closed=1 => ok
+CHECK card-err1-dark FAIL unreadable: center=<unreadable> want "English"
+CHECK card-err1-light FAIL center="→, English" look=light side={0.5,533.5,2.5,20.0} kept="Vertical scroll bar, 1 page" want-kept="Thanks so much for today" error="The API is overloaded. Try again in a moment." want-error="The API is overloaded. Try again in a moment." header="→ English" texts=4 buttons="Cancel 68.7x44.0,Retry 56.7x44.0,Copy 56.0x44.0" strip=0 closed=1 => kept text 'Vertical scroll bar, 1 page', want 'Thanks so much for today'
+CHECK card-mid-dark FAIL look=dark side={0.5,533.5,2.5,20.0} text="Vertical scroll bar, 1 page" final="Thanks so much for today, it really helped me out." copy=disabled header="→ English" texts=3 buttons="Cancel 68.7x44.0,Copy 56.0x44.0 disabled,Replace 77.0x44.0 disabled" strip=1 => 'Vertical scroll bar, 1 page' is not the start of 'Thanks so much for today, it really helped me out.'
+CHECK card-mid-light FAIL look=light side={0.5,533.5,2.5,20.0} text="Vertical scroll bar, 1 page" final="Thanks so much for today, it really helped me out." copy=disabled header="→ English" texts=3 buttons="Cancel 68.7x44.0,Copy 56.0x44.0 disabled,Replace 77.0x44.0 disabled" strip=1 => 'Vertical scroll bar, 1 page' is not the start of 'Thanks so much for today, it really helped me out.'
+CHECK card-slow PASS center="→, English" look=dark side={0.5,533.5,2.5,20.0} strip="Translating, →, English, … Translating → English … Still translating…" cancel=44.0x44.0 card=0 at=9.3s => ok
+CHECK card-wait-dark PASS center="→, English" strip="Translating, →, English, … Translating → English …" cancel=44.0x44.0 card=0 look=dark side={0.5,533.5,2.5,20.0} => ok
+CHECK card-wait-light PASS center="→, English" strip="Translating, →, English, … Translating → English …" cancel=44.0x44.0 card=0 look=light side={0.5,533.5,2.5,20.0} => ok
+CHECK dark-1 NOT-RUN filtered run: its test method was not selected
+CHECK hit-1 PASS slots="left 127.3x46.7 \"ㅅ도\", center 127.3x46.7 \"Polish\", right 127.3x46.7 \"the\"" => ok
+CHECK icon NOT-RUN filtered run: its test method was not selected
+CHECK mem-stream PASS first=seen done=seen => before 65.0 MB, peak 65.0 MB over 7 samples during the stream, growth +0.0 MB (footprint, pid 13596; macOS-side footprint; the 40 MB limit is judged on the phone)
+CHECK menu-0 NOT-RUN filtered run: its test method was not selected
+CHECK menu-1 NOT-RUN filtered run: its test method was not selected
+CHECK menu-4 NOT-RUN filtered run: its test method was not selected
+CHECK pad-1 NOT-RUN filtered run: its test method was not selected
+CHECK pad-2 NOT-RUN filtered run: its test method was not selected
+CHECK pad-3 NOT-RUN filtered run: its test method was not selected
+CHECK ret-1-composer NOT-RUN filtered run: its test method was not selected
+CHECK ret-1-input NOT-RUN filtered run: its test method was not selected
+CHECK ret-1-textarea NOT-RUN filtered run: its test method was not selected
+CHECK ret-2-composer NOT-RUN filtered run: its test method was not selected
+CHECK ret-2-input NOT-RUN filtered run: its test method was not selected
+CHECK ret-2-textarea NOT-RUN filtered run: its test method was not selected
+CHECK ret-3-composer NOT-RUN filtered run: its test method was not selected
+CHECK ret-3-input NOT-RUN filtered run: its test method was not selected
+CHECK ret-3-textarea NOT-RUN filtered run: its test method was not selected
+CHECK ret-4-composer NOT-RUN filtered run: its test method was not selected
+CHECK ret-4-input NOT-RUN filtered run: its test method was not selected
+CHECK ret-4-textarea NOT-RUN filtered run: its test method was not selected
+CHECK ret-5-composer NOT-RUN filtered run: its test method was not selected
+CHECK ret-5-input NOT-RUN filtered run: its test method was not selected
+CHECK ret-5-textarea NOT-RUN filtered run: its test method was not selected
+CHECK ws-1 NOT-RUN filtered run: its test method was not selected
+CHECK ws-2 NOT-RUN filtered run: its test method was not selected
+CHECK ws-3 NOT-RUN filtered run: its test method was not selected

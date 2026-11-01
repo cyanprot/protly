@@ -1,0 +1,74 @@
+== PhoneChecksUITests.test0_access
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+Settings: General
+Settings: Keyboard
+Settings: Keyboards
+Settings: Protly
+Settings: switch tap 1, no alert, switch Optional(0)
+Settings: switch tap 2, Allow in the alert, switch Optional(1)
+full access: on, turned on in Settings (switch tap 2, Allow in the alert)
+== PhoneChecksUITests.test5d_card
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+looks appearance dark: 1793534337944 ok appearance now dark
+tapped the center slot
+CHECK card-wait-dark PENDING center="→, English" strip="Translating, →, English, … Translating → English …" cancel=44.0x44.0 card=0 look=dark side={0.5,533.5,2.5,20.0}
+CHECK card-mid-dark PENDING look=dark side={0.5,533.5,2.5,20.0} text="Vertical scroll bar, 1 page" final="Thanks so much for today, it really helped me out." copy=disabled header="→ English" texts=3 buttons="Cancel 68.7x44.0,Copy 56.0x44.0 disabled,Replace 77.0x44.0 disabled" strip=1
+CHECK card-done-dark PENDING look=dark side={0.5,533.5,2.5,20.0} text="Vertical scroll bar, 1 page" back="Vertical scroll bar, 1 page" want="Thanks so much for today, it really helped me out." want-back="오늘 정말 고마워, 큰 도움이 됐어." header="→ English" texts=4 buttons="Cancel 68.7x44.0,Copy 56.0x44.0,Replace 79.7x44.0" strip=0 after="Thanks so much for today, it really helped me out." want-after="Thanks so much for today, it really helped me out."
+card-err0-dark: center "Undo" before English: bringing the keyboard back
+tapped the field
+tapped the center slot
+CHECK card-err0-dark FAIL unreadable: center="→, English" look=dark side={0.5,533.5,2.5,20.0} no error on the strip in 8 s: strip="Polishing, … Polishing …"
+card-err1-dark: center <unreadable> before English: bringing the keyboard back
+tapped the field
+CHECK card-err1-dark FAIL unreadable: center=<unreadable> want "English"
+looks appearance light: 1793534440825 ok appearance now light
+tapped the center slot
+CHECK card-wait-light PENDING center="→, English" strip="Translating, →, English, … Translating → English …" cancel=44.0x44.0 card=0 look=light side={0.5,533.5,2.5,20.0}
+CHECK card-mid-light PENDING look=light side={0.5,533.5,2.5,20.0} text="Vertical scroll bar, 1 page" final="Thanks so much for today, it really helped me out." copy=disabled header="→ English" texts=3 buttons="Cancel 68.7x44.0,Copy 56.0x44.0 disabled,Replace 77.0x44.0 disabled" strip=1
+CHECK card-done-light PENDING look=light side={0.5,533.5,2.5,20.0} text="Vertical scroll bar, 1 page" back="Vertical scroll bar, 1 page" want="Thanks so much for today, it really helped me out." want-back="오늘 정말 고마워, 큰 도움이 됐어." header="→ English" texts=4 buttons="Cancel 68.7x44.0,Copy 56.0x44.0,Replace 79.7x44.0" strip=0 copied=1 closed=1 after="protly-stub ok 오늘 정말 고마워" want-after="protly-stub ok 오늘 정말 고마워"
+tapped the center slot
+CHECK card-err0-light PENDING center="→, English" look=light side={0.5,533.5,2.5,20.0} strip="The API is overloaded. Try again in a moment." cancel=44.0x44.0 card=0 want-error="The API is overloaded. Try again in a moment." retry=44.0x44.0 closed=1
+tapped the center slot
+CHECK card-err1-light PENDING center="→, English" look=light side={0.5,533.5,2.5,20.0} kept="Vertical scroll bar, 1 page" want-kept="Thanks so much for today" error="The API is overloaded. Try again in a moment." want-error="The API is overloaded. Try again in a moment." header="→ English" texts=4 buttons="Cancel 68.7x44.0,Retry 56.7x44.0,Copy 56.0x44.0" strip=0 closed=1
+looks appearance dark: 1793534530120 ok appearance now dark
+MARK mem-stream-before 1793534552.735
+tapped the center slot
+CHECK card-slow PENDING center="→, English" look=dark side={0.5,533.5,2.5,20.0} strip="Translating, →, English, … Translating → English … Still translating…" cancel=44.0x44.0 card=0 at=9.3s
+MARK mem-stream-start 1793534567.706
+MARK mem-stream-end 1793534581.157
+CHECK mem-stream PENDING first=seen done=seen
+tapped the center slot
+CHECK card-cancel PENDING center="→, English" look=dark side={0.5,533.5,2.5,20.0} card-before=1 xmark=44.0x44.0 card-after=0 strip-after=0 keys=1 card-late=0 field="protly-stub ok 오늘 정말 고마워" want-field="protly-stub ok 오늘 정말 고마워"
+putting dark and the default text size back (asked for before: appearance light; )
+looks appearance dark: 1793534620477 ok appearance now dark
+looks content_size large: 1793534625541 ok content_size now large
+== PhoneChecksUITests.test5e_bar
+putting dark and the default text size back (asked for before: appearance light; )
+looks appearance dark: 1793534630762 ok appearance now dark
+looks content_size large: 1793534633282 ok content_size now large
+ocr self-test: "Polish 안녕하세요"
+ocr self-test: works true, hangul true
+typing: keyboard top 512.00, row 1 564.00
+typed "teh"
+CHECK hit-1 PENDING slots="left 127.3x46.7 \"ㅅ도\", center 127.3x46.7 \"Polish\", right 127.3x46.7 \"the\""
+CHECK bar-dark PENDING shot1="c-bar-dark-1.png" slot1={131.2,527.5,127.6,32.0} center1="Polish" shot2="c-bar-dark-2.png" slot2={131.2,527.5,127.6,32.0} center2="→, English" look=dark points=390
+looks appearance light: 1793534676556 ok appearance now light
+typing: keyboard top 512.00, row 1 564.00
+typed "teh"
+CHECK bar-light PENDING shot1="c-bar-light-1.png" slot1={131.2,527.5,127.6,32.0} center1="Polish" shot2="c-bar-light-2.png" slot2={131.2,527.5,127.6,32.0} center2="→, English" look=light points=390
+looks appearance dark: 1793534708855 ok appearance now dark
+looks content_size extra-extra-large: 1793534725187 ok content_size now extra-extra-large
+ocr bar-xxl center: "〉 Bahas..."
+ocr bar-xxl center: "العربية →"
+CHECK bar-xxl PENDING base-h=20.3 ms-button={131.3,512.0,127.3,46.7} ms-slot={131.2,527.5,127.6,32.0} ms-texts="→ {152.8,521.3,19.0,25.3}|Bahasa Melayu {175.8,524.0,61.3,20.0}" ms-want="Bahasa Melayu" ms-ocr="〉 Bahas..." ar-button={131.3,512.0,127.3,46.7} ar-slot={131.2,527.5,127.6,32.0} ar-texts="→ {155.7,521.3,19.0,25.3}|العربية {178.7,521.3,55.7,25.3}" ar-want="العربية" ar-ocr="العربية →"
+looks content_size large: 1793534760766 ok content_size now large
+looks appearance dark: 1793534766345 ok appearance now dark
+CHECK app-dark PENDING hero=1 shot1="c-app-dark-1.png" shot2="c-app-dark-2.png" look=dark
+looks appearance light: 1793534790019 ok appearance now light
+CHECK app-light PENDING hero=1 shot1="c-app-light-1.png" shot2="c-app-light-2.png" look=light
+looks appearance dark: 1793534809110 ok appearance now dark
+putting dark and the default text size back (asked for before: appearance light; appearance light; content_size extra-extra-large; appearance light; )
+looks appearance dark: 1793534822742 ok appearance now dark
+looks content_size large: 1793534826266 ok content_size now large

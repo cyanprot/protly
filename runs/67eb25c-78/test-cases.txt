@@ -1,0 +1,3 @@
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test0_access]' passed (44.426 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test5d_card]' passed (318.743 seconds).
+Test Case '-[ProtlyCIUITests.PhoneChecksUITests test5e_bar]' passed (200.787 seconds).
