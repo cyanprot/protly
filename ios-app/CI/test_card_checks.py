@@ -154,6 +154,14 @@ class CardTests(unittest.TestCase):
                 f'strip=0 closed=1')
         self.assertEqual(resolve(line).status, "FAIL")
 
+    def test_error_after_text_with_a_disabled_copy_fails(self):
+        line = (f'CHECK card-err1-dark PENDING kept="Thanks so much for today" want-kept="Thanks so much for today" '
+                f'error="{ERROR}" want-error="{ERROR}" '
+                f'buttons="Cancel 76.0x44.0,Retry 60.0x44.0,Copy 60.0x44.0 disabled" strip=0 closed=1')
+        c = resolve(line)
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("Copy is disabled", c.evidence)
+
     def test_error_after_text_offering_replace_fails(self):
         line = (f'CHECK card-err1-dark PENDING kept="Thanks so much for today" want-kept="Thanks so much for today" '
                 f'error="{ERROR}" want-error="{ERROR}" '
@@ -165,11 +173,15 @@ class CardTests(unittest.TestCase):
     def test_cancel_closes_and_nothing_comes_back(self):
         draft = "protly-stub ok 오늘 정말 고마워"
         line = (f'CHECK card-cancel PENDING center="→ English" card-before=1 xmark=44.0x44.0 card-after=0 '
-                f'strip-after=0 card-late=0 field="{draft}" want-field="{draft}"')
+                f'strip-after=0 keys=1 card-late=0 field="{draft}" want-field="{draft}"')
         self.assertEqual(resolve(line).status, "PASS", resolve(line).evidence)
         late = resolve(line.replace("card-late=0", "card-late=1"))
         self.assertEqual(late.status, "FAIL")
         self.assertIn("came back", late.evidence)
+        blind = resolve(line.replace("card-after=0", "card-after=-1"))
+        self.assertEqual(blind.status, "FAIL")
+        self.assertIn("could not be read", blind.evidence)
+        self.assertEqual(resolve(line.replace("keys=1", "keys=0")).status, "FAIL")
 
 
 class MemoryTests(unittest.TestCase):
@@ -190,6 +202,10 @@ class MemoryTests(unittest.TestCase):
         mem = self.mem([61440] * 5 + [75000] * 7)
         c = resolve("CHECK mem-stream PENDING first=seen done=seen", log=self.LOG, mem=mem)
         self.assertEqual(c.status, "FAIL")
+
+    def test_too_few_samples_are_unreadable(self):
+        c = resolve("CHECK mem-stream PENDING first=seen done=seen", log=self.LOG, mem=self.mem([61440] * 6))
+        self.assertIn("not the whole stream", c.evidence)
 
     def test_missing_marks_or_samples_are_unreadable(self):
         c = resolve("CHECK mem-stream PENDING first=seen done=seen", log="", mem="")
@@ -239,6 +255,11 @@ class XxlTests(unittest.TestCase):
     def test_cut_short_or_unscaled_is_record(self):
         self.assertEqual(resolve(self.line(self.MS, self.AR, ms_ocr="→ Bahasa M...")).status, "RECORD")
         self.assertEqual(resolve(self.line(self.MS, self.AR, base="27.0")).status, "RECORD")
+
+    def test_no_base_height_or_no_ocr_never_passes(self):
+        self.assertIn("unreadable", resolve(self.line(self.MS, self.AR, base="none")).evidence)
+        line = self.line(self.MS, self.AR).replace('ms-ocr="→ Bahasa Melayu"', "ms-ocr=<unreadable>")
+        self.assertEqual(resolve(line).status, "RECORD")
 
 
 @unittest.skipIf(Image is None, "Pillow is not installed")
@@ -290,6 +311,27 @@ class ImageTests(unittest.TestCase):
         self.assertEqual(self.app("light", checks.PAPER).status, "PASS")
         self.assertEqual(self.app("light", checks.INK).status, "FAIL")
         self.assertIn("no hero", self.app("dark", checks.INK, hero=0).evidence)
+
+    def card(self, look, keyboard):
+        with tempfile.TemporaryDirectory() as d:
+            img = Image.new("RGB", (390 * 3, 844 * 3), (32, 160, 96))
+            ImageDraw.Draw(img).rectangle([0, 500 * 3, 390 * 3, 844 * 3], fill=keyboard)
+            img.save(os.path.join(d, f"c-card-wait-{look}.png"))
+            return resolve(f'CHECK card-wait-{look} PENDING strip="Translating → English…" cancel=44.0x44.0 card=0 '
+                           f'look={look} side={{0.5,518.0,2.5,34.7}}', run_dir=d)
+
+    def test_card_look_is_measured(self):
+        self.assertEqual(self.card("light", (209, 212, 217)).status, "PASS")
+        self.assertEqual(self.card("dark", (43, 43, 45)).status, "PASS")
+        c = self.card("light", (43, 43, 45))
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("not light", c.evidence)
+
+    def test_a_card_line_without_its_shot_fails(self):
+        with tempfile.TemporaryDirectory() as d:
+            c = resolve('CHECK card-wait-dark PENDING strip="Translating → English…" cancel=44.0x44.0 card=0 '
+                        'look=dark side={0.5,518.0,2.5,34.7}', run_dir=d)
+        self.assertEqual(c.status, "FAIL")
 
     def test_a_missing_shot_is_unreadable(self):
         with tempfile.TemporaryDirectory() as d:

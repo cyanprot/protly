@@ -41,6 +41,12 @@ struct CallView {
             .sorted { ($0.frame.minY, $0.frame.minX) < ($1.frame.minY, $1.frame.minX) }
     }
 
+    /// The card is finished: its `primary` button (Replace, Insert) is there and enabled, and the strip is gone.
+    /// While the text streams the card draws the same button disabled, so its presence alone proves nothing.
+    func finished(_ primary: String) -> Bool {
+        strip.isEmpty && button(primary, in: card)?.enabled == true
+    }
+
     /// The strip's label line(s), joined with spaces ("Translating → English…", the 8 s line, an error line).
     var stripText: String { texts(strip).map(\.label).joined(separator: " ") }
 
@@ -63,28 +69,19 @@ struct CallView {
 
 @MainActor
 extension Driver {
-    /// The keyboard's elements (frames from `top` down, points) in one snapshot of the app's tree; nil when the
-    /// snapshot failed. `top` defaults to the band above row 1 as last measured.
+    /// The keyboard's elements (frames that reach below `top`, points), read from the app's debug description: the
+    /// text the tree-*.txt files hold, which carries the keyboard's remote views. `app.snapshot()` did not (run
+    /// d103b93-77: the bar's buttons, plain in tree-protly.txt, were not among its children). `top` defaults to the
+    /// band above row 1 as last measured. nil when the description has no element at all.
     func keyboardTree(top: CGFloat? = nil) -> [KeyElement]? {
         let limit = top ?? ((fixedRow1 ?? Self.lastRow1 ?? 564) - Geo.band - 6)
-        let root: XCUIElementSnapshot
-        do {
-            root = try app.snapshot()
-        } catch {
-            log("tree snapshot failed: \(error)")
+        let elements = KeyTreeText.parse(app.debugDescription)
+        guard !elements.isEmpty else {
+            log("tree: no element in the app's description")
             return nil
         }
-        var out: [KeyElement] = []
-        func walk(_ s: XCUIElementSnapshot, _ part: String?) {
-            let p = s.identifier.hasPrefix("protly-") ? s.identifier : part
-            let f = s.frame
-            if f.minY >= limit, f.width > 0, f.height > 0, s.elementType != .window, s.elementType != .application {
-                out.append(KeyElement(type: s.elementType, label: s.label, frame: f, enabled: s.isEnabled, part: p))
-            }
-            for c in s.children { walk(c, p) }
-        }
-        walk(root, nil)
-        return out
+        // maxY: a long card text scrolled up inside the card starts above the band and still counts.
+        return elements.filter { $0.frame.maxY > limit && $0.frame.width > 0 && $0.frame.height > 0 }
     }
 
     func callView() -> CallView? { keyboardTree().map(CallView.init) }
@@ -113,7 +110,7 @@ extension Driver {
     /// Asks run-shots.sh to run `xcrun simctl ui <device> <setting> <value>` (the test runs inside the simulator and
     /// cannot): a line in looks-requests.txt, answered in looks-acks.txt. Only `appearance light|dark` and
     /// `content_size <size>` are honored. Leaves looks-changed.txt while not back at dark and the default size, so a
-    /// later method (a restarted runner included) can put them back. false when no answer came.
+    /// later method (a restarted runner included) can put them back. false unless simctl read the new value back.
     @discardableResult
     func looks(_ setting: String, _ value: String, timeout: TimeInterval = 30) -> Bool {
         let n = Int(Date().timeIntervalSince1970 * 1000)
@@ -125,17 +122,12 @@ extension Driver {
             if let line = text.split(separator: "\n").first(where: { $0.hasPrefix("\(n) ") }) {
                 log("looks \(setting) \(value): \(line)")
                 pause(1.5)  // the views take the new traits
-                let ok = line.split(separator: " ").dropFirst().first == "ok"
-                let changed = out.appendingPathComponent("looks-changed.txt")
-                if ok && (value == "dark" || value == Self.defaultContentSize) {
-                    var rest = ((try? String(contentsOf: changed, encoding: .utf8)) ?? "").split(separator: "\n")
-                    rest.removeAll { $0.hasPrefix(setting + " ") }
-                    if rest.isEmpty {
-                        try? FileManager.default.removeItem(at: changed)
-                    } else {
-                        try? rest.joined(separator: "\n").write(to: changed, atomically: true, encoding: .utf8)
-                    }
-                } else if ok {
+                // `<n> ok <setting> now <value>`: simctl read the setting back, and it must be the one asked for.
+                let words = line.split(separator: " ").map(String.init)
+                let ok = words.count >= 5 && words[1] == "ok" && words[3] == "now" && words[4] == value
+                if words.count >= 2 && words[1] == "ok" && !ok { log("looks \(setting) \(value): simctl reads back another value") }
+                // Any change counts, even one simctl did not confirm: the next method puts dark and the default back.
+                if !(value == "dark" || value == Self.defaultContentSize) {
                     append("\(setting) \(value)", to: "looks-changed.txt")
                 }
                 return ok
@@ -149,12 +141,63 @@ extension Driver {
     /// The simulator's default text size (simctl's name for UIContentSizeCategoryLarge).
     static let defaultContentSize = "large"
 
-    /// Dark and the default text size again, when an earlier method left them changed (looks-changed.txt).
+    /// Dark and the default text size again, once any method asked for another look (looks-changed.txt, appended to
+    /// and never cleared): both are asked for every time, so a lost write cannot leave a later method in light mode.
     func restoreLooks() {
         let changed = out.appendingPathComponent("looks-changed.txt")
         guard let text = try? String(contentsOf: changed, encoding: .utf8), !text.isEmpty else { return }
-        log("restoring the looks an earlier method left: \(text.replacingOccurrences(of: "\n", with: "; "))")
-        if text.contains("appearance ") { looks("appearance", "dark") }
-        if text.contains("content_size ") { looks("content_size", Self.defaultContentSize) }
+        log("putting dark and the default text size back (asked for before: \(text.replacingOccurrences(of: "\n", with: "; ")))")
+        if !looks("appearance", "dark") { log("looks: dark not confirmed") }
+        if !looks("content_size", Self.defaultContentSize) { log("looks: the default text size not confirmed") }
+    }
+}
+
+/// XCUITest's element description, one element per line: `<indent>Button, 0x.., {{x, y}, {w, h}}, identifier: 'id',
+/// label: 'text', value: v, Disabled`. The indent gives the nesting, so each element gets the nearest `protly-`
+/// identifier on itself or above it.
+enum KeyTreeText {
+    private static let line = try! NSRegularExpression(
+        pattern: #"^( *)(?:\u2192)?([A-Za-z]+)(?: \([^)]*\))?, 0x[0-9a-fA-F]+, \{\{(-?[0-9.]+), (-?[0-9.]+)\}, \{([0-9.]+), ([0-9.]+)\}\}(.*)$"#)
+    /// What may follow a quoted value: the next attribute, a flag, or the end of the line.
+    private static let end = #"'(?=$|, (?:identifier|label|value|placeholderValue|title): |, (?:Disabled|Selected|Keyboard Focused|Focused)\b)"#
+
+    static func parse(_ text: String) -> [KeyElement] {
+        var out: [KeyElement] = []
+        var stack: [(indent: Int, part: String?)] = []
+        for raw in text.components(separatedBy: "\n") {
+            let ns = raw as NSString
+            guard let m = line.firstMatch(in: raw, range: NSRange(location: 0, length: ns.length)) else { continue }
+            func group(_ i: Int) -> String { ns.substring(with: m.range(at: i)) }
+            let indent = group(1).count
+            let rest = group(7)
+            while let last = stack.last, last.indent >= indent { stack.removeLast() }
+            let identifier = quoted("identifier", in: rest) ?? ""
+            let part = identifier.hasPrefix("protly-") ? identifier : stack.last?.part
+            stack.append((indent, part))
+            let type: XCUIElement.ElementType
+            switch group(2) {
+            case "Button": type = .button
+            case "StaticText": type = .staticText
+            case "Image": type = .image
+            case "Window": type = .window
+            case "Application": type = .application
+            default: type = .other
+            }
+            guard type != .window && type != .application,
+                  let x = Double(group(3)), let y = Double(group(4)), let w = Double(group(5)), let h = Double(group(6))
+            else { continue }
+            out.append(KeyElement(type: type, label: quoted("label", in: rest) ?? "",
+                                  frame: CGRect(x: x, y: y, width: w, height: h),
+                                  enabled: !rest.contains(", Disabled"), part: part))
+        }
+        return out
+    }
+
+    /// The value of `name: '...'` in the rest of a line; a value may hold quotes and commas.
+    static func quoted(_ name: String, in rest: String) -> String? {
+        guard let start = rest.range(of: ", \(name): '") else { return nil }
+        let tail = String(rest[start.upperBound...])
+        guard let close = tail.range(of: end, options: .regularExpression) else { return nil }
+        return String(tail[..<close.lowerBound])
     }
 }

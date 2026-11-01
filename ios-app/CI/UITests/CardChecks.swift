@@ -40,7 +40,8 @@ extension PhoneRun {
         if notReady(ids) || !accessReady(ids) { return }
         defer { d.restoreLooks() }
         for look in Self.looks {
-            if look != "dark" && !d.looks("appearance", look) {
+            // Dark is asked for too: a look that did not take must not pass as the other one (checks.py also measures it).
+            if !d.looks("appearance", look) {
                 for id in ids where id.hasSuffix("-\(look)") { write(id, "FAIL", "unreadable: appearance \(look) not set") }
                 continue
             }
@@ -117,6 +118,18 @@ extension PhoneRun {
         }
     }
 
+    /// The look asked for, and a sliver of the keyboard's background left of the bar (inside the side inset, where
+    /// neither the strip nor the card draws), so checks.py can confirm the look on c-<id>.png.
+    private func noteLook(_ item: Item, _ look: String, _ row1: CGFloat) {
+        let left = d.slotRect(.left, row1: row1)
+        item.note("look=\(look) side=\(rectText(CGRect(x: 0.5, y: left.minY + 6, width: 2.5, height: left.height - 12)))")
+    }
+
+    /// The card or strip closed and the keyboard is still up (a tap that dismissed the keyboard closes nothing).
+    private func closed(_ gone: (view: CallView?, screen: XCUIScreenshot, met: Bool)) -> Int {
+        gone.met && d.rowOne() != nil ? 1 : 0
+    }
+
     private func noteStrip(_ item: Item, _ v: CallView) {
         let cancel = v.button("Cancel", in: v.strip)
         item.note("strip=\(q(v.stripText)) cancel=\(cancel?.size ?? "none") card=\(v.card.count)")
@@ -133,15 +146,16 @@ extension PhoneRun {
     private func cardOK(_ look: String) {
         let wait = Item("card-wait-\(look)"), mid = Item("card-mid-\(look)"), done = Item("card-done-\(look)")
         d.clearField()
-        guard startStub("ok", wait) != nil else {
+        guard let row1 = startStub("ok", wait) else {
             finish(wait)
             for it in [mid, done] { it.markUnreadable("the call did not start (card-wait-\(look))"); finish(it) }
             return
         }
-        // The stub waits 2.8 s before its first words.
+        // The stub's first words come about 4.4 s after the tap (a thinking block, then the opening quote).
         d.pause(0.8)
         let w = poll(1.5) { !$0.strip.isEmpty }
         if let v = w.view { noteStrip(wait, v) } else { wait.markUnreadable("tree=unreadable") }
+        for it in [wait, mid, done] { noteLook(it, look, row1) }
         wait.markPending()
         finish(wait, screen: w.screen)
 
@@ -157,7 +171,7 @@ extension PhoneRun {
         mid.markPending()
         finish(mid, screen: m.screen)
 
-        let f = poll(12) { $0.button("Replace", in: $0.card) != nil && $0.strip.isEmpty }
+        let f = poll(12) { $0.finished("Replace") }
         guard let v = f.view, f.met else {
             done.markUnreadable("no finished card in 12 s: \(f.view.map { q($0.buttons($0.card)) } ?? "tree unreadable")")
             finish(done, screen: f.screen)
@@ -183,7 +197,7 @@ extension PhoneRun {
                 d.pause(1)
             }
             let gone = poll(2) { $0.card.isEmpty }
-            done.note("closed=\(gone.met ? 1 : 0) after=\(q(field())) want-after=\(q(Stub.draft("ok")))")
+            done.note("closed=\(closed(gone)) after=\(q(field())) want-after=\(q(Stub.draft("ok")))")
         }
         finish(done, screen: f.screen)
         d.clearField()
@@ -194,7 +208,8 @@ extension PhoneRun {
         let it = Item("card-err0-\(look)")
         let message = ActionError(.overloaded).message
         d.clearField()
-        guard startStub("error", it) != nil else { return finish(it) }
+        guard let row1 = startStub("error", it) else { return finish(it) }
+        noteLook(it, look, row1)
         let e = poll(8) { $0.stripText.contains(message) }
         if let v = e.view, e.met {
             noteStrip(it, v)
@@ -202,7 +217,7 @@ extension PhoneRun {
             if let cancel = v.button("Cancel", in: v.strip) {
                 d.point(cancel.frame.midX, cancel.frame.midY).tap()
                 let gone = poll(2) { $0.strip.isEmpty }
-                it.note("closed=\(gone.met ? 1 : 0)")
+                it.note("closed=\(closed(gone))")
             }
         } else {
             it.markUnreadable("no error on the strip in 8 s: strip=\(q(e.view?.stripText))")
@@ -218,7 +233,8 @@ extension PhoneRun {
         let it = Item("card-err1-\(look)")
         let message = ActionError(.overloaded).message
         d.clearField()
-        guard startStub("cut", it) != nil else { return finish(it) }
+        guard let row1 = startStub("cut", it) else { return finish(it) }
+        noteLook(it, look, row1)
         let e = poll(10) { $0.cardRows.body.contains(message) }
         if let v = e.view, e.met {
             let body = v.cardRows.body
@@ -228,7 +244,7 @@ extension PhoneRun {
             if let cancel = v.button("Cancel", in: v.card) {
                 d.point(cancel.frame.midX, cancel.frame.midY).tap()
                 let gone = poll(2) { $0.card.isEmpty }
-                it.note("closed=\(gone.met ? 1 : 0)")
+                it.note("closed=\(closed(gone))")
             }
         } else {
             it.markUnreadable("no error under kept text in 10 s: \(q(e.view?.cardRows.body.joined(separator: " | ")))")
@@ -251,11 +267,12 @@ extension PhoneRun {
         }
         d.pause(4)  // two samples with the keyboard idle
         d.mark("mem-stream-before")
-        guard tapCenter(want: "English", it) != nil else {
+        guard let row1 = tapCenter(want: "English", it) else {
             finish(it)
             mem.markUnreadable("the call did not start")
             return finish(mem)
         }
+        noteLook(it, "dark", row1)
         let t0 = Date()
         d.pause(8.5)
         let s = poll(2) { $0.stripText.contains("Still translating") }
@@ -265,7 +282,7 @@ extension PhoneRun {
         finish(it, screen: s.screen)
         let first = poll(10, every: 0.5) { !$0.cardRows.body.isEmpty }
         d.mark("mem-stream-start")
-        let done = poll(25, every: 1) { $0.button("Replace", in: $0.card) != nil && $0.strip.isEmpty }
+        let done = poll(25, every: 1) { $0.finished("Replace") }
         d.mark("mem-stream-end")
         mem.note("first=\(first.met ? "seen" : "none") done=\(done.met ? "seen" : "none")")
         if !first.met || !done.met { mem.markUnreadable("the slow stream did not run to its end") }
@@ -284,7 +301,8 @@ extension PhoneRun {
     private func cardCancel() {
         let it = Item("card-cancel")
         d.clearField()
-        guard startStub("ok", it) != nil else { return finish(it) }
+        guard let row1 = startStub("ok", it) else { return finish(it) }
+        noteLook(it, "dark", row1)
         let m = poll(9) { !$0.cardRows.body.isEmpty }
         guard let v = m.view, m.met, let xmark = v.button("Cancel", in: v.strip) else {
             it.markUnreadable("no streaming card with the strip's xmark: \(q(m.view?.stripText))")
@@ -293,7 +311,9 @@ extension PhoneRun {
         it.note("card-before=\(v.card.isEmpty ? 0 : 1) xmark=\(xmark.size)")
         d.point(xmark.frame.midX, xmark.frame.midY).tap()
         let gone = poll(2) { $0.card.isEmpty && $0.strip.isEmpty }
-        it.note("card-after=\(gone.view?.card.isEmpty == false ? 1 : 0) strip-after=\(gone.view?.strip.isEmpty == false ? 1 : 0)")
+        // -1: the tree could not be read, which must not pass as "gone".
+        it.note("card-after=\(gone.view.map { $0.card.isEmpty ? 0 : 1 } ?? -1) "
+                + "strip-after=\(gone.view.map { $0.strip.isEmpty ? 0 : 1 } ?? -1) keys=\(d.rowOne() != nil ? 1 : 0)")
         d.pause(5)  // past the stub's last delta: nothing may bring the card back
         let late = d.callView()
         it.note("card-late=\(late.map { $0.card.isEmpty ? 0 : 1 } ?? -1)")

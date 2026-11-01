@@ -336,14 +336,17 @@ extension PhoneRun {
     }
 
     /// Polls the tree every 0.5 s, up to `timeout`, until the call ends: done (the card's `primary` button and no
-    /// strip), failed (Retry, an error line on the strip, or a card with neither the strip nor `primary`), or not
-    /// in time. `busy` is the strip's verb ("Translating"): a strip without it shows an error. The last screenshot is
+    /// strip), failed (Retry on the strip, the card or a panel, an error line on the strip, or a card with neither the
+    /// strip nor `primary`), or not in time. `busy` is the strip's verb ("Translating"): a strip without it shows an error. The last screenshot is
     /// saved as c-<id>-<n>-<name>.png.
     func waitCall(_ item: Item, primary: String, busy: String, timeout: TimeInterval = 30, name: String) -> CallWait {
         let end = Date().addingTimeInterval(timeout)
         var first: Date?
         var last: CallView?
         var result = CallWait(end: .timeout, text: "", failure: "", strip: "", at: Date())
+        // The card with `primary` and no strip in the previous snapshot too: the end even if the tree never reports the
+        // button enabled (a snapshot that misses the strip once is not the end).
+        var settled = false
         while true {
             let at = Date()
             let v = d.callView()
@@ -353,12 +356,26 @@ extension PhoneRun {
                 let body = v.cardRows.body
                 if first == nil && !body.isEmpty { first = at }
                 let retry = v.button("Retry", in: v.strip) ?? v.button("Retry", in: v.card)
-                let stripError = !v.strip.isEmpty && v.stripText.range(of: busy, options: .caseInsensitive) == nil
-                let done = v.button(primary, in: v.card) != nil && v.strip.isEmpty
+                // An empty strip text is the label not in the tree yet, not an error line.
+                let stripError = !v.strip.isEmpty && !v.stripText.isEmpty
+                    && v.stripText.range(of: busy, options: .caseInsensitive) == nil
+                let shown = v.button(primary, in: v.card) != nil && v.strip.isEmpty
+                let done = v.finished(primary) || (shown && settled)
+                settled = shown
                 let cardFailed = !v.card.isEmpty && v.strip.isEmpty && v.button(primary, in: v.card) == nil
-                if done || retry != nil || stripError || cardFailed {
+                // A failure before any call (a cut-short field read, nothing copied) is a panel with Retry.
+                let panelFailed = v.button("Retry", in: v.panel) != nil
+                if done || retry != nil || stripError || cardFailed || panelFailed {
                     result.end = done ? .done : .failed
-                    result.failure = done ? "" : ((stripError || (retry != nil && !v.strip.isEmpty)) ? v.stripText : body.last ?? "")
+                    if done {
+                        result.failure = ""
+                    } else if panelFailed {
+                        result.failure = v.texts(v.panel).map(\.label).joined(separator: " ")
+                    } else if stripError || (retry != nil && !v.strip.isEmpty) {
+                        result.failure = v.stripText
+                    } else {
+                        result.failure = body.last ?? ""
+                    }
                     result.primary = v.button(primary, in: v.card)?.frame
                     result.close = (v.button("Cancel", in: v.card) ?? v.button("Done", in: v.card))?.frame
                     result.at = at

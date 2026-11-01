@@ -697,6 +697,8 @@ def button_problems(buttons, want, absent=()):
             problems.append(f"no {label} button ({sorted(buttons) or 'none'})")
         elif buttons[label][1] < MIN_TAP:
             problems.append(f"{label} is {buttons[label][1]:.0f} pt tall, under {MIN_TAP}")
+        elif not buttons[label][2]:
+            problems.append(f"{label} is disabled")
     for label in absent:
         if label in buttons:
             problems.append(f"{label} offered")
@@ -839,8 +841,12 @@ def resolve_card_cancel(check, marks=None, samples=None, run_dir=None):
         return unreadable(check.id, f"no field/want-field in {ev[:200]!r}")
     problems = []
     for name, wanted, why in (("card-before", 1, "no card before the xmark"), ("card-after", 0, "the card stayed"),
-                              ("strip-after", 0, "the strip stayed"), ("card-late", 0, "the card came back")):
-        if int_field(ev, name) != wanted:
+                              ("strip-after", 0, "the strip stayed"), ("card-late", 0, "the card came back"),
+                              ("keys", 1, "the keyboard went away")):
+        value = int_field(ev, name)
+        if value == -1:
+            problems.append(f"{name}: the tree could not be read")
+        elif value != wanted:
             problems.append(why)
     if not same_text(field, want):
         problems.append(f"field {field!r}, want the draft {want!r}")
@@ -852,6 +858,9 @@ def resolve_card_cancel(check, marks=None, samples=None, run_dir=None):
 # share, notes "What the simulator cannot show"): the simulator judges what the stream adds, against the 10 MB
 # growth line of 6.8-10, and records the absolute numbers for the phone check.
 MEM_STREAM_MAX_GROWTH_MB = 10
+# The stream lasts about 13 s and memsample.py samples every 2 s: fewer samples, or none near the end, miss part of it.
+MEM_STREAM_MIN_SAMPLES = 3
+MEM_STREAM_END_GAP = 3.0
 
 
 def resolve_mem_stream(check, marks, samples, run_dir=None):
@@ -865,6 +874,9 @@ def resolve_mem_stream(check, marks, samples, run_dir=None):
     during = [s for s in samples if s.method == method and marks["mem-stream-start"] - 1 <= s.t <= marks["mem-stream-end"] + 1]
     if method is None or not before or not during:
         return unreadable(check.id, f"no keyboard memory sample before or during the stream ({method})")
+    if len(during) < MEM_STREAM_MIN_SAMPLES or max(s.t for s in during) < marks["mem-stream-end"] - MEM_STREAM_END_GAP:
+        return unreadable(check.id, f"{len(during)} samples during the stream, the last "
+                          f"{marks['mem-stream-end'] - max(s.t for s in during):.1f} s before its end: not the whole stream")
     if len(before) != 1 or len({s.pid for s in during}) != 1 or during[0].pid != before[0].pid:
         return Check(check.id, "RECORD", f"several keyboard processes: before pid {pids(before)}, during "
                      f"{','.join(sorted({str(s.pid) for s in during}))} ({method}), not comparable")
@@ -1011,6 +1023,8 @@ def resolve_bar_xxl(check, marks=None, samples=None, run_dir=None):
     problems, notes = [], []
     record = False
     base = float_field(ev, "base-h")
+    if base is None:
+        return unreadable(check.id, f"no base-h (the title's height at the default size) in {ev[:200]!r}")
     for tag in ("ms", "ar"):
         slot, want = rect_field(ev, f"{tag}-slot"), quoted_field(ev, f"{tag}-want")
         parts = _texts(quoted_field(ev, f"{tag}-texts"))
@@ -1028,13 +1042,13 @@ def resolve_bar_xxl(check, marks=None, samples=None, run_dir=None):
             problems.append(f"{tag}: no arrow in the pill")
         elif arrow[0] + arrow[2] > title[0] + 0.5:
             problems.append(f"{tag}: the arrow is not before {want!r} (bidi order)")
-        if title is not None and base is not None and title[3] <= base * 1.05:
+        if title is not None and title[3] <= base * 1.05:
             notes.append(f"{tag}: the name is {title[3]:.1f} pt tall, as at the default size ({base:.1f})")
             record = True
         ocr = quoted_field(ev, f"{tag}-ocr")
         notes.append(f"{tag} ocr {ocr!r}")
-        if tag == "ms" and ocr is not None and "Melayu" not in ocr:
-            notes.append(f"{tag}: the name is cut short on screen")
+        if tag == "ms" and (ocr is None or "Melayu" not in ocr):
+            notes.append(f"{tag}: the name is cut short on screen" if ocr is not None else f"{tag}: no OCR reading")
             record = True
     return verdict(check, problems, notes, record=record)
 
@@ -1070,14 +1084,50 @@ def resolve_app(check, marks=None, samples=None, run_dir=None):
     return verdict(check, problems, [f"background {bg}"])
 
 
+def look_problems(check, run_dir):
+    """The card lines' look (`look=`, `side={x,y,w,h}`): the keyboard's background beside the bar in c-<id>.png must
+    be light or dark as asked, so a look that did not take cannot pass as the other one. Without a run folder (unit
+    tests of the text rules) nothing is measured; main() always passes one."""
+    ev = check.evidence
+    look, side = plain_field(ev, "look"), rect_field(ev, "side")
+    if run_dir is None:
+        return []
+    if look not in CARD_LOOKS or side is None:
+        return [f"no look/side to confirm the look ({ev[:120]!r})"]
+    try:
+        from PIL import Image  # noqa: F401
+        img = _open_image(run_dir, f"c-{check.id}.png")
+    except ImportError:
+        return ["Pillow is not installed"]
+    except OSError as e:
+        return [f"c-{check.id}.png: {e}"]
+    luma = _luma(_median(_crop(img, side, int_field(ev, "points") or 390)))
+    if look == "light" and luma < LIGHT_MIN_LUMA:
+        return [f"the keyboard is not light (luma {luma:.0f})"]
+    if look == "dark" and luma > DARK_MAX_LUMA:
+        return [f"the keyboard is not dark (luma {luma:.0f})"]
+    return []
+
+
+def with_look(resolver):
+    """A card rule plus the look check: a PASS or RECORD becomes FAIL when the shot has the other look."""
+    def resolve(check, marks=None, samples=None, run_dir=None):
+        c = resolver(check, marks, samples, run_dir)
+        if c.status == "FAIL":
+            return c
+        problems = look_problems(check, run_dir)
+        return Check(c.id, "FAIL", f"{c.evidence}; {'; '.join(problems)}") if problems else c
+    return resolve
+
+
 CARD_RESOLVERS = {
-    **{f"card-wait-{look}": resolve_card_wait for look in CARD_LOOKS},
-    **{f"card-mid-{look}": resolve_card_mid for look in CARD_LOOKS},
-    **{f"card-done-{look}": resolve_card_done for look in CARD_LOOKS},
-    **{f"card-err0-{look}": resolve_card_err0 for look in CARD_LOOKS},
-    **{f"card-err1-{look}": resolve_card_err1 for look in CARD_LOOKS},
-    "card-slow": resolve_card_slow,
-    "card-cancel": resolve_card_cancel,
+    **{f"card-wait-{look}": with_look(resolve_card_wait) for look in CARD_LOOKS},
+    **{f"card-mid-{look}": with_look(resolve_card_mid) for look in CARD_LOOKS},
+    **{f"card-done-{look}": with_look(resolve_card_done) for look in CARD_LOOKS},
+    **{f"card-err0-{look}": with_look(resolve_card_err0) for look in CARD_LOOKS},
+    **{f"card-err1-{look}": with_look(resolve_card_err1) for look in CARD_LOOKS},
+    "card-slow": with_look(resolve_card_slow),
+    "card-cancel": with_look(resolve_card_cancel),
     "mem-stream": resolve_mem_stream,
     "hit-1": resolve_hit,
     "bar-dark": resolve_bar_look,
