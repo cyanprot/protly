@@ -166,13 +166,15 @@ extension PhoneRun {
         d.clearField()
     }
 
-    /// Apple's keyboard: its keys are in the accessibility tree, so they are tapped by label.
+    /// Apple's keyboard: its keys are in the accessibility tree, so they are tapped by label (a letter, either case)
+    /// or, for space, by identifier (its label is " ", run 8632699-72's tree-english.txt).
     private func typeOnApple(_ text: String) -> Bool {
         for ch in text {
-            let label = ch == " " ? "space" : String(ch)
-            let key = d.app.keyboards.keys.matching(NSPredicate(format: "label ==[c] %@", label)).firstMatch
+            let predicate = ch == " " ? NSPredicate(format: "identifier == 'space' OR label == ' '")
+                : NSPredicate(format: "label ==[c] %@", String(ch))
+            let key = d.app.keyboards.keys.matching(predicate).firstMatch
             guard key.waitForExistence(timeout: 2) else {
-                d.fail("Apple's keyboard has no \(label) key")
+                d.fail("Apple's keyboard has no \(String(reflecting: ch)) key")
                 return false
             }
             key.tap()
@@ -218,18 +220,27 @@ extension PhoneRun {
         d.clearField()
     }
 
-    /// Types `text`, reads the caret, holds and drags on space, writes the PENDING line. The caret's move left.
+    /// Types `text` (once more if a tap was lost: run 8632699-72 typed `wrld` once), reads the field and the caret,
+    /// holds and drags on space, writes the PENDING line: the drag must leave the field as it was before it. Returns
+    /// the caret's move left.
     private func padDrag(_ id: String, text: String, dx: CGFloat, dy: CGFloat, speed: CGFloat,
                          extra: String = "") -> Int? {
-        d.clearField()
-        d.type(text)
-        d.pause(0.5)
+        var typed: String?
+        var tries = 0
+        repeat {
+            tries += 1
+            d.clearField()
+            d.type(text)
+            d.pause(0.5)
+            typed = field()
+        } while typed != text && tries < 2
         let sel0 = Self.selection(d.probeValue("sel"))
         d.dragSpace(hold: 1.0, dx: dx, dy: dy, speed: speed)
         d.pause(0.6)
         let sel1 = d.probeValue("sel")
-        var ev = "want=\(q(text)) field=\(q(field())) sel0=\(sel0.map { String($0.location) } ?? "unreadable") "
+        var ev = "want=\(q(typed)) field=\(q(field())) sel0=\(sel0.map { String($0.location) } ?? "unreadable") "
         ev += "sel1=\(q(sel1)) marked=\(q(d.probeValue("marked")))"
+        if tries > 1 || typed != text { ev += " asked=\(q(text)) typing-tries=\(tries)" }
         ev += String(format: " drag=%.0f,%.0f speed=%.0f", dx, dy, speed) + extra
         pending(id, ev)
         guard let s0 = sel0, let s1 = Self.selection(sel1) else { return nil }

@@ -65,7 +65,8 @@ script takes the newest iOS 26 runtime and an iPhone 13 Pro (else the first 390 
 `docs/plans/2026-10-30-sim-phone-checks.md` (results: `docs/ios-keyboard-notes.md`, "Simulator phone checks").
 After the layout scenarios, `UITests/PhoneChecksUITests.swift` runs the phone checklists in the order
 `test0_access`, `test0_probe` (only with `[probe]` in the commit message; Sprint 002's probe since then), `test1_68`,
-`test2_ws`, `test3_85offline`, `test4_memory`, `test5_icon`, then the network groups `test6_85net` and `test7_77`
+`test2_ws`, `test3_85offline`, `test4_memory`, `test5_icon`, the typing-fixes methods `test5a_web`, `test5b_menu` and
+`test5c_pad` (below), then the network groups `test6_85net` and `test7_77`
 (below); learned words carry over between them.
 
 - `UITests/Driver.swift`: the shared helpers. Text is typed by coordinate: Hangul as its Dubeolsik keys
@@ -144,6 +145,37 @@ and the container app's about-me note: 6.8-11 (its Translate part runs inside `t
   the center's label, `Translating` at once, Undo, the confirm panel's count) make the line FAIL directly.
 - **Request cap**: at most 60 requests per run (`requests:` in `network.txt`); above it items are `SKIP request cap`.
 - The fictional test note: `I run Moonbeam Kiln (문빔 킬른), a pottery studio in Victoria.`
+
+## Typing-fixes checks (typing-fixes 004)
+
+Plan section "Sprint 004" of `docs/plans/2026-10-30-typing-fixes.md`; results in `docs/ios-keyboard-notes.md`,
+"Simulator proof (typing-fixes 004)". Code: `UITests/TypingChecks.swift`. Three offline methods run after
+`test5_icon` and before the network groups. Every line is `PENDING` with its readings and `checks.py` decides
+(`resolve_dark`, `resolve_ret`, `resolve_menu`, `resolve_menu4`, `resolve_pad`, unit-tested in
+`test_typing_checks.py`).
+
+- **Host screens.** `-screen <name>` on the host's command line (`PhoneRun(..., arguments:)`) picks a screen; none is
+  the solid field above. Each keeps its content above 30% of the height (measure.py's background sample), with
+  `Clear` and `Dismiss` top right, and publishes its readings as the accessibility values of small `Probe` captions
+  (exact, unlike OCR). `-screen uikit`: a `UITextView` with `sel` (`location,length`), `marked`, `first-word` and
+  `last-word` (frames in screen points). `-screen web`: a `WKWebView` with the bundled `Host/web-composer.html` (black,
+  `color-scheme: dark`): a `<textarea>`, an `<input>` in a `<form>` whose submit is logged and prevented, and a
+  `contenteditable` Enter-to-send composer with the `isComposing || keyCode === 229` guard and `caret-color:
+  transparent`. `web-state` holds the fields' text, the sent and submitted lists, each field's text when the page
+  saw Return, and a trace of the step's events; `web-rects` the fields' frames. Every DOM event is a line in the
+  host's `Documents/web-events.txt` (`t=` epoch ms; the test's `MARK ret-<step>-<field>` lines in `ui-log.txt` use
+  the same clock), which `run-shots.sh` copies into the run folder.
+- **test5a_web**: row 1 is measured on the solid host first (on the web screen the form accessory bar sits above
+  the keyboard), then the web screen. `dark-1`: `dkssud` (안녕) in the composer, a screenshot, a space, a screenshot;
+  checks.py compares the ink inside the composer (count and tone) and looks for an underline row.
+  `ret-<step>-<field>`: steps 1 to 5 of `enter-clears-web.md` in each field; the last tap (Return) follows after
+  `gap` (0.05 s, or 0.3 s in step 4; XCUITest's own time to tap comes on top, the line says what it was).
+- **test5b_menu** (`-screen uikit`): `menu-0` on Apple's keyboard (the control: keys tapped by label, then a
+  double-tap on `hello`), `menu-1` on Protly (`안녕 오늘` with no space, a double-tap on `오늘`), `menu-4` (then `ㅎ`).
+  The menu's items are found by label; the tree is `tree-edit-menu.txt`.
+- **test5c_pad** (`-screen uikit`): `Driver.dragSpace` holds space 1 s, then drags in a straight line
+  (`press(forDuration:thenDragTo:withVelocity:thenHoldForDuration:)`). `pad-1` 90 pt left, `pad-2` 90 pt left while
+  rising 80 pt (must move at least 75% of pad-1), `pad-3` `안녕` and 20 pt left (one syllable: `1,0`).
 
 ## Reading a run without GitHub access
 

@@ -430,7 +430,8 @@ PAD_RISING_SHARE = 0.75
 def resolve_pad(check, marks=None, samples=None, run_dir=None):
     """pad-1: a 1 s press on space, then a drag left moves the caret left. pad-2: the same drag with the finger rising
     80 pt keeps moving (at least PAD_RISING_SHARE of pad-1's move, `ref`). pad-3: `안녕`, one step left lands at
-    `want-sel` (안|녕). In every one the text is unchanged and nothing is selected."""
+    `want-sel` (안|녕). In every one the drag leaves the text as it was (`want`: the field before the drag) and
+    selects nothing."""
     ev = check.evidence
     want, field = quoted_field(ev, "want"), quoted_field(ev, "field")
     sel0, sel1 = int_field(ev, "sel0"), quoted_field(ev, "sel1")
