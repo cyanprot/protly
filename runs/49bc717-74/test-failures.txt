@@ -1,0 +1,3 @@
+2026-11-01 08:55:12.387086+0000 ProtlyCIUITests-Runner[8641:34822] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+2026-11-01 08:55:12.425243+0000 ProtlyCIUITests-Runner[8641:34824] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics
+/Users/runner/work/protly/protly/ios-app/CI/UITests/Driver.swift:155: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : failed - 01-apple: expected english, found none
