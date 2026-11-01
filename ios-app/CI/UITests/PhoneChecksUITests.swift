@@ -17,7 +17,8 @@ final class PhoneChecksUITests: XCTestCase {
     /// network groups stop starting items 2 minutes before theirs (PhoneRun.startGroup).
     static let allowance: [String: TimeInterval] = [
         "test0_access": 300, "test0_probe": 480, "test1_68": 900, "test2_ws": 300, "test3_85offline": 900,
-        "test4_memory": 600, "test5_icon": 300, "test6_85net": 1080, "test7_77": 1080,
+        "test4_memory": 600, "test5_icon": 300, "test5a_web": 900, "test5b_menu": 420, "test5c_pad": 420,
+        "test6_85net": 1080, "test7_77": 1080,
     ]
 
     override func setUpWithError() throws {
@@ -67,6 +68,23 @@ final class PhoneChecksUITests: XCTestCase {
     @MainActor
     func test5_icon() throws {
         try PhoneRun(test: self, name: "test5_icon", launch: false).icon()
+    }
+
+    /// typing-fixes 004 (TypingChecks.swift): the dark web composer (dark-1, ret-*), the edit menu (menu-*) and the
+    /// space trackpad (pad-*), on the host's extra screens. Offline, so before the network groups.
+    @MainActor
+    func test5a_web() throws {
+        try PhoneRun(test: self, name: "test5a_web").checksWeb()
+    }
+
+    @MainActor
+    func test5b_menu() throws {
+        try PhoneRun(test: self, name: "test5b_menu", arguments: ["-screen", "uikit"]).checksMenu()
+    }
+
+    @MainActor
+    func test5c_pad() throws {
+        try PhoneRun(test: self, name: "test5c_pad", arguments: ["-screen", "uikit"]).checksPad()
     }
 
     /// After every offline group, so the requests and the about-me note change nothing they check.
@@ -214,7 +232,8 @@ final class PhoneRun {
     /// Fewer ink pixels than this in a slot = nothing drawn there. A word is thousands at 3x.
     static let inkEmpty = 40
 
-    init(test: XCTestCase, name: String, launch: Bool = true) throws {
+    /// `arguments`: the host's launch arguments (`-screen uikit`, HostApp.swift).
+    init(test: XCTestCase, name: String, launch: Bool = true, arguments: [String] = []) throws {
         let driver = try Driver(test: test)
         driver.strict = false
         driver.keyPause = 0.35
@@ -223,7 +242,7 @@ final class PhoneRun {
         reader.selfTest()
         var ok = false
         if launch {
-            driver.launch()
+            driver.launch(arguments: arguments)
             ok = driver.ensureProtly()
         }
         d = driver

@@ -420,10 +420,15 @@ final class Driver {
         return row1
     }
 
+    /// Seconds between the end of the next-to-last tap and the end of the last one in the last `type(_:lastGap:)`
+    /// call (the gap asked for plus XCUITest's own time to make the last tap).
+    private(set) var lastGap: TimeInterval = 0
+
     /// Types `text` on Protly. Hangul goes in as its Dubeolsik keys (ProtlyCore KeyEncoder), capitals and the
-    /// shifted jamo with a shift tap, symbols on the 123 layer, "\n" with return.
+    /// shifted jamo with a shift tap, symbols on the 123 layer, "\n" with return. `lastGap`: the pause before the
+    /// last tap instead of `keyPause` (typing-fixes 004: Return right after a word, or 300 ms later).
     @discardableResult
-    func type(_ text: String) -> Bool {
+    func type(_ text: String, lastGap gap: TimeInterval? = nil) -> Bool {
         guard let taps = Typing.taps(for: text) else {
             fail("no keys for \(String(reflecting: text))")
             return false
@@ -433,13 +438,46 @@ final class Driver {
             return false
         }
         log(String(format: "typing: keyboard top %.2f, row 1 %.2f", CGFloat(top) / shot.scale, row1))
-        for t in taps {
+        var before = Date()
+        for (i, t) in taps.enumerated() {
             let (x, y) = position(of: t, row1: row1)
             point(x, y).tap()
-            pause(keyPause)
+            if i == taps.count - 1 { lastGap = Date().timeIntervalSince(before) }
+            if i == taps.count - 2, let gap {
+                before = Date()
+                pause(gap)
+            } else {
+                pause(keyPause)
+            }
         }
-        log("typed \(String(reflecting: text))")
+        log("typed \(String(reflecting: text))" + (gap == nil ? "" : String(format: ", last gap %.2f s", lastGap)))
         return true
+    }
+
+    /// Holds space for `hold` seconds, drags by (dx, dy) points in a straight line at `speed` (XCUIGestureVelocity),
+    /// then rests `rest` seconds before lifting (typing-fixes 004, the space trackpad). false without a keyboard.
+    @discardableResult
+    func dragSpace(hold: TimeInterval, dx: CGFloat, dy: CGFloat, speed: CGFloat, rest: TimeInterval = 0.3) -> Bool {
+        guard let row1 = rowOne() else {
+            fail("no keyboard for a space drag")
+            return false
+        }
+        let (x, y) = position(of: .space, row1: row1)
+        point(x, y).press(forDuration: hold, thenDragTo: point(x + dx, y + dy),
+                          withVelocity: XCUIGestureVelocity(rawValue: speed), thenHoldForDuration: rest)
+        pause(keyPause)
+        log(String(format: "space: held %.1f s at (%.1f, %.1f), dragged by (%.0f, %.0f) at %.0f", hold, x, y, dx, dy, speed))
+        return true
+    }
+
+    /// The accessibility value of a host element (the `Probe` captions in HostApp.swift); nil when there is none.
+    func probeValue(_ id: String, timeout: TimeInterval = 2) -> String? {
+        let e = app.descendants(matching: .any).matching(identifier: id).firstMatch
+        guard e.waitForExistence(timeout: timeout) else {
+            log("probe \(id) not found")
+            return nil
+        }
+        return e.value as? String
     }
 
     /// Where a tap lands, in points. Bottom-row widths are KeyboardKit's iPhone portrait percentages of the width
