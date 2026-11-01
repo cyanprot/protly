@@ -120,8 +120,11 @@ and the container app's about-me note: 6.8-11 (its Translate part runs inside `t
   Protly or Full Access, and run 40 read TCC.db without its `-wal` file (copied since), so nothing is written
   before boot.
 - **The strip, the card and the panels** (keyboard-ui 003) are read from the host's accessibility tree, where the
-  keyboard's SwiftUI views appear with their labels and frames (`UITests/KeyboardTree.swift`; the views carry the
-  identifiers `protly-strip`, `protly-card` and `protly-panel`, which nothing speaks). A call: the strip's verb
+  keyboard's SwiftUI views appear with their labels, frames and `Disabled` flag. `UITests/KeyboardTree.swift` parses
+  `app.debugDescription` (the text of the `tree-*.txt` files): `app.snapshot()` held none of the keyboard's remote
+  views in run `d103b93-77`. Only static texts count as text (the card's ScrollView adds a "Vertical scroll bar"
+  element). The views carry the identifiers `protly-strip`, `protly-card` and `protly-panel`, which nothing speaks.
+  A call: the strip's verb
   (`Translating`) right after the tap, then the tree every 0.5 s (up to 30 s) until the card's `Replace` (Read: `Insert`)
   is there and the strip is gone, since the card streams in and its buttons are there, inert, from the first words;
   Retry, an error line on the strip or a card without the strip and without `Replace` ends it as failed. The poll
