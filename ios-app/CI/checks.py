@@ -740,9 +740,8 @@ def resolve_card_mid(check, marks=None, samples=None, run_dir=None):
     streaming = int_field(ev, "strip") == 1
     if not streaming:
         notes.append("the call had already ended: not caught mid-stream")
-    copy = plain_field(ev, "copy")
-    if copy == "enabled":
-        notes.append("Copy reads enabled while the text streams")
+    if plain_field(ev, "copy") == "enabled":
+        problems.append("Copy is enabled while the text streams")
     return verdict(check, problems, notes, record=not problems and not streaming)
 
 
@@ -1024,7 +1023,7 @@ def resolve_bar_xxl(check, marks=None, samples=None, run_dir=None):
     record = False
     base = float_field(ev, "base-h")
     if base is None:
-        return unreadable(check.id, f"no base-h (the title's height at the default size) in {ev[:200]!r}")
+        return unreadable(check.id, f"no base-h (the arrow's height at the default size) in {ev[:200]!r}")
     for tag in ("ms", "ar"):
         slot, want = rect_field(ev, f"{tag}-slot"), quoted_field(ev, f"{tag}-want")
         parts = _texts(quoted_field(ev, f"{tag}-texts"))
@@ -1042,8 +1041,8 @@ def resolve_bar_xxl(check, marks=None, samples=None, run_dir=None):
             problems.append(f"{tag}: no arrow in the pill")
         elif arrow[0] + arrow[2] > title[0] + 0.5:
             problems.append(f"{tag}: the arrow is not before {want!r} (bidi order)")
-        if title is not None and title[3] <= base * 1.05:
-            notes.append(f"{tag}: the name is {title[3]:.1f} pt tall, as at the default size ({base:.1f})")
+        if arrow is not None and arrow[3] <= base * 1.05:
+            notes.append(f"{tag}: the arrow is {arrow[3]:.1f} pt tall, as at the default size ({base:.1f})")
             record = True
         ocr = quoted_field(ev, f"{tag}-ocr")
         notes.append(f"{tag} ocr {ocr!r}")

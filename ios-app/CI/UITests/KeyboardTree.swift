@@ -32,11 +32,12 @@ struct CallView {
         elements.first { $0.type == .button && $0.label == label }
     }
 
-    /// Texts that are not a button or inside one (a button's title is a static text child of it), top to bottom.
+    /// Static texts that are not inside a button (a button's title is a static text child of it), top to bottom.
+    /// Only static texts: the card's ScrollView adds an element labeled "Vertical scroll bar, 1 page" (run 67eb25c-78).
     func texts(_ elements: [KeyElement]) -> [KeyElement] {
         let buttons = elements.filter { $0.type == .button }.map(\.frame)
         return elements
-            .filter { $0.type != .button && !$0.label.isEmpty }
+            .filter { $0.type == .staticText && !$0.label.isEmpty }
             .filter { e in !buttons.contains { $0.insetBy(dx: -0.5, dy: -0.5).contains(e.frame) } }
             .sorted { ($0.frame.minY, $0.frame.minX) < ($1.frame.minY, $1.frame.minX) }
     }

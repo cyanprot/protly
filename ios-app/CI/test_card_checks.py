@@ -108,6 +108,12 @@ class CardTests(unittest.TestCase):
         c = resolve(f'CHECK card-mid-dark PENDING text="Something else" final="{OK}" header="→ English" strip=1')
         self.assertEqual(c.status, "FAIL")
 
+    def test_mid_stream_copy_must_be_disabled(self):
+        c = resolve(f'CHECK card-mid-dark PENDING text="Thanks so much " final="{OK}" copy=enabled '
+                    f'header="→ English" strip=1')
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("Copy is enabled", c.evidence)
+
     def test_mid_read_after_the_end_is_record(self):
         c = resolve(f'CHECK card-mid-light PENDING text="{OK}" final="{OK}" header="→ English" strip=0')
         self.assertEqual(c.status, "RECORD", c.evidence)

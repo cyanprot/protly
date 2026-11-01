@@ -91,7 +91,10 @@ extension PhoneRun {
             d.log("\(item.id): center \(q(center?.label)) before \(want): bringing the keyboard back")
             d.dismissKeyboard()
             d.pause(1)
-            d.focusField()
+            // Not focusField: a tap on the text selects a misspelled word (`protly`, run 67eb25c-78) and the call then
+            // polishes the selection. The field's empty bottom-right corner only places the cursor.
+            d.field.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.9)).tap()
+            _ = d.waitForKeyboard()
             d.waitOutStandIn()
             d.pause(0.8)
             center = d.barButtons(row1: row1)?[.center]
@@ -188,6 +191,8 @@ extension PhoneRun {
             d.point(replace.frame.midX, replace.frame.midY).tap()
             d.pause(1.2)
             done.note("after=\(q(field())) want-after=\(q(Stub.okTranslation))")
+            // The bar now offers Undo, and keeps offering it after the host empties the field; a key ends it.
+            d.type("a")
         } else if let copy = v.button("Copy", in: v.card) {
             d.point(copy.frame.midX, copy.frame.midY).tap()
             let c = poll(3) { $0.button("Copied", in: $0.card) != nil }
@@ -383,7 +388,7 @@ extension PhoneRun {
         d.clearField()
     }
 
-    /// The height of the target's title in the center pill (`→ English`, `→ Bahasa Melayu`), nil when not found.
+    /// The height of one part of the center pill (`→`, `English`), nil when not found.
     private func titleHeight(_ title: String) -> CGFloat? {
         guard let row1 = d.rowOne(), let center = d.barButtons(row1: row1)?[.center], let tree = d.keyboardTree() else {
             return nil
@@ -399,7 +404,8 @@ extension PhoneRun {
         d.clearField()
         if fill(1, Self.barFills[0], it) {
             d.pause(0.6)
-            it.note("base-h=\(titleHeight("English").map { String(format: "%.1f", $0) } ?? "none")")
+            // The arrow, not the name: the name may shrink to fit (minimumScaleFactor), the arrow keeps the text size.
+            it.note("base-h=\(titleHeight("→").map { String(format: "%.1f", $0) } ?? "none")")
         }
         guard d.looks("content_size", "extra-extra-large") else {
             it.markUnreadable("content_size extra-extra-large not set")
