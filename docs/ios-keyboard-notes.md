@@ -746,6 +746,8 @@ Campaign 2026-10-30-keyboard-ui, sprint 001 (`docs/plans/2026-10-30-keyboard-ui.
   exactly. Without its quotes Vision reads the jamo-only flip `ㅗ디ㅣㅐ` as `-]T`, also from contrast-stretched
   crops (`runs/394cf1a-66`), so ws-1 falls back to the left slot button's accessibility label when OCR finds no
   Hangul, only if the slot has ink, and notes both readings.
+- **Known limit.** With a selection, the label comes from the text around the cursor while the action sends the
+  selection (the old `draftMode` did the same).
 
 Phone checks the tower still owes: the feel of the bar and the pill in dark and light apps; a flip of a real word
 against a dimmed one; the protly key's symbol after a Replace (`arrow.uturn.backward`) and on an empty field
