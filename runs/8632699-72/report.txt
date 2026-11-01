@@ -1,0 +1,77 @@
+STATUS measured
+source 863269984d023a11bd12d51332fe541b2b634477
+xcode Xcode 26.6 Build version 17F113 
+network key: present (CI key); DerivedData cache: restore only, not saved in this run
+FILTER PhoneChecksUITests/test0_access PhoneChecksUITests/test5a_web PhoneChecksUITests/test5b_menu PhoneChecksUITests/test5c_pad (a debug run, outside the run budget; other IDs are NOT-RUN)
+runtime iOS 26.5 (com.apple.CoreSimulator.SimRuntime.iOS-26-5)
+device iPhone-13-Pro (FC7A514B-153E-45A5-A59C-721F5E7D81D7), 390 pt wide
+build ok
+AppleKeyboards ("com.northprot.protly.cihost.keyboard","emoji@sw=Emoji","en_US@sw=QWERTY;hw=Automatic")
+appearance dark
+memory sampler pid 14439, probe 0, network 1
+test failures (2 lines, test-failures.txt):
+  2026-11-01 07:35:40.513575+0000 ProtlyCIUITests-Runner[17404:58094] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+  2026-11-01 07:35:40.560334+0000 ProtlyCIUITests-Runner[17404:58090] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics
+web-events.txt: 990 lines
+RESULT NOT-RUN (filtered run: KeyboardShotsUITests not selected)
+CHECKS
+CHECK 6.8-1 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-2 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-3 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-4 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-5 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-6 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-7 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-8 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-9 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-10 NOT-RUN filtered run: its test method was not selected
+CHECK 6.8-11 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-1 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-2 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-3 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-4 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-5 NOT-RUN filtered run: its test method was not selected
+CHECK 7.7-6 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-1 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-1o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-2o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-3 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-4 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-5 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-6 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-6o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-7 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-7o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-8 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-8o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-9 NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-9o NOT-RUN filtered run: its test method was not selected
+CHECK 8.5-10 NOT-RUN filtered run: its test method was not selected
+CHECK dark-1 PASS typing="c-dark-1-1-typing.png" space="c-dark-1-2-space.png" rect=12.0,157.0,256.0,32.0 points=390 before="안녕" after="안녕 " => ink typing 1300 space 1300, tone 599/599, longest run 30 of 81 px
+CHECK icon NOT-RUN filtered run: its test method was not selected
+CHECK menu-0 FAIL unreadable: Apple's English keyboard not reached or not typed on (english) problems="Apple's keyboard has no space key"
+CHECK menu-1 PASS menu="Copy,Cut,Look Up" sel="3,2" marked="no" field="안녕 오늘" after="안녕 오늘" => ok
+CHECK menu-4 PASS field="안녕 ㅎ" sel-before="3,2" sel="4,0" => ok
+CHECK pad-1 PASS want="hello world hello world " field="hello world hello world " sel0=24 sel1="7,0" marked="no" drag=-90,0 speed=120 => moved 17
+CHECK pad-2 FAIL want="hello world hello world " field="hello world hello wrld " sel0=23 sel1="5,0" marked="no" drag=-90,-80 speed=120 ref=17 => field 'hello world hello wrld ', want 'hello world hello world ' unchanged; moved 18
+CHECK pad-3 PASS want="안녕" field="안녕" sel0=2 sel1="1,0" marked="no" drag=-20,0 speed=60 want-sel=1 => moved 1
+CHECK ret-1-composer PASS want="안녕" before="안녕" value="" sent-count=1 sent="안녕" submit-count=0 gap=0.83s ev="c:keydown/녀:0 c:keypress/녀:45376 c:beforeinput/insertText c:input/insertText c:keyup/녀:0 c:keydown/Backspace:8 c:beforeinput/deleteContentBackward c:input/deleteContentBackward c:keyup/Backspace:8 c:keydown/녕:0 c:keypress/녕:45397 c:beforeinput/insertText c:input/insertText c:keyup/녕:0 c:keydown/Enter:13 c:keyup/Enter:13" => ok
+CHECK ret-1-input PASS want="안녕" before="안녕" value="안녕" sent-count=0 submit-count=1 submitted="안녕" gap=0.93s ev="i:input/insertText i:keyup/녀:0 i:keydown/Backspace:8 i:beforeinput/deleteContentBackward i:input/deleteContentBackward i:keyup/Backspace:8 i:keydown/녕:0 i:keypress/녕:45397 i:beforeinput/insertText i:input/insertText i:keyup/녕:0 i:keydown/Enter:13 i:keypress/Enter:13 i:change i:submit i:keyup/Enter:13" => ok
+CHECK ret-1-textarea PASS want="안녕" before="안녕" value="안녕\n" sent-count=0 submit-count=0 gap=2.05s ev="t:input/insertText t:keyup/녀:0 t:keydown/Backspace:8 t:beforeinput/deleteContentBackward t:input/deleteContentBackward t:keyup/Backspace:8 t:keydown/녕:0 t:keypress/녕:45397 t:beforeinput/insertText t:input/insertText t:keyup/녕:0 t:keydown/Enter:13 t:keypress/Enter:13 t:beforeinput/insertLineBreak t:input/insertLineBreak t:keyup/Enter:13" => ok
+CHECK ret-2-composer PASS want="hello 안녕" before="hello 안녕" value="" sent-count=1 sent="hello 안녕" submit-count=0 gap=0.90s ev="c:keydown/녀:0 c:keypress/녀:45376 c:beforeinput/insertText c:input/insertText c:keyup/녀:0 c:keydown/Backspace:8 c:beforeinput/deleteContentBackward c:input/deleteContentBackward c:keyup/Backspace:8 c:keydown/녕:0 c:keypress/녕:45397 c:beforeinput/insertText c:input/insertText c:keyup/녕:0 c:keydown/Enter:13 c:keyup/Enter:13" => ok
+CHECK ret-2-input PASS want="hello 안녕" before="hello 안녕" value="hello 안녕" sent-count=0 submit-count=1 submitted="hello 안녕" gap=0.86s ev="i:input/insertText i:keyup/녀:0 i:keydown/Backspace:8 i:beforeinput/deleteContentBackward i:input/deleteContentBackward i:keyup/Backspace:8 i:keydown/녕:0 i:keypress/녕:45397 i:beforeinput/insertText i:input/insertText i:keyup/녕:0 i:keydown/Enter:13 i:keypress/Enter:13 i:change i:submit i:keyup/Enter:13" => ok
+CHECK ret-2-textarea PASS want="hello 안녕" before="hello 안녕" value="hello 안녕\n" sent-count=0 submit-count=0 gap=1.20s ev="t:input/insertText t:keyup/녀:0 t:keydown/Backspace:8 t:beforeinput/deleteContentBackward t:input/deleteContentBackward t:keyup/Backspace:8 t:keydown/녕:0 t:keypress/녕:45397 t:beforeinput/insertText t:input/insertText t:keyup/녕:0 t:keydown/Enter:13 t:keypress/Enter:13 t:beforeinput/insertLineBreak t:input/insertLineBreak t:keyup/Enter:13" => ok
+CHECK ret-3-composer PASS want="hello 안녕 " before="hello 안녕 " value="" sent-count=1 sent="hello 안녕 " submit-count=0 gap=0.88s ev="c:keydown/Backspace:8 c:beforeinput/deleteContentBackward c:input/deleteContentBackward c:keyup/Backspace:8 c:keydown/녕:0 c:keypress/녕:45397 c:beforeinput/insertText c:input/insertText c:keyup/녕:0 c:keydown/ :32 c:keypress/ :32 c:beforeinput/insertText c:input/insertText c:keyup/ :32 c:keydown/Enter:13 c:keyup/Enter:13" => ok
+CHECK ret-3-input PASS want="hello 안녕 " before="hello 안녕 " value="hello 안녕 " sent-count=0 submit-count=1 submitted="hello 안녕 " gap=0.90s ev="i:keyup/Backspace:8 i:keydown/녕:0 i:keypress/녕:45397 i:beforeinput/insertText i:input/insertText i:keyup/녕:0 i:keydown/ :32 i:keypress/ :32 i:beforeinput/insertText i:input/insertText i:keyup/ :32 i:keydown/Enter:13 i:keypress/Enter:13 i:change i:submit i:keyup/Enter:13" => ok
+CHECK ret-3-textarea PASS want="hello 안녕 " before="hello 안녕 " value="hello 안녕 \n" sent-count=0 submit-count=0 gap=0.97s ev="t:keyup/Backspace:8 t:keydown/녕:0 t:keypress/녕:45397 t:beforeinput/insertText t:input/insertText t:keyup/녕:0 t:keydown/ :32 t:keypress/ :32 t:beforeinput/insertText t:input/insertText t:keyup/ :32 t:keydown/Enter:13 t:keypress/Enter:13 t:beforeinput/insertLineBreak t:input/insertLineBreak t:keyup/Enter:13" => ok
+CHECK ret-4-composer PASS want="hello 안녕" before="hello 안녕" value="" sent-count=1 sent="hello 안녕" submit-count=0 gap=1.10s ev="c:keydown/녀:0 c:keypress/녀:45376 c:beforeinput/insertText c:input/insertText c:keyup/녀:0 c:keydown/Backspace:8 c:beforeinput/deleteContentBackward c:input/deleteContentBackward c:keyup/Backspace:8 c:keydown/녕:0 c:keypress/녕:45397 c:beforeinput/insertText c:input/insertText c:keyup/녕:0 c:keydown/Enter:13 c:keyup/Enter:13" => ok
+CHECK ret-4-input PASS want="hello 안녕" before="hello 안녕" value="hello 안녕" sent-count=0 submit-count=1 submitted="hello 안녕" gap=1.08s ev="i:input/insertText i:keyup/녀:0 i:keydown/Backspace:8 i:beforeinput/deleteContentBackward i:input/deleteContentBackward i:keyup/Backspace:8 i:keydown/녕:0 i:keypress/녕:45397 i:beforeinput/insertText i:input/insertText i:keyup/녕:0 i:keydown/Enter:13 i:keypress/Enter:13 i:change i:submit i:keyup/Enter:13" => ok
+CHECK ret-4-textarea PASS want="hello 안녕" before="hello 안녕" value="hello 안녕\n" sent-count=0 submit-count=0 gap=1.07s ev="t:input/insertText t:keyup/녀:0 t:keydown/Backspace:8 t:beforeinput/deleteContentBackward t:input/deleteContentBackward t:keyup/Backspace:8 t:keydown/녕:0 t:keypress/녕:45397 t:beforeinput/insertText t:input/insertText t:keyup/녕:0 t:keydown/Enter:13 t:keypress/Enter:13 t:beforeinput/insertLineBreak t:input/insertLineBreak t:keyup/Enter:13" => ok
+CHECK ret-5-composer PASS want="ㅇㅋ" before="ㅇㅋ" value="" sent-count=1 sent="ㅇㅋ" submit-count=0 gap=0.85s ev="c:keydown/ㅇ:0 c:keypress/ㅇ:12615 c:beforeinput/insertText c:input/insertText c:keyup/ㅇ:0 c:keydown/ㅋ:0 c:keypress/ㅋ:12619 c:beforeinput/insertText c:input/insertText c:keyup/ㅋ:0 c:keydown/Enter:13 c:keyup/Enter:13" => ok
+CHECK ret-5-input PASS want="ㅇㅋ" before="ㅇㅋ" value="ㅇㅋ" sent-count=0 submit-count=1 submitted="ㅇㅋ" gap=0.89s ev="i:keydown/ㅇ:0 i:keypress/ㅇ:12615 i:beforeinput/insertText i:input/insertText i:keyup/ㅇ:0 i:keydown/ㅋ:0 i:keypress/ㅋ:12619 i:beforeinput/insertText i:input/insertText i:keyup/ㅋ:0 i:keydown/Enter:13 i:keypress/Enter:13 i:change i:submit i:keyup/Enter:13" => ok
+CHECK ret-5-textarea PASS want="ㅇㅋ" before="ㅇㅋ" value="ㅇㅋ\n" sent-count=0 submit-count=0 gap=0.80s ev="t:keydown/ㅇ:0 t:keypress/ㅇ:12615 t:beforeinput/insertText t:input/insertText t:keyup/ㅇ:0 t:keydown/ㅋ:0 t:keypress/ㅋ:12619 t:beforeinput/insertText t:input/insertText t:keyup/ㅋ:0 t:keydown/Enter:13 t:keypress/Enter:13 t:beforeinput/insertLineBreak t:input/insertLineBreak t:keyup/Enter:13" => ok
+CHECK ws-1 NOT-RUN filtered run: its test method was not selected
+CHECK ws-2 NOT-RUN filtered run: its test method was not selected
+CHECK ws-3 NOT-RUN filtered run: its test method was not selected
+CHECKS pass 20 fail 2 record 0 skip 0 not-run 36
+LEAK-GUARD pass: no key prefix in 42 files
