@@ -172,7 +172,8 @@ Plan section "Sprint 004" of `docs/plans/2026-10-30-typing-fixes.md`; results in
   `gap` (0.05 s, or 0.3 s in step 4; XCUITest's own time to tap comes on top, the line says what it was). The
   field's text when the page saw Return must be the text typed; no Return event, or a form input that did not
   submit, is FAIL. A step that asked for Return at once but got it later than 0.3 s is RECORD, not PASS: it shows
-  the text kept, not the at-once race (run 8632699-72 measured 0.8 to 2 s), which stays a phone check.
+  the text kept, not the at-once race (XCUITest taps about 0.6 s apart: runs 87ef63d-73 and 49bc717-74 measured
+  0.6 to 1 s), which stays a phone check. Expect RECORD on ret-1, -2, -3 and -5 in every run.
 - **test5b_menu** (`-screen uikit`): `menu-0` on Apple's keyboard (the control: keys tapped by label, then a
   double-tap on `hello`), `menu-1` on Protly (`안녕 오늘` with no space, a double-tap on `오늘`), `menu-4` (then `ㅎ`).
   The menu's items are found by label (none may be open before the double-tap); the tree is `tree-edit-menu.txt`.
