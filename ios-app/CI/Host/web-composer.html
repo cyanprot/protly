@@ -1,0 +1,147 @@
+<!doctype html>
+<!--
+  CI host's web composer (typing-fixes 004, ios-app/CI/Host/HostApp.swift `-screen web`; scenario from
+  docs/research/2026-10-30-enter-clears-web.md and marked-text-dark.md). Offline: no request leaves the page.
+  Three fields on a black, color-scheme: dark page: a plain textarea, an input in a form whose submit is logged and
+  prevented, and a contenteditable "Enter to send" composer with the common IME guard and a transparent caret.
+  Every DOM event goes to the host (window.webkit.messageHandlers.protly), which appends it to web-events.txt; the
+  page's state goes with it, which the host publishes for XCUITest.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; padding: 0; background: #000; color: #f2f2f2; overflow: hidden; }
+  body { font: 17px -apple-system, system-ui, sans-serif; }
+  .f {
+    display: block; box-sizing: border-box; width: 264px; margin: 6px 8px; padding: 6px 8px;
+    background: #000; color: #f2f2f2; border: 1px solid #1a1a1a; border-radius: 8px; outline: none;
+    font: 17px -apple-system, system-ui, sans-serif;
+  }
+  textarea.f { height: 44px; resize: none; }
+  input.f { height: 36px; }
+  #composer { height: 40px; white-space: pre-wrap; caret-color: transparent; overflow: hidden; }
+  form { margin: 0; }
+  #sent { margin: 2px 8px; height: 16px; overflow: hidden; font-size: 11px; color: #8a8a8a; white-space: nowrap; }
+</style>
+</head>
+<body>
+<textarea id="textarea" class="f" aria-label="web textarea" autocapitalize="off" autocorrect="off"
+  spellcheck="false"></textarea>
+<form id="form" action="#"><input id="input" class="f" type="text" aria-label="web input" autocapitalize="off"
+  autocorrect="off" spellcheck="false"></form>
+<div id="composer" class="f" contenteditable="true" role="textbox" aria-label="web composer" autocapitalize="off"
+  autocorrect="off" spellcheck="false"></div>
+<div id="sent" aria-label="sent"></div>
+<script>
+"use strict";
+const fields = {
+  textarea: document.getElementById("textarea"),
+  input: document.getElementById("input"),
+  composer: document.getElementById("composer"),
+};
+const form = document.getElementById("form");
+let sent = [];
+let submitted = [];
+// Each field's text when the page first saw Return in this step (keydown Enter, a line-break beforeinput, a submit).
+let atReturn = {};
+// A short trace of the step's events, for the CHECK line (the full log is web-events.txt).
+let trace = [];
+
+function post(msg) {
+  try { window.webkit.messageHandlers.protly.postMessage(msg); } catch (e) { /* not in the host */ }
+}
+
+function text(name) {
+  const f = fields[name];
+  return (name === "composer" ? f.textContent : f.value).replace(/ /g, " ");
+}
+
+function rects() {
+  const r = {};
+  for (const [name, f] of Object.entries(fields)) {
+    const b = f.getBoundingClientRect();
+    r[name] = [b.left, b.top, b.width, b.height];
+  }
+  return r;
+}
+
+function state() {
+  const s = {
+    textarea: text("textarea"), input: text("input"), composer: text("composer"), sent, submitted, atReturn,
+    focus: (document.activeElement && document.activeElement.id) || "", trace: trace.slice(-16),
+  };
+  post({ kind: "state", json: JSON.stringify(s), rects: rects() });
+}
+
+function isReturn(e) {
+  if (e.type === "keydown") return e.key === "Enter" || e.keyCode === 13;
+  if (e.type === "beforeinput") {
+    return e.inputType === "insertLineBreak" || e.inputType === "insertParagraph" || e.data === "\n";
+  }
+  return e.type === "submit";
+}
+
+function log(name, e) {
+  if (isReturn(e) && !(name in atReturn)) atReturn[name] = text(name);
+  const parts = [`t=${Date.now()}`, name, e.type];
+  if (e.inputType) parts.push(`inputType=${e.inputType}`);
+  if (e.data !== undefined && e.data !== null) parts.push(`data=${JSON.stringify(e.data)}`);
+  if (e.key !== undefined) parts.push(`key=${JSON.stringify(e.key)}`, `keyCode=${e.keyCode}`);
+  if (e.isComposing !== undefined) parts.push(`isComposing=${e.isComposing}`);
+  parts.push(`value=${JSON.stringify(text(name))}`);
+  post({ kind: "event", line: parts.join(" ") });
+  let t = name[0] + ":" + e.type;
+  if (e.inputType) t += "/" + e.inputType;
+  if (e.key !== undefined) t += "/" + e.key + ":" + e.keyCode;
+  if (e.isComposing) t += "/composing";
+  trace.push(t);
+}
+
+const types = ["keydown", "keypress", "keyup", "beforeinput", "input", "compositionstart", "compositionupdate",
+  "compositionend", "change", "focus", "blur"];
+for (const [name, f] of Object.entries(fields)) {
+  for (const type of types) f.addEventListener(type, (e) => { log(name, e); state(); }, true);
+}
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  log("input", e);
+  submitted.push(text("input"));
+  state();
+});
+
+// Enter to send, as chat composers do it: the IME guard, then send and clear.
+fields.composer.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.shiftKey) return;
+  if (e.isComposing || e.keyCode === 229) return;
+  e.preventDefault();
+  sent.push(text("composer"));
+  fields.composer.textContent = "";
+  document.getElementById("sent").textContent = sent.join(" | ");
+  post({ kind: "event", line: `t=${Date.now()} composer sent ${JSON.stringify(sent[sent.length - 1])}` });
+  state();
+});
+
+function clearAll() {
+  for (const name of ["textarea", "input"]) fields[name].value = "";
+  fields.composer.textContent = "";
+  document.getElementById("sent").textContent = "";
+  sent = [];
+  submitted = [];
+  atReturn = {};
+  trace = [];
+  post({ kind: "event", line: `t=${Date.now()} clear` });
+  state();
+  return true;
+}
+
+window.addEventListener("load", () => { post({ kind: "event", line: `t=${Date.now()} load` }); state(); });
+window.addEventListener("resize", state);
+setInterval(state, 1000);  // the rects after the keyboard and the accessory bar settle
+</script>
+</body>
+</html>
