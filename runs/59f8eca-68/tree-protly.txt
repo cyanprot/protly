@@ -1,0 +1,44 @@
+Attributes: Application, 0x10265bd40, pid: 9155, label: 'ProtlyCIHost'
+Element subtree:
+ →Application, 0x10265bd40, pid: 9155, label: 'ProtlyCIHost'
+    Window (Main), 0x10265be80, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x1136d4000, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1136d4140, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x1136d4280, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x1136d43c0, {{0.0, 0.0}, {390.0, 844.0}}
+              TextField, 0x1136d4500, {{16.0, 71.0}, {200.0, 22.0}}, identifier: 'field', Keyboard Focused
+                Other, 0x1136d4640, {{16.0, 71.0}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                  Other, 0x1136d4780, {{16.0, 71.0}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                    Other, 0x1136d48c0, {{8.8, 57.5}, {16.5, 16.5}}
+                    Other, 0x1136d4a00, {{16.0, 71.0}, {2.0, 0.0}}
+                  Other, 0x1136d4b40, {{16.0, 71.0}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                    Other, 0x1136d4c80, {{8.8, 57.5}, {16.5, 16.5}}
+                    Other, 0x1136d4dc0, {{16.0, 71.0}, {2.0, 0.0}}
+                Other, 0x1136d4f00, {{16.0, 79.0}, {200.0, 11.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                  Other, 0x1136d5040, {{19.0, 87.0}, {194.0, 3.0}}
+              Button, 0x1136d5180, {{334.0, 71.0}, {40.0, 20.3}}, identifier: 'clear', label: 'Clear'
+              Button, 0x1136d52c0, {{314.7, 107.3}, {59.3, 20.3}}, identifier: 'dismiss', label: 'Dismiss'
+    Window, 0x1136d5400, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x1136d5540, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1136d5680, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1136d57c0, {{0.0, 769.0}, {390.0, 75.0}}
+    Window, 0x1136d5900, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x1136d5a40, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1136d5b80, {{0.0, 769.0}, {390.0, 75.0}}
+          Other, 0x1136d5cc0, {{0.0, 769.0}, {390.0, 75.0}}
+            Other, 0x1136d5e00, {{0.0, 769.0}, {390.0, 75.0}}
+              Other, 0x1136d5f40, {{0.0, 769.0}, {390.0, 75.0}}
+          Other, 0x1136d6080, {{0.0, 769.0}, {390.0, 75.0}}
+            Button, 0x1136d61c0, {{8.5, 775.7}, {68.1, 68.7}}, label: 'Next keyboard', value: English (US)
+              StaticText, 0x1136d6300, {{8.5, 775.7}, {0.0, 0.0}}
+            Button, 0x1136d6440, {{313.4, 775.4}, {68.1, 68.7}}, identifier: 'dictation', label: 'Dictate'
+              StaticText, 0x1136d6580, {{313.4, 775.4}, {0.0, 0.0}}
+            Button, 0x1136d66c0, {{313.4, 775.4}, {68.1, 68.7}}, identifier: 'dictation', label: 'Dictate'
+              StaticText, 0x1136d6800, {{313.4, 775.4}, {0.0, 0.0}}
+Path to element:
+ →Application, 0x10265bd40, pid: 9155, label: 'ProtlyCIHost'
+Query chain:
+ →Find: Target Application 'com.northprot.protly.cihost'
+  Output: {
+    Application, 0x1136d6940, pid: 9155, label: 'ProtlyCIHost'
+  }

@@ -1,0 +1,2 @@
+/Users/runner/work/protly/protly/ios-app/CI/UITests/Driver.swift:155: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : failed - 02-first-open: expected protly, found system-keyboard
+/Users/runner/work/protly/protly/ios-app/CI/UITests/Driver.swift:155: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : failed - emoji keyboard not reached
