@@ -6,7 +6,8 @@ import WebKit
 /// CI-only host for the keyboard screenshots (ios-app/CI/README.md). `-screen <name>` on the command line picks a
 /// screen; every screen is offline:
 /// - none: one multi-line field, focused on launch, on one solid color that measure.py knows (`HOST_BG`).
-///   `-prefill "text"` puts text in it.
+///   `-prefill "text"` puts text in it, and `-fills "a|b"` adds one button per draft (`fill-1`, `fill-2`) that puts
+///   that draft in it with the keyboard up (keyboard-ui 003: the stub's marker drafts, CardChecks.swift).
 /// - `uikit`: a UITextView (typing-fixes 004: the edit menu and the space trackpad) whose selection, marked text and
 ///   first and last word frames are published as accessibility values for XCUITest.
 /// - `web`: a dark web composer (typing-fixes 004: Return in web fields, the word's ink on a dark page) in a WKWebView,
@@ -34,6 +35,7 @@ let hostBackground = Color(red: 32 / 255, green: 160 / 255, blue: 96 / 255)
 struct HostView: View {
     @State private var text = UserDefaults.standard.string(forKey: "prefill") ?? ""
     @FocusState private var focused: Bool
+    private let fills = (UserDefaults.standard.string(forKey: "fills") ?? "").split(separator: "|").map(String.init)
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -52,6 +54,13 @@ struct HostView: View {
                     .accessibilityIdentifier("clear")
                 Button("Dismiss") { focused = false }
                     .accessibilityIdentifier("dismiss")
+                // Above 30% of the height (measure.py's background sample), right of the field.
+                HStack(spacing: 12) {
+                    ForEach(Array(fills.enumerated()), id: \.offset) { i, draft in
+                        Button("F\(i + 1)") { text = draft }
+                            .accessibilityIdentifier("fill-\(i + 1)")
+                    }
+                }
             }
             .tint(.white)
             .frame(maxWidth: .infinity, alignment: .trailing)

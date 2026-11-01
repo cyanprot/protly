@@ -528,6 +528,11 @@ Field text is read through XCUITest (exact); bar labels with Vision OCR in the U
   had the memory sampler attached; run 12 did not (it starts with the phone checks), so the sampler is not the
   cause. When the notification does not come, the keyboard keeps the 17 pt band; on a slow phone the same can
   happen.
+  A second cause, seen in #22's run 59 (`band-04-after-background`, top 495): the notification came 32 ms before
+  the new controller pinned, so only the old controller saw it (`host became active after 13.6 s, kept`). Since
+  2026-10-31 (tower decision D-E) every pin records the notification's time, and a pin made within 0.5 s of it drops
+  at once (log: `host became active N s before pinning`). Unproven until a `[shots]` run shows scenario 04 at 52 pt
+  with that line in `keyboard-log.txt`.
 - A slow extension start shows Apple's Korean keyboard instead: in runs 12 and 14 (layout scenarios 197 s and
   247 s against 81-98 s) the first presentation was Apple's Korean keyboard (`한` on the space bar), iOS's stand-in
   for Protly's primary language, and run 14 then lost the keyboard after Emoji (03 found none). The driver had

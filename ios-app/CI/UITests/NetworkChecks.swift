@@ -143,6 +143,17 @@ extension PhoneRun {
         let end = Date().addingTimeInterval(timeout)
         while true {
             let at = Date()
+            // The tree first (keyboard-ui 003): the panel's buttons and texts exactly, wherever the panel is drawn.
+            if let v = d.callView() {
+                for label in labels {
+                    if let b = v.button(label, in: v.panel) {
+                        let screen = XCUIScreen.main.screenshot()
+                        let words = v.panel.filter { $0.type == .button }.map { (text: $0.label, rect: $0.frame) }
+                        let seen = Seen(lines: v.texts(v.panel).map(\.label), words: words)
+                        return (savePanel(PanelRead(screen: screen, seen: seen, file: nil), item, name), label, b.frame, at)
+                    }
+                }
+            }
             let r = readPanel(row1, item, save: nil, only: band)
             if let seen = r.seen {
                 for label in labels {
@@ -168,9 +179,16 @@ extension PhoneRun {
         return PanelRead(screen: r.screen, seen: r.seen, file: saved ? f + ".png" : nil)
     }
 
-    /// Taps a panel button found by OCR in its row. false when the label is not there.
+    /// Taps a button of the panel, the card or the strip, found in the tree (else by OCR in the panel's button row).
+    /// false when the label is not there.
     @discardableResult
     func tapPanelButton(_ label: String, _ row1: CGFloat, _ item: Item) -> Bool {
+        if let v = d.callView(), let b = v.button(label, in: v.panel) ?? v.button(label, in: v.card) ?? v.button(label, in: v.strip) {
+            d.point(b.frame.midX, b.frame.midY).tap()
+            d.pause(1)
+            d.log(String(format: "\(item.id): tapped %@ at %.1f, %.1f (tree)", label, b.frame.midX, b.frame.midY))
+            return true
+        }
         let r = readPanel(row1, item, save: nil)
         guard let rect = r.seen?.word(label, in: d.panelButtonBand(row1: row1)) else {
             d.log("\(item.id): no \(label) button on the panel: \(q(r.seen?.text))")
@@ -185,13 +203,15 @@ extension PhoneRun {
     // MARK: Translate / Polish
 
     struct Attempt {
-        /// The field after Insert.
+        /// The field after Replace.
         var output: String?
-        /// Tap to the screenshot that showed the result's button.
+        /// Tap to the screenshot that showed the finished card.
         var seconds: Double?
-        /// The result panel's OCR text (translation, back translation or change line).
+        /// Tap to the first text on the card (streamed).
+        var first: Double?
+        /// The card's texts (translation, back translation or change line), from the tree.
         var panel: String?
-        /// The busy label ("Translating") was on the panel at once.
+        /// The strip's verb ("Translating") was on the bar at once.
         var busy: Bool?
         /// Why there is no output: a step the test judges itself (FAIL), not model output.
         var problem: String?
@@ -203,7 +223,8 @@ extension PhoneRun {
     }
 
     /// One try: clear, type the draft (the flip rule for its code), check the field and the center's label, tap it,
-    /// look for the busy label at once, wait for Insert, then tap Insert and read the field (insert false: Cancel).
+    /// look for the strip's verb at once, wait for the finished card (keyboard-ui 003: it streams in, so Replace is
+    /// there but inert until the strip goes), then tap Replace and read the field (insert false: Cancel).
     func attempt(_ item: Item, _ draft: Draft, center want: String, busy: String, n: Int, insert: Bool = true,
                  saveBusy: Bool = false) -> Attempt {
         var a = Attempt()
@@ -244,45 +265,134 @@ extension PhoneRun {
         let t0 = Date()
         d.tapSlot(.center, settle: 0)
         a.tapped = true
-        // The loading panel shows at once (act() sets it before the request); poll up to 1.5 s for its label, and
-        // stop when a result button is already there.
+        // The strip shows at once (act() sets it before the field read): poll up to 1.5 s for its verb, and stop when
+        // the call has already moved on (a card, or Retry on the strip).
         let busyEnd = Date().addingTimeInterval(1.5)
         repeat {
-            let r = readPanel(row1, item, save: nil)
-            guard let seen = r.seen else { break }
-            let band = d.panelButtonBand(row1: row1)
-            if seen.contains(busy) || seen.word("Insert", in: band) != nil || seen.word("Retry", in: band) != nil {
-                a.busy = seen.contains(busy)
-                if saveBusy { _ = savePanel(r, item, "busy") }
+            guard let v = d.callView() else { break }
+            if v.stripText.contains(busy) {
+                a.busy = true
+                if saveBusy { d.savePNG(item.nextShot("busy")) }
                 break
             }
             a.busy = false
+            if v.button("Retry", in: v.strip) != nil || !v.card.isEmpty { break }
         } while Date() < busyEnd
-        let w = waitPanel(row1, item, for: ["Insert", "Retry"], name: "result")
-        a.panel = w.read.seen?.text
-        guard let hit = w.label, let rect = w.rect else {
-            a.problem = "no result in 30 s, panel \(q(a.panel))"
+        let w = waitCall(item, primary: "Replace", busy: busy, name: "result")
+        a.panel = w.text
+        a.first = w.first.map { $0.timeIntervalSince(t0) }
+        switch w.end {
+        case .timeout:
+            a.problem = "no result in 30 s, card \(q(a.panel)) strip \(q(w.strip))"
             a.transient = true
             return a
-        }
-        if hit == "Retry" {
-            a.problem = "the panel failed: \(q(a.panel))"
+        case .failed:
+            a.problem = "the call failed: \(q(w.failure))"
             a.transient = true
             return a
+        case .done:
+            break
         }
         a.seconds = w.at.timeIntervalSince(t0)  // only a result counts as a timing
+        d.pause(0.6)  // the card's buttons ignore taps for 0.5 s after it appears (AboutMe.saveDelay)
         if !insert {
-            tapPanelButton("Cancel", row1, item)
+            if let close = w.close { d.point(close.midX, close.midY).tap() } else { tapPanelButton("Cancel", row1, item) }
+            d.pause(1)
+            return a
+        }
+        guard let rect = w.primary else {
+            a.problem = "no Replace on the finished card"
             return a
         }
         d.point(rect.midX, rect.midY).tap()
         d.pause(1.2)
         guard let out = field() else {
-            a.problem = "field unreadable after Insert"
+            a.problem = "field unreadable after Replace"
             return a
         }
         a.output = out
         return a
+    }
+
+    enum CallEnd {
+        case done, failed, timeout
+    }
+
+    /// How one call ended, as the tree showed it (KeyboardTree.swift).
+    struct CallWait {
+        var end: CallEnd
+        /// The card's texts under its header (the translation, the back translation, an error line), joined.
+        var text: String
+        /// The error line (the strip's, or the card's last text) when the call failed.
+        var failure: String
+        var strip: String
+        /// The finished card's primary button (Replace, Insert) and its close button (Cancel, Done).
+        var primary: CGRect?
+        var close: CGRect?
+        /// When the card first showed text.
+        var first: Date?
+        /// When the screenshot that showed the end was taken.
+        var at: Date
+    }
+
+    /// Polls the tree every 0.5 s, up to `timeout`, until the call ends: done (the card's `primary` button and no
+    /// strip), failed (Retry on the strip, the card or a panel, an error line on the strip, or a card with neither the
+    /// strip nor `primary`), or not in time. `busy` is the strip's verb ("Translating"): a strip without it shows an error. The last screenshot is
+    /// saved as c-<id>-<n>-<name>.png.
+    func waitCall(_ item: Item, primary: String, busy: String, timeout: TimeInterval = 30, name: String) -> CallWait {
+        let end = Date().addingTimeInterval(timeout)
+        var first: Date?
+        var last: CallView?
+        var result = CallWait(end: .timeout, text: "", failure: "", strip: "", at: Date())
+        // The card with `primary` and no strip in the previous snapshot too: the end even if the tree never reports the
+        // button enabled (a snapshot that misses the strip once is not the end).
+        var settled = false
+        while true {
+            let at = Date()
+            let v = d.callView()
+            let screen = XCUIScreen.main.screenshot()
+            if let v {
+                last = v
+                let body = v.cardRows.body
+                if first == nil && !body.isEmpty { first = at }
+                let retry = v.button("Retry", in: v.strip) ?? v.button("Retry", in: v.card)
+                // An empty strip text is the label not in the tree yet, not an error line.
+                let stripError = !v.strip.isEmpty && !v.stripText.isEmpty
+                    && v.stripText.range(of: busy, options: .caseInsensitive) == nil
+                let shown = v.button(primary, in: v.card) != nil && v.strip.isEmpty
+                let done = v.finished(primary) || (shown && settled)
+                settled = shown
+                let cardFailed = !v.card.isEmpty && v.strip.isEmpty && v.button(primary, in: v.card) == nil
+                // A failure before any call (a cut-short field read, nothing copied) is a panel with Retry.
+                let panelFailed = v.button("Retry", in: v.panel) != nil
+                if done || retry != nil || stripError || cardFailed || panelFailed {
+                    result.end = done ? .done : .failed
+                    if done {
+                        result.failure = ""
+                    } else if panelFailed {
+                        result.failure = v.texts(v.panel).map(\.label).joined(separator: " ")
+                    } else if stripError || (retry != nil && !v.strip.isEmpty) {
+                        result.failure = v.stripText
+                    } else {
+                        result.failure = body.last ?? ""
+                    }
+                    result.primary = v.button(primary, in: v.card)?.frame
+                    result.close = (v.button("Cancel", in: v.card) ?? v.button("Done", in: v.card))?.frame
+                    result.at = at
+                }
+            }
+            if result.end != .timeout || Date() >= end {
+                result.text = last?.cardRows.body.joined(separator: " ") ?? ""
+                result.strip = last?.stripText ?? ""
+                result.first = first
+                let f = item.nextShot(name)
+                d.savePNG(f, screen)
+                d.log("\(item.id) \(name): \(result.end) card \(q(result.text)) strip \(q(result.strip)) "
+                      + "buttons \(q(last.map { $0.buttons($0.card) } ?? ""))")
+                return result
+            }
+            d.pause(0.5)
+        }
     }
 
     /// Up to two attempts (plan Task 2.3): the second when the first's output fails `passes` (checks.py RULES,
@@ -299,7 +409,7 @@ extension PhoneRun {
                 break
             }
             if needBusy && a.tapped && a.busy == nil {
-                item.markUnreadable("busy#\(n)=unreadable (no OCR of the panel right after the tap)")
+                item.markUnreadable("busy#\(n)=unreadable (no tree right after the tap)")
             } else if let seen = a.busy {
                 if needBusy {
                     item.require("busy#\(n)", seen, seen ? q(busy) : "no \(q(busy)) at once")
@@ -308,6 +418,7 @@ extension PhoneRun {
                 }
             }
             if let s = a.seconds { item.note(String(format: "seconds#%d=%.1f", n, s)) }
+            if let f = a.first { item.note(String(format: "first#%d=%.1f", n, f)) }
             if let p = a.problem {
                 if a.transient && n == 1 {
                     item.note("try#1=\(p)")
@@ -325,7 +436,7 @@ extension PhoneRun {
         return attempts
     }
 
-    /// 6.8-11's Translate part, after the flip part (test1_68): a Korean draft, center English, Insert: Latin.
+    /// 6.8-11's Translate part, after the flip part (test1_68): a Korean draft, center English, Replace: Latin.
     func translate68(_ it: Item) {
         guard Self.network else {
             it.skip("no network key")  // the Translate part is the item's half: no PASS on the flip alone
@@ -348,7 +459,8 @@ extension PhoneRun {
         startGroup(PhoneChecksUITests.allowance["test6_85net"]! - 120)
         if notReady(ids) || !networkReady(ids) { return }
 
-        // Drafts end with a space: the bar offers no action while a word is being typed (Sprint 001 finding).
+        // Drafts end with a space, as sending would: it ends the last word, so its reading (and the flip rule) has
+        // settled. Since keyboard-ui 001 the action stays visible while a word is typed.
         var it = Item("8.5-1")
         context(korean: true, it)
         let ru = Draft(code: "ru", text: "누나 노트 고마워 누나 덕분에 살았다 ")
@@ -390,7 +502,8 @@ extension PhoneRun {
                 && !Rules.hasNoCase($0, "colour") && !Rules.hasNoCase($0, "conprastes")
         }
 
-        // 8.5-10: seconds from tap to Insert for 8.5-1, two tries (a second, Cancel instead of Insert, if 8.5-1 had one).
+        // 8.5-10: seconds from tap to the finished card for 8.5-1, two tries (a second, Cancel instead of Replace, if
+        // 8.5-1 had one).
         it = Item("8.5-10")
         if times.count < 2 {
             context(korean: true, it)
@@ -405,12 +518,12 @@ extension PhoneRun {
         }
         if !times.isEmpty {
             let list = times.enumerated().map { String(format: "try%d=%.1fs", $0.offset + 1, $0.element) }
-            it.note(list.joined(separator: " ") + " (tap to Insert shown; OCR poll every 0.5 s)")
+            it.note(list.joined(separator: " ") + " (tap to the finished card; tree poll every 0.5 s)")
         }
         finish(it, record: true)
     }
 
-    /// One draft, one action, the Insert checked by checks.py; the panel's text is kept as `shown#n` (RECORD part:
+    /// One draft, one action, the Replace checked by checks.py; the panel's text is kept as `shown#n` (RECORD part:
     /// back translation or change line).
     private func simple(_ id: String, _ draft: Draft, korean: Bool, center: String = "English",
                         busy: String = "Translating", needBusy: Bool = false, passes: (String) -> Bool) {
@@ -439,7 +552,9 @@ extension PhoneRun {
     /// Read clipboard. With `text` (the host): the keyboard goes down, the test runner sets the clipboard, and the
     /// keyboard comes back on the empty field, so the bar looks at the clipboard (viewWillAppear). Without (the
     /// container app): its Copy button has set it. Taps the center's `Read` pill (the protly key when the
-    /// center does not offer it, noted), answers Allow Paste and waits for one of `labels`. nil: it did not start.
+    /// center does not offer it, noted), answers Allow Paste and waits for one of `labels` (a panel), or, when the read
+    /// `sends`, for the finished Read card (label `Insert`, `rect` its Done; `Retry` when it failed). nil: it did not
+    /// start.
     func readClipboard(_ item: Item, _ text: String?, waitFor labels: [String], sends: Bool, name: String = "clipboard",
                        markTimeout: Bool = true, probe: ((String) -> Void)? = nil) -> ClipRead? {
         if pastDeadline(item, name) { return nil }
@@ -489,9 +604,19 @@ extension PhoneRun {
         item.note("\(name)-paste=\(q(how))")
         probe?("allow paste: \(how)")
         d.append("allow paste (\(item.id) \(name)): \(how)", to: "network.txt")
-        let w = waitPanel(row1, item, for: labels, timeout: sends ? 30 : 10, name: name)
+        // A Read is a call: its card streams in, and Done is there from the start, so wait for the finished card.
+        let w: (seen: Seen?, label: String?, rect: CGRect?)
+        if sends {
+            let c = waitCall(item, primary: "Insert", busy: "Reading", name: name)
+            let label: String? = c.end == .done ? "Insert" : c.end == .failed ? "Retry" : nil
+            if c.end == .failed { item.note("\(name)-failed=\(q(c.failure))") }
+            w = (Seen(lines: [c.text], words: []), label, c.close)
+        } else {
+            let p = waitPanel(row1, item, for: labels, timeout: 10, name: name)
+            w = (p.read.seen, p.label, p.rect)
+        }
         if w.label == nil {
-            if markTimeout { item.markUnreadable("\(name): none of \(labels) on the panel, \(q(w.read.seen?.text))") }
+            if markTimeout { item.markUnreadable("\(name): none of \(labels) on the panel, \(q(w.seen?.text))") }
             // A read that never shows a panel may be waiting on an unanswered prompt, with the keyboard blocked in
             // the clipboard read: end the app so the keyboard is freed for the next item (run 36 stalled).
             d.log("\(item.id) \(name): no panel; relaunching \(inHost ? "the host" : "the app") to free the keyboard")
@@ -501,7 +626,7 @@ extension PhoneRun {
                 d.ensureProtly()
             }
         }
-        return ClipRead(label: w.label, seen: w.read.seen, rect: w.rect, row1: row1)
+        return ClipRead(label: w.label, seen: w.seen, rect: w.rect, row1: row1)
     }
 
     /// The Allow Paste prompt of a clipboard read is a SpringBoard alert (run 40). While it is up the keyboard is
@@ -587,14 +712,14 @@ extension PhoneRun {
             write("7.7-3", "SKIP", "no network key")
         }
 
-        // 7.7-4: seconds from tap to Insert for Translate with the note: 7.7-2 and 7.7-3's repeat of it.
+        // 7.7-4: seconds from tap to the finished card for Translate with the note: 7.7-2 and 7.7-3's repeat of it.
         it = Item("7.7-4")
         if !Self.network {
             write("7.7-4", "SKIP", "no network key")
         } else {
             if times.count < 2 { it.markUnreadable("\(times.count) of 2 timings") }
             let list = times.enumerated().map { String(format: "try%d=%.1fs", $0.offset + 1, $0.element) }
-            it.note(list.joined(separator: " ") + " (7.7-2 and 7.7-3's repeat; tap to Insert shown, OCR poll every 0.5 s)")
+            it.note(list.joined(separator: " ") + " (7.7-2 and 7.7-3's repeat; tap to the finished card, tree poll every 0.5 s)")
             finish(it, record: true)
         }
 
@@ -620,7 +745,7 @@ extension PhoneRun {
     /// 7.7-3's first part: a friend's English message, empty field, Read clipboard: Korean on the panel (one retry).
     private func readEnglish(_ it: Item) {
         for n in 1...2 {
-            guard let r = readClipboard(it, "Can you send me the photos from yesterday?", waitFor: ["Done", "Retry"],
+            guard let r = readClipboard(it, "Can you send me the photos from yesterday?", waitFor: ["Insert"],
                                         sends: true, name: "read", markTimeout: false) else { return }
             if r.label == "Retry" || r.label == nil {
                 it.note("read#\(n) failed: \(q(r.text))")
@@ -630,6 +755,7 @@ extension PhoneRun {
             }
             it.output("panel", n, r.text)
             if let rect = r.rect {
+                d.pause(0.6)  // the card's buttons ignore taps for 0.5 s after it appears
                 d.point(rect.midX, rect.midY).tap()  // Done
                 d.pause(1)
             }

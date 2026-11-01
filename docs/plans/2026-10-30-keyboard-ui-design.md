@@ -15,12 +15,30 @@ These override the text below wherever they disagree.
 - **Written for an English speaker, not Korean only.** Hero: "Polish and translate as you type." Try it has two
   chips, Polish first (the English sentence with mistakes, "Tap Polish in the bar.") and Translate Korean
   (`오늘 고마워`, "Tap → English in the bar."); the `ru:` chip is gone. Instruction rows: `teh`, then Undo, then
-  "Writing Korean? Type `dkssud`, then tap the left slot." Other languages come gradually, in later plans.
+  "Writing Korean? Type `dkssud`: it turns into 안녕 on its own. The left slot flips a word back." (2026-10-31:
+  replaced the earlier "Type `dkssud`, then tap the left slot.", because the bundled word lists turn `dkssud` into
+  안녕 by themselves, so there is nothing to flip; phone check owed.) Other languages come gradually, in later plans.
 - **Dictation follows the keycaps.** The keyboard reports `en-US` (Info.plist `PrimaryLanguage` and the
   `primaryLanguage` override), `ko-KR` only on Korean keycaps; before, dictation was Korean only. Phone check:
   dictation listens in English on English keycaps and in Korean on Korean keycaps.
 - **Open, not in this campaign:** Read translates someone else's text into Korean (`ActionMode.in`). An English
   speaker needs English; changing the target is logic, planned later with the other languages.
+
+## Tower decisions 2026-10-31 (review of #20, fixes from #22)
+
+The owner delegated these to the tower. They override the text below wherever they disagree.
+
+- **D4 deviation: the keys wait during the field read.** D4 keeps the keys live until the first text arrives. A key
+  typed while the field read walks the cursor to the end would land mid-text and join the text sent, so the keys
+  wait for the read (`ProtlyActionHandler`; a gesture's `.end` still passes); the network wait that follows keeps
+  them live, as D4 says. The whole read is capped at 2 s (`FieldReadBudget`): a new cursor step starts only while its
+  full 1 s settle wait still fits, so a step on its way always settles and Cancel's record stays exact. A read the
+  cap stops leaves text after the cursor and ends like any cut-short read ("Could not read the whole text. Select
+  all, then tap again.", with Retry); the keys come back. Phone check owed: whether 2 s feels OK.
+- **P4 widened: Retry on `.server` and `.parse` too.** Retry shows exactly where the message says to try again
+  (`ActionError.canRetry`, pinned by `ActionAPITests`): network, timeout, overloaded and rate limit as Flow step 5
+  says, plus a server error and a reply that was not readable, which a second try can fix as well. `.refused` gets
+  no Retry; its line is "The model declined this text. Edit it first."
 
 ## Goal
 

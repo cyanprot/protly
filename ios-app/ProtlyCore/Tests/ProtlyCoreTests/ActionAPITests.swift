@@ -14,6 +14,7 @@ final class ActionAPITests: XCTestCase {
         XCTAssertEqual((b["thinking"] as? [String: String])?["type"], "between_tools")
         XCTAssertEqual(b["system"] as? String, "SYS")
         XCTAssertNil(b["temperature"])
+        XCTAssertEqual(b["stream"] as? Bool, true)
         let msg = (b["messages"] as! [[String: Any]])[0]
         XCTAssertEqual(msg["content"] as? String, "MODE: in\n\nTEXT:\nsee you soon")
     }
@@ -23,6 +24,8 @@ final class ActionAPITests: XCTestCase {
             let b = json(try ActionAPI.body(mode: mode, text: "x", system: "S"))
             XCTAssertEqual(b["model"] as? String, "claude-opus-5-5")
             XCTAssertEqual((b["thinking"] as? [String: String])?["type"], "adaptive")
+            XCTAssertEqual(b["stream"] as? Bool, true)
+            XCTAssertEqual(b["max_tokens"] as? Int, 16000)
             let msg = (b["messages"] as! [[String: Any]])[0]
             let target = mode == .out ? "\nTARGET: English" : ""
             XCTAssertEqual(msg["content"] as? String, "MODE: \(mode.rawValue)\(target)\n\nDRAFT:\nx")
@@ -72,6 +75,47 @@ final class ActionAPITests: XCTestCase {
         XCTAssertEqual(kind(529, "{}"), .overloaded)
         XCTAssertEqual(kind(503, "{}"), .server)
         XCTAssertEqual(kind(400, "{}"), .badRequest)
+    }
+
+    /// The part of parse after the status, shared by the whole-body path and the stream.
+    func testResultFromTheTextAndTheStopReason() {
+        let text = #"{"translation":"Hi","back_translation":"안녕"}"#
+        let ok = ActionResult(translation: "Hi", backTranslation: "안녕")
+        XCTAssertEqual(try ActionAPI.result(text: text, stopReason: "end_turn").get(), ok)
+        XCTAssertEqual(try ActionAPI.result(text: text, stopReason: nil).get(), ok)
+        XCTAssertEqual(ActionAPI.result(text: text, stopReason: "refusal").failureKind, .refused)
+        XCTAssertEqual(ActionAPI.result(text: text, stopReason: "max_tokens").failureKind, .truncated)
+        XCTAssertEqual(ActionAPI.result(text: #"{"translation":"Hi""#, stopReason: "end_turn").failureKind, .parse)
+        XCTAssertEqual(ActionAPI.result(text: #"{"translation":" ","back_translation":""}"#, stopReason: nil).failureKind, .parse)
+    }
+
+    /// keyboard-ui 003 (P4): Retry only where trying again can work, and exactly those lines say to try again.
+    func testRetryOnlyWhereItCanWork() {
+        let retry: Set<ActionError.Kind> = [.network, .timeout, .overloaded, .rate, .server, .parse]
+        for k in [ActionError.Kind.auth, .spendLimit, .rate, .overloaded, .server, .badRequest, .network, .timeout,
+                  .refused, .truncated, .parse, .tooLong, .noKey, .setup] {
+            XCTAssertEqual(ActionError(k).canRetry, retry.contains(k), "\(k)")
+            // Each line says what happened and what to do next: at least two sentences.
+            let m = ActionError(k).message
+            XCTAssertGreaterThanOrEqual(m.components(separatedBy: ". ").count, 2, m)
+            XCTAssertTrue(m.hasSuffix("."), m)
+            XCTAssertEqual(m.lowercased().contains("try again"), retry.contains(k), m)
+        }
+    }
+
+    /// A stream's error event type -> the kind shown; the spend limit is read from the body as for a 429.
+    func testStreamErrorTypes() {
+        let table: [(String, ActionError.Kind)] = [
+            ("invalid_request_error", .badRequest), ("authentication_error", .auth), ("permission_error", .auth),
+            ("not_found_error", .badRequest), ("request_too_large", .badRequest), ("rate_limit_error", .rate),
+            ("api_error", .server), ("overloaded_error", .overloaded), ("timeout_error", .timeout),
+            ("something_new", .server), ("", .server),
+        ]
+        for (type, kind) in table {
+            XCTAssertEqual(ActionAPI.kind(streamError: type, body: Data()), kind, type)
+        }
+        let spend = Data(#"{"type": "error", "error": {"type": "rate_limit_error", "details": {"error_code": "enforced_spend_limit_reached"}}}"#.utf8)
+        XCTAssertEqual(ActionAPI.kind(streamError: "rate_limit_error", body: spend), .spendLimit)
     }
 }
 

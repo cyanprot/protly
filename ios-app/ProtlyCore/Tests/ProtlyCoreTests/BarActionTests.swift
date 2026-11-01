@@ -113,4 +113,28 @@ final class BarActionTests: XCTestCase {
         // The request keeps the English name.
         XCTAssertEqual(Languages.name(of: "ru"), "Russian")
     }
+
+    /// keyboard-ui 003: the progress strip names the operation and, for a translation, its target; after 8 s a
+    /// second line says it is still going (P5).
+    func testProgressWords() {
+        XCTAssertEqual(BarAction.translate(target: "English").progressVerb, "Translating")
+        XCTAssertEqual(BarAction.polish(korean: false).progressVerb, "Polishing")
+        XCTAssertEqual(BarAction.polish(korean: true).progressVerb, "Polishing")
+        XCTAssertEqual(BarAction.read.progressVerb, "Reading")
+        XCTAssertNil(BarAction.undo.progressVerb)
+        XCTAssertEqual(BarAction.translate(target: "Русский").slowLine, "Still translating…")
+        XCTAssertEqual(BarAction.polish(korean: false).slowLine, "Still polishing…")
+        XCTAssertEqual(BarAction.read.slowLine, "Still reading…")
+        XCTAssertNil(BarAction.undo.slowLine)
+    }
+
+    /// The call a request makes, as the bar would have labeled it: the strip and the card name the same target.
+    func testTheCallsLabelFollowsTheRequest() {
+        XCTAssertEqual(BarAction.call(.out, text: "ru: 안녕"), .translate(target: "Русский"))
+        XCTAssertEqual(BarAction.call(.out, text: "오늘 고마워"), .translate(target: "English"))
+        XCTAssertEqual(BarAction.call(.fix, text: "teh cat"), .polish(korean: false))
+        XCTAssertEqual(BarAction.call(.fix, text: "ko: 낼 봐"), .polish(korean: true))
+        XCTAssertEqual(BarAction.call(.in, text: "anything"), .read)
+        XCTAssertEqual(BarAction.call(.out, text: ""), .translate(target: "English"))
+    }
 }

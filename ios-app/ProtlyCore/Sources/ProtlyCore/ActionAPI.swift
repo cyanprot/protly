@@ -24,18 +24,26 @@ public struct ActionError: Error, Sendable, Equatable {
         case tooLong, noKey, setup
     }
     public let kind: Kind
-    /// Short English line for the bar.
+    /// Trying again can work: the network, a timeout, an overloaded API, a rate limit (P4), a server error or a reply
+    /// that was not readable. Exactly these kinds tell the user to try again (ActionAPITests).
+    public var canRetry: Bool {
+        switch kind {
+        case .network, .timeout, .overloaded, .rate, .server, .parse: return true
+        default: return false
+        }
+    }
+    /// One line for the strip or the card: what happened, then what to do next.
     public var message: String {
         switch kind {
         case .auth: return "API key rejected. Rebuild protly with a valid key."
-        case .spendLimit: return "Monthly API spend limit reached."
+        case .spendLimit: return "Monthly API spend limit reached. Raise the limit in the Console, or wait until it resets."
         case .rate: return "Rate limited. Try again in a moment."
         case .overloaded: return "The API is overloaded. Try again in a moment."
         case .server: return "The API had a server error. Try again."
-        case .badRequest: return "The API rejected the request."
+        case .badRequest: return "The API rejected the request. Try a shorter text, or rebuild protly."
         case .network: return "Network error. Check the connection and try again."
         case .timeout: return "The model took too long. Try again."
-        case .refused: return "The model declined this text."
+        case .refused: return "The model declined this text. Edit it first."
         case .truncated: return "The reply was cut off. Try a shorter text."
         case .parse: return "The reply was not readable. Try again."
         case .tooLong: return "The text is too long. Try a shorter text."
@@ -94,10 +102,12 @@ public enum ActionAPI {
     /// Longest text sent, in UTF-16 units. A longer text cannot fit the 16000-token reply anyway, and a
     /// multi-megabyte clipboard would cost the keyboard its memory and the account its money.
     public static let maxInputLength = 50_000
-    /// Largest reply read. 16000 tokens of output are about 100 KB; anything this big is not a reply.
+    /// Largest reply read, counted in raw bytes: for a stream that includes the event framing and the thinking
+    /// deltas. One text_delta event is about 112 bytes of framing plus its text, so even one token per event, 16000
+    /// tokens, is about 1.9 MB; anything bigger is not a reply.
     public static let maxResponseBytes = 2_000_000
-    /// Seconds without a byte (the API sends the reply whole, so this is also the wait for it), and the
-    /// cap on the whole request, so a reply dribbled byte by byte still ends.
+    /// Seconds without a byte (the stream's pings and thinking deltas reset it), and the cap on the whole call,
+    /// so a reply dribbled byte by byte still ends. URLSession enforces both and cancels the read.
     public static let idleTimeout: TimeInterval = 30
     public static let totalTimeout: TimeInterval = 90
 
@@ -149,7 +159,7 @@ public enum ActionAPI {
     ] }
 
     /// Same shape as the extension and the Shortcut: thinking off on Sonnet is "between_tools", Opus is
-    /// "adaptive"; effort low; JSON schema output; no temperature.
+    /// "adaptive"; effort low; JSON schema output; no temperature. Streamed (keyboard-ui 003).
     public static func body(mode: ActionMode, text: String, system: String) throws -> Data {
         let body: [String: Any] = [
             "model": model(for: mode),
@@ -158,6 +168,7 @@ public enum ActionAPI {
             "output_config": ["effort": "low", "format": ["type": "json_schema", "schema": schema]],
             "system": system,
             "messages": [["role": "user", "content": userMessage(mode: mode, text: text)]],
+            "stream": true,
         ]
         return try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
     }
@@ -190,26 +201,44 @@ public enum ActionAPI {
         return data
     }
 
-    /// HTTP status and body -> result. Thinking blocks are skipped; the answer is the joined text blocks.
+    /// HTTP status and a whole (not streamed) body -> result. Thinking blocks are skipped; the answer is the joined
+    /// text blocks.
     public static func parse(status: Int, body: Data) -> Result<ActionResult, ActionError> {
         guard body.count <= maxResponseBytes else { return .failure(ActionError(.parse)) }
         guard status == 200 else { return .failure(ActionError(kind(status: status, body: body))) }
         guard let resp = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else {
             return .failure(ActionError(.parse))
         }
-        switch resp["stop_reason"] as? String {
+        let blocks = resp["content"] as? [[String: Any]] ?? []
+        let text = blocks.filter { $0["type"] as? String == "text" }.compactMap { $0["text"] as? String }.joined()
+        return result(text: text, stopReason: resp["stop_reason"] as? String)
+    }
+
+    /// The model's text and its stop reason -> result: the whole-body path and the stream both end here.
+    public static func result(text: String, stopReason: String?) -> Result<ActionResult, ActionError> {
+        switch stopReason {
         case "refusal": return .failure(ActionError(.refused))
         case "max_tokens": return .failure(ActionError(.truncated))
         default: break
         }
-        let blocks = resp["content"] as? [[String: Any]] ?? []
-        let text = blocks.filter { $0["type"] as? String == "text" }.compactMap { $0["text"] as? String }.joined()
         guard let obj = jsonObject(in: text),
               let translation = obj["translation"] as? String,
               !translation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               let back = obj["back_translation"] as? String
         else { return .failure(ActionError(.parse)) }
         return .success(ActionResult(translation: translation, backTranslation: back))
+    }
+
+    /// A stream's `error` event type -> the kind to show. The spend limit is read from the body, as for a 429.
+    static func kind(streamError type: String, body: Data) -> ActionError.Kind {
+        switch type {
+        case "authentication_error", "permission_error": return .auth
+        case "rate_limit_error": return kind(status: 429, body: body)
+        case "overloaded_error": return .overloaded
+        case "timeout_error": return .timeout
+        case "invalid_request_error", "not_found_error", "request_too_large": return .badRequest
+        default: return .server  // api_error and anything new
+        }
     }
 
     static func kind(status: Int, body: Data) -> ActionError.Kind {

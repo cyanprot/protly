@@ -84,4 +84,33 @@ public enum BarAction: Hashable, Sendable {
     public static func protlyKey(text: String, canUndo: Bool, clipboardIsNew: Bool) -> BarAction {
         center(text: text, canUndo: canUndo, clipboardIsNew: clipboardIsNew) ?? .read
     }
+
+    /// The progress strip while the call runs (keyboard-ui 003): "Translating", then the arrow and the title for a
+    /// translation. nil for Undo, which makes no call.
+    public var progressVerb: String? {
+        switch self {
+        case .translate: return "Translating"
+        case .polish: return "Polishing"
+        case .read: return "Reading"
+        case .undo: return nil
+        }
+    }
+
+    /// The strip's second line after 8 s (P5).
+    public var slowLine: String? {
+        progressVerb.map { "Still \($0.lowercased())…" }
+    }
+
+    /// The label of a call the keyboard makes, from the text it sends, as the bar would show it.
+    public static func call(_ mode: ActionMode, text: String) -> BarAction {
+        switch mode {
+        case .in: return .read
+        case .out, .fix:
+            // center(text:) decides from the text; an empty text is never sent, but the label stays the mode's.
+            if let action = center(text: text, canUndo: false, clipboardIsNew: false), action.actionMode == mode {
+                return action
+            }
+            return mode == .out ? .translate(target: Languages.endonym(of: "en") ?? "English") : .polish(korean: false)
+        }
+    }
 }

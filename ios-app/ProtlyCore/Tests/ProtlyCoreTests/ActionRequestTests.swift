@@ -132,7 +132,7 @@ extension ActionRequestTests {
             for mode in ActionMode.allCases {
                 let body = try XCTUnwrap(try ActionAPI.request(mode: mode, text: text, system: "SYS", apiKey: "k").get().httpBody)
                 let obj = try XCTUnwrap(try JSONSerialization.jsonObject(with: body) as? [String: Any])
-                XCTAssertEqual(Set(obj.keys), ["model", "max_tokens", "thinking", "output_config", "system", "messages"])
+                XCTAssertEqual(Set(obj.keys), ["model", "max_tokens", "thinking", "output_config", "system", "messages", "stream"])
                 XCTAssertEqual(obj["system"] as? String, "SYS")
                 let messages = try XCTUnwrap(obj["messages"] as? [[String: Any]])
                 XCTAssertEqual(messages.count, 1)

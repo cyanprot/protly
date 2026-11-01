@@ -76,6 +76,18 @@ final class KeyboardSourceRulesTests: XCTestCase {
         }
     }
 
+    /// Tower decision D-E: the host's became-active notice can come just before the new controller pins (run 59: 32 ms),
+    /// so every pin remembers it and a pin made soon after takes the drop itself.
+    func testTheHeightPinCatchesAHostReturnThatCameJustBefore() throws {
+        guard let text = try sources().first(where: { $0.name == "ProtlyHeight.swift" })?.text else { return }
+        let ns = text as NSString
+        let became = body(of: "@objc private func hostBecameActive(", in: ns).map { ns.substring(with: $0) } ?? ""
+        XCTAssertTrue(became.contains("Self.lastHostBecameActive = "), "hostBecameActive records the time for the next pin")
+        let initBody = body(of: "private init(_ controller: KeyboardInputViewController)", in: ns).map { ns.substring(with: $0) } ?? ""
+        XCTAssertTrue(initBody.contains("Self.lastHostBecameActive"), "a new pin checks the host's last return")
+        XCTAssertTrue(initBody.contains("< Self.earlyWindow"), "only a return just before the pin counts")
+    }
+
     func testTheKeyGoesOnlyIntoTheRequest() throws {
         var uses: [String] = []
         for (name, text) in try sources() {
@@ -88,24 +100,34 @@ final class KeyboardSourceRulesTests: XCTestCase {
                       uses.joined())
     }
 
+    /// keyboard-ui 003: the one write, Copy on the result card, is an assignment inside copyResult().
     func testTheClipboardStringIsReadOnlyInReadClipboard() throws {
+        var writes: [String] = []
         for (name, text) in try sources() {
             let ns = text as NSString
-            let names = boundNames(#"UIPasteboard\.general\b"#, in: text)
+            let names = Set(boundNames(#"UIPasteboard\.general\b"#, in: text))
             let readers = [#"UIPasteboard\.general\.(string|strings|items|data|value)\b"#]
                 + names.map { #"\b\#($0)\.(string|strings|items|data|value)\b"# }
-            let reads = readers.flatMap { matches($0, in: text) }
-            guard !reads.isEmpty else { continue }
+            let uses = readers.flatMap { matches($0, in: text) }
+            guard !uses.isEmpty else { continue }
             XCTAssertEqual(name, "KeyboardViewController.swift")
-            let body = ns.range(of: "private func readClipboard()")
-            guard body.location != NSNotFound else { XCTFail("\(name): readClipboard not found"); continue }
-            let end = ns.range(of: "\n    }\n", range: NSRange(location: body.location, length: ns.length - body.location))
-            guard end.location != NSNotFound else { XCTFail("\(name): end of readClipboard not found"); continue }
-            for r in reads {
-                XCTAssertTrue(r.location > body.location && r.location < end.location,
-                              "\(name): clipboard read outside readClipboard: \(lineText(ns, r))")
+            guard let read = body(of: "private func readClipboard()", in: ns) else {
+                XCTFail("\(name): readClipboard not found"); continue
+            }
+            let copy = body(of: "func copyResult()", in: ns)
+            for r in uses {
+                let rest = ns.substring(from: r.location + r.length)
+                if rest.range(of: #"^\s*=(?!=)"#, options: .regularExpression) != nil {
+                    XCTAssertTrue(copy.map { NSLocationInRange(r.location, $0) } == true,
+                                  "\(name): clipboard write outside copyResult: \(lineText(ns, r))")
+                    writes.append("\(name): \(lineText(ns, r))")
+                } else {
+                    XCTAssertTrue(NSLocationInRange(r.location, read),
+                                  "\(name): clipboard read outside readClipboard: \(lineText(ns, r))")
+                }
             }
         }
+        XCTAssertEqual(writes.count, 1, writes.joined(separator: "\n"))
     }
 
     /// The range of a function's body: from its declaration to the first line that is only `    }`.
@@ -302,6 +324,142 @@ final class KeyboardSourceRulesTests: XCTestCase {
             return XCTFail("ProtlyBar.swift not found")
         }
         XCTAssertTrue(bar.contains("accessibilityReduceMotion"), "ProtlyBar.swift has no Reduce Motion form")
+    }
+
+    /// keyboard-ui 003: ActionClient stays nonisolated, so the download and the parsing run off the main actor, and
+    /// it reads the reply only through ProtlyCore's stream driver.
+    func testActionClientIsNotOnTheMainActor() throws {
+        guard let client = try sources().first(where: { $0.name == "ActionClient.swift" })?.text else {
+            return XCTFail("ActionClient.swift not found")
+        }
+        XCTAssertFalse(client.contains("@MainActor"), "ActionClient.swift must not be on the main actor")
+        XCTAssertTrue(client.contains("ActionAPI.updates"), "ActionClient.swift must read the reply through ActionAPI.updates")
+    }
+
+    /// keyboard-ui 003, Task 3.5: the CI stub compiles only into the simulator's ProtlyCIKeyboard. `PROTLY_CI_STUB`
+    /// wraps the whole stub file and its one call site, before the key; only ios-app/CI/project.yml defines it.
+    func testTheCIStubIsCompiledOutOfThePhone() throws {
+        let all = try sources()
+        var uses: [String] = []
+        for (name, text) in all {
+            let ns = text as NSString
+            uses += matches(#"\bPROTLY_CI_STUB\b"#, in: text).map { "\(name): \(lineText(ns, $0))" }
+            if name != "StubActionClient.swift" && name != "ActionClient.swift" {
+                XCTAssertTrue(matches(#"\bStubActionClient\b"#, in: text).isEmpty, "\(name) calls the stub")
+            }
+        }
+        // One `#if` in each of the two files, nothing else (the line numbers dropped).
+        let places = uses.map { $0.replacingOccurrences(of: #": \d+: "#, with: ": ", options: .regularExpression) }.sorted()
+        XCTAssertEqual(places, ["ActionClient.swift: #if PROTLY_CI_STUB", "StubActionClient.swift: #if PROTLY_CI_STUB"],
+                       uses.joined(separator: "\n"))
+        guard let stub = all.first(where: { $0.name == "StubActionClient.swift" })?.text,
+              let client = all.first(where: { $0.name == "ActionClient.swift" })?.text else {
+            return XCTFail("StubActionClient.swift or ActionClient.swift not found")
+        }
+        // Wholly inside the condition: nothing before the #if or after the #endif, and no second block.
+        let lines = stub.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        XCTAssertEqual(lines.first, "#if PROTLY_CI_STUB")
+        XCTAssertEqual(lines.last, "#endif")
+        XCTAssertEqual(lines.filter { $0.hasPrefix("#if") || $0.hasPrefix("#endif") || $0.hasPrefix("#else") }.count, 2)
+        // A cancelled call stops in the stub's delays: they throw, never `try?`.
+        XCTAssertTrue(stub.contains("try await Task.sleep(for:"), "the stub's delays")
+        XCTAssertFalse(stub.contains("try? await Task.sleep"), "a stub delay that ignores a cancel")
+        XCTAssertTrue(stub.contains("ActionAPI.updates"), "the stub must feed ProtlyCore's driver, as the real client does")
+        // The call site asks the stub first (before the key) and only inside the condition.
+        let ns = client as NSString
+        let run = body(of: "static func run(", in: ns).map { ns.substring(with: $0) } ?? ""
+        let condition = run.range(of: "#if PROTLY_CI_STUB"), call = run.range(of: "StubActionClient.run("),
+            endif = run.range(of: "#endif"), real = run.range(of: "ActionAPI.updates")
+        XCTAssertTrue(condition != nil && call != nil && endif != nil && real != nil, "ActionClient.run: \(run)")
+        if let condition, let call, let endif, let real {
+            XCTAssertTrue(condition.upperBound < call.lowerBound && call.upperBound < endif.lowerBound
+                          && endif.upperBound < real.lowerBound, "ActionClient.run asks the stub first, inside the condition")
+        }
+        // Defined only for the CI keyboard target: never in the phone's package.
+        let iosApp = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let package = try String(contentsOf: iosApp.appendingPathComponent("Package.swift"), encoding: .utf8)
+        XCTAssertFalse(package.contains("PROTLY_CI_STUB"), "ios-app/Package.swift defines the CI stub")
+        let project = try String(contentsOf: iosApp.appendingPathComponent("CI/project.yml"), encoding: .utf8)
+        let defined = project.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("#") }
+            .filter { $0.contains("PROTLY_CI_STUB") }
+        XCTAssertEqual(defined.map { $0.trimmingCharacters(in: .whitespaces) },
+                       [#"SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) PROTLY_CI_STUB""#])
+        let keyboard = project.range(of: "  ProtlyCIKeyboard:"), app = project.range(of: "  ProtlyCIApp:"),
+            setting = project.range(of: "SWIFT_ACTIVE_COMPILATION_CONDITIONS")
+        if let keyboard, let app, let setting {
+            XCTAssertTrue(keyboard.upperBound < setting.lowerBound && setting.upperBound < app.lowerBound,
+                          "PROTLY_CI_STUB is set on ProtlyCIKeyboard only")
+        } else {
+            XCTFail("project.yml: ProtlyCIKeyboard, ProtlyCIApp or the setting not found")
+        }
+    }
+
+    /// keyboard-ui 003, Task 3.5: the strip's glow and the card's reveal each name their Reduce Motion form.
+    func testTheStripAndTheCardHaveAReduceMotionForm() throws {
+        let all = try sources()
+        for name in ["ProgressStrip.swift", "ResultCard.swift"] {
+            let text = all.first(where: { $0.name == name })?.text ?? ""
+            XCTAssertFalse(text.isEmpty, "\(name) not found")
+            XCTAssertTrue(text.contains("@Environment(\\.accessibilityReduceMotion)"), "\(name) has no Reduce Motion form")
+        }
+        let controller = all.first(where: { $0.name == "KeyboardViewController.swift" })?.text ?? ""
+        XCTAssertTrue(controller.contains(".modifier(CardReveal(visible: visible))"), "the panel layer reveals the card with CardReveal")
+    }
+
+    /// keyboard-ui 003 review fixes, on the keyboard's source text (it needs the iOS SDK to build).
+    func testResultCardWiring() throws {
+        let all = try sources()
+        func file(_ name: String) -> String {
+            let text = all.first(where: { $0.name == name })?.text ?? ""
+            XCTAssertFalse(text.isEmpty, "\(name) not found")
+            return text
+        }
+        let controller = file("KeyboardViewController.swift"), handler = file("ProtlyActionHandler.swift")
+        // The panel layer is always mounted and animates its own opacity: no view leaves with a transition (the ghost
+        // card), and a hidden layer takes no taps and is hidden from VoiceOver.
+        for name in ["KeyboardViewController.swift", "Panel.swift", "ResultCard.swift"] {
+            XCTAssertFalse(file(name).contains(".transition("), "\(name): a panel view removed with a transition")
+        }
+        for needle in [".allowsHitTesting(visible)", ".accessibilityHidden(!visible)", "completionCriteria: .removed"] {
+            XCTAssertTrue(controller.contains(needle), "the panel layer: \(needle)")
+        }
+        // A late fade-out completion of card A must not drop card B (D-D): only the latest fade drops the panel.
+        let cns = controller as NSString
+        let follow = body(of: "private func follow(", in: cns).map { cns.substring(with: $0) } ?? ""
+        XCTAssertTrue(follow.contains("generation &+= 1"), "follow() numbers each change")
+        XCTAssertTrue(follow.contains("if fade == generation"), "a fade-out completion drops the panel only if it is the latest")
+        XCTAssertFalse(follow.contains("if !visible { shown = nil }"), "a late completion can drop the next card")
+        // The keys wait while the field read walks the cursor: a key then would land mid-text.
+        let hns = handler as NSString
+        for declaration in ["override func handle(", "override func handleDrag("] {
+            let fn = body(of: declaration, in: hns).map { hns.substring(with: $0) } ?? ""
+            XCTAssertTrue(fn.contains("host?.isReadingField == true"), "\(declaration) runs during the read")
+        }
+        // Cancel mid-step waits for the step to settle, and no new call starts while it does.
+        XCTAssertTrue(controller.contains("if isReadingField, cursorReturn.isMoving {"), "restoreCursor moves back mid-step")
+        XCTAssertTrue(controller.contains("if isReadingField { return false }"), "a call can start while a read settles")
+        // Every Retry goes through retry(_:), which sends Read's own text again instead of reading the clipboard.
+        XCTAssertEqual(matches(#"retry: \{ \[unowned host\] in host\.retry\(\$0\) \}"#, in: controller).count, 2)
+        XCTAssertEqual(matches(#"retry: \{ \[unowned host\] in host\.act\("#, in: controller).count, 0)
+        // Read's Insert keeps what it typed over, so Undo can put a selection back.
+        let insert = body(of: "func insertResult()", in: cns).map { cns.substring(with: $0) } ?? ""
+        XCTAssertTrue(insert.contains("lastInsert = (result, selected, !selected.isEmpty)"), "Read's Insert drops the selection")
+    }
+
+    /// Tower decision D-B: the keys wait during the field read, so the read runs on FieldReadBudget's clock (2 s in all,
+    /// a started step always settles) instead of a fixed count of polls.
+    func testTheFieldReadIsCapped() throws {
+        guard let text = try sources().first(where: { $0.name == "FieldText.swift" })?.text else {
+            return XCTFail("FieldText.swift not found")
+        }
+        let ns = text as NSString
+        let read = body(of: "static func read(", in: ns).map { ns.substring(with: $0) } ?? ""
+        for needle in ["FieldReadBudget(start:", "for _ in 0..<FieldReadBudget.maxSteps", "budget.canStartStep(now:",
+                       "while budget.isWaiting(sentAt: sent,"] {
+            XCTAssertTrue(read.contains(needle), "FieldText.read: \(needle)")
+        }
+        XCTAssertTrue(matches(#"for _ in 0\.\.<\d"#, in: read).isEmpty, "FieldText.read: a fixed count of steps or polls")
     }
 
     private func lineText(_ ns: NSString, _ r: NSRange) -> String {

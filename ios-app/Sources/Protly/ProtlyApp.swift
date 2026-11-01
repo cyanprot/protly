@@ -236,7 +236,7 @@ private struct TryItSection: View {
                 NumberedRow(number: 2) {
                     Text("After a Replace, tap \(Image(systemName: "arrow.uturn.backward")) Undo.")
                 }
-                NumberedRow(number: 3) { Text("Writing Korean? Type `dkssud`, then tap the left slot.") }
+                NumberedRow(number: 3) { Text("Writing Korean? Type `dkssud`: it turns into 안녕 on its own. The left slot flips a word back.") }
             }
         }
     }

@@ -17,6 +17,8 @@ import UIKit
 /// layout (runs 5 and 6). Then the pin drops by the margin, and ProtlyRoot keeps the content at the bottom, so only
 /// the empty top of the bar's band goes under iOS's margin. A controller older than `freshWindow` ignores the
 /// notification (Control Center, an alert, Face ID over a live keyboard): iOS kept the fresh-presentation geometry.
+/// The notification can also come just before the new controller pins (run 59: 32 ms before, received only by the
+/// old controller): every pin records it, and a pin made within `earlyWindow` of it takes the drop at once.
 ///
 /// Logs the view's height at debug level (subsystem com.northprot.protly, category height): Console on a Mac
 /// shows it for the phone, `log show --debug` for the simulator.
@@ -30,6 +32,10 @@ final class ProtlyHeight: NSObject {
     static let hostTopMargin: CGFloat = 17
     /// How soon after loading a controller still counts as attached by the host's return (seen: 0.22-0.24 s).
     static let freshWindow: TimeInterval = 2
+    /// How soon before a controller pins the host's return still counts as meant for it (seen: 32 ms).
+    static let earlyWindow: TimeInterval = 0.5
+    /// systemUptime of the host's last NSExtensionHostDidBecomeActive, as any pin saw it.
+    private static var lastHostBecameActive: TimeInterval?
 
     private static let log = Logger(subsystem: "com.northprot.protly", category: "height")
     private static var key: UInt8 = 0
@@ -91,9 +97,15 @@ final class ProtlyHeight: NSObject {
             self, selector: #selector(hostWillResignActive), name: .NSExtensionHostWillResignActive, object: nil
         )
         report("pinned")
+        // The host came back just before this controller loaded: the notification went to the old one only.
+        if let last = Self.lastHostBecameActive, loaded - last < Self.earlyWindow, constraint.isActive {
+            constraint.constant = Self.portrait - Self.hostTopMargin
+            report("host became active \(loaded - last) s before pinning")
+        }
     }
 
     @objc private func hostBecameActive(_ note: Notification) {
+        Self.lastHostBecameActive = ProcessInfo.processInfo.systemUptime
         let age = ProcessInfo.processInfo.systemUptime - loaded
         guard age < Self.freshWindow, constraint.isActive else {
             return report("host became active after \(age) s, kept")

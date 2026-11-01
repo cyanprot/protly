@@ -14,6 +14,9 @@ final class ProtlyMode: ObservableObject {
     @Published var alternativeIsWord = true
     /// The panel in place of the keys, nil = keys.
     @Published var panel: PanelState?
+    /// The progress strip in place of the bar while a call runs, or after it failed before any text; nil = the bar.
+    /// Changes at the start and the end of a call only: the streamed text is in ResultFeed.
+    @Published var strip: StripState?
     /// The bar's center slot (nil = empty) and what the protly key runs. ProtlyCore decides both from the field text
     /// (BarAction), the same way the request is built, so a label never names another target.
     @Published var center: BarAction?
@@ -44,6 +47,22 @@ final class KeyboardViewController: KeyboardInputViewController {
     private static let previousKey = "protly.previousLanguage"
     private static let clipboardKey = "protly.clipboardChangeCount"
     private var actionTask: Task<Void, Never>?
+    /// The streamed text of the latest call: only ResultCard reads it. A new one per call, so a card fading out keeps
+    /// its own text.
+    private(set) var feed = ResultFeed()
+    /// The call whose field read is moving the cursor: the keys wait until it ends (ProtlyActionHandler), or a key
+    /// would land mid-text and join the text sent.
+    private var readingCall: Int?
+    var isReadingField: Bool { readingCall != nil }
+    /// Cancel or a hide came while a read step was on its way: the read lets it settle, then puts the cursor back.
+    private var restoreWhenReadEnds = false
+    /// Read clipboard's text for the call on screen: Retry sends it again instead of reading the clipboard, which may
+    /// hold protly's own Copy by then.
+    private var readInput: String?
+    /// Numbers the calls: a new number restarts the strip's 8 s line and makes a new card.
+    private var calls = 0
+    /// What the field reads moved the cursor over, for Cancel (P6).
+    private var cursorReturn = CursorReturn()
     /// Text protly inserted and what it replaced, for Undo.
     private var lastInsert: (inserted: String, original: String, isSelection: Bool)?
     /// LearnedWords.changes at the last save (Words.swift). Per controller: each one loads its own copy.
@@ -54,6 +73,10 @@ final class KeyboardViewController: KeyboardInputViewController {
     override var primaryLanguage: String? {
         get { session.keycapLanguage == .korean ? "ko-KR" : "en-US" }
         set {}
+    }
+
+    deinit {
+        actionTask?.cancel()
     }
 
     override func viewDidLoad() {
@@ -112,8 +135,11 @@ final class KeyboardViewController: KeyboardInputViewController {
         // The word is already plain text in the field: only the session state goes, so the next key starts a new
         // word. The abandoned word's language carries to the next message.
         abandonWord()
-        actionTask?.cancel()
-        mode.panel = nil
+        // Hiding mid-call counts as Cancel: the call stops and the cursor goes back too.
+        restoreCursor()
+        if mode.panel != nil { mode.panel = nil }
+        if mode.strip != nil { mode.strip = nil }  // also stops the glow
+        readInput = nil
         endUndo()
         refreshMode()
     }
@@ -121,6 +147,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     // MARK: Typing
 
     func typeLetter(_ letter: Character) {
+        dismissFailedStrip()
         endUndo()
         noticeFieldMoved()
         let kc = state.keyboardContext.keyboardCase
@@ -145,6 +172,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     func backspaceInWord() -> Bool {
         guard let edit = session.backspace() else { return false }
         guard apply(edit) else { return false }
+        dismissFailedStrip()
         // Shift is spent, as on KeyboardKit's own path (this gesture skips its case change).
         if state.keyboardContext.keyboardCase == .uppercased { setKeyboardCase(.lowercased) }
         refreshMode()
@@ -250,46 +278,109 @@ final class KeyboardViewController: KeyboardInputViewController {
 
     /// requested nil = the protly key: the action that fits the field, or the clipboard when it is empty.
     func act(_ requested: ActionMode?) {
-        commitWord()
-        session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
-        watch.forget()  // reading the field moves the cursor
-        refreshMode()
-        // Every path below shows its own panel: a request still running must not replace it later.
-        actionTask?.cancel()
-        guard hasFullAccess else {
-            // F1: say why instead of a failed call (the bar shows the outlined lock pill).
-            mode.panel = .notice(
-                "Translate, Polish and Read need Full Access: Settings > General > Keyboard > Keyboards > Protly > Allow Full Access")
-            return
-        }
+        guard beginCall() else { return }
         if requested == .in {
             readClipboard()
             return
         }
-        // The panel shows at once: a second tap during the field read cannot start a second request.
-        mode.panel = .loading(requested ?? mode.protlyKey.actionMode ?? .in)
+        // The strip shows at once, labeled as the bar was: a second tap during the field read starts nothing.
+        let action = requested ?? mode.protlyKey.actionMode ?? .in
+        let tapped = [mode.center, mode.protlyKey].compactMap { $0 }.first { $0.actionMode == action }
+        let call = nextCall()
+        mode.strip = StripState(call: call, action: action, label: tapped ?? BarAction.call(action, text: ""))
+        readingCall = call
         actionTask = Task { [weak self] in
             guard let self else { return }
-            let field = await FieldText.read(textDocumentProxy)
-            guard !Task.isCancelled else { return }
+            defer { if readingCall == call { readingCall = nil } }
+            guard !Task.isCancelled else { return }  // Cancel or a hide came first: never move the cursor
+            cursorReturn.begin(before: textDocumentProxy.documentContextBeforeInput ?? "")
+            let field = await FieldText.read(textDocumentProxy) { [weak self] move in self?.record(move) }
+            guard !Task.isCancelled else {
+                // Cancelled mid-step: the step has settled now, so the cursor can go back over exactly what landed.
+                if restoreWhenReadEnds {
+                    restoreWhenReadEnds = false
+                    putCursorBack()
+                }
+                return
+            }
             guard let field else {
-                mode.panel = nil
+                // Nothing to send: put back what the read moved over (whitespace) at once, no Cancel will.
+                restoreCursor()
+                mode.strip = nil
                 if requested == nil { readClipboard() }
                 return
             }
+            if field.isSelection { cursorReturn.clear() }
             // The action comes from the text read here (the whole field or the selection), not from the bar's view of it.
             let action = ActionAPI.mode(forDraft: field.text)
-            // Text left after the cursor = only a prefix was read: Insert would glue the result to the rest.
+            // Text left after the cursor = only a prefix was read: Replace would glue the result to the rest.
             if !field.isSelection, !(textDocumentProxy.documentContextAfterInput ?? "").isEmpty {
+                mode.strip = nil
                 mode.panel = .failed("Could not read the whole text. Select all, then tap again.", retry: action)
                 return
             }
-            run(action, text: field.text, original: field.text, isSelection: field.isSelection)
+            run(action, text: field.text, original: field.text, isSelection: field.isSelection, call: call)
         }
+    }
+
+    /// Retry on the strip, a panel or the card: the same call again. Read sends the same text again; the field
+    /// actions read the field again (a Retry after a cut-short read continues from where it stopped, CursorReturn).
+    func retry(_ action: ActionMode) {
+        guard action == .in, let text = readInput else { return act(action) }
+        guard beginCall() else { return }
+        cursorReturn.clear()
+        run(.in, text: text, original: "", isSelection: false)
+    }
+
+    /// What every call does first. false while a call runs (B10: the strip has no action, and the protly key is still
+    /// live), or without Full Access, which gets its own notice.
+    private func beginCall() -> Bool {
+        if let strip = mode.strip, strip.error == nil { return false }
+        if isReadingField { return false }  // a cancelled read still settling its last step
+        commitWord()
+        session.forgetLast()  // the field is about to change: the bar's flip must not reach into it
+        watch.forget()  // reading the field moves the cursor
+        refreshMode()
+        // Every path after this shows its own strip or panel: a request still running must not replace it later.
+        actionTask?.cancel()
+        if mode.panel != nil { mode.panel = nil }
+        guard hasFullAccess else {
+            // F1: say why instead of a failed call (the bar shows the outlined lock pill).
+            mode.strip = nil
+            mode.panel = .notice(
+                "Translate, Polish and Read need Full Access: Settings > General > Keyboard > Keyboards > Protly > Allow Full Access")
+            return false
+        }
+        return true
+    }
+
+    /// One move of the field read, into the record Cancel uses.
+    private func record(_ move: FieldText.Move) {
+        switch move {
+        case .sending(let chunk): cursorReturn.sending(chunk)
+        case .applied(let before): cursorReturn.applied(before: before)
+        case .notApplied: cursorReturn.notApplied()
+        }
+    }
+
+    /// Typing after a call failed before any text: the error has been read, the bar comes back. The cursor is the
+    /// user's again, so Cancel has nothing left to put back.
+    private func dismissFailedStrip() {
+        guard let strip = mode.strip, strip.error != nil else { return }
+        mode.strip = nil
+        cursorReturn.clear()
+    }
+
+    private func nextCall() -> Int {
+        calls += 1
+        return calls
     }
 
     /// Reading the string shows the Allow Paste prompt: only ever on a tap.
     private func readClipboard() {
+        cursorReturn.clear()  // Read does not touch the field
+        readInput = nil
+        if mode.strip != nil { mode.strip = nil }
         let pb = UIPasteboard.general
         UserDefaults.standard.set(pb.changeCount, forKey: Self.clipboardKey)
         mode.clipboardIsNew = false
@@ -302,6 +393,7 @@ final class KeyboardViewController: KeyboardInputViewController {
         // note is only shown here; Save on the panel (insertResult) keeps it.
         switch AboutMe.parse(clipboard: text) {
         case .notAboutMe:
+            readInput = text
             run(.in, text: text, original: "", isSelection: false)
         case .note(let note):
             mode.panel = .confirmNote(note, shownAt: ProcessInfo.processInfo.systemUptime)
@@ -312,21 +404,81 @@ final class KeyboardViewController: KeyboardInputViewController {
         }
     }
 
-    private func run(_ action: ActionMode, text: String, original: String, isSelection: Bool) {
-        mode.panel = .loading(action)
+    /// One call: the strip at once, the card at the first text, the result or the error at the end (design Part 3).
+    private func run(_ action: ActionMode, text: String, original: String, isSelection: Bool, call: Int? = nil) {
+        let call = call ?? nextCall()
+        let label = BarAction.call(action, text: text)
+        if mode.panel != nil { mode.panel = nil }
+        let callFeed = ResultFeed()
+        feed = callFeed  // the card of the last call keeps its own while it fades out
+        // From act() the strip is already up for this call: one write at most.
+        let strip = StripState(call: call, action: action, label: label)
+        if mode.strip != strip { mode.strip = strip }
         actionTask?.cancel()
         actionTask = Task { [weak self] in
-            let result = await ActionClient.run(action, text: text)
-            guard let self, !Task.isCancelled else { return }
-            switch result {
-            case .success(let r):
-                mode.panel = .result(action, r, original: original, isSelection: isSelection)
-            case .failure(let e):
-                mode.panel = .failed(e.message, retry: action)
+            // self is bound per update, never before the loop: a torn-down controller is not held for up to 90 s. The
+            // cancel check stops a late update from bringing a card back after Cancel or after a Retry replaced this task.
+            for await update in ActionClient.run(action, text: text) {
+                guard let self, !Task.isCancelled else { return }
+                show(update, feed: callFeed, card: CardState(call: call, action: action, label: label, original: original,
+                                                         isSelection: isSelection, shownAt: now))
+                // At most 20 redraws of the card's text a second: meanwhile the stream keeps only the newest partial
+                // and the result, so nothing is lost and the text is never more than 50 ms behind.
+                if case .partial = update { try? await Task.sleep(nanoseconds: 50_000_000) }
             }
+            // The stream ended with no result (the system cancelled the download): never leave the call hanging.
+            guard let self, !Task.isCancelled, let strip = mode.strip, strip.call == call, strip.error == nil else { return }
+            show(.failed(ActionError(.network)), feed: callFeed,
+                 card: CardState(call: call, action: action, label: label, original: original, isSelection: isSelection,
+                                 shownAt: now))
         }
     }
 
+    /// `card` is the card to open if none is open yet. mode.panel changes at the first text and at the end only.
+    private func show(_ update: ActionUpdate, feed: ResultFeed, card fresh: CardState) {
+        switch update {
+        case .partial(let text):
+            feed.partial = text
+            if openCard != nil { return }
+            mode.panel = .card(fresh)
+        case .done(let result):
+            feed.partial = result.translation
+            feed.back = result.backTranslation
+            var card = openCard ?? fresh
+            card.phase = .done
+            // P10: typed or moved during the call: the result stays, only Copy is offered.
+            card.copyOnly = card.action != .in && !fieldHolds(card.original, isSelection: card.isSelection)
+            mode.strip = nil
+            mode.panel = .card(card)
+        case .failed(let error):
+            guard var card = openCard else {
+                // No text yet: the error replaces the strip's label, the keys stay, no card opens.
+                mode.strip?.error = error
+                return
+            }
+            // Text on screen: it stays, dimmed, with the error line under it.
+            feed.failed = error
+            card.phase = .failed
+            mode.strip = nil
+            mode.panel = .card(card)
+        }
+    }
+
+    private var openCard: CardState? {
+        if case .card(let card) = mode.panel { return card }
+        return nil
+    }
+
+    /// The field still holds what the read returned (the selection, or the whole text with the cursor at its end).
+    private func fieldHolds(_ original: String, isSelection: Bool) -> Bool {
+        let p = textDocumentProxy
+        return isSelection
+            ? p.selectedText == original
+            : FieldGuard.canReplace(original, before: p.documentContextBeforeInput ?? "", after: p.documentContextAfterInput ?? "")
+    }
+
+    /// Replace (Translate, Polish) and Insert (Read) on the card, and Save on the About me confirm panel: the panel's
+    /// insert button is the only caller.
     func insertResult() {
         // Save on the About me confirm panel: the only way a clipboard note is kept. A tap in the first
         // AboutMe.saveDelay seconds is dropped (it falls to the guard below, which returns).
@@ -336,27 +488,47 @@ final class KeyboardViewController: KeyboardInputViewController {
             mode.panel = .notice(AboutMe.savedText(for: note))
             return
         }
-        guard case let .result(action, r, original, isSelection) = mode.panel else { return }
-        // The user may have moved the cursor or edited while the request ran: never delete the wrong text.
+        guard var card = openCard, card.primary != nil, AboutMe.canSave(shownAt: card.shownAt, now: now) else { return }
+        let result = feed.partial
         let p = textDocumentProxy
-        let unchanged = isSelection
-            ? p.selectedText == original
-            : FieldGuard.canReplace(
-                original, before: p.documentContextBeforeInput ?? "", after: p.documentContextAfterInput ?? "")
-        guard unchanged else {
-            mode.panel = .failed("The text changed. Try again.", retry: action)
-            return
+        if card.action == .in {
+            // Read: the reply goes in at the cursor, over the selection if there is one; Undo puts that back.
+            let selected = p.selectedText ?? ""
+            p.insertText(result)
+            lastInsert = (result, selected, !selected.isEmpty)
+        } else {
+            // The user may have moved the cursor or edited since: never delete the wrong text (P10).
+            guard fieldHolds(card.original, isSelection: card.isSelection) else {
+                card.copyOnly = true
+                mode.panel = .card(card)
+                return
+            }
+            FieldText.replace(card.original, isSelection: card.isSelection, with: result, p)
+            lastInsert = (result, card.original, card.isSelection)
         }
-        FieldText.replace(original, isSelection: isSelection, with: r.translation, p)
+        cursorReturn.clear()
         watch.forget()
-        lastInsert = (r.translation, original, isSelection)
         mode.canUndo = true
         mode.panel = nil
+        readInput = nil
         refreshField()
+    }
+
+    /// Copy on the card: the one write to the pasteboard. false when the tap came too soon after the card appeared.
+    func copyResult() -> Bool {
+        guard let card = openCard, card.phase != .streaming, !feed.partial.isEmpty,
+              AboutMe.canSave(shownAt: card.shownAt, now: now) else { return false }
+        let pb = UIPasteboard.general
+        pb.string = feed.partial
+        // Protly's own copy is not new text: the bar must not offer to Read it.
+        UserDefaults.standard.set(pb.changeCount, forKey: Self.clipboardKey)
+        refreshField()
+        return true
     }
 
     /// The protly key runs exactly what its symbol shows (K1): symbol and action are the same BarAction value.
     func runProtlyKey() {
+        guard !isReadingField else { return }  // VoiceOver's action reaches here without ProtlyActionHandler
         if mode.protlyKey == .undo {
             undoInsert()
         } else {
@@ -378,9 +550,37 @@ final class KeyboardViewController: KeyboardInputViewController {
         refreshField()
     }
 
+    /// The strip's xmark, the card's Cancel or Done, and every other panel's close.
     func closePanel() {
+        restoreCursor()
+        if mode.panel != nil { mode.panel = nil }
+        if mode.strip != nil { mode.strip = nil }
+        readInput = nil
+        refreshField()
+    }
+
+    /// P6: stop the call, then put the cursor back where it was before the reads moved it, while the text they moved
+    /// over is still just before it. Works mid-read too: the moves made so far are recorded.
+    private func restoreCursor() {
         actionTask?.cancel()
-        mode.panel = nil
+        actionTask = nil
+        if isReadingField, cursorReturn.isMoving {
+            // A step is on its way: moving back now could count a step the host drops, or miss one it applies late.
+            // The read settles it (at most 1 s, the keys still wait) and then puts the cursor back.
+            restoreWhenReadEnds = true
+            return
+        }
+        readingCall = nil
+        putCursorBack()
+    }
+
+    /// Back over the read's settled steps, while the text they moved over is still just before the cursor.
+    private func putCursorBack() {
+        let back = cursorReturn.back(before: textDocumentProxy.documentContextBeforeInput ?? "")
+        cursorReturn.clear()
+        guard back > 0 else { return }
+        FieldText.restore(back, textDocumentProxy)
+        watch.forget()
     }
 
     private func endUndo() {
@@ -441,6 +641,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     // MARK: KeyboardKit text calls: commit the word first
 
     override func insertText(_ text: String) {
+        dismissFailedStrip()
         commitWord()  // Return after a word: the word is already in the field, so only "\n" follows it
         let overSelection = proxyHasSelection
         super.insertText(text)
@@ -451,6 +652,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     }
 
     override func deleteBackward() {
+        dismissFailedStrip()
         commitWord()
         session.forgetLast()
         endUndo()
@@ -466,6 +668,7 @@ final class KeyboardViewController: KeyboardInputViewController {
     }
 
     override func deleteBackward(times: Int) {
+        dismissFailedStrip()
         commitWord()
         session.forgetLast()
         endUndo()
@@ -547,6 +750,15 @@ struct ProtlyRoot: View {
     unowned let host: KeyboardViewController
     @ObservedObject var mode: ProtlyMode
     @ObservedObject var context: KeyboardContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The panel on the layer over the keys, with its call's text. It follows mode.panel, but stays through the fade-out
+    /// after mode.panel goes nil and is dropped once the fade has finished.
+    @State private var shown: (state: PanelState, feed: ResultFeed)?
+    /// The layer is showing (or fading in), not fading out or gone.
+    @State private var visible = false
+    /// Counts follow() calls: a fade-out's completion drops the panel only if nothing changed since it started, so a
+    /// late completion from card A cannot drop card B mid-fade.
+    @State private var generation = 0
 
     var body: some View {
         // A late host callback can lower the case while manualShift is still set: trust the case too.
@@ -587,28 +799,50 @@ struct ProtlyRoot: View {
             collapsedView: { $0.view },
             emojiKeyboard: { _ in EmptyView() },  // not KeyboardKit's placeholder: keeps the emoji key
             toolbar: { _ in
-                ProtlyBar(
-                    mode: mode,
-                    scheme: context.colorScheme,
-                    flip: { [unowned host] in host.flipWord() },
-                    act: { [unowned host] in host.act($0) },
-                    undo: { [unowned host] in host.undoInsert() },
-                    pick: { [unowned host] in host.pickSuggestion() }
-                )
+                if let strip = mode.strip {
+                    ProgressStrip(
+                        state: strip,
+                        scheme: context.colorScheme,
+                        close: { [unowned host] in host.closePanel() },
+                        retry: { [unowned host] in host.retry($0) }
+                    )
+                } else {
+                    ProtlyBar(
+                        mode: mode,
+                        scheme: context.colorScheme,
+                        flip: { [unowned host] in host.flipWord() },
+                        act: { [unowned host] in host.act($0) },
+                        undo: { [unowned host] in host.undoInsert() },
+                        pick: { [unowned host] in host.pickSuggestion() }
+                    )
+                }
             }
         )
         .overlay(alignment: .bottom) {
-            if let panel = mode.panel {
-                // Same height as the key area: the keyboard never grows.
-                PanelView(
-                    state: panel,
-                    insert: { [unowned host] in host.insertResult() },
-                    close: { [unowned host] in host.closePanel() },
-                    retry: { [unowned host] in host.act($0) }
-                )
-                .frame(height: layoutHeight)
+            // Always mounted: the panel fades and grows in and out on this layer's own opacity and scale, and its
+            // content goes only after the fade-out finished. No view is inserted or removed with a transition, so none
+            // can be left half removed over the keys (the ghost card); a hidden layer takes no taps and VoiceOver skips
+            // it.
+            ZStack {
+                if let shown {
+                    // Same height as the key area: the keyboard never grows.
+                    PanelView(
+                        state: shown.state,
+                        feed: shown.feed,
+                        insert: { [unowned host] in host.insertResult() },
+                        copy: { [unowned host] in host.copyResult() },
+                        close: { [unowned host] in host.closePanel() },
+                        retry: { [unowned host] in host.retry($0) }
+                    )
+                    .frame(height: layoutHeight)
+                }
             }
+            // The card grows down from the strip over the keys; a crossfade under Reduce Motion (ResultCard.swift).
+            .modifier(CardReveal(visible: visible))
+            .allowsHitTesting(visible)
+            .accessibilityHidden(!visible)
         }
+        .onChange(of: mode.panel, initial: true) { _, panel in follow(panel) }
         // Outside the view: KeyboardKit sizes keys from the width it is given, and its own edgeInsets
         // only pad inside a fixed frame, which moves nothing.
         .padding(.horizontal, ProtlyGeometry.sideInset)
@@ -627,5 +861,24 @@ struct ProtlyRoot: View {
             }
             return style
         })
+    }
+
+    /// The layer follows mode.panel: a panel shows at once and fades in; nil fades the shown panel out with its own
+    /// text, then drops it. A panel that comes back during the fade-out reverses it.
+    private func follow(_ panel: PanelState?) {
+        let animation: Animation = reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.3, bounce: 0)
+        generation &+= 1
+        let fade = generation
+        if let panel {
+            shown = (panel, host.feed)
+            if !visible { withAnimation(animation) { visible = true } }
+        } else if visible {
+            withAnimation(animation, completionCriteria: .removed) {
+                visible = false
+            } completion: {
+                // Only the latest fade: not if a new panel came during it, nor if that one is fading out by now.
+                if fade == generation { shown = nil }
+            }
+        }
     }
 }

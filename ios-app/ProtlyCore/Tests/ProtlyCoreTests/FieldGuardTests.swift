@@ -50,4 +50,13 @@ final class FieldGuardTests: XCTestCase {
         XCTAssertEqual(nfc.count, nfd.count)
         XCTAssertTrue(FieldGuard.canUndo("\u{00C5}", before: "x\u{212B}"))
     }
+
+    /// keyboard-ui 003 (P6): Cancel moves the cursor back only while the text the read moved over is still just
+    /// before it.
+    func testRestoreOnlyWhileTheReadTextIsBeforeTheCursor() {
+        XCTAssertTrue(FieldGuard.canRestore("hello there", before: "hello there"))
+        XCTAssertTrue(FieldGuard.canRestore("hello", before: "x hello"))
+        XCTAssertFalse(FieldGuard.canRestore("hello", before: "hello!"))
+        XCTAssertFalse(FieldGuard.canRestore("", before: "x"))
+    }
 }

@@ -12,4 +12,9 @@ public enum FieldGuard {
     public static func canUndo(_ inserted: String, before: String) -> Bool {
         !inserted.isEmpty && before.hasSuffix(inserted)
     }
+
+    /// Cancel after a read: the cursor goes back only while the text the read moved over is still just before it.
+    public static func canRestore(_ read: String, before: String) -> Bool {
+        !read.isEmpty && before.hasSuffix(read)
+    }
 }
