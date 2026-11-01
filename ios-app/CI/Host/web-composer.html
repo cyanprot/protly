@@ -69,7 +69,15 @@ function rects() {
   return r;
 }
 
+// Coalesced: a key press fires about five events, and each state is a SwiftUI update XCUITest waits out.
+let statePending = false;
 function state() {
+  if (statePending) return;
+  statePending = true;
+  setTimeout(() => { statePending = false; postState(); }, 30);
+}
+
+function postState() {
   const s = {
     textarea: text("textarea"), input: text("input"), composer: text("composer"), sent, submitted, atReturn,
     focus: (document.activeElement && document.activeElement.id) || "", trace: trace.slice(-16),
@@ -135,13 +143,13 @@ function clearAll() {
   atReturn = {};
   trace = [];
   post({ kind: "event", line: `t=${Date.now()} clear` });
-  state();
+  postState();
   return true;
 }
 
-window.addEventListener("load", () => { post({ kind: "event", line: `t=${Date.now()} load` }); state(); });
+window.addEventListener("load", () => { post({ kind: "event", line: `t=${Date.now()} load` }); postState(); });
 window.addEventListener("resize", state);
-setInterval(state, 1000);  // the rects after the keyboard and the accessory bar settle
+if (window.visualViewport) window.visualViewport.addEventListener("resize", state);
 </script>
 </body>
 </html>

@@ -38,15 +38,23 @@ extension PhoneRun {
         write(id, "FAIL", "unreadable: \(why)" + (problems.isEmpty ? "" : " problems=\(q(problems.joined(separator: "; ")))"))
     }
 
-    /// Protly up on the field just tapped: waits out a stand-in, else the globe's list or globe taps.
+    /// Protly up on the field just tapped: waits for a keyboard, then out a stand-in, else the globe's list or globe
+    /// taps. One look when Protly is already up (each look is a screenshot and two tree queries).
     func protlyUp() -> Bool {
-        guard d.waitForKeyboard() else {
+        let end = Date().addingTimeInterval(6)
+        var now = d.current()
+        while now == .none && Date() < end {
+            d.pause(0.5)
+            now = d.current()
+        }
+        if now == .protly { return true }
+        if now == .none {
             d.fail("no keyboard after tapping the field")
             return false
         }
         d.waitOutStandIn()
         if d.current() == .protly || d.pick(.protly) || d.cycle(to: .protly, taps: 3) { return true }
-        d.fail("protly keyboard not reached")
+        d.fail("protly keyboard not reached (\(d.current().rawValue))")
         return false
     }
 
@@ -90,7 +98,7 @@ extension PhoneRun {
                 let inner = r.insetBy(dx: 4, dy: 4)
                 pending("dark-1", "typing=\"c-dark-1-1-typing.png\" space=\"c-dark-1-2-space.png\" rect="
                         + String(format: "%.1f,%.1f,%.1f,%.1f", inner.minX, inner.minY, inner.width, inner.height)
-                        + " points=\(Int(d.width)) before=\(q(before)) after=\(q(after))")
+                        + " points=\(Int(d.width)) want=\(q("안녕")) before=\(q(before)) after=\(q(after))")
             } else {
                 unreadableLine("dark-1", saved ? "no composer frame" : "c-dark-1-*.png not written")
             }
@@ -121,7 +129,7 @@ extension PhoneRun {
                 ev += " sent-count=\(sent.count)" + (sent.last.map { " sent=\(q($0))" } ?? "")
                 let submitted = s["submitted"] as? [String] ?? []
                 ev += " submit-count=\(submitted.count)" + (submitted.last.map { " submitted=\(q($0))" } ?? "")
-                ev += String(format: " gap=%.2fs", d.lastGap)
+                ev += String(format: " asked-gap=%.2f gap=%.2fs", step.gap, d.lastGap)
                 ev += " ev=\(q((s["trace"] as? [String] ?? []).joined(separator: " ")))"
                 pending(id, ev)
             }
@@ -188,6 +196,10 @@ extension PhoneRun {
         guard let r = Self.rect(d.probeValue(probe)) else {
             d.fail("no \(probe) frame from the host")
             return []
+        }
+        // A menu left open by an earlier step must not count for this one.
+        if d.app.descendants(matching: .any).matching(NSPredicate(format: "label ==[c] 'Copy'")).firstMatch.exists {
+            d.fail("an edit menu with Copy was already open before the double-tap on \(probe)")
         }
         d.point(r.midX, r.midY).doubleTap()
         d.pause(1.0)  // the menu shows after the gesture ends
@@ -264,9 +276,15 @@ extension PhoneRun {
 /// The host's web composer screen (`-screen web`, web-composer.html), read through the `web-state` and `web-rects`
 /// probes: exact text, unlike the web view's accessibility tree.
 @MainActor
-struct WebPage {
+final class WebPage {
     static let fields = ["textarea", "input", "composer"]
     let d: Driver
+    /// The fields' frames once read: the page neither scrolls nor zooms, so they do not move (one query less a step).
+    private var frames: [String: CGRect] = [:]
+
+    init(d: Driver) {
+        self.d = d
+    }
 
     func raw() -> String? {
         d.probeValue("web-state")
@@ -283,11 +301,14 @@ struct WebPage {
 
     /// A field's frame in screen points.
     func rect(_ field: String) -> CGRect? {
+        if let r = frames[field] { return r }
         guard let s = d.probeValue("web-rects"), let data = s.data(using: .utf8),
               let all = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
               let v = (all[field] as? [NSNumber])?.map({ CGFloat($0.doubleValue) }), v.count == 4,
               v[2] > 0, v[3] > 0 else { return nil }
-        return CGRect(x: v[0], y: v[1], width: v[2], height: v[3])
+        let r = CGRect(x: v[0], y: v[1], width: v[2], height: v[3])
+        frames[field] = r
+        return r
     }
 
     /// The page posted its state and the fields' frames.
@@ -307,7 +328,7 @@ struct WebPage {
             return false
         }
         d.point(r.midX, r.midY).tap()
-        d.pause(0.6)
+        d.pause(0.5)
         return true
     }
 
@@ -324,8 +345,10 @@ struct WebPage {
             d.fail("no page state after Clear")
             return
         }
-        if Self.fields.contains(where: { !((s[$0] as? String) ?? "?").isEmpty }) {
-            d.fail("Clear left text on the web page: \(q(raw()))")
+        let lists = ["sent", "submitted"].allSatisfy { (s[$0] as? [Any])?.isEmpty == true }
+        let atReturn = (s["atReturn"] as? [String: Any])?.isEmpty == true
+        if Self.fields.contains(where: { !((s[$0] as? String) ?? "?").isEmpty }) || !lists || !atReturn {
+            d.fail("Clear did not reset the web page: \(q(raw()))")
         }
     }
 }

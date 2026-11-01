@@ -71,10 +71,36 @@ class ReturnTests(unittest.TestCase):
                     'sent-count=0 submit-count=1 submitted="hello 안녕"')
         self.assertEqual(c.status, "PASS", c.evidence)
 
-    def test_input_without_a_submit_still_keeps_the_text(self):
+    def test_input_without_a_submit_fails(self):
         c = resolve('CHECK ret-5-input PENDING want="ㅇㅋ" before="ㅇㅋ" value="ㅇㅋ" sent-count=0 submit-count=0')
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("did not submit", c.evidence)
+
+    def test_input_where_return_never_arrived_fails(self):
+        c = resolve('CHECK ret-1-input PENDING want="안녕" value="안녕" sent-count=0 submit-count=0')
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("no Return event", c.evidence)
+
+    def test_late_return_on_an_at_once_step_is_record(self):
+        c = resolve('CHECK ret-1-textarea PENDING want="안녕" before="안녕" value="안녕\\n" sent-count=0 '
+                    'submit-count=0 asked-gap=0.05 gap=0.83s')
+        self.assertEqual(c.status, "RECORD", c.evidence)
+        self.assertIn("not at once", c.evidence)
+
+    def test_quick_return_on_an_at_once_step_passes(self):
+        c = resolve('CHECK ret-1-textarea PENDING want="안녕" before="안녕" value="안녕\\n" sent-count=0 '
+                    'submit-count=0 asked-gap=0.05 gap=0.12s')
         self.assertEqual(c.status, "PASS", c.evidence)
-        self.assertIn("no submit", c.evidence)
+
+    def test_the_300_ms_step_passes_when_later(self):
+        c = resolve('CHECK ret-4-textarea PENDING want="hello 안녕" before="hello 안녕" value="hello 안녕\\n" '
+                    'sent-count=0 submit-count=0 asked-gap=0.30 gap=1.07s')
+        self.assertEqual(c.status, "PASS", c.evidence)
+
+    def test_late_return_that_lost_text_still_fails(self):
+        c = resolve('CHECK ret-1-textarea PENDING want="안녕" before="안녕" value="\\n" sent-count=0 '
+                    'submit-count=0 asked-gap=0.05 gap=0.83s')
+        self.assertEqual(c.status, "FAIL")
 
     def test_input_that_submitted_a_cut_word_fails(self):
         c = resolve('CHECK ret-1-input PENDING want="안녕" before="안녕" value="안녕" sent-count=0 submit-count=1 '
@@ -113,15 +139,16 @@ class ReturnTests(unittest.TestCase):
         self.assertEqual(c.status, "FAIL")
         self.assertIn("before Return", c.evidence)
 
-    def test_no_return_event_is_noted_not_failed(self):
+    def test_no_return_event_fails(self):
         c = resolve('CHECK ret-1-textarea PENDING want="안녕" value="안녕\\n" sent-count=0 submit-count=0')
-        self.assertEqual(c.status, "PASS", c.evidence)
+        self.assertEqual(c.status, "FAIL")
         self.assertIn("no Return event", c.evidence)
 
     def test_nfd_text_compares_equal(self):
         import unicodedata
         nfd = unicodedata.normalize("NFD", "안녕")
-        c = resolve(f'CHECK ret-1-input PENDING want="안녕" before="{nfd}" value="{nfd}" sent-count=0 submit-count=0')
+        c = resolve(f'CHECK ret-1-input PENDING want="안녕" before="{nfd}" value="{nfd}" sent-count=0 submit-count=1 '
+                    f'submitted="{nfd}"')
         self.assertEqual(c.status, "PASS", c.evidence)
 
     def test_missing_value_is_unreadable(self):
@@ -132,13 +159,31 @@ class ReturnTests(unittest.TestCase):
 
 class MenuTests(unittest.TestCase):
     def test_copy_in_the_menu_passes(self):
-        c = resolve('CHECK menu-1 PENDING menu="Copy,Look Up,Paste" sel="3,2" field="안녕 오늘"')
+        c = resolve('CHECK menu-1 PENDING menu="Copy,Look Up,Paste" sel="3,2" marked="no" field="안녕 오늘"')
+        self.assertEqual(c.status, "PASS", c.evidence)
+
+    def test_control_passes(self):
+        c = resolve('CHECK menu-0 PENDING menu="Copy,Cut" sel="0,5" field="hello there" keyboard=english')
         self.assertEqual(c.status, "PASS", c.evidence)
 
     def test_no_menu_fails(self):
         c = resolve('CHECK menu-0 PENDING menu="" sel="0,5" field="hello there"')
         self.assertEqual(c.status, "FAIL")
         self.assertIn("no Copy", c.evidence)
+
+    def test_copy_on_the_wrong_word_fails(self):
+        c = resolve('CHECK menu-1 PENDING menu="Copy,Cut" sel="0,2" field="안녕 오늘"')
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("selection", c.evidence)
+
+    def test_copy_after_the_wrong_text_fails(self):
+        c = resolve('CHECK menu-1 PENDING menu="Copy,Cut" sel="3,2" field="dkssud dhsmf"')
+        self.assertEqual(c.status, "FAIL")
+
+    def test_marked_text_fails(self):
+        c = resolve('CHECK menu-1 PENDING menu="Copy" sel="3,2" marked="yes" field="안녕 오늘"')
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("marked", c.evidence)
 
     def test_paste_without_copy_fails(self):
         c = resolve('CHECK menu-1 PENDING menu="Paste,Select All" sel="5,0" field="안녕 오늘"')
@@ -151,9 +196,9 @@ class MenuTests(unittest.TestCase):
     def test_menu4_selection_replaced(self):
         self.assertEqual(resolve('CHECK menu-4 PENDING field="안녕 ㅎ" sel="4,0"').status, "PASS")
 
-    def test_menu4_latin_reading_of_the_same_key_is_a_replacement_too(self):
+    def test_menu4_latin_reading_of_the_same_key_is_record(self):
         c = resolve('CHECK menu-4 PENDING field="안녕 g" sel="4,0"')
-        self.assertEqual(c.status, "PASS", c.evidence)
+        self.assertEqual(c.status, "RECORD", c.evidence)
         self.assertIn("Latin", c.evidence)
 
     def test_menu4_appended_to_the_word_fails(self):
@@ -171,6 +216,25 @@ class PadTests(unittest.TestCase):
         c = resolve(f'CHECK pad-1 PENDING want="{self.TEXT}" field="{self.TEXT}" sel0=24 sel1="9,0"')
         self.assertEqual(c.status, "PASS", c.evidence)
         self.assertIn("moved 15", c.evidence)
+
+    def test_pad1_one_step_is_too_little(self):
+        c = resolve(f'CHECK pad-1 PENDING want="{self.TEXT}" field="{self.TEXT}" sel0=24 sel1="23,0"')
+        self.assertEqual(c.status, "FAIL")
+
+    def test_pad_marked_text_fails(self):
+        c = resolve(f'CHECK pad-1 PENDING want="{self.TEXT}" field="{self.TEXT}" sel0=24 sel1="9,0" marked="yes"')
+        self.assertEqual(c.status, "FAIL")
+
+    def test_pad1_retyped_text_is_noted(self):
+        c = resolve('CHECK pad-1 PENDING want="hello world hello wrld " field="hello world hello wrld " sel0=23 '
+                    'sel1="8,0" asked="hello world hello world " typing-tries=2')
+        self.assertEqual(c.status, "PASS", c.evidence)
+        self.assertIn("2 tries", c.evidence)
+
+    def test_pad3_on_other_text_is_unreadable(self):
+        c = resolve('CHECK pad-3 PENDING want="안녀" field="안녀" sel0=2 sel1="1,0" asked="안녕" typing-tries=2 '
+                    'want-sel=1')
+        self.assertIn("unreadable", c.evidence)
 
     def test_pad1_cursor_still_fails(self):
         c = resolve(f'CHECK pad-1 PENDING want="{self.TEXT}" field="{self.TEXT}" sel0=24 sel1="24,0"')
@@ -244,7 +308,11 @@ class DarkTests(unittest.TestCase):
             if space:
                 space(d, "c-dark-1-2-space.png")
             return resolve(f'CHECK dark-1 PENDING typing="c-dark-1-1-typing.png" space="c-dark-1-2-space.png" '
-                           f'rect={rect} points=390 before="{before}" after="{after}"', run_dir=d)
+                           f'rect={rect} points=390 before={self.quote(before)} after="{after}"', run_dir=d)
+
+    @staticmethod
+    def quote(s):
+        return s if s == "<unreadable>" else f'"{s}"'
 
     def test_same_ink_no_underline_passes(self):
         c = self.run_dark(self.shot, self.shot)
@@ -280,6 +348,24 @@ class DarkTests(unittest.TestCase):
     def test_bad_rect_is_unreadable(self):
         c = self.run_dark(self.shot, self.shot, rect="1,2")
         self.assertIn("unreadable", c.evidence)
+
+    def test_missing_text_reading_is_unreadable(self):
+        c = self.run_dark(self.shot, self.shot, before="<unreadable>")
+        self.assertIn("unreadable", c.evidence)
+
+    def test_other_word_typed_fails(self):
+        c = self.run_dark(self.shot, self.shot, before="dkssud", after="dkssud ")
+        self.assertEqual(c.status, "FAIL")
+
+    def test_hairline_under_one_syllable_fails(self):
+        def thin(d, n):
+            self.shot(d, n)
+            img = Image.open(os.path.join(d, n))
+            ImageDraw.Draw(img).rectangle([160, 392, 204, 393], fill=(10, 132, 255))
+            img.save(os.path.join(d, n))
+        c = self.run_dark(thin, self.shot)
+        self.assertEqual(c.status, "FAIL")
+        self.assertIn("underline", c.evidence)
 
     def test_word_changed_by_the_space_fails(self):
         c = self.run_dark(self.shot, self.shot, before="안녕", after="안녀 ")

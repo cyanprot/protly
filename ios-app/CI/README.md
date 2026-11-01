@@ -169,13 +169,19 @@ Plan section "Sprint 004" of `docs/plans/2026-10-30-typing-fixes.md`; results in
   the keyboard), then the web screen. `dark-1`: `dkssud` (안녕) in the composer, a screenshot, a space, a screenshot;
   checks.py compares the ink inside the composer (count and tone) and looks for an underline row.
   `ret-<step>-<field>`: steps 1 to 5 of `enter-clears-web.md` in each field; the last tap (Return) follows after
-  `gap` (0.05 s, or 0.3 s in step 4; XCUITest's own time to tap comes on top, the line says what it was).
+  `gap` (0.05 s, or 0.3 s in step 4; XCUITest's own time to tap comes on top, the line says what it was). The
+  field's text when the page saw Return must be the text typed; no Return event, or a form input that did not
+  submit, is FAIL. A step that asked for Return at once but got it later than 0.3 s is RECORD, not PASS: it shows
+  the text kept, not the at-once race (run 8632699-72 measured 0.8 to 2 s), which stays a phone check.
 - **test5b_menu** (`-screen uikit`): `menu-0` on Apple's keyboard (the control: keys tapped by label, then a
   double-tap on `hello`), `menu-1` on Protly (`안녕 오늘` with no space, a double-tap on `오늘`), `menu-4` (then `ㅎ`).
-  The menu's items are found by label; the tree is `tree-edit-menu.txt`.
+  The menu's items are found by label (none may be open before the double-tap); the tree is `tree-edit-menu.txt`.
+  The rule also needs the field's text and the selection of the double-tapped word (`0,5`, `3,2`). `menu-4` reading
+  `안녕 g` (the key read as Latin, still a replacement) is RECORD.
 - **test5c_pad** (`-screen uikit`): `Driver.dragSpace` holds space 1 s, then drags in a straight line
   (`press(forDuration:thenDragTo:withVelocity:thenHoldForDuration:)`). `pad-1` 90 pt left, `pad-2` 90 pt left while
-  rising 80 pt (must move at least 75% of pad-1), `pad-3` `안녕` and 20 pt left (one syllable: `1,0`).
+  rising 80 pt (must move at least 75% of pad-1), `pad-3` `안녕` and 20 pt left (one syllable: `1,0`). pad-1 must
+  move at least 8 characters; the drag must leave the text as typed (a lost tap is retyped once) and no marked text.
 
 ## Reading a run without GitHub access
 

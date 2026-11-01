@@ -17,7 +17,7 @@ final class PhoneChecksUITests: XCTestCase {
     /// network groups stop starting items 2 minutes before theirs (PhoneRun.startGroup).
     static let allowance: [String: TimeInterval] = [
         "test0_access": 300, "test0_probe": 480, "test1_68": 900, "test2_ws": 300, "test3_85offline": 900,
-        "test4_memory": 600, "test5_icon": 300, "test5a_web": 600, "test5b_menu": 420, "test5c_pad": 420,
+        "test4_memory": 600, "test5_icon": 300, "test5a_web": 900, "test5b_menu": 420, "test5c_pad": 420,
         "test6_85net": 1080, "test7_77": 1080,
     ]
 

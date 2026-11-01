@@ -226,7 +226,10 @@ final class WebModel: NSObject, ObservableObject, WKScriptMessageHandler {
         .appendingPathComponent("web-events.txt")
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let body = message.body as? [String: Any], let kind = body["kind"] as? String else { return }
+        guard let body = message.body as? [String: Any], let kind = body["kind"] as? String else {
+            append("host: malformed message \(message.body)")
+            return
+        }
         switch kind {
         case "event":
             if let line = body["line"] as? String { append(line) }
@@ -234,12 +237,14 @@ final class WebModel: NSObject, ObservableObject, WKScriptMessageHandler {
             if let json = body["json"] as? String, json != state { state = json }
             if let r = body["rects"] as? [String: Any] { publish(r) }
         default:
-            break
+            append("host: unknown message kind \(kind)")
         }
     }
 
     func clear() {
-        webView?.evaluateJavaScript("clearAll()", completionHandler: nil)
+        webView?.evaluateJavaScript("clearAll()") { [weak self] _, error in
+            if let error { self?.append("host: clearAll() failed: \(error)") }
+        }
     }
 
     func dismiss() {

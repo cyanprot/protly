@@ -101,7 +101,7 @@ def unescape(value):
 
 def quoted_field(text, name):
     """The value of name="..." in a line (backslash escapes as the Swift side writes them), or None."""
-    m = re.search(name + r'="((?:[^"\\]|\\.)*)"', text)
+    m = re.search(r"(?<![\w-])" + re.escape(name) + r'="((?:[^"\\]|\\.)*)"', text)
     if not m:
         return None
     return unescape(m.group(1))
@@ -347,17 +347,37 @@ def int_field(text, name):
     return int(m.group(1)) if m else None
 
 
-def verdict(check, problems, notes=()):
-    """PASS without problems, FAIL with them; the evidence keeps the readings and says why after " => "."""
+def verdict(check, problems, notes=(), record=False):
+    """PASS without problems (RECORD when the readings do not show all the item claims), FAIL with them; the
+    evidence keeps the readings and says why after " => "."""
     why = "; ".join(list(problems) + list(notes)) or "ok"
-    return Check(check.id, "FAIL" if problems else "PASS", f"{check.evidence} => {why}")
+    status = "FAIL" if problems else ("RECORD" if record else "PASS")
+    return Check(check.id, status, f"{check.evidence} => {why}")
+
+
+def float_field(text, name):
+    """The value of name=<number>[s] in a line, or None."""
+    m = re.search(r"(?<![\w-])" + re.escape(name) + r"=(-?\d+(?:\.\d+)?)s?(?![\w.])", text)
+    return float(m.group(1)) if m else None
+
+
+def marked_problem(ev):
+    """Sprint 001 removed marked text: a field that reports it is a regression."""
+    return ["the field holds marked text"] if quoted_field(ev, "marked") == "yes" else []
+
+
+# A Return asked for at once (0.05 s) that came later than this is not the at-once case.
+AT_ONCE_GAP = 0.3
 
 
 def resolve_ret(check, marks=None, samples=None, run_dir=None):
     """ret-<step>-<field> (enter-clears-web.md, Simulator scenario): the text typed before Return is kept. textarea:
-    the text plus a line; input: the text, and a submit (if any) carries all of it; composer (Enter to send): sent
-    exactly once, exactly the text, and the composer left with no text. `before` is the field when the page saw
-    Return (keydown Enter, a line-break beforeinput or the submit): the keyboard's reading, which must be `want`."""
+    the text plus a line; input: the text, and the form's implicit submit carries all of it; composer (Enter to
+    send): sent exactly once, exactly the text, and the composer left with no text. `before` is the field when the
+    page saw Return (keydown Enter, a line-break beforeinput or the submit): the keyboard's reading, which must be
+    `want`; no Return event at all is a FAIL. A step that asked for Return at once (`asked-gap` under
+    AT_ONCE_GAP) but got it later (`gap`, XCUITest's own tap time) is RECORD: it shows the text kept, not the
+    at-once race (C1)."""
     field = check.id.rsplit("-", 1)[1]
     ev = check.evidence
     want = quoted_field(ev, "want")
@@ -367,7 +387,7 @@ def resolve_ret(check, marks=None, samples=None, run_dir=None):
     problems, notes = [], []
     before = quoted_field(ev, "before")
     if before is None:
-        notes.append("no Return event seen by the page")
+        problems.append("no Return event seen by the page")
     elif not same_text(before, want):
         problems.append(f"typed {before!r} before Return, not {want!r}")
     if field == "textarea":
@@ -379,7 +399,7 @@ def resolve_ret(check, marks=None, samples=None, run_dir=None):
         submits = int_field(ev, "submit-count") or 0
         submitted = quoted_field(ev, "submitted")
         if submits == 0:
-            notes.append("no submit")
+            problems.append("Return did not submit the form")
         elif submitted is None or not same_text(submitted, want):
             problems.append(f"submitted {submitted!r}, want {want!r}")
     else:
@@ -394,7 +414,15 @@ def resolve_ret(check, marks=None, samples=None, run_dir=None):
                 problems.append(f"sent {sent!r}, want {want!r}")
             if value.strip():
                 problems.append(f"composer kept {value!r}")
-    return verdict(check, problems, notes)
+    asked, gap = float_field(ev, "asked-gap"), float_field(ev, "gap")
+    late = asked is not None and gap is not None and asked < AT_ONCE_GAP < gap
+    if late:
+        notes.append(f"not at once: Return {gap:.2f} s after the last key (XCUITest's tap time)")
+    return verdict(check, problems, notes, record=late)
+
+
+# The text typed and the double-tapped word's range (UTF-16 location,length): hello in menu-0, 오늘 in menu-1.
+MENU_WANT = {"menu-0": ("hello there", "0,5"), "menu-1": ("안녕 오늘", "3,2")}
 
 
 def resolve_menu(check, marks=None, samples=None, run_dir=None):
@@ -404,12 +432,19 @@ def resolve_menu(check, marks=None, samples=None, run_dir=None):
     if menu is None:
         return unreadable(check.id, f"no menu reading in {check.evidence[:200]!r}")
     items = [m for m in menu.split(",") if m]
-    return verdict(check, [] if "Copy" in items else [f"no Copy in the edit menu ({items or 'no menu'})"])
+    problems = [] if "Copy" in items else [f"no Copy in the edit menu ({items or 'no menu'})"]
+    want_field, want_sel = MENU_WANT[check.id]
+    field, sel = quoted_field(check.evidence, "field"), quoted_field(check.evidence, "sel")
+    if field is None or not same_text(field, want_field):
+        problems.append(f"field {field!r}, want {want_field!r}")
+    if sel != want_sel:
+        problems.append(f"selection {sel!r}, want {want_sel!r} (the double-tapped word)")
+    return verdict(check, problems + marked_problem(check.evidence))
 
 
 # S4: ㅎ typed over the double-tapped 오늘 replaces it. The same key read as Latin (`g`) replaces it too: the item is
 # about the selection, not the language reading.
-MENU4_OK = {"안녕 ㅎ": None, "안녕 g": "the key came out Latin, still a replacement"}
+MENU4_OK = {"안녕 ㅎ": None, "안녕 g": "the key came out Latin: the selection was replaced, the reading is not ㅎ"}
 
 
 def resolve_menu4(check, marks=None, samples=None, run_dir=None):
@@ -420,11 +455,14 @@ def resolve_menu4(check, marks=None, samples=None, run_dir=None):
     match = next((k for k in MENU4_OK if same_text(field, k)), None)
     if match is None:
         return verdict(check, [f"field {field!r}, want {list(MENU4_OK)[0]!r} (the selection replaced)"])
-    return verdict(check, [], [MENU4_OK[match]] if MENU4_OK[match] else [])
+    note = MENU4_OK[match]
+    return verdict(check, [], [note] if note else [], record=note is not None)
 
 
 # pad-2 must move at least this share of pad-1's move: a drag that froze once the finger rose would stop early.
 PAD_RISING_SHARE = 0.75
+# pad-1 drags 90 pt slowly over narrow letters (6 pt each): about 15 steps; under this many the trackpad is broken.
+PAD1_MIN_MOVE = 8
 
 
 def resolve_pad(check, marks=None, samples=None, run_dir=None):
@@ -444,11 +482,15 @@ def resolve_pad(check, marks=None, samples=None, run_dir=None):
         problems.append(f"field {field!r}, want {want!r} unchanged")
     if length:
         problems.append(f"a selection of {length}, not a caret")
+    problems += marked_problem(ev)
+    asked = quoted_field(ev, "asked")
+    if asked is not None and not same_text(asked, want):
+        notes.append(f"typed {want!r} for {asked!r} ({int_field(ev, 'typing-tries')} tries)")
     moved = sel0 - loc
     notes.append(f"moved {moved}")
     if check.id == "pad-1":
-        if moved < 1:
-            problems.append("the caret did not move left")
+        if moved < PAD1_MIN_MOVE:
+            problems.append(f"the caret moved {moved}, want at least {PAD1_MIN_MOVE} for a 90 pt drag")
     elif check.id == "pad-2":
         ref = int_field(ev, "ref")
         if ref is None or ref < 1:
@@ -457,6 +499,8 @@ def resolve_pad(check, marks=None, samples=None, run_dir=None):
             problems.append(f"moved {moved} while rising, under {PAD_RISING_SHARE:.0%} of pad-1's {ref}")
     else:
         target = int_field(ev, "want-sel")
+        if asked is not None and not same_text(asked, want):
+            return unreadable(check.id, f"typed {want!r}, not {asked!r}: not the 안|녕 case")
         if target is None:
             return unreadable(check.id, f"no want-sel in {ev[:200]!r}")
         if loc != target:
@@ -475,6 +519,11 @@ DARK_TONE_TOLERANCE = 0.15
 # a glyph stroke spans one syllable at most.
 UNDERLINE_SHARE = 0.6
 UNDERLINE_MIN = 20
+# Or a thin band (at most UNDERLINE_BAND px) of ink rows below the glyphs, apart from them by an empty row, at least
+# UNDERLINE_BAND_SHARE of the word's width: an underline under one syllable of two.
+UNDERLINE_BAND = 9
+UNDERLINE_BAND_SHARE = 0.3
+DARK_WORD = "안녕"
 
 
 def measure_word(image, rect, points):
@@ -497,8 +546,11 @@ def measure_word(image, rect, points):
     tone = 0
     xs = []
     longest = 0
+    rows = []  # per row: (ink count, longest run)
     for row in range(ch):
         run = 0
+        row_ink = 0
+        row_run = 0
         for col in range(cw):
             p = data[row * cw + col]
             d = abs(p[0] - bg[0]) + abs(p[1] - bg[1]) + abs(p[2] - bg[2])
@@ -507,11 +559,27 @@ def measure_word(image, rect, points):
                 tone += d
                 xs.append(col)
                 run += 1
-                longest = max(longest, run)
+                row_ink += 1
+                row_run = max(row_run, run)
             else:
                 run = 0
+        longest = max(longest, row_run)
+        rows.append((row_ink, row_run))
     width = (max(xs) - min(xs) + 1) if xs else 0
     underline = width > 0 and longest >= max(UNDERLINE_SHARE * width, UNDERLINE_MIN)
+    # The bands of consecutive ink rows; a thin last band under an empty row is an underline when wide enough.
+    bands = []
+    for i, (n, _) in enumerate(rows):
+        if n and (not bands or bands[-1][1] != i - 1):
+            bands.append([i, i])
+        elif n:
+            bands[-1][1] = i
+    if len(bands) >= 2 and width > 0:
+        top, bottom = bands[-1]
+        band_run = max(r for _, r in rows[top:bottom + 1])
+        if bottom - top + 1 <= UNDERLINE_BAND and band_run >= max(UNDERLINE_BAND_SHARE * width, UNDERLINE_MIN):
+            underline = True
+            longest = max(longest, band_run)
     return {"ink": ink, "tone": tone / ink if ink else 0.0, "width": width, "run": longest, "underline": underline}
 
 
@@ -541,8 +609,11 @@ def resolve_dark(check, marks=None, samples=None, run_dir=None):
     typing, space = shots
     problems = []
     before, after = quoted_field(ev, "before"), quoted_field(ev, "after")
-    if before is not None and after is not None and not same_text(after, before + " "):
-        problems.append(f"typed {before!r}, then {after!r} after the space")
+    want = quoted_field(ev, "want") or DARK_WORD
+    if before is None or after is None:
+        return unreadable(check.id, f"no before/after text in {ev[:200]!r}")
+    if not same_text(before, want) or not same_text(after, want + " "):
+        problems.append(f"typed {before!r}, then {after!r} after the space; want {want!r}")
     for name, s in (("typing", typing), ("space", space)):
         if s["ink"] < DARK_MIN_INK:
             problems.append(f"{name}: no word ({s['ink']} ink px)")
