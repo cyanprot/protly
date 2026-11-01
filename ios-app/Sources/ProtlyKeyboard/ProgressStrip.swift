@@ -53,6 +53,7 @@ struct ProgressStrip: View {
             .accessibilityLabel("Cancel")
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("protly-strip")  // the simulator checks find the strip's texts by it (not spoken)
         .padding(.leading, 12)
         .frame(height: BarSlotStyle.rowHeight)
         .frame(maxHeight: .infinity, alignment: .top)

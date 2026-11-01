@@ -12,7 +12,11 @@ enum ActionClient {
     /// Partial translations, then exactly one done or failed. Ending the consumer (its task cancelled) cancels the
     /// download; a cancel ends the stream with nothing more.
     static func run(_ mode: ActionMode, text: String) -> AsyncStream<ActionUpdate> {
-        ActionAPI.updates { () async throws -> (status: Int, bytes: URLSession.AsyncBytes, stop: @Sendable () -> Void) in
+        #if PROTLY_CI_STUB
+        // The simulator CI only (StubActionClient.swift): a marker draft gets a recorded stream, before the key.
+        if let stub = StubActionClient.run(mode, text: text) { return stub }
+        #endif
+        return ActionAPI.updates { () async throws -> (status: Int, bytes: URLSession.AsyncBytes, stop: @Sendable () -> Void) in
             let (bytes, response) = try await session.bytes(for: request(mode, text: text))
             let task = bytes.task
             // The timeouts stay URLSession's (ActionAPI.sessionConfiguration): both cancel this read.

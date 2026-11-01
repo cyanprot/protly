@@ -66,8 +66,8 @@ script takes the newest iOS 26 runtime and an iPhone 13 Pro (else the first 390 
 After the layout scenarios, `UITests/PhoneChecksUITests.swift` runs the phone checklists in the order
 `test0_access`, `test0_probe` (only with `[probe]` in the commit message; Sprint 002's probe since then), `test1_68`,
 `test2_ws`, `test3_85offline`, `test4_memory`, `test5_icon`, the typing-fixes methods `test5a_web`, `test5b_menu` and
-`test5c_pad` (below), then the network groups `test6_85net` and `test7_77`
-(below); learned words carry over between them.
+`test5c_pad`, the keyboard-ui methods `test5d_card` and `test5e_bar` (below), then the network groups `test6_85net` and
+`test7_77` (below); learned words carry over between them.
 
 - `UITests/Driver.swift`: the shared helpers. Text is typed by coordinate: Hangul as its Dubeolsik keys
   (ProtlyCore `KeyEncoder`, linked into the UI tests), capitals and shifted jamo with a shift tap, symbols on the
@@ -119,11 +119,16 @@ and the container app's about-me note: 6.8-11 (its Translate part runs inside `t
   `test0_access` between two snapshots of the shut-down device, `prefsdump.py`) shows no plist change naming
   Protly or Full Access, and run 40 read TCC.db without its `-wal` file (copied since), so nothing is written
   before boot.
-- **Panel buttons** (Insert, Undo is the bar's center, Save, Cancel, Done, Retry) are inside the keyboard: the test
-  polls Vision OCR of the panel every 0.5 s (up to 30 s) and taps the label's word box from the same screenshot,
-  in the panel's bottom 45 pt so the same word in the panel's text does not count, and case-insensitively (Vision
-  reads the semibold `Insert` as `insert`). Polls read only that band (a whole-panel reading takes seconds); the poll
-  time is the timing.
+- **The strip, the card and the panels** (keyboard-ui 003) are read from the host's accessibility tree, where the
+  keyboard's SwiftUI views appear with their labels and frames (`UITests/KeyboardTree.swift`; the views carry the
+  identifiers `protly-strip`, `protly-card` and `protly-panel`, which nothing speaks). A call: the strip's verb
+  (`Translating`) right after the tap, then the tree every 0.5 s (up to 30 s) until the card's `Replace` (Read: `Insert`)
+  is there and the strip is gone, since the card streams in and its buttons are there, inert, from the first words;
+  Retry, an error line on the strip or a card without the strip and without `Replace` ends it as failed. The poll
+  time is the timing (`seconds#n`; `first#n` is the first streamed words). Replace, Cancel and Done are tapped at
+  their tree frames, 0.6 s after the card is finished (the card ignores taps for 0.5 s after it appears). The About
+  me confirm and notice panels (Save, Cancel, Done) are found in the tree too; Vision OCR of the panel's bottom 45 pt
+  (case-insensitive: Vision reads the semibold `Insert` as `insert`) stays the fallback.
 - **Deadlines.** Each method has an XCTest time allowance (`PhoneChecksUITests.allowance`, `-test-timeouts-enabled`),
   the network groups stop starting items two minutes before theirs, `run-shots.sh` stops the main test run after
   65 minutes (`with_deadline`; run 53, on a slow runner, ran past the earlier 50 in test7_77), and the build
@@ -183,6 +188,47 @@ Plan section "Sprint 004" of `docs/plans/2026-10-30-typing-fixes.md`; results in
   (`press(forDuration:thenDragTo:withVelocity:thenHoldForDuration:)`). `pad-1` 90 pt left, `pad-2` 90 pt left while
   rising 80 pt (must move at least 75% of pad-1), `pad-3` `안녕` and 20 pt left (one syllable: `1,0`). pad-1 must
   move at least 8 characters; the drag must leave the text as typed (a lost tap is retyped once) and no marked text.
+
+## Result card checks (keyboard-ui 003)
+
+Plan Task 3.5 of `docs/plans/2026-10-30-keyboard-ui.md` (design Part 3, CI list); results in
+`docs/ios-keyboard-notes.md`, "Streaming result card (keyboard-ui 003)". Code: `UITests/CardChecks.swift`. Two offline
+methods after `test5c_pad`; every line is `PENDING` with its readings and `checks.py` decides (`resolve_card_*`,
+`resolve_mem_stream`, `resolve_hit`, `resolve_bar_look`, `resolve_bar_xxl`, `resolve_app`, unit-tested in
+`test_card_checks.py`).
+
+- **The stub.** `project.yml` sets the compilation condition `PROTLY_CI_STUB` on `ProtlyCIKeyboard` only (never
+  `ios-app/Package.swift`, so the phone has no stub; a source rule in `KeyboardSourceRulesTests` keeps it so).
+  `../Sources/ProtlyKeyboard/StubActionClient.swift` answers a draft that starts with `protly-stub <scenario>` with a
+  recorded stream of server-sent events, through the same ProtlyCore driver as the real reply, before the key is read;
+  every other draft goes to the API as on the phone, so the network checks are unchanged. Scenarios: `ok` (a thinking
+  block, 2.8 s of waiting, the translation in 0.8 s deltas, the back translation), `slow` (pings past the strip's 8 s
+  line, then 13 one-second deltas), `error` (an `overloaded_error` event before any text), `cut` (part of the
+  translation, then the same error). The texts are repeated in `CardChecks.swift`'s `Stub`;
+  `test_card_checks.py` compares the two files.
+- **Drafts.** The host's `-fills "a|b"` adds buttons `fill-1`, `fill-2` (top right, above 30% of the height) that put a
+  draft in the field with the keyboard up, so no relaunch is needed per call. The stub drafts end in Korean, so the
+  bar offers `→ English`.
+- **The looks helper.** The tests run inside the simulator and cannot call `simctl`: `Driver.looks` writes
+  `<n> appearance light|dark` or `<n> content_size <size>` to `looks-requests.txt`, and `run-shots.sh`'s
+  `looks_helper` runs `xcrun simctl ui <device> ...` and answers in `looks-acks.txt` (anything else is refused).
+  `looks-changed.txt` remembers a look left changed, and the next method puts dark and the default size back.
+- **test5d_card**, in dark then light: `card-wait-*` (the strip names `Translating → English…`, its xmark at least
+  44 x 44 pt, no card), `card-mid-*` (the first words are the start of the result while the strip runs),
+  `card-done-*` (the whole translation and back translation, Cancel, Copy and Replace at least 44 pt tall, the strip
+  gone; dark taps Replace and the field takes the result, light taps Copy (Copied) and Cancel), `card-err0-*` (the
+  error line on the strip with Retry, no card), `card-err1-*` (the kept text with the error line under it, Copy and
+  Retry, no Replace). Then, dark: `card-slow` (`Still translating…` after 8 s), `mem-stream` (the keyboard's footprint
+  from before the call through the long stream: at most 10 MB of growth; the 40 MB limit is the phone's) and
+  `card-cancel` (the strip's xmark mid-stream closes everything, a later delta brings nothing back, the draft stays).
+  Each item's `c-<id>.png` is the screen at the moment it was read.
+- **test5e_bar**: `hit-1` (with `teh` typed, each of the three slot buttons at least 120 x 40 pt), `bar-dark` and
+  `bar-light` (the bar with `teh`, then the `→ English` pill, in each look: checks.py measures the keyboard's
+  background beside the bar and the paper or ink pixels in the center slot), `bar-xxl` (the extra-extra-large text
+  size with `ms:` (Bahasa Melayu) and `ar:` (العربية): every part of the pill inside its slot and the arrow before the
+  name; RECORD when the OCR shows the long name cut short or the text did not grow), `app-dark` and `app-light`
+  (`ProtlyCIApp`'s guide screen: the hero line, and an ink or paper background; `c-app-<look>-1.png` and `-2.png` one
+  screen down).
 
 ## Reading a run without GitHub access
 

@@ -45,6 +45,9 @@ targets:
         # The phone's Info.plist; Xcode merges in the bundle keys that xtool adds on the phone build.
         INFOPLIST_FILE: ../Support/ProtlyKeyboard-Info.plist
         GENERATE_INFOPLIST_FILE: YES
+        # keyboard-ui 003: StubActionClient.swift answers `protly-stub <scenario>` drafts with recorded streams (the
+        # result-card checks, offline). Only here: ios-app/Package.swift never defines it, so the phone has no stub.
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) PROTLY_CI_STUB"
     dependencies:
       - package: ProtlyCore
       - package: KeyboardKit

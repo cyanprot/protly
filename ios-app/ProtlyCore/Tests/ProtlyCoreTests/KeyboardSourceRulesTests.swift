@@ -336,6 +336,77 @@ final class KeyboardSourceRulesTests: XCTestCase {
         XCTAssertTrue(client.contains("ActionAPI.updates"), "ActionClient.swift must read the reply through ActionAPI.updates")
     }
 
+    /// keyboard-ui 003, Task 3.5: the CI stub compiles only into the simulator's ProtlyCIKeyboard. `PROTLY_CI_STUB`
+    /// wraps the whole stub file and its one call site, before the key; only ios-app/CI/project.yml defines it.
+    func testTheCIStubIsCompiledOutOfThePhone() throws {
+        let all = try sources()
+        var uses: [String] = []
+        for (name, text) in all {
+            let ns = text as NSString
+            uses += matches(#"\bPROTLY_CI_STUB\b"#, in: text).map { "\(name): \(lineText(ns, $0))" }
+            if name != "StubActionClient.swift" && name != "ActionClient.swift" {
+                XCTAssertTrue(matches(#"\bStubActionClient\b"#, in: text).isEmpty, "\(name) calls the stub")
+            }
+        }
+        // One `#if` in each of the two files, nothing else (the line numbers dropped).
+        let places = uses.map { $0.replacingOccurrences(of: #": \d+: "#, with: ": ", options: .regularExpression) }.sorted()
+        XCTAssertEqual(places, ["ActionClient.swift: #if PROTLY_CI_STUB", "StubActionClient.swift: #if PROTLY_CI_STUB"],
+                       uses.joined(separator: "\n"))
+        guard let stub = all.first(where: { $0.name == "StubActionClient.swift" })?.text,
+              let client = all.first(where: { $0.name == "ActionClient.swift" })?.text else {
+            return XCTFail("StubActionClient.swift or ActionClient.swift not found")
+        }
+        // Wholly inside the condition: nothing before the #if or after the #endif, and no second block.
+        let lines = stub.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        XCTAssertEqual(lines.first, "#if PROTLY_CI_STUB")
+        XCTAssertEqual(lines.last, "#endif")
+        XCTAssertEqual(lines.filter { $0.hasPrefix("#if") || $0.hasPrefix("#endif") || $0.hasPrefix("#else") }.count, 2)
+        // A cancelled call stops in the stub's delays: they throw, never `try?`.
+        XCTAssertTrue(stub.contains("try await Task.sleep(for:"), "the stub's delays")
+        XCTAssertFalse(stub.contains("try? await Task.sleep"), "a stub delay that ignores a cancel")
+        XCTAssertTrue(stub.contains("ActionAPI.updates"), "the stub must feed ProtlyCore's driver, as the real client does")
+        // The call site asks the stub first (before the key) and only inside the condition.
+        let ns = client as NSString
+        let run = body(of: "static func run(", in: ns).map { ns.substring(with: $0) } ?? ""
+        let condition = run.range(of: "#if PROTLY_CI_STUB"), call = run.range(of: "StubActionClient.run("),
+            endif = run.range(of: "#endif"), real = run.range(of: "ActionAPI.updates")
+        XCTAssertTrue(condition != nil && call != nil && endif != nil && real != nil, "ActionClient.run: \(run)")
+        if let condition, let call, let endif, let real {
+            XCTAssertTrue(condition.upperBound < call.lowerBound && call.upperBound < endif.lowerBound
+                          && endif.upperBound < real.lowerBound, "ActionClient.run asks the stub first, inside the condition")
+        }
+        // Defined only for the CI keyboard target: never in the phone's package.
+        let iosApp = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let package = try String(contentsOf: iosApp.appendingPathComponent("Package.swift"), encoding: .utf8)
+        XCTAssertFalse(package.contains("PROTLY_CI_STUB"), "ios-app/Package.swift defines the CI stub")
+        let project = try String(contentsOf: iosApp.appendingPathComponent("CI/project.yml"), encoding: .utf8)
+        let defined = project.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("#") }
+            .filter { $0.contains("PROTLY_CI_STUB") }
+        XCTAssertEqual(defined.map { $0.trimmingCharacters(in: .whitespaces) },
+                       [#"SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) PROTLY_CI_STUB""#])
+        let keyboard = project.range(of: "  ProtlyCIKeyboard:"), app = project.range(of: "  ProtlyCIApp:"),
+            setting = project.range(of: "SWIFT_ACTIVE_COMPILATION_CONDITIONS")
+        if let keyboard, let app, let setting {
+            XCTAssertTrue(keyboard.upperBound < setting.lowerBound && setting.upperBound < app.lowerBound,
+                          "PROTLY_CI_STUB is set on ProtlyCIKeyboard only")
+        } else {
+            XCTFail("project.yml: ProtlyCIKeyboard, ProtlyCIApp or the setting not found")
+        }
+    }
+
+    /// keyboard-ui 003, Task 3.5: the strip's glow and the card's reveal each name their Reduce Motion form.
+    func testTheStripAndTheCardHaveAReduceMotionForm() throws {
+        let all = try sources()
+        for name in ["ProgressStrip.swift", "ResultCard.swift"] {
+            let text = all.first(where: { $0.name == name })?.text ?? ""
+            XCTAssertFalse(text.isEmpty, "\(name) not found")
+            XCTAssertTrue(text.contains("@Environment(\\.accessibilityReduceMotion)"), "\(name) has no Reduce Motion form")
+        }
+        let controller = all.first(where: { $0.name == "KeyboardViewController.swift" })?.text ?? ""
+        XCTAssertTrue(controller.contains(".modifier(CardReveal(visible: visible))"), "the panel layer reveals the card with CardReveal")
+    }
+
     /// keyboard-ui 003 review fixes, on the keyboard's source text (it needs the iOS SDK to build).
     func testResultCardWiring() throws {
         let all = try sources()

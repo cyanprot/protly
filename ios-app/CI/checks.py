@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Assembles the phone checks of one CI run (docs/plans/2026-10-30-sim-phone-checks.md, Tasks 1.2-1.6 and 2.3, and
-docs/plans/2026-10-30-typing-fixes.md, Sprint 004: dark-1, ret-*, menu-*, pad-*).
+docs/plans/2026-10-30-typing-fixes.md, Sprint 004: dark-1, ret-*, menu-*, pad-*, and
+docs/plans/2026-10-30-keyboard-ui.md, Task 3.5: card-*, mem-stream, hit-1, bar-*, app-*).
 
 Usage: checks.py <dir> [--network-key] [--ran <entry>,<entry>...]
 
@@ -35,7 +36,14 @@ NETWORK_IDS = ["6.8-11"] + [f"8.5-{i}" for i in (1, 3, 4, 5, 6, 7, 8, 9, 10)] + 
 WEB_FIELDS = ("textarea", "input", "composer")
 RET_IDS = [f"ret-{step}-{field}" for step in range(1, 6) for field in WEB_FIELDS]
 TYPING_IDS = ["dark-1"] + RET_IDS + ["menu-0", "menu-1", "menu-4", "pad-1", "pad-2", "pad-3"]
-EXPECTED_IDS = OFFLINE_IDS + [i for i in NETWORK_IDS if i not in OFFLINE_IDS] + TYPING_IDS
+# keyboard-ui 003: the strip and the result card from the CI stub in both looks, the cancel, memory during a stream
+# (test5d_card); the bar's hit frames, the bar in both looks, a long target at a large text size and the app's guide
+# screen (test5e_bar).
+CARD_LOOKS = ("dark", "light")
+CARD_STATES = ("wait", "mid", "done", "err0", "err1")
+CARD_IDS = [f"card-{s}-{look}" for look in CARD_LOOKS for s in CARD_STATES] + ["card-slow", "card-cancel", "mem-stream"]
+BAR_IDS = ["hit-1", "bar-dark", "bar-light", "bar-xxl", "app-dark", "app-light"]
+EXPECTED_IDS = OFFLINE_IDS + [i for i in NETWORK_IDS if i not in OFFLINE_IDS] + TYPING_IDS + CARD_IDS + BAR_IDS
 # The PhoneChecksUITests method that writes each ID. A filtered run (`[shots:...]`, shotsfilter.py) marks the IDs of
 # methods it did not select NOT-RUN. Items inside one method depend on each other (6.8-9 on 6.8-8's learned word,
 # 8.5-10 and 7.7-4 on earlier timings), so a method is the smallest unit a filter selects.
@@ -48,6 +56,8 @@ METHOD_IDS = {
     "test5a_web": ["dark-1"] + RET_IDS,
     "test5b_menu": ["menu-0", "menu-1", "menu-4"],
     "test5c_pad": ["pad-1", "pad-2", "pad-3"],
+    "test5d_card": CARD_IDS,
+    "test5e_bar": BAR_IDS,
     "test6_85net": [f"8.5-{i}" for i in (1, 3, 4, 5, 6, 7, 8, 9, 10)],
     "test7_77": [f"7.7-{i}" for i in range(1, 7)],
 }
@@ -639,8 +649,447 @@ TYPING_RESOLVERS = {
 }
 
 
+# keyboard-ui 003 (docs/plans/2026-10-30-keyboard-ui.md, Task 3.5). UITests/CardChecks.swift reads the strip, the
+# card and the bar from the host's accessibility tree and writes each line PENDING with its readings; the rules below
+# decide. The stub's texts (StubActionClient.swift) come in the line as want=..., so a rule never hard-codes them.
+
+# Apple's minimum tap target, and the bar slot's hit frame (Sprint 001: each slot is a third of the bar).
+MIN_TAP = 44
+MIN_SLOT = (120, 40)
+# The verb and target the strip names for the stub's Korean drafts ("Translating → English…").
+STRIP_WORDS = ("Translating", "English")
+BUTTON = re.compile(r"\s*(.+?) (\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)( disabled)?\s*$")
+SIZE = re.compile(r"^(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)$")
+
+
+def plain_field(text, name):
+    """The value of name=<token> (unquoted, up to a space), or None."""
+    m = re.search(r"(?<![\w-])" + re.escape(name) + r"=([^\s\"]+)", text)
+    return m.group(1) if m else None
+
+
+def size_field(text, name):
+    """name=<w>x<h> as (w, h); None when absent or `none`."""
+    m = SIZE.match(plain_field(text, name) or "")
+    return (float(m.group(1)), float(m.group(2))) if m else None
+
+
+def rect_field(text, name):
+    """name={x,y,w,h} (points) as a tuple, or None."""
+    m = re.search(r"(?<![\w-])" + re.escape(name) + r"=\{(-?[\d.]+),(-?[\d.]+),([\d.]+),([\d.]+)\}", text)
+    return tuple(float(v) for v in m.groups()) if m else None
+
+
+def parse_buttons(value):
+    """`Cancel 70.0x44.0,Copy 60.0x44.0 disabled` as {label: (w, h, enabled)}."""
+    out = {}
+    for part in (value or "").split(","):
+        m = BUTTON.match(part)
+        if m:
+            out[m.group(1)] = (float(m.group(2)), float(m.group(3)), m.group(4) is None)
+    return out
+
+
+def button_problems(buttons, want, absent=()):
+    problems = []
+    for label in want:
+        if label not in buttons:
+            problems.append(f"no {label} button ({sorted(buttons) or 'none'})")
+        elif buttons[label][1] < MIN_TAP:
+            problems.append(f"{label} is {buttons[label][1]:.0f} pt tall, under {MIN_TAP}")
+    for label in absent:
+        if label in buttons:
+            problems.append(f"{label} offered")
+    return problems
+
+
+def resolve_card_wait(check, marks=None, samples=None, run_dir=None):
+    """card-wait-<look> (design Part 3, step 1): right after the tap the bar is the strip, naming the operation and the
+    target, with an xmark of at least 44 x 44 pt; the keys stay (no card yet)."""
+    ev = check.evidence
+    strip = quoted_field(ev, "strip")
+    if strip is None:
+        return unreadable(check.id, f"no strip reading in {ev[:200]!r}")
+    problems = [f"strip {strip!r} lacks {w!r}" for w in STRIP_WORDS if w not in strip]
+    cancel = size_field(ev, "cancel")
+    if cancel is None:
+        problems.append("no xmark on the strip")
+    elif min(cancel) < MIN_TAP:
+        problems.append(f"xmark hit area {cancel[0]:.0f} x {cancel[1]:.0f} pt, under {MIN_TAP} x {MIN_TAP}")
+    if int_field(ev, "card") != 0:
+        problems.append("a card opened before any text")
+    return verdict(check, problems)
+
+
+def resolve_card_mid(check, marks=None, samples=None, run_dir=None):
+    """card-mid-<look> (step 2): the first words are on the card while the strip still runs, and they are the start
+    of the result. Read after the whole text but before the end, it is RECORD (the shot missed the moment)."""
+    ev = check.evidence
+    text, final = quoted_field(ev, "text"), quoted_field(ev, "final")
+    if text is None or final is None:
+        return unreadable(check.id, f"no text/final in {ev[:200]!r}")
+    problems, notes = [], []
+    if not text:
+        problems.append("the card shows no text")
+    elif not unicodedata.normalize("NFC", final).startswith(unicodedata.normalize("NFC", text)):
+        problems.append(f"{text!r} is not the start of {final!r}")
+    if "English" not in (quoted_field(ev, "header") or ""):
+        problems.append(f"header {quoted_field(ev, 'header')!r} does not name the target")
+    streaming = int_field(ev, "strip") == 1
+    if not streaming:
+        notes.append("the call had already ended: not caught mid-stream")
+    copy = plain_field(ev, "copy")
+    if copy == "enabled":
+        notes.append("Copy reads enabled while the text streams")
+    return verdict(check, problems, notes, record=not problems and not streaming)
+
+
+def resolve_card_done(check, marks=None, samples=None, run_dir=None):
+    """card-done-<look> (steps 2 and 3): the whole translation with the back translation under it, Cancel, Copy and
+    Replace at least 44 pt tall, the strip gone. Then (dark) Replace puts the result in the field, or (light) Copy
+    turns into Copied and Cancel closes the card with the draft untouched."""
+    ev = check.evidence
+    text, want = quoted_field(ev, "text"), quoted_field(ev, "want")
+    back, want_back = quoted_field(ev, "back"), quoted_field(ev, "want-back")
+    if None in (text, want, back, want_back):
+        return unreadable(check.id, f"no text/want/back/want-back in {ev[:200]!r}")
+    problems = []
+    if not same_text(text, want):
+        problems.append(f"text {text!r}, want {want!r}")
+    if not same_text(back, want_back):
+        problems.append(f"back translation {back!r}, want {want_back!r}")
+    problems += button_problems(parse_buttons(quoted_field(ev, "buttons")), ("Cancel", "Copy", "Replace"))
+    if int_field(ev, "strip") != 0:
+        problems.append("the strip is still up")
+    after, want_after = quoted_field(ev, "after"), quoted_field(ev, "want-after")
+    if want_after is None or after is None:
+        problems.append("no field reading after the card's button")
+    elif not same_text(after, want_after):
+        problems.append(f"field {after!r} after the card's button, want {want_after!r}")
+    if plain_field(ev, "copied") not in (None, "1"):
+        problems.append("Copy did not turn into Copied")
+    if plain_field(ev, "closed") not in (None, "1"):
+        problems.append("Cancel left the card up")
+    return verdict(check, problems)
+
+
+def resolve_card_err0(check, marks=None, samples=None, run_dir=None):
+    """card-err0-<look> (step 5, no text yet): the error line replaces the strip's label, with Retry; no card opens;
+    the xmark closes the strip."""
+    ev = check.evidence
+    strip, want = quoted_field(ev, "strip"), quoted_field(ev, "want-error")
+    if strip is None or want is None:
+        return unreadable(check.id, f"no strip/want-error in {ev[:200]!r}")
+    problems = [] if want in strip else [f"strip {strip!r} lacks {want!r}"]
+    retry = size_field(ev, "retry")
+    if retry is None:
+        problems.append("no Retry on the strip")
+    elif retry[1] < MIN_TAP:
+        problems.append(f"Retry is {retry[1]:.0f} pt tall, under {MIN_TAP}")
+    if int_field(ev, "card") != 0:
+        problems.append("a card opened with no text")
+    if plain_field(ev, "closed") != "1":
+        problems.append("the xmark did not close the strip")
+    return verdict(check, problems)
+
+
+def resolve_card_err1(check, marks=None, samples=None, run_dir=None):
+    """card-err1-<look> (step 5, text on screen): the text already shown stays, with one error line under it, only
+    Copy (no Replace) and Retry; Cancel closes the card. The CHECK that the error-after-text shot shows both."""
+    ev = check.evidence
+    kept, want_kept = quoted_field(ev, "kept"), quoted_field(ev, "want-kept")
+    error, want_error = quoted_field(ev, "error"), quoted_field(ev, "want-error")
+    if None in (kept, want_kept, error, want_error):
+        return unreadable(check.id, f"no kept/want-kept/error/want-error in {ev[:200]!r}")
+    problems = []
+    if not same_text(kept, want_kept):
+        problems.append(f"kept text {kept!r}, want {want_kept!r}")
+    if not same_text(error, want_error):
+        problems.append(f"error line {error!r}, want {want_error!r}")
+    problems += button_problems(parse_buttons(quoted_field(ev, "buttons")), ("Copy", "Retry"),
+                                absent=("Replace", "Insert"))
+    if int_field(ev, "strip") != 0:
+        problems.append("the strip is still up")
+    if plain_field(ev, "closed") != "1":
+        problems.append("Cancel left the card up")
+    return verdict(check, problems)
+
+
+def resolve_card_slow(check, marks=None, samples=None, run_dir=None):
+    """card-slow (P5): after 8 s with no text the strip says it is still going."""
+    ev = check.evidence
+    strip = quoted_field(ev, "strip")
+    if strip is None:
+        return unreadable(check.id, f"no strip reading in {ev[:200]!r}")
+    problems = [] if "Still translating" in strip else [f"strip {strip!r} has no 'Still translating' line"]
+    at = float_field(ev, "at")
+    if at is not None and at < 8:
+        problems.append(f"read at {at:.1f} s, before the 8 s line is due")
+    if int_field(ev, "card") != 0:
+        problems.append("a card opened before any text")
+    return verdict(check, problems)
+
+
+def resolve_card_cancel(check, marks=None, samples=None, run_dir=None):
+    """card-cancel (step 4): the strip's xmark while text streams closes the card and the strip, a later delta does
+    not bring the card back, and the field keeps the draft."""
+    ev = check.evidence
+    field, want = quoted_field(ev, "field"), quoted_field(ev, "want-field")
+    if field is None or want is None:
+        return unreadable(check.id, f"no field/want-field in {ev[:200]!r}")
+    problems = []
+    for name, wanted, why in (("card-before", 1, "no card before the xmark"), ("card-after", 0, "the card stayed"),
+                              ("strip-after", 0, "the strip stayed"), ("card-late", 0, "the card came back")):
+        if int_field(ev, name) != wanted:
+            problems.append(why)
+    if not same_text(field, want):
+        problems.append(f"field {field!r}, want the draft {want!r}")
+    return verdict(check, problems)
+
+
+# Growth of the keyboard's footprint during one streamed reply over the moment before the call. The phone's limit is
+# the 40 MB jetsam ledger, which the simulator does not show (its footprint starts near 60 MB with the simulator's own
+# share, notes "What the simulator cannot show"): the simulator judges what the stream adds, against the 10 MB
+# growth line of 6.8-10, and records the absolute numbers for the phone check.
+MEM_STREAM_MAX_GROWTH_MB = 10
+
+
+def resolve_mem_stream(check, marks, samples, run_dir=None):
+    """mem-stream: memsample.py's samples from mem-stream-start to mem-stream-end (the long `slow` stream) against the
+    sample nearest mem-stream-before (the keyboard idle with the draft in the field)."""
+    names = ("mem-stream-before", "mem-stream-start", "mem-stream-end")
+    if any(n not in marks for n in names):
+        return unreadable(check.id, f"{', '.join(names)} marks missing ({sorted(marks)})")
+    method = best_method(samples)
+    before = nearest(samples, marks["mem-stream-before"], method)
+    during = [s for s in samples if s.method == method and marks["mem-stream-start"] - 1 <= s.t <= marks["mem-stream-end"] + 1]
+    if method is None or not before or not during:
+        return unreadable(check.id, f"no keyboard memory sample before or during the stream ({method})")
+    if len(before) != 1 or len({s.pid for s in during}) != 1 or during[0].pid != before[0].pid:
+        return Check(check.id, "RECORD", f"several keyboard processes: before pid {pids(before)}, during "
+                     f"{','.join(sorted({str(s.pid) for s in during}))} ({method}), not comparable")
+    base = before[0]
+    peak = max(during, key=lambda s: s.kb)
+    growth = (peak.kb - base.kb) / 1024
+    line = (f"before {mb(base.kb)}, peak {mb(peak.kb)} over {len(during)} samples during the stream, growth "
+            f"{growth:+.1f} MB ({method}, pid {base.pid}; macOS-side footprint; the 40 MB limit is judged on the phone)")
+    if growth > MEM_STREAM_MAX_GROWTH_MB:
+        return Check(check.id, "FAIL", f"{check.evidence} => {line}: more than {MEM_STREAM_MAX_GROWTH_MB} MB")
+    return Check(check.id, "PASS", f"{check.evidence} => {line}")
+
+
+SLOT_RE = re.compile(r"(left|center|right) (none|(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?))")
+
+
+def resolve_hit(check, marks=None, samples=None, run_dir=None):
+    """hit-1 (design Part 3, CI list): with `teh` typed every slot shows a button, and each button's hit frame is at
+    least 120 x 40 pt."""
+    slots = quoted_field(check.evidence, "slots")
+    found = {m.group(1): m for m in SLOT_RE.finditer(slots or "")}
+    if len(found) != 3:
+        return unreadable(check.id, f"no reading of the three slots in {check.evidence[:200]!r}")
+    problems = []
+    for name in ("left", "center", "right"):
+        m = found[name]
+        if m.group(2) == "none":
+            problems.append(f"no button in the {name} slot")
+            continue
+        w, h = float(m.group(3)), float(m.group(4))
+        if w < MIN_SLOT[0] or h < MIN_SLOT[1]:
+            problems.append(f"{name} hit frame {w:.1f} x {h:.1f} pt, under {MIN_SLOT[0]} x {MIN_SLOT[1]}")
+    return verdict(check, problems)
+
+
+# The brand (design D3, src/ui/tokens.css.js; tests/brand.test.js keeps the copies equal).
+PAPER = (0xF5, 0xF0, 0xE6)
+INK = (0x1A, 0x1F, 0x2E)
+# A pixel this close to paper or ink (sum of channel differences) is drawn in it.
+BRAND_NEAR = 60
+# The pill fills more pixels than this at 3x (a short pill, 70 x 30 pt, is about 19000).
+PILL_MIN_PX = 3000
+# The keyboard's own background, sampled at the bar's edge: light above, dark below (0-255 luminance).
+LIGHT_MIN_LUMA = 150
+DARK_MAX_LUMA = 110
+
+
+def _luma(p):
+    return 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2]
+
+
+def _near(p, ref):
+    return abs(p[0] - ref[0]) + abs(p[1] - ref[1]) + abs(p[2] - ref[2]) <= BRAND_NEAR
+
+
+def _crop(img, rect, points):
+    """The pixels of `rect` (points) of a screenshot `points` wide."""
+    scale = img.width / points
+    x, y, w, h = rect
+    box = (int(round(x * scale)), int(round(y * scale)), int(round((x + w) * scale)), int(round((y + h) * scale)))
+    crop = img.convert("RGB").crop(box)
+    raw = crop.tobytes()
+    return [tuple(raw[i:i + 3]) for i in range(0, len(raw), 3)]
+
+
+def _median(pixels):
+    if not pixels:
+        return (0, 0, 0)
+    return tuple(sorted(p[i] for p in pixels)[len(pixels) // 2] for i in range(3))
+
+
+def measure_pill(img, slot, points):
+    """The center slot of a bar screenshot: paper and ink pixels in it, and the keyboard's background beside the bar
+    (a sliver at the side inset, left of the left slot, at the slot's height)."""
+    pixels = _crop(img, slot, points)
+    side = _crop(img, (0.5, slot[1] + slot[3] * 0.3, 2.5, slot[3] * 0.4), points)
+    return {"paper": sum(1 for p in pixels if _near(p, PAPER)), "ink": sum(1 for p in pixels if _near(p, INK)),
+            "bg": _luma(_median(side))}
+
+
+def _open_image(run_dir, name):
+    from PIL import Image
+    with Image.open(os.path.join(run_dir, name)) as img:
+        img.load()
+        return img.copy()
+
+
+def _pillow(check, run_dir):
+    if run_dir is None:
+        return unreadable(check.id, "no run folder to read the screenshots from")
+    try:
+        import PIL  # noqa: F401
+    except ImportError:
+        return unreadable(check.id, "Pillow is not installed")
+    return None
+
+
+def resolve_bar_look(check, marks=None, samples=None, run_dir=None):
+    """bar-dark and bar-light (design D3, P9): in each shot (`teh` typed, then the target pill) the keyboard has that
+    look and the center pill is drawn in the brand: paper on a dark keyboard, ink on a light one."""
+    ev = check.evidence
+    look = plain_field(ev, "look")
+    points = int_field(ev, "points")
+    shots = [(quoted_field(ev, f"shot{n}"), rect_field(ev, f"slot{n}")) for n in (1, 2)]
+    if look not in CARD_LOOKS or not points or any(s is None or r is None for s, r in shots):
+        return unreadable(check.id, f"no look/points/shot1/slot1/shot2/slot2 in {ev[:200]!r}")
+    stop = _pillow(check, run_dir)
+    if stop:
+        return stop
+    problems, notes = [], []
+    fill, other = ("ink", "paper") if look == "light" else ("paper", "ink")
+    for n, (name, slot) in enumerate(shots, 1):
+        try:
+            m = measure_pill(_open_image(run_dir, name), slot, points)
+        except OSError as e:
+            return unreadable(check.id, f"{name}: {e}")
+        notes.append(f"shot{n} paper {m['paper']} ink {m['ink']} px, keyboard luma {m['bg']:.0f}")
+        if look == "light" and m["bg"] < LIGHT_MIN_LUMA:
+            problems.append(f"shot{n}: the keyboard is not light (luma {m['bg']:.0f})")
+        if look == "dark" and m["bg"] > DARK_MAX_LUMA:
+            problems.append(f"shot{n}: the keyboard is not dark (luma {m['bg']:.0f})")
+        if m[fill] < PILL_MIN_PX:
+            problems.append(f"shot{n}: no {fill} pill ({m[fill]} px)")
+        elif look == "light" and m[other] > m[fill]:
+            problems.append(f"shot{n}: more {other} than {fill} in the pill")
+    return verdict(check, problems, notes)
+
+
+def _texts(value):
+    """`→ {x,y,w,h}|Bahasa Melayu {x,y,w,h}` as [(label, (x, y, w, h))]."""
+    out = []
+    for part in (value or "").split("|"):
+        m = re.match(r"^(.*) \{(-?[\d.]+),(-?[\d.]+),([\d.]+),([\d.]+)\}$", part)
+        if m:
+            out.append((m.group(1), tuple(float(v) for v in m.groups()[1:])))
+    return out
+
+
+def resolve_bar_xxl(check, marks=None, samples=None, run_dir=None):
+    """bar-xxl (P7, CI list): the target pill at the extra-extra-large text size, for a long name (`ms`) and a right-to-
+    left one (`ar`): every part inside the slot (no overflow), the arrow before the name (no bidi reordering). RECORD
+    when the text size did not grow or the OCR shows the long name cut short."""
+    ev = check.evidence
+    problems, notes = [], []
+    record = False
+    base = float_field(ev, "base-h")
+    for tag in ("ms", "ar"):
+        slot, want = rect_field(ev, f"{tag}-slot"), quoted_field(ev, f"{tag}-want")
+        parts = _texts(quoted_field(ev, f"{tag}-texts"))
+        if slot is None or want is None or not parts:
+            return unreadable(check.id, f"no {tag}-slot/{tag}-want/{tag}-texts in {ev[:300]!r}")
+        x0, x1 = slot[0] - 1, slot[0] + slot[2] + 1
+        for label, (x, y, w, h) in parts:
+            if x < x0 or x + w > x1:
+                problems.append(f"{tag}: {label!r} at x {x:.1f}..{x + w:.1f} leaves the slot {x0 + 1:.1f}..{x1 - 1:.1f}")
+        arrow = next((r for label, r in parts if label == "→"), None)
+        title = next((r for label, r in parts if same_text(label, want)), None)
+        if title is None:
+            problems.append(f"{tag}: no {want!r} in the pill ({[label for label, _ in parts]})")
+        elif arrow is None:
+            problems.append(f"{tag}: no arrow in the pill")
+        elif arrow[0] + arrow[2] > title[0] + 0.5:
+            problems.append(f"{tag}: the arrow is not before {want!r} (bidi order)")
+        if title is not None and base is not None and title[3] <= base * 1.05:
+            notes.append(f"{tag}: the name is {title[3]:.1f} pt tall, as at the default size ({base:.1f})")
+            record = True
+        ocr = quoted_field(ev, f"{tag}-ocr")
+        notes.append(f"{tag} ocr {ocr!r}")
+        if tag == "ms" and ocr is not None and "Melayu" not in ocr:
+            notes.append(f"{tag}: the name is cut short on screen")
+            record = True
+    return verdict(check, problems, notes, record=record)
+
+
+# The guide screen's background: the brand (ink in dark, paper in light), within this distance.
+APP_BG_NEAR = 40
+
+
+def resolve_app(check, marks=None, samples=None, run_dir=None):
+    """app-dark and app-light (P9, Sprint 002's guide screen): the hero line is there, and the screen's background is
+    ink in dark mode and paper in light mode (a sliver at the left edge, from 20% to 80% of the height)."""
+    ev = check.evidence
+    look, shot = plain_field(ev, "look"), quoted_field(ev, "shot1")
+    if look not in CARD_LOOKS or shot is None:
+        return unreadable(check.id, f"no look/shot1 in {ev[:200]!r}")
+    stop = _pillow(check, run_dir)
+    if stop:
+        return stop
+    try:
+        img = _open_image(run_dir, shot)
+    except OSError as e:
+        return unreadable(check.id, f"{shot}: {e}")
+    points = 390
+    height = img.height * points / img.width
+    bg = _median(_crop(img, (1, height * 0.2, 4, height * 0.6), points))
+    want = INK if look == "dark" else PAPER
+    problems = []
+    if int_field(ev, "hero") != 1:
+        problems.append("no hero line (Polish and translate as you type.)")
+    distance = sum(abs(a - b) for a, b in zip(bg, want))
+    if distance > APP_BG_NEAR:
+        problems.append(f"background {bg} is not {'ink' if look == 'dark' else 'paper'} {want}")
+    return verdict(check, problems, [f"background {bg}"])
+
+
+CARD_RESOLVERS = {
+    **{f"card-wait-{look}": resolve_card_wait for look in CARD_LOOKS},
+    **{f"card-mid-{look}": resolve_card_mid for look in CARD_LOOKS},
+    **{f"card-done-{look}": resolve_card_done for look in CARD_LOOKS},
+    **{f"card-err0-{look}": resolve_card_err0 for look in CARD_LOOKS},
+    **{f"card-err1-{look}": resolve_card_err1 for look in CARD_LOOKS},
+    "card-slow": resolve_card_slow,
+    "card-cancel": resolve_card_cancel,
+    "mem-stream": resolve_mem_stream,
+    "hit-1": resolve_hit,
+    "bar-dark": resolve_bar_look,
+    "bar-light": resolve_bar_look,
+    "bar-xxl": resolve_bar_xxl,
+    "app-dark": resolve_app,
+    "app-light": resolve_app,
+}
+
+
 RESOLVERS = {"6.8-9": resolve_relaunch, "6.8-10": resolve_memory, **{i: resolve_rules for i in RULES},
-             **TYPING_RESOLVERS}
+             **TYPING_RESOLVERS, **CARD_RESOLVERS}
 
 
 NO_KEY = "no network key"

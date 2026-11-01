@@ -18,6 +18,7 @@ final class PhoneChecksUITests: XCTestCase {
     static let allowance: [String: TimeInterval] = [
         "test0_access": 300, "test0_probe": 480, "test1_68": 900, "test2_ws": 300, "test3_85offline": 900,
         "test4_memory": 600, "test5_icon": 300, "test5a_web": 900, "test5b_menu": 420, "test5c_pad": 420,
+        "test5d_card": 720, "test5e_bar": 600,
         "test6_85net": 1080, "test7_77": 1080,
     ]
 
@@ -85,6 +86,21 @@ final class PhoneChecksUITests: XCTestCase {
     @MainActor
     func test5c_pad() throws {
         try PhoneRun(test: self, name: "test5c_pad", arguments: ["-screen", "uikit"]).checksPad()
+    }
+
+    /// keyboard-ui 003 (CardChecks.swift): the strip and the result card from the CI stub's recorded streams, dark and
+    /// light, the cancel and the memory during a stream. Offline (a marker draft never reaches the API), after Full Access.
+    @MainActor
+    func test5d_card() throws {
+        try PhoneRun(test: self, name: "test5d_card", arguments: ["-fills", Stub.fills]).checksCard()
+    }
+
+    /// keyboard-ui 003: the bar's hit frames, the bar in light mode, a long target name at a large text size, and the
+    /// container app's guide screen in both looks.
+    @MainActor
+    func test5e_bar() throws {
+        try PhoneRun(test: self, name: "test5e_bar", arguments: ["-fills", PhoneRun.barFills.joined(separator: "|")])
+            .checksBar()
     }
 
     /// After every offline group, so the requests and the about-me note change nothing they check.
@@ -180,6 +196,11 @@ final class Item {
         notes.append("\(group)#\(n)=\(q(text))")
     }
 
+    /// The readings are for checks.py to judge (CardChecks.swift): PENDING unless the test saw a FAIL itself.
+    func markPending() {
+        pending = true
+    }
+
     func skip(_ why: String) {
         skipReason = why
     }
@@ -239,6 +260,7 @@ final class PhoneRun {
         driver.keyPause = 0.35
         let reader = Reader(driver: driver)
         driver.log("== PhoneChecksUITests.\(name)")
+        driver.restoreLooks()  // an earlier method that stopped in light mode or at a large text size
         reader.selfTest()
         var ok = false
         if launch {
@@ -263,11 +285,12 @@ final class PhoneRun {
         d.log(line)
     }
 
-    func finish(_ item: Item, record: Bool = false) {
+    /// `screen`: the screenshot that shows the item (CardChecks: the card at the moment it was read), else the screen now.
+    func finish(_ item: Item, record: Bool = false, screen: XCUIScreenshot? = nil) {
         // A step that did not happen (no keyboard to type on, Clear left text, a slot tap without a keyboard) means
         // the evidence does not show what the item claims.
         for p in d.takeProblems() { item.markUnreadable("problem=\(q(p))") }
-        if !d.savePNG("c-\(item.id)") { item.markUnreadable("c-\(item.id).png not written") }
+        if !d.savePNG("c-\(item.id)", screen) { item.markUnreadable("c-\(item.id).png not written") }
         let line = "CHECK \(item.id) \(item.status(record: record)) \(item.evidence)"
         d.append(line, to: "checks.txt")
         d.log(line)
@@ -580,8 +603,9 @@ final class PhoneRun {
     func checks85() {
         if notReady(["8.5-1o", "8.5-2o", "8.5-6o", "8.5-7o", "8.5-8o", "8.5-9o"]) { return }
 
-        // A draft's last word is still being typed until a space ends it, and the bar offers no action while a word
-        // is typed (ProtlyBar / refreshField): the drafts end with a space, except 8.5-8o (cursor at the end).
+        // The drafts end with a space, as sending would: it ends the last word, so its reading has settled. Since
+        // keyboard-ui 001 the bar's action stays visible while a word is typed; 8.5-8o records it with the cursor
+        // right after the last letter.
         var it = Item("8.5-1o")
         d.clearField()
         typeCode("ru", it)
@@ -714,7 +738,7 @@ final class PhoneRun {
     /// shows for a Read clipboard. Full Access is test0_access's (run-shots.sh dumps the preferences around it).
     func probe() {
         let p = { (line: String) in self.d.append(line, to: "probe.txt") }
-        p("== sprint 002 probe")
+        p("== sprint 002 probe (keyboard-ui 003: the strip and the streamed card)")
         p("full access: \(fullAccessHow)")
         p("network key: \(Self.network)")
         guard ready else {
@@ -732,12 +756,35 @@ final class PhoneRun {
                 d.savePNG("probe-bar")
                 let t0 = Date()
                 d.tapSlot(.center, settle: 0)
-                probePanel("probe-panel-loading", row1, p)
-                let r = waitPanel(row1, it, for: ["Insert", "Retry"], timeout: 30)
-                p(String(format: "result after %.1f s: %@", Date().timeIntervalSince(t0), r.label ?? "none"))
+                // keyboard-ui 003: the strip in the bar while the call runs, then the card streaming in. The trees
+                // show what KeyboardTree.swift reads (parts, labels, frames, enabled).
+                d.pause(0.5)
+                d.savePNG("probe-strip")
+                try? d.app.debugDescription.write(to: d.out.appendingPathComponent("tree-probe-strip.txt"),
+                                                  atomically: true, encoding: .utf8)
+                p("strip: \(q(d.callView()?.stripText))")
+                var streamed = false
+                for _ in 0..<40 where !streamed {
+                    if let v = d.callView(), !v.cardRows.body.isEmpty {
+                        streamed = true
+                        p(String(format: "first text after %.1f s: %@ buttons %@", Date().timeIntervalSince(t0),
+                                 q(v.cardRows.body.first), q(v.buttons(v.card))))
+                        d.savePNG("probe-card-streaming")
+                        try? d.app.debugDescription.write(to: d.out.appendingPathComponent("tree-probe-streaming.txt"),
+                                                          atomically: true, encoding: .utf8)
+                    } else {
+                        d.pause(0.25)
+                    }
+                }
+                let r = waitCall(it, primary: "Replace", busy: "Translating", name: "probe-result")
+                p(String(format: "result after %.1f s: %@ card %@ strip %@", Date().timeIntervalSince(t0),
+                         "\(r.end)", q(r.text), q(r.strip)))
+                try? d.app.debugDescription.write(to: d.out.appendingPathComponent("tree-probe-card.txt"),
+                                                  atomically: true, encoding: .utf8)
                 probePanel("probe-panel-result", row1, p)
+                d.pause(0.6)
                 tapPanelButton("Cancel", row1, it)
-                p("after Cancel: field \(q(field())), panel \(q(readPanel(row1, it, save: nil).seen?.text))")
+                p("after Cancel: field \(q(field())), card \(d.callView()?.card.count ?? -1) elements")
             }
         } else {
             p("panel probe skipped: no network key")

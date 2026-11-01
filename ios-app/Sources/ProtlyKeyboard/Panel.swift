@@ -60,6 +60,7 @@ struct PanelView: View {
         .modifier(CardGlass())
         .padding(.horizontal, 6)
         .contentShape(.rect)  // the side strips must not pass taps to the keys underneath
+        .accessibilityIdentifier("protly-panel")  // the simulator checks find the panel's texts by it (not spoken)
     }
 
     @ViewBuilder

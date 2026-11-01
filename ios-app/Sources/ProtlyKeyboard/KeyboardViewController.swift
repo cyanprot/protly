@@ -837,9 +837,8 @@ struct ProtlyRoot: View {
                     .frame(height: layoutHeight)
                 }
             }
-            // The card grows down from the strip over the keys; a crossfade under Reduce Motion.
-            .opacity(visible ? 1 : 0)
-            .scaleEffect(visible || reduceMotion ? 1 : 0.94, anchor: .top)
+            // The card grows down from the strip over the keys; a crossfade under Reduce Motion (ResultCard.swift).
+            .modifier(CardReveal(visible: visible))
             .allowsHitTesting(visible)
             .accessibilityHidden(!visible)
         }

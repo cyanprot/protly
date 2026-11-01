@@ -59,6 +59,7 @@ struct ResultCard: View {
         .modifier(CardGlass())
         .padding(.horizontal, 6)
         .contentShape(.rect)  // the side strips must not pass taps to the keys underneath
+        .accessibilityIdentifier("protly-card")  // the simulator checks find the card's texts by it (not spoken)
     }
 
     /// Symbol, arrow and title as in the pill: separate views, so a right-to-left endonym cannot reorder them.
@@ -168,6 +169,21 @@ private struct CardText: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// How the panel layer shows the card (design Part 3, step 2): it grows down from the strip over the keys, and under
+/// Reduce Motion it only crossfades. ProtlyRoot animates `visible`; the layer stays mounted, so nothing leaves with a
+/// transition (the ghost card).
+struct CardReveal: ViewModifier {
+    let visible: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(visible ? 1 : 0)
+            .scaleEffect(visible || reduceMotion ? 1 : 0.94, anchor: .top)
     }
 }
 

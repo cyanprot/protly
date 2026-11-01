@@ -234,6 +234,42 @@ progress() {
   done
 }
 
+# The looks helper (keyboard-ui 003, CardChecks.swift): the UI tests run inside the simulator and cannot call simctl,
+# so they ask for light mode or a text size with a line `<n> appearance light|dark` or `<n> content_size <size>` in
+# looks-requests.txt (Driver.looks) and wait for `<n> ok <setting> now <value>`, `<n> failed ...` or `<n> refused ...`
+# in looks-acks.txt. Nothing else is run: anything but these two settings and simctl's own values is refused.
+looks_helper() {
+  local seen=0 n line id rest setting value now
+  while sleep 0.5; do
+    [ -f "$out/looks-requests.txt" ] || continue
+    n=$(wc -l < "$out/looks-requests.txt" | tr -d ' ')
+    while [ "$seen" -lt "$n" ]; do
+      seen=$((seen + 1))
+      line="$(sed -n "${seen}p" "$out/looks-requests.txt")"
+      id="${line%% *}"
+      rest="${line#* }"
+      setting="${rest%% *}"
+      value="${rest#* }"
+      case "$id" in ''|*[!0-9]*) echo "0 refused a malformed request" >> "$out/looks-acks.txt"; continue ;; esac
+      case "$setting:$value" in
+        appearance:light|appearance:dark|content_size:extra-small|content_size:small|content_size:medium|\
+        content_size:large|content_size:extra-large|content_size:extra-extra-large|\
+        content_size:extra-extra-extra-large|content_size:accessibility-medium|content_size:accessibility-large|\
+        content_size:accessibility-extra-large|content_size:accessibility-extra-extra-large|\
+        content_size:accessibility-extra-extra-extra-large)
+          if xcrun simctl ui "$udid" "$setting" "$value" > "$work/looks.log" 2>&1; then
+            now="$(xcrun simctl ui "$udid" "$setting" 2>&1 | tr -d '\n' | cut -c1-60)"
+            echo "$id ok $setting now $now" >> "$out/looks-acks.txt"
+          else
+            echo "$id failed $setting $value: $(tail -n 1 "$work/looks.log" | cut -c1-120)" >> "$out/looks-acks.txt"
+          fi
+          ;;
+        *) echo "$id refused $setting $value" >> "$out/looks-acks.txt" ;;
+      esac
+    done
+  done
+}
+
 # One test method on its own (the probe's Full Access step).
 run_one() {  # test-id log
   with_deadline 600 env TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" TEST_RUNNER_NETWORK="$network" \
@@ -282,6 +318,8 @@ note "memory sampler pid $sampler, probe ${PROBE:-0}, network $network"
 rm -rf "$work/Tests.xcresult"
 progress &
 progress_pid=$!
+looks_helper > /dev/null 2>&1 &
+looks_pid=$!
 main_deadline="${MAIN_TEST_DEADLINE:-3900}"
 with_deadline "$main_deadline" env TEST_RUNNER_SHOTS_DIR="$out" TEST_RUNNER_PROBE="${PROBE:-0}" \
   TEST_RUNNER_OCR_FALLBACK="${OCR_FALLBACK:-0}" TEST_RUNNER_NETWORK="$network" \
@@ -294,6 +332,12 @@ test_code=$?
 pkill -P "$progress_pid" > /dev/null 2>&1  # its sleep, which holds the step's output
 kill "$progress_pid" > /dev/null 2>&1
 wait "$progress_pid" > /dev/null 2>&1
+pkill -P "$looks_pid" > /dev/null 2>&1
+kill "$looks_pid" > /dev/null 2>&1
+wait "$looks_pid" > /dev/null 2>&1
+if [ -f "$out/looks-requests.txt" ]; then
+  note "looks helper: $(wc -l < "$out/looks-requests.txt" | tr -d ' ') requests, $( (grep -c ' ok ' "$out/looks-acks.txt" 2> /dev/null) || true) done"
+fi
 if [ $test_code -eq 124 ]; then note "main tests stopped at the ${main_deadline} s deadline (see the last CHECK and == lines)"; fi
 kill "$sampler" > /dev/null 2>&1
 wait "$sampler" > /dev/null 2>&1
