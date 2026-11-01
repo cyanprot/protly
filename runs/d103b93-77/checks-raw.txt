@@ -1,0 +1,19 @@
+CHECK card-wait-dark FAIL unreadable: center=<unreadable> want "English"
+CHECK card-mid-dark FAIL unreadable: the call did not start (card-wait-dark)
+CHECK card-done-dark FAIL unreadable: the call did not start (card-wait-dark)
+CHECK card-err0-dark FAIL unreadable: center=<unreadable> want "English"
+CHECK card-err1-dark FAIL unreadable: center=<unreadable> want "English"
+CHECK card-wait-light FAIL unreadable: center=<unreadable> want "English"
+CHECK card-mid-light FAIL unreadable: the call did not start (card-wait-light)
+CHECK card-done-light FAIL unreadable: the call did not start (card-wait-light)
+CHECK card-err0-light FAIL unreadable: center=<unreadable> want "English"
+CHECK card-err1-light FAIL unreadable: center=<unreadable> want "English"
+CHECK card-slow FAIL unreadable: center=<unreadable> want "English"
+CHECK mem-stream FAIL unreadable: the call did not start
+CHECK card-cancel FAIL unreadable: center=<unreadable> want "English"
+CHECK hit-1 PENDING slots="left none, center none, right none"
+CHECK bar-dark PENDING shot1="c-bar-dark-1.png" slot1={131.2,527.5,127.6,32.0} center1=<unreadable> shot2="c-bar-dark-2.png" slot2={131.2,527.5,127.6,32.0} center2=<unreadable> look=dark points=390
+CHECK bar-light PENDING shot1="c-bar-light-1.png" slot1={131.2,527.5,127.6,32.0} center1=<unreadable> shot2="c-bar-light-2.png" slot2={131.2,527.5,127.6,32.0} center2=<unreadable> look=light points=390
+CHECK bar-xxl FAIL unreadable: base-h=none ms: no center pill ar: no center pill
+CHECK app-dark PENDING hero=1 shot1="c-app-dark-1.png" shot2="c-app-dark-2.png" look=dark
+CHECK app-light PENDING hero=1 shot1="c-app-light-1.png" shot2="c-app-light-2.png" look=light
