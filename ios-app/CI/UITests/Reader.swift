@@ -43,6 +43,19 @@ final class Reader {
 
     static let languages = ["ko-KR", "en-US"]
 
+    /// The languages for reading a label that names `word` (keyboard-ui 001: the center pill shows the target's
+    /// endonym, such as "Русский" or "日本語"). Vision's Korean model reads Hangul and Latin only: run ec69307-50
+    /// dropped a whole Cyrillic panel line under `languages`. A Cyrillic or Japanese word is read with its own model
+    /// first, English second; everything else with `languages`.
+    static func labelLanguages(_ word: String) -> [String] {
+        let scalars = word.unicodeScalars
+        if scalars.contains(where: { (0x0400...0x04FF).contains($0.value) }) { return ["ru-RU", "en-US"] }
+        if scalars.contains(where: { (0x3040...0x30FF).contains($0.value) || (0x4E00...0x9FFF).contains($0.value) }) {
+            return ["ja-JP", "en-US"]
+        }
+        return Self.languages
+    }
+
     init(driver: Driver) {
         self.driver = driver
     }
@@ -89,9 +102,10 @@ final class Reader {
     }
 
     /// Text lines in `rect` (points) of `shot`, left to right, NFC; nil when Vision failed (not when it found nothing).
-    func text(in rect: CGRect, of shot: XCUIScreenshot, points: CGFloat, label: String) -> [String]? {
+    func text(in rect: CGRect, of shot: XCUIScreenshot, points: CGFloat, label: String,
+              languages: [String] = Reader.languages) -> [String]? {
         guard let c = cropped(rect, of: shot, points: points, label: label) else { return nil }
-        return recognize(c.image, label: label)
+        return recognize(c.image, label: label, languages: languages)
     }
 
     /// Lines in reading order and word boxes (points) in `rect` of `shot`; nil when Vision failed.
@@ -139,11 +153,12 @@ final class Reader {
         return (crop, px, scale)
     }
 
-    private func observe(_ image: CGImage, label: String) -> [VNRecognizedTextObservation]? {
+    private func observe(_ image: CGImage, label: String,
+                         languages: [String] = Reader.languages) -> [VNRecognizedTextObservation]? {
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = false
-        request.recognitionLanguages = Self.languages
+        request.recognitionLanguages = languages
         let handler = VNImageRequestHandler(cgImage: image, options: [:])
         do {
             try handler.perform([request])
@@ -154,8 +169,8 @@ final class Reader {
         return request.results ?? []
     }
 
-    func recognize(_ image: CGImage, label: String) -> [String]? {
-        guard let results = observe(image, label: label) else { return nil }
+    func recognize(_ image: CGImage, label: String, languages: [String] = Reader.languages) -> [String]? {
+        guard let results = observe(image, label: label, languages: languages) else { return nil }
         let observations = results.sorted { $0.boundingBox.minX < $1.boundingBox.minX }
         let lines = observations
             .compactMap { $0.topCandidates(1).first?.string }

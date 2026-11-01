@@ -715,3 +715,41 @@ character, no acceleration, every step dropped 50 pt above or below the start).
 Phone checks the tower still owes (`space-trackpad.md` P3 to P5): drag left across the keyboard while the thumb
 rises, the cursor never stops; slow drags are precise and a flick reaches about 40 characters; Korean and English
 feel equally fast on screen; `안녕` with no space, hold space, one step left gives `안|녕` with nothing lost.
+
+## Bar and protly key (keyboard-ui 001)
+
+Campaign 2026-10-30-keyboard-ui, sprint 001 (`docs/plans/2026-10-30-keyboard-ui.md`, design Part 1).
+
+- **What changed.** The bar is Apple's three full slots, each a button the full third and the whole band above row
+  1, with thin dividers that hide next to an empty slot. The center is a pill in the brand colors (dark keyboard:
+  paper pill, ink text; light: the reverse) whose words come from `BarAction` (ProtlyCore): `→ English` or the
+  target's endonym (`→ Русский`, `→ 日本語`), `Polish` (`한 Polish` for `ko:`), `Read`, `Undo`. Translate and Polish
+  show words only, no symbol (owner, 2026-10-30); Read and Undo keep `doc.on.clipboard` and
+  `arrow.uturn.backward`. The action stays visible while a word is typed. The left slot drops the quotes and dims a
+  flip that is not a listed word (`alternativeIsWord`). The protly key shows the same action's symbol and runs it.
+  Without Full Access the pill is an outline with `lock.fill`, and a tap explains where to turn it on.
+- **Simulator.** `runs/59f8eca-69`: `STATUS measured`, layout `RESULT PASS` (no +17 pt flake), `CHECKS pass 26 fail 0
+  record 8 skip 2`. It is the free re-run of `runs/59f8eca-68`, which had the same 26 passes but a KeyboardShots
+  harness failure (02 met a system keyboard standing in, then emoji not reached; `runs/6254808-61` on a branch
+  without this bar failed the same way). `measure.py` needed no change: the pill reads as one bar word centered
+  on the slot (`bar-text-centers 195.17(88)` in 07, 2 pt tolerance).
+- **Hit frames** (`tree-06-word-typed.txt`, `tree-07-empty-left-slot.txt`): 06 left `{3.7, 512.0} 127.3 x 46.7`,
+  06 center `{131.3, 512.0} 127.3 x 46.7`, 07 center `{131.3, 512.0} 127.3 x 46.7`; the right slot is empty in
+  both. Every slot showing a button is at least 120 x 40 pt.
+- **Shots.** KeyboardShots runs before `test0_access`, so shots 06 and 07 show the locked pill (`lock.fill` Polish,
+  outlined). With Full Access on, the phone checks' crops show the filled paper pill with `Polish` and no symbol
+  (`c-8.5-9o-1-center.png`). Shots 02 to 05 keep an empty center.
+- **CI words.** The center checks match the pill's words, contains-the-word (OCR adds `→`, `•` or a stray glyph for
+  a symbol, for example `G Read`, `5 Undo`). Vision's Korean model drops Cyrillic and Japanese (the Russian line of
+  an 8.5-1 result panel in `runs/ec69307-50` was on screen and not read), so `Reader.labelLanguages` reads a
+  Cyrillic label with `ru-RU, en-US` and a Japanese one with `ja-JP, en-US`; `→ Русский` and `→ 日本語` now read
+  exactly. Without its quotes Vision reads the jamo-only flip `ㅗ디ㅣㅐ` as `-]T`, also from contrast-stretched
+  crops (`runs/394cf1a-66`), so ws-1 falls back to the left slot button's accessibility label when OCR finds no
+  Hangul, only if the slot has ink, and notes both readings.
+- **Known limit.** With a selection, the label comes from the text around the cursor while the action sends the
+  selection (the old `draftMode` did the same).
+
+Phone checks the tower still owes: the feel of the bar and the pill in dark and light apps; a flip of a real word
+against a dimmed one; the protly key's symbol after a Replace (`arrow.uturn.backward`) and on an empty field
+(`doc.on.clipboard`); Full Access off shows the outlined lock pill and the reason line; the pill in a dark keyboard
+field inside a light app; whether the pill is too loud (design D3); VoiceOver reads the protly key's action.

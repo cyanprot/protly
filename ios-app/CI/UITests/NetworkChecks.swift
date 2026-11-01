@@ -223,12 +223,13 @@ extension PhoneRun {
             a.problem = "draft#\(n) typed as \(q(typed)) want \(q(draft.full))"
             return a
         }
-        let center = readSlot(.center, item)
+        let center = readSlot(.center, item, languages: Reader.labelLanguages(want))
         guard center.unreadable == nil, let label = center.text else {
             a.problem = "center#\(n) unreadable (\(center.unreadable ?? "no OCR text"), \(center.file))"
             return a
         }
-        guard label == want else {
+        // The pill's words only (keyboard-ui 001): OCR may add the arrow or a symbol, or drop an accent.
+        guard label.range(of: want, options: .diacriticInsensitive) != nil else {
             a.problem = "center#\(n)=\(q(label)) want \(q(want))"
             return a
         }
@@ -324,7 +325,7 @@ extension PhoneRun {
         return attempts
     }
 
-    /// 6.8-11's Translate part, after the flip part (test1_68): a Korean draft, center Translate, Insert: Latin.
+    /// 6.8-11's Translate part, after the flip part (test1_68): a Korean draft, center English, Insert: Latin.
     func translate68(_ it: Item) {
         guard Self.network else {
             it.skip("no network key")  // the Translate part is the item's half: no PASS on the flip alone
@@ -335,7 +336,7 @@ extension PhoneRun {
             return
         }
         context(korean: true, it)  // the flip just made the previous word English
-        tryAction(it, Draft(code: nil, text: "오늘 정말 고마워 "), center: "Translate", busy: "Translating",
+        tryAction(it, Draft(code: nil, text: "오늘 정말 고마워 "), center: "English", busy: "Translating",
                   needBusy: false, passes: Rules.latin)
         resetKeyboard()
     }
@@ -351,7 +352,7 @@ extension PhoneRun {
         var it = Item("8.5-1")
         context(korean: true, it)
         let ru = Draft(code: "ru", text: "누나 노트 고마워 누나 덕분에 살았다 ")
-        let tries = tryAction(it, ru, center: "Translate", busy: "Translating", needBusy: true) {
+        let tries = tryAction(it, ru, center: "Русский", busy: "Translating", needBusy: true) {
             Rules.cyrillic($0) && !Rules.hangul($0) && !Rules.hasNoCase($0, "ru:") && $0.contains("спасла")
         }
         for (i, a) in tries.enumerated() {
@@ -366,10 +367,10 @@ extension PhoneRun {
         finish(it)
         resetKeyboard()
 
-        simple("8.5-3", Draft(code: "ja", text: "내일 시간 있어? 같이 밥 먹자 ㅋㅋ "), korean: true) {
+        simple("8.5-3", Draft(code: "ja", text: "내일 시간 있어? 같이 밥 먹자 ㅋㅋ "), korean: true, center: "日本語") {
             Rules.kanaOrKanji($0) && !Rules.hangul($0) && !Rules.hasNoCase($0, "lol")
         }
-        simple("8.5-4", Draft(code: "es", text: "나 오늘 너무 피곤해 "), korean: true) {
+        simple("8.5-4", Draft(code: "es", text: "나 오늘 너무 피곤해 "), korean: true, center: "Español") {
             Rules.hasNoCase($0, "cansado") && !Rules.hasNoCase($0, "cansada") && !Rules.hangul($0)
         }
         simple("8.5-5", Draft(code: nil, text: "내일 3시에 봐 "), korean: true, passes: Rules.latin)
@@ -393,7 +394,7 @@ extension PhoneRun {
         it = Item("8.5-10")
         if times.count < 2 {
             context(korean: true, it)
-            let a = attempt(it, ru, center: "Translate", busy: "Translating", n: 2, insert: false)
+            let a = attempt(it, ru, center: "Русский", busy: "Translating", n: 2, insert: false)
             if a.capped { it.note("try#2=request cap") }
             if let s = a.seconds { times.append(s) }
             if let p = a.problem { it.note("try#2=\(p)") }
@@ -411,7 +412,7 @@ extension PhoneRun {
 
     /// One draft, one action, the Insert checked by checks.py; the panel's text is kept as `shown#n` (RECORD part:
     /// back translation or change line).
-    private func simple(_ id: String, _ draft: Draft, korean: Bool, center: String = "Translate",
+    private func simple(_ id: String, _ draft: Draft, korean: Bool, center: String = "English",
                         busy: String = "Translating", needBusy: Bool = false, passes: (String) -> Bool) {
         let it = Item(id)
         context(korean: korean, it)
@@ -437,7 +438,7 @@ extension PhoneRun {
 
     /// Read clipboard. With `text` (the host): the keyboard goes down, the test runner sets the clipboard, and the
     /// keyboard comes back on the empty field, so the bar looks at the clipboard (viewWillAppear). Without (the
-    /// container app): its Copy button has set it. Taps the center's `Read clipboard` (the protly key when the
+    /// container app): its Copy button has set it. Taps the center's `Read` pill (the protly key when the
     /// center does not offer it, noted), answers Allow Paste and waits for one of `labels`. nil: it did not start.
     func readClipboard(_ item: Item, _ text: String?, waitFor labels: [String], sends: Bool, name: String = "clipboard",
                        markTimeout: Bool = true, probe: ((String) -> Void)? = nil) -> ClipRead? {
@@ -457,7 +458,7 @@ extension PhoneRun {
             return nil
         }
         let center = readSlot(.center, item)
-        let offered = center.text == "Read clipboard"
+        let offered = center.text?.contains("Read") ?? false
         if inHost {
             // The host brings the keyboard back on an empty field, so the bar must offer it (refreshField).
             item.require("\(name)-center", offered, q(center.text))
@@ -559,7 +560,7 @@ extension PhoneRun {
         it = Item("7.7-2")
         if Self.network {
             context(korean: true, it)
-            let tries = tryAction(it, Self.kiln, center: "Translate", busy: "Translating", needBusy: false,
+            let tries = tryAction(it, Self.kiln, center: "English", busy: "Translating", needBusy: false,
                                   passes: Rules.aboutMe)
             if let s = tries.compactMap({ $0.seconds }).first { times.append(s) }
             finish(it)
@@ -577,7 +578,7 @@ extension PhoneRun {
             }
             resetKeyboard()
             context(korean: true, it)
-            let tries = tryAction(it, Self.kiln, center: "Translate", busy: "Translating", needBusy: false,
+            let tries = tryAction(it, Self.kiln, center: "English", busy: "Translating", needBusy: false,
                                   passes: Rules.aboutMe)
             if let s = tries.compactMap({ $0.seconds }).first { times.append(s) }
             finish(it)

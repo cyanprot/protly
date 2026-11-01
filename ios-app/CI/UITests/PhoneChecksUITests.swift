@@ -269,7 +269,7 @@ final class PhoneRun {
     }
 
     /// Screenshot (saved), then OCR and ink of one slot.
-    func readSlot(_ slot: Slot, _ item: Item) -> SlotRead {
+    func readSlot(_ slot: Slot, _ item: Item, languages: [String] = Reader.languages) -> SlotRead {
         d.pause(0.6)  // the bar follows the last key
         let board = d.current()
         let screen = XCUIScreen.main.screenshot()
@@ -284,10 +284,33 @@ final class PhoneRun {
         let rect = d.slotRect(slot, row1: row1)
         let ink = shot.ink(in: rect, background: CGPoint(x: rect.midX, y: rect.minY + 1))
         var text: String?
-        if reader.works, let lines = reader.text(in: rect, of: screen, points: d.width, label: "\(item.id) \(slot.name)") {
+        if reader.works, let lines = reader.text(in: rect, of: screen, points: d.width, label: "\(item.id) \(slot.name)",
+                                                 languages: languages) {
             text = Self.clean(lines.joined(separator: " "))
         }
         return SlotRead(text: text, ink: ink, file: file + ".png")
+    }
+
+    /// OCR first; when it misses, the slot button's accessibility label, if the slot has ink (the keyboard's elements
+    /// are in the host's tree: tree-06). Once keyboard-ui 001 dropped the quotes around the flip, Vision read the
+    /// jamo-only "ㅗ디ㅣㅐ" as "-]T" (runs 49f47b2-62 and 394cf1a-66, also from contrast-stretched crops); the label is
+    /// the string the slot draws. Both readings are noted.
+    func labelFallback(_ slot: Slot, _ item: Item, _ first: SlotRead, _ ok: (String) -> Bool) -> SlotRead {
+        guard first.unreadable == nil, !(first.text.map(ok) ?? false) else { return first }
+        let label = slotLabel(slot)
+        item.note("\(slot.name)-ocr=\(q(first.text)) \(slot.name)-label=\(q(label)) ink \(first.ink)")
+        guard let label, ok(label), first.ink >= Self.inkEmpty else { return first }
+        return SlotRead(text: label, ink: first.ink, file: first.file)
+    }
+
+    /// The label of the button whose center is in `slot`'s rect, among buttons with a Hangul label.
+    func slotLabel(_ slot: Slot) -> String? {
+        guard let row1 = d.rowOne() else { return nil }
+        let rect = d.slotRect(slot, row1: row1)
+        let hangul = NSPredicate(format: "label MATCHES %@", ".*[\\u1100-\\u11FF\\u3130-\\u318F\\uAC00-\\uD7A3].*")
+        return d.app.buttons.matching(hangul).allElementsBoundByIndex
+            .first { rect.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) }?
+            .label
     }
 
     /// OCR text without the flip's curly quotes around it.
@@ -504,7 +527,8 @@ final class PhoneRun {
         var it = Item("ws-1")
         d.clearField()
         d.type("hello ")
-        let left = readSlot(.left, it)
+        // Vision misreads the unquoted jamo `ㅗ디ㅣㅐ` (keyboard-ui 001): the slot's label stands in, with its ink.
+        let left = labelFallback(.left, it, readSlot(.left, it)) { hasHangul($0) }
         expectSlot(it, "left", left, "Hangul") { hasHangul($0) }
         d.tapSlot(.left)
         if let f = field() {
@@ -544,7 +568,8 @@ final class PhoneRun {
         typeCode("ru", it)
         d.type(": 누나 노트 고마워 누나 덕분에 살았다 ")
         it.expect("field", field(), "ru: 누나 노트 고마워 누나 덕분에 살았다 ")
-        expectSlot(it, "center", readSlot(.center, it), equals: "Translate")
+        let russian = readSlot(.center, it, languages: Reader.labelLanguages("Русский"))
+        expectSlot(it, "center", russian, q("Русский")) { $0.contains("Русский") }
         finish(it)
 
         it = Item("8.5-2o")
@@ -565,7 +590,7 @@ final class PhoneRun {
         typeCode("ok", it)
         d.type(": 내일 봐 ")
         it.expect("field", field(), "ok: 내일 봐 ")
-        expectSlot(it, "center", readSlot(.center, it), equals: "Translate")
+        expectSlot(it, "center", readSlot(.center, it), q("English")) { $0.contains("English") }
         finish(it)
 
         it = Item("8.5-7o")
@@ -573,7 +598,7 @@ final class PhoneRun {
         typeCode("ko", it)
         d.type(": 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 ")
         it.expect("field", field(), "ko: 낼 시간되? 같이 밥먹자 ㅋㅋ 안되면 말해죠 ")
-        expectSlot(it, "center", readSlot(.center, it), equals: "Polish")
+        expectSlot(it, "center", readSlot(.center, it), q("Polish")) { $0.contains("Polish") }
         finish(it)
 
         it = Item("8.5-8o")
@@ -589,7 +614,7 @@ final class PhoneRun {
         let spanish = "me encanta el color de tu chaqueta, donde la conprastes? jaja "
         d.type(spanish)
         it.expect("field", field(), spanish)
-        expectSlot(it, "center", readSlot(.center, it), equals: "Polish")
+        expectSlot(it, "center", readSlot(.center, it), q("Polish")) { $0.contains("Polish") }
         finish(it)
         d.clearField()
     }
