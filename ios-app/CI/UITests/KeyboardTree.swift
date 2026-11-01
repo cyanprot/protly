@@ -154,18 +154,35 @@ extension Driver {
 }
 
 /// XCUITest's element description, one element per line: `<indent>Button, 0x.., {{x, y}, {w, h}}, identifier: 'id',
-/// label: 'text', value: v, Disabled`. The indent gives the nesting, so each element gets the nearest `protly-`
-/// identifier on itself or above it.
+/// label: 'text', value: v, Disabled`. A label with line breaks runs on over the next lines (the About me confirm
+/// text, run 236dc9a-80), so a line that starts no element continues the one before. The indent gives the nesting, so
+/// each element gets the nearest `protly-` identifier on itself or above it.
 enum KeyTreeText {
+    private static let start = try! NSRegularExpression(pattern: #"^ *(?:\u2192)?[A-Za-z]+(?: \([^)]*\))?, 0x[0-9a-fA-F]+, \{\{"#)
     private static let line = try! NSRegularExpression(
-        pattern: #"^( *)(?:\u2192)?([A-Za-z]+)(?: \([^)]*\))?, 0x[0-9a-fA-F]+, \{\{(-?[0-9.]+), (-?[0-9.]+)\}, \{([0-9.]+), ([0-9.]+)\}\}(.*)$"#)
+        pattern: #"^( *)(?:\u2192)?([A-Za-z]+)(?: \([^)]*\))?, 0x[0-9a-fA-F]+, \{\{(-?[0-9.]+), (-?[0-9.]+)\}, \{([0-9.]+), ([0-9.]+)\}\}(.*)$"#,
+        options: [.dotMatchesLineSeparators])
+
+    /// The description's elements, each with the lines its label runs on over.
+    static func entries(_ text: String) -> [String] {
+        var out: [String] = []
+        for raw in text.components(separatedBy: "\n") {
+            let ns = raw as NSString
+            if start.firstMatch(in: raw, range: NSRange(location: 0, length: ns.length)) != nil || out.isEmpty {
+                out.append(raw)
+            } else {
+                out[out.count - 1] += "\n" + raw
+            }
+        }
+        return out
+    }
     /// What may follow a quoted value: the next attribute, a flag, or the end of the line.
     private static let end = #"'(?=$|, (?:identifier|label|value|placeholderValue|title): |, (?:Disabled|Selected|Keyboard Focused|Focused)\b)"#
 
     static func parse(_ text: String) -> [KeyElement] {
         var out: [KeyElement] = []
         var stack: [(indent: Int, part: String?)] = []
-        for raw in text.components(separatedBy: "\n") {
+        for raw in entries(text) {
             let ns = raw as NSString
             guard let m = line.firstMatch(in: raw, range: NSRange(location: 0, length: ns.length)) else { continue }
             func group(_ i: Int) -> String { ns.substring(with: m.range(at: i)) }
