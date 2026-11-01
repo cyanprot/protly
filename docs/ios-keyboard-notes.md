@@ -758,3 +758,63 @@ Phone checks the tower still owes: the feel of the bar and the pill in dark and 
 against a dimmed one; the protly key's symbol after a Replace (`arrow.uturn.backward`) and on an empty field
 (`doc.on.clipboard`); Full Access off shows the outlined lock pill and the reason line; the pill in a dark keyboard
 field inside a light app; whether the pill is too loud (design D3); VoiceOver reads the protly key's action.
+
+## Simulator proof (typing-fixes 004)
+
+Campaign 2026-10-30-typing-fixes, sprint 004 (`docs/plans/2026-10-30-typing-fixes.md`, Task 4.1 to 4.3). The CI
+host gained two offline screens (`ios-app/CI/README.md`, "Typing-fixes checks"): a dark web composer (`-screen
+web`: a textarea, a form input whose submit is logged and prevented, an Enter-to-send `contenteditable` composer
+with the IME guard and a transparent caret, every DOM event in `web-events.txt`) and a `UITextView` that publishes
+its selection (`-screen uikit`). Three methods (`test5a_web`, `test5b_menu`, `test5c_pad`) run after `test5_icon`
+and before the network groups; `checks.py` judges their lines.
+
+Runs: `runs/8632699-72` (filtered debug run, the probe: 20 of 22 lines passed; Apple's space key is labeled `" "`
+with the identifier `space`, and pad-2 lost a typed letter), `runs/87ef63d-73` (first full run: `STATUS measured`,
+layout `RESULT PASS`, `CHECKS pass 48 fail 0 record 8 skip 2`), `runs/49bc717-74` (the review's stricter rules:
+every new line as below; a KeyboardShots harness failure, `01-apple: expected english, found none`, and two lost
+taps in 6.8-1 and 8.5-9 on a slow runner) and its free re-run `runs/49bc717-75` (`STATUS measured`, layout
+`RESULT PASS`, `CHECKS pass 33 fail 3 record 20 skip 2`; the three FAILs are 6.8-1, 6.8-2 and 6.8-7, below).
+
+### Results
+
+| ID | Result | Evidence (`runs/49bc717-75` unless noted) |
+|---|---|---|
+| dark-1 | PASS | `dkssud` in the composer on the black page: `안녕`; ink inside the composer 1300 px while typing and 1300 px after a space, the same tone (599), no underline (longest ink row 30 px of an 81 px word). The word being typed is as visible as committed text |
+| ret-1-* | RECORD | `안녕` + Return: textarea `안녕` + newline; input keeps `안녕` and submits `안녕`; composer sends `안녕` and empties. Return came 0.6 to 0.9 s after the last key, not at once |
+| ret-2-* | RECORD | `hello 안녕` + Return: the same in all three fields; not at once |
+| ret-3-* | RECORD | `hello 안녕 ` (space) + Return: the same, the space kept; not at once |
+| ret-4-* | PASS | `hello 안녕`, 300 ms, Return (0.8 to 0.9 s measured): the same in all three fields |
+| ret-5-* | RECORD | `ㅇㅋ` + Return: the same in all three fields; not at once |
+| menu-0 | PASS | control, Apple's keyboard: `hello there`, double-tap on `hello`: selection `0,5`, menu Copy, Cut, Look Up |
+| menu-1 | PASS | Protly: `안녕 오늘` with no space, double-tap on `오늘`: selection `3,2`, no marked text, menu Copy, Cut, Look Up (AutoFill on screen too) |
+| menu-4 | PASS | then `ㅎ`: field `안녕 ㅎ`, caret `4,0`: the selection was replaced |
+| pad-1 | PASS | `hello world hello world `, 1 s on space, 90 pt left: caret 24 -> 3 (21 characters; 18 in 73 and 74) |
+| pad-2 | PASS | the same drag while rising 80 pt: caret moved 16 (15 in 73, 17 in 74); the thumb rising does not stop the cursor |
+| pad-3 | PASS | `안녕`, 1 s on space, 20 pt left: caret `1,0` (`안|녕`), field `안녕`, no space typed |
+
+Every Return reached the page as `keydown` `Enter` with `keyCode 13` and `isComposing=false`, then `keypress`
+(textarea and input), `beforeinput`/`input` `insertLineBreak` (textarea) or `submit` (input); the composer's
+handler sent before any newline. No `composition*` event appears in `web-events.txt`: each key is an `insertText`
+(a Hangul syllable is a delete and a retype, as the plain-text writing does). That settles C1 to C3 of
+`enter-clears-web.md` for this page in the simulator: nothing is composing when Return arrives.
+
+Timings (runs 73, 74, 75): test5a_web 329, 347 and 310 s for dark-1 and 15 Return steps (10 to 26 s each),
+test5b_menu 86, 106 and 89 s, test5c_pad 101, 156 and 109 s. The full suite ran about 2800 s (73) of the 3900 s deadline. XCUITest makes
+one coordinate tap in about 0.6 s, so the "Return at once" steps (asked 0.05 s) are RECORD, not PASS, by rule:
+they show the text kept, not the race inside a few tens of milliseconds, which stays a phone check.
+
+### Findings for the tower
+
+- pad-2's typing: in the `UITextView` screen, `hello world hello world ` typed right after pad-1 came out
+  `hello world hello wrld ` in run 72 and in both tries of run 74 (not in run 73, nor in pad-1): the `o` after the
+  second `w` was lost. The drag itself was measured on the typed text and kept it. Whether a key is lost in the
+  delete-and-retype of a word that flips between readings (`w`+`o` reads `재`) is worth a look on the phone.
+- Not this sprint's checks: in run 74, 6.8-1 typed ` jcjcccS` for `i dont think its ok teh.` and 8.5-9 lost the
+  `e` of `encanta`; in run 75, 6.8-1 came out `I dont think it’s ok teh.` because test1_68 typed on Apple's English
+  keyboard (`keyboard top 509.00, row 1 561.00`, the 01-apple numbers) after "picked Protly" (KeyboardShots ends on
+  English), and 6.8-2 (`recive.`) and 6.8-7 (`ri 가자`) followed. Both runs were slow (test1_68 459 and 526 s
+  against 372 s in 73). A keyboard-switching harness flake in a method this sprint does not touch.
+
+Phone checks the tower still owes: Return right after a word (no pause) in Safari and Chrome on a real page;
+the same three fields opened in Safari on the phone; the edit menu after a long-press; the trackpad's feel (P3 to
+P5).
