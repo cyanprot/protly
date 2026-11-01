@@ -1,0 +1,4 @@
+full access: on, turned on in Settings (switch tap 2, Allow in the alert)
+allow paste (7.7-1 confirm): tapped Allow Paste in SpringBoard
+allow paste (7.7-3 read): tapped Allow Paste in SpringBoard
+allow paste (7.7-3 test-note): tapped Allow Paste in SpringBoard

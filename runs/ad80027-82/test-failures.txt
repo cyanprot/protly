@@ -1,0 +1,1 @@
+/Users/runner/work/protly/protly/ios-app/CI/UITests/Driver.swift:673: error: -[ProtlyCIUITests.KeyboardShotsUITests testScenarios] : Failed to get screenshot: Timed out while requesting screenshot.
